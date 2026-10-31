@@ -2,13 +2,18 @@
 
 from __future__ import annotations
 
+import logging
+
 from ..core.types import Comparison, Conclusion, StructuredClaim, Uncertainty
+
+log = logging.getLogger(__name__)
 
 SUMMARY_SYSTEM = """You write evidence-analysis summaries. Return ONLY a JSON object:
 {"summary": "max 4 sentences", "caveats": ["short strings"]}
-Rules: use ONLY the comparisons, uncertainties and excerpts provided.
+Rules: use ONLY the comparisons and uncertainties provided.
 Cite comparison ids like [cmp_xxx] inside the summary. Never introduce new
-facts, numbers, sources or verdicts. State plainly when evidence is missing."""
+facts, numbers, sources or verdicts. Never mention excerpts, documents or
+materials not listed in the input. State plainly when evidence is missing."""
 
 
 # Checks that corroborate context but can never verify a claim on their own.
@@ -63,23 +68,38 @@ def synthesize(
     summary, caveats = template_summary(stance, comparisons, uncertainties)
     if llm is not None and llm.available:
         try:
+            # Slim payload: muse-spark spends its token budget on hidden
+            # reasoning, so send only what the summary needs.
             payload = {
                 "claim": claim.raw_text,
                 "stance": stance,
-                "comparisons": [c.model_dump(mode="json") for c in comparisons],
-                "uncertainties": [u.model_dump(mode="json") for u in uncertainties],
+                "comparisons": [
+                    {"id": c.comparison_id, "metric": c.metric,
+                     "verdict": c.verdict, "notes": c.notes}
+                    for c in comparisons
+                ],
+                "uncertainties": [
+                    {"code": u.code, "description": u.description,
+                     "severity": u.severity}
+                    for u in uncertainties
+                ],
             }
             import json as _json
 
-            data = llm.complete_json(SUMMARY_SYSTEM, _json.dumps(payload)[:6000])
+            data = llm.complete_json(
+                SUMMARY_SYSTEM, _json.dumps(payload)[:3000], max_tokens=4000
+            )
             if isinstance(data.get("summary"), str) and data["summary"].strip():
                 summary = data["summary"].strip()
                 actor = "model"
                 model = getattr(llm, "name", "model")
+            else:
+                log.warning("LLM summary missing 'summary' key, using template")
             if isinstance(data.get("caveats"), list):
                 caveats = [str(c) for c in data["caveats"]]
-        except Exception:
-            pass  # keep deterministic summary; audit notes the fallback
+        except Exception as exc:
+            # keep deterministic summary; audit + log note the fallback
+            log.warning("LLM summary failed, using template: %r", exc)
     return Conclusion(
         stance=stance,  # type: ignore[arg-type]
         summary=summary,

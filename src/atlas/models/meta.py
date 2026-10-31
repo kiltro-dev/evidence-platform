@@ -24,6 +24,12 @@ class MetaClient:
         model: str | None = None,
         timeout_s: float = 120.0,
     ) -> None:
+        try:  # honor a local .env without requiring it
+            from dotenv import load_dotenv
+
+            load_dotenv()
+        except ImportError:
+            pass
         self.api_key = api_key or os.environ.get("MODEL_API_KEY", "")
         self.base_url = base_url or os.environ.get("MODEL_API_BASE_URL", DEFAULT_BASE_URL)
         self.model = model or os.environ.get("MODEL_API_MODEL", DEFAULT_MODEL)
@@ -59,5 +65,11 @@ class MetaClient:
             temperature=0,
             max_tokens=max_tokens,
         )
-        content = resp.choices[0].message.content or "{}"
+        content = resp.choices[0].message.content
+        if not content or not content.strip():
+            raise RuntimeError(
+                "Model returned empty content "
+                f"(finish_reason={resp.choices[0].finish_reason}); "
+                "likely truncated during reasoning — retry with more max_tokens."
+            )
         return json.loads(content)

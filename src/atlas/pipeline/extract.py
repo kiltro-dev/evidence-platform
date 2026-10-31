@@ -2,8 +2,12 @@
 
 from __future__ import annotations
 
+import logging
+
 from ..core.types import GeoRef, Quantity, StructuredClaim, TimeRef
 from ..models.heuristic import extract_heuristic
+
+log = logging.getLogger(__name__)
 
 STRUCTURE_SYSTEM = """You structure factual claims for evidence analysis.
 Return ONLY a JSON object with exactly these keys:
@@ -29,10 +33,13 @@ def structure_claim(raw_text: str, llm=None) -> StructuredClaim:
     text = raw_text.strip()
     if llm is not None and llm.available:
         try:
-            data = llm.complete_json(STRUCTURE_SYSTEM, f"Claim: {text}")
+            data = llm.complete_json(
+                STRUCTURE_SYSTEM, f"Claim: {text}", max_tokens=4000
+            )
             return _from_llm_json(text, data, getattr(llm, "name", "model"))
-        except Exception:
-            pass  # fall through to heuristic; audit records the fallback
+        except Exception as exc:
+            # fall through to heuristic; audit + log record the fallback
+            log.warning("LLM structuring failed, using heuristic: %r", exc)
     return extract_heuristic(text)
 
 

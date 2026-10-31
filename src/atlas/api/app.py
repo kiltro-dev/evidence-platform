@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
@@ -24,10 +23,8 @@ _llm: MetaClient | None = None
 def get_llm() -> MetaClient | None:
     global _llm
     if _llm is None:
-        client = MetaClient()
-        _llm = client if client.available else None
-    # re-check env on each call so a newly exported key is picked up
-    if _llm is None and os.environ.get("MODEL_API_KEY"):
+        # MetaClient loads .env on construction; a key added later
+        # requires a server restart.
         client = MetaClient()
         _llm = client if client.available else None
     return _llm

@@ -51,10 +51,20 @@ Persistent record for the autonomous build. Latest entry last.
   28/28 offline tests, server GET / 200, live GDP analysis → supported.
 - Dev server left running on 127.0.0.1:8765 for immediate demo.
 
+## 2026-10-31 — Live model integration
+
+- User provisioned `.env` (gitignored, mode 600). App did not auto-load
+  it → added `python-dotenv` loading in `MetaClient` + pinned dep.
+- Verified real `muse-spark-1.3`: minimal JSON call OK (~3s); full
+  `analyze()` model/model with stance `supported`; HTTP full mode OK.
+- Found + fixed: reasoning-token truncation (`finish=length`, empty
+  content) → explicit error, logged fallbacks, slim summary payload,
+  `max_tokens=4000` on both calls. Offline suite still 28/28.
+- Server restarted on :8765 in full mode. Details: docs/LIVE_MODEL.md.
+
 ## Open risks / not done
 
-- No MODEL_API_KEY provisioned in this environment; full model-assisted
-  mode implemented but exercised only via scripted doubles. Degraded
-  deterministic mode fully verified live.
 - Submit-portal fields and video specs unverifiable without login; demo
   video recording itself is a human task (script ready in docs/).
+- No per-report token accounting yet; truncation fallback possible
+  under load (handled by degradation).
