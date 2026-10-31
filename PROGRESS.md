@@ -38,12 +38,23 @@ Persistent record for the autonomous build. Latest entry last.
 - Tests: 28 offline + 3 live green. Eval harness: 10/10 live cases.
 - Git: 3 checkpoints on local main.
 
-## Next
+## 2026-10-31 — Docs + delivery
 
-- Docs batch 2–4 (architecture, agents, ADRs, eval, framework, study guide,
-  reference analysis, hackathon rules, demo script).
-- Public repo `kiltro-dev/evidence-platform`, clean-env install check,
-  secrets review, 3-minute demo rehearsal against live UI.
-- Open risk: no MODEL_API_KEY provisioned in this environment; full
-  model-assisted mode is implemented but exercised only via scripted
-  doubles. Degraded deterministic mode is fully verified live.
+- Committed full docs: README, ARCHITECTURE, AGENTS, 5 ADRs, EVAL,
+  FRAMEWORK (Evidence–Validity Dual Assessment), REFERENCE_ANALYSIS,
+  HACKATHON (rules verified), STUDY_GUIDE, DEMO_SCRIPT.
+- Secrets audit: no secret values in tracked files, no `.env`, sensitive
+  paths gitignored.
+- Created public repo `kiltro-dev/evidence-platform` (main, 4 commits
+  pushed, visibility PUBLIC, verified via `gh repo view`).
+- Clean-env check from public clone (/tmp/cleanenv): fresh venv install,
+  28/28 offline tests, server GET / 200, live GDP analysis → supported.
+- Dev server left running on 127.0.0.1:8765 for immediate demo.
+
+## Open risks / not done
+
+- No MODEL_API_KEY provisioned in this environment; full model-assisted
+  mode implemented but exercised only via scripted doubles. Degraded
+  deterministic mode fully verified live.
+- Submit-portal fields and video specs unverifiable without login; demo
+  video recording itself is a human task (script ready in docs/).
