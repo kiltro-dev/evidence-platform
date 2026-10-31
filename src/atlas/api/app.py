@@ -15,7 +15,7 @@ from atlas.models.meta import MetaClient
 from atlas.pipeline.run import analyze
 from atlas.storage.store import get_report, list_reports
 
-WEB_DIR = Path(__file__).resolve().parents[2] / "web"
+WEB_DIR = Path(__file__).resolve().parents[3] / "web"
 
 app = FastAPI(title="Evidence Atlas", version="0.1.0")
 _llm: MetaClient | None = None
