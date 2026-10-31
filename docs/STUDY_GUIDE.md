@@ -1,0 +1,100 @@
+# Study & defense guide
+
+How to learn, present, and defend Evidence Atlas in front of evaluators.
+
+## The 60-second story
+
+"Chatbots answer true-or-false without showing their work. Evidence Atlas
+is a traceable claim-analysis workbench: it structures a claim, pulls
+real data from public sources, checks numbers with deterministic code,
+and shows every step — including which parts a model wrote and which
+parts code verified. It's an analysis aid, not an oracle."
+
+## End-to-end flow (say it while demoing)
+
+1. Paste a claim → `POST /api/analyze`.
+2. **Extract**: Muse Spark structures it (or heuristics offline) —
+   quantities, units, years, countries. Badge shows the actor.
+3. **Route + retrieve**: economy claims hit World Bank indicators;
+   science claims hit OpenAlex works. Real HTTP, real URLs, no invented
+   citations. Empty-handed is a valid, reported outcome.
+4. **Verify** (code only): same unit? same period? then compare with an
+   explicit 2% rule. Incompatible → refused, with the reason recorded.
+5. **Synthesize**: deterministic stance rules; model may rephrase the
+   summary but cannot change stance or verdicts.
+6. Report persists to SQLite; UI renders claim, evidence, comparisons
+   with Δ%, uncertainties, limitations, and the audit trail.
+
+## Why this architecture (expected question)
+
+- Fixed pipeline over agent loop: fewer failure modes, import-level
+  guarantee that verification can't be skipped, hermetic tests.
+- Monolith + SQLite: 4-day deadline, one process to run and demo.
+- Keyless sources: demo works from a clean environment, no credentials.
+- No confidence scores: uncalibrated numbers would be dishonest; stances
+  + coded uncertainties instead.
+
+## Model vs code split (memorize the table)
+
+Model (Muse Spark): claim structuring, summary wording. Code: routing,
+retrieval parsing, unit math, comparisons, stance, persistence.
+Fallbacks: heuristic extractor, template summary. Cap: 2 model calls
+per analysis, asserted in e2e tests. Without `MODEL_API_KEY` the same
+verification core runs in degraded mode.
+
+## Real problems found during the build (say these, they're true)
+
+1. OpenAlex noise on economy claims → domain-gated routing.
+2. Bibliographic year-match produced "supported" → non-verifying metrics
+   capped at `partially_supported`.
+3. Bare numbers ("500 million") unmatched → count-only matching with an
+   explicit `unit_assumed_from_context` flag.
+4. Years parsed as quantities ("2020") duplicated comparisons →
+   year-like numbers excluded from quantities.
+5. `GET /` 404 → `WEB_DIR` off by one path level.
+6. `pkill -f` matched the author's own shell → bracket-pattern fix.
+7. Naming: 9 candidates collided with existing projects (documented in
+   PROGRESS.md) → descriptive name chosen.
+
+## Discarded alternatives
+
+Multi-agent loop, microservices, stdlib-only server, keyed sources
+(FRED etc.), fixtures-only demo, confidence scores, copying
+legal-agent-workshop domain code, SAM 3.1 (no image task in MVP).
+
+## Limitations to state proactively
+
+- ~16 indicators / ~50 countries; science is metadata-only.
+- 10 hand-picked eval cases, degraded mode only; not a benchmark.
+- Full model mode implemented but exercised here via scripted doubles
+  (no key provisioned in the build environment).
+- Live sources drift; eval uses wide margins and records values.
+
+## Hard questions evaluators may ask
+
+**"Why should I trust your verdicts?"** — You shouldn't, blindly. Every
+verdict links to its evidence, rule, and actor. Challenge the rule
+(`synthesize.decide_stance`), re-fetch the source URL, re-run the eval.
+The system is built to be checked, not believed.
+
+**"Isn't 2% tolerance arbitrary?"** — It's explicit and overridable, not
+hidden. It approximates statistical revision noise for macro data. The
+report shows the measured Δ% so you can apply your own threshold.
+
+**"What stops the model from lying in the summary?"** — The summary
+contract (cite ids, no new facts) plus the fact that stance, verdicts,
+and citations are computed beforehand in code. A lying summary would
+contradict the adjacent table — visible, not hidden.
+
+**"Why only 10 eval cases?"** — Time-boxed MVP honesty: 10 cases we
+actually ran and recorded beat 100 invented ones. The harness makes
+adding cases cheap; the docs state what the metrics don't prove.
+
+**"What breaks if World Bank changes its API?"** — The connector raises,
+the pipeline records `connector_error`, analysis continues with other
+sources, and the live integration tests fail loudly. No silent wrongness.
+
+**"Where's the moat?"** — The honesty architecture: strict comparability
+that refuses instead of guessing, import-level model/code separation,
+and the Evidence–Validity split as an evaluation discipline. Features
+are commodity; refusing to overclaim is the product.
