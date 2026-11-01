@@ -1,5 +1,12 @@
 # Evidence Atlas — the truth layer for the agent era
 
+> **Provenance (hackathon compliance):** all work in this repo was done
+> 2026-10-31 → 2026-11-04 (first commit `757d0e8`, 2026-10-31 — inside
+> the Oct 26–Nov 4 window). The static claim-checker (`src/atlas/`,
+> tag `pre-pivot-v1`) is now the deterministic numeric library of
+> **Atlas Live**, the real-time agent newsroom in [`live/`](live/).
+> New demo work lands only in `live/` with dated commits.
+
 Paste AI-generated text, get a verdict per claim: Evidence Atlas splits
 it into atomic claims, structures each one, retrieves real evidence,
 runs deterministic checks, tries to disprove its own draft against the
