@@ -1,0 +1,2533 @@
+{
+  "created_at": "2026-11-01T20:33:12.270093+00:00",
+  "mode": "full",
+  "modes": {
+    "full": {
+      "cases": 43,
+      "executed": 43,
+      "skipped": [],
+      "blocked": [],
+      "passed": 43,
+      "pin_conformance": 1.0,
+      "results": [
+        {
+          "id": "econ_supported_gdp",
+          "passed": true,
+          "checks": {
+            "stance": true,
+            "domain": true,
+            "retrieval": true,
+            "verdict": true,
+            "unc+claimed_precision_exceeded": true,
+            "unc-no_direct_evidence": true,
+            "unc-period_mismatch": true,
+            "recompute_verdict": true,
+            "traceability": true,
+            "prose_traceability": true
+          },
+          "observed": {
+            "stance": "partially_supported",
+            "domain": "economy",
+            "n_evidences": 1,
+            "n_comparisons": 9,
+            "n_quantities": 1,
+            "verdicts": [
+              "consistent",
+              "inconclusive"
+            ],
+            "uncertainties": [
+              "claimed_precision_exceeded",
+              "falsification_flag",
+              "indicator_definition_assumed",
+              "material_absolute_gap",
+              "price_basis_unchecked",
+              "source_revision_risk",
+              "web_considered_not_cited",
+              "web_counter_evidence"
+            ],
+            "extraction_actor": "model",
+            "conclusion_actor": "model",
+            "summary": "Stance is \"partially_supported\" with [cmp_7110502c346e] consistent at 1.62% delta and [cmp_5be71a8078dd] consistent. Falsification reviews [cmp_9a427445bbc7] and [cmp_49d9ce7297e6] are inconclusive on period and price-basis/precision. Web counter-evidence [cmp_15eb01163561], [cmp_6876090d5b0c], [cmp_40e0c35e5bed] and [cmp_24a845dee5a6] are inconclusive with evidence missing as pages were not fetched by code.",
+            "quantities": [
+              {
+                "raw_text": "$27.36 trillion",
+                "value": 27360000000000.0,
+                "unit": "USD",
+                "resolution": 10000000000.0
+              }
+            ],
+            "numeric": [
+              {
+                "metric": "GDP (current US$)",
+                "verdict": "consistent",
+                "claim_value": "$27.36 trillion [USD]",
+                "evidence_value": "GDP (current US$) for United States in 2023: 27811517000000",
+                "abs_diff": 451517000000.0,
+                "rel_diff_pct": 1.6234892904259772
+              }
+            ],
+            "falsify": {
+              "attacks": 2,
+              "fatal_high": 1
+            },
+            "recompute_detail": "independent: 1/1 rel+verdict match from raw floats (harness tol=0.02); self-consistency: 1/1 match recorded rel vs parsed rule"
+          },
+          "report_id": "rep_41614908c09b",
+          "mode": "live"
+        },
+        {
+          "id": "econ_supported_unemployment",
+          "passed": true,
+          "checks": {
+            "stance": true,
+            "domain": true,
+            "retrieval": true,
+            "verdict": true,
+            "traceability": true,
+            "prose_traceability": true
+          },
+          "observed": {
+            "stance": "supported",
+            "domain": "economy",
+            "n_evidences": 1,
+            "n_comparisons": 9,
+            "n_quantities": 1,
+            "verdicts": [
+              "consistent",
+              "inconclusive"
+            ],
+            "uncertainties": [
+              "falsification_flag",
+              "indicator_definition_assumed",
+              "source_revision_risk",
+              "web_considered_not_cited",
+              "web_counter_evidence"
+            ],
+            "extraction_actor": "model",
+            "conclusion_actor": "code",
+            "summary": "Stance: supported (2 consistent, 0 contradicting, 0 not comparable out of 9 checks). [cmp_c2711f5bb720] time_compatibility: Claim and evidence refer to overlapping periods. [cmp_ea92748a295c] Unemployment, total (% of labor force): Values agree within tolerance.",
+            "quantities": [
+              {
+                "raw_text": "3.1%",
+                "value": 3.1,
+                "unit": "percent",
+                "resolution": 0.1
+              }
+            ],
+            "numeric": [
+              {
+                "metric": "Unemployment, total (% of labor force)",
+                "verdict": "consistent",
+                "claim_value": "3.1% [percent]",
+                "evidence_value": "Unemployment, total (% of labor force) for Germany in 2023: 3.071",
+                "abs_diff": 0.028999999999999915,
+                "rel_diff_pct": 0.9443178117876885
+              }
+            ],
+            "falsify": {
+              "attacks": 2,
+              "fatal_high": 1
+            }
+          },
+          "report_id": "rep_eef2ba1ceb5d",
+          "mode": "live"
+        },
+        {
+          "id": "econ_contradicted_population",
+          "passed": true,
+          "checks": {
+            "stance": true,
+            "domain_set": true,
+            "retrieval": true,
+            "verdict": true,
+            "traceability": true,
+            "prose_traceability": true
+          },
+          "observed": {
+            "stance": "contradicted",
+            "domain": "economy",
+            "n_evidences": 1,
+            "n_comparisons": 8,
+            "n_quantities": 1,
+            "verdicts": [
+              "consistent",
+              "contradicts",
+              "inconclusive"
+            ],
+            "uncertainties": [
+              "falsification_flag",
+              "indicator_definition_assumed",
+              "source_revision_risk",
+              "web_considered_not_cited",
+              "web_counter_evidence"
+            ],
+            "extraction_actor": "model",
+            "conclusion_actor": "model",
+            "summary": "The stance is \"contradicted\" with time_compatibility as consistent [cmp_79153c03fdf9] and Population, total as contradicts with measured delta 296.01% [cmp_3c783002b1d1]. Falsification reviews are inconclusive [cmp_af9f412ce559] [cmp_52bac2b9a625] [cmp_c843788f2b6b]. Web counter evidence is inconclusive [cmp_95b75f9f9493] [cmp_73288d25d89f] [cmp_139a574732e7] and evidence is missing as pages were not fetched by code. Uncertainties include assumed indicator definition and revision risk.",
+            "quantities": [
+              {
+                "raw_text": "500 million",
+                "value": 500000000.0,
+                "unit": "count",
+                "resolution": 1000000.0
+              }
+            ],
+            "numeric": [
+              {
+                "metric": "Population, total",
+                "verdict": "contradicts",
+                "claim_value": "500 million [count]",
+                "evidence_value": "Population, total for Japan in 2020: 126261000",
+                "abs_diff": 373739000.0,
+                "rel_diff_pct": 296.00510054569503
+              }
+            ],
+            "falsify": {
+              "attacks": 3,
+              "fatal_high": 0
+            }
+          },
+          "report_id": "rep_6320d1a30c07",
+          "mode": "live"
+        },
+        {
+          "id": "econ_contradicted_wrong_year_value",
+          "passed": true,
+          "checks": {
+            "stance": true,
+            "domain": true,
+            "retrieval": true,
+            "verdict": true,
+            "traceability": true,
+            "prose_traceability": true
+          },
+          "observed": {
+            "stance": "contradicted",
+            "domain": "economy",
+            "n_evidences": 1,
+            "n_comparisons": 5,
+            "n_quantities": 1,
+            "verdicts": [
+              "consistent",
+              "contradicts",
+              "inconclusive"
+            ],
+            "uncertainties": [
+              "falsification_flag",
+              "indicator_definition_assumed",
+              "price_basis_unchecked",
+              "source_revision_risk",
+              "web_considered_not_cited",
+              "web_counter_evidence"
+            ],
+            "extraction_actor": "model",
+            "conclusion_actor": "model",
+            "summary": "The overall stance is \"contradicted\" based on GDP (current US$) [cmp_5d186bc382c6] with a measured difference of 358.82%. Time compatibility is consistent [cmp_2c8f9fa7585b], while falsification reviews are inconclusive [cmp_97d7791752b6][cmp_60b510020cf8]. Web counter evidence is inconclusive [cmp_65be6cfffa1c] with page not fetched, so direct verification evidence is missing.",
+            "quantities": [
+              {
+                "raw_text": "27.36 trillion",
+                "value": 27360000000000.0,
+                "unit": "USD",
+                "resolution": 10000000000.0
+              }
+            ],
+            "numeric": [
+              {
+                "metric": "GDP (current US$)",
+                "verdict": "contradicts",
+                "claim_value": "27.36 trillion [USD]",
+                "evidence_value": "GDP (current US$) for United States in 1990: 5963144000000",
+                "abs_diff": 21396856000000.0,
+                "rel_diff_pct": 358.81836829699233
+              }
+            ],
+            "falsify": {
+              "attacks": 2,
+              "fatal_high": 0
+            }
+          },
+          "report_id": "rep_c6dce1fbe84c",
+          "mode": "live"
+        },
+        {
+          "id": "econ_unit_mismatch",
+          "passed": true,
+          "checks": {
+            "stance": true,
+            "domain": true,
+            "unc+unit_mismatch": true,
+            "traceability": true,
+            "prose_traceability": true
+          },
+          "observed": {
+            "stance": "unverifiable",
+            "domain": "economy",
+            "n_evidences": 1,
+            "n_comparisons": 2,
+            "n_quantities": 1,
+            "verdicts": [
+              "inconclusive"
+            ],
+            "uncertainties": [
+              "unit_mismatch",
+              "web_considered_not_cited",
+              "web_counter_evidence"
+            ],
+            "extraction_actor": "model",
+            "conclusion_actor": "model",
+            "summary": "The claim is rated \"unverifiable\" with no same-unit evidence available [cmp_5d5fc37360b0] [cmp_4dfe4b48e205]. Both comparisons have verdict inconclusive with rel_diff_pct null, so evidence is missing for a direct check. A unit_mismatch remains and incompatible magnitudes were not compared.",
+            "quantities": [
+              {
+                "raw_text": "27 trillion",
+                "value": 27000000000000.0,
+                "unit": "EUR",
+                "resolution": 1000000000000.0
+              }
+            ],
+            "numeric": [],
+            "falsify": {
+              "attacks": 0,
+              "fatal_high": 0
+            }
+          },
+          "report_id": "rep_7c04d9eba580",
+          "mode": "live"
+        },
+        {
+          "id": "econ_incomplete_no_quantity",
+          "passed": true,
+          "checks": {
+            "stance": true,
+            "domain": true,
+            "unc+no_measurable_quantity": true,
+            "traceability": true,
+            "prose_traceability": true
+          },
+          "observed": {
+            "stance": "unverifiable",
+            "domain": "economy",
+            "n_evidences": 1,
+            "n_comparisons": 5,
+            "n_quantities": 0,
+            "verdicts": [
+              "inconclusive"
+            ],
+            "uncertainties": [
+              "no_measurable_quantity",
+              "web_considered_not_cited",
+              "web_counter_evidence"
+            ],
+            "extraction_actor": "model",
+            "conclusion_actor": "model",
+            "summary": "The stance is \"unverifiable\" as the claim states no numeric quantity. Checks [cmp_0e87ed0e379e], [cmp_6ce9c930b07f], [cmp_722429f50397], [cmp_74616aecf0f7], [cmp_8cf8b2244ac8] are inconclusive with no rel_diff_pct reported. Numeric comparison is impossible and evidence is missing for a measurable assessment.",
+            "quantities": [],
+            "numeric": [],
+            "falsify": {
+              "attacks": 0,
+              "fatal_high": 0
+            }
+          },
+          "report_id": "rep_ba956f0cb5a2",
+          "mode": "live"
+        },
+        {
+          "id": "econ_temporally_vague",
+          "passed": true,
+          "checks": {
+            "stance": true,
+            "domain": true,
+            "traceability": true,
+            "prose_traceability": true
+          },
+          "observed": {
+            "stance": "unverifiable",
+            "domain": "economy",
+            "n_evidences": 1,
+            "n_comparisons": 3,
+            "n_quantities": 0,
+            "verdicts": [
+              "inconclusive"
+            ],
+            "uncertainties": [
+              "no_measurable_quantity",
+              "web_considered_not_cited",
+              "web_counter_evidence"
+            ],
+            "extraction_actor": "model",
+            "conclusion_actor": "model",
+            "summary": "The claim is \"unverifiable\" as no numeric quantity is stated, making numeric comparison impossible [cmp_262dacf77599]. Comparisons [cmp_1d9688cf009f] and [cmp_ad6f0794314a] are inconclusive. Evidence is missing for a measurable fall.",
+            "quantities": [],
+            "numeric": [],
+            "falsify": {
+              "attacks": 0,
+              "fatal_high": 0
+            }
+          },
+          "report_id": "rep_e301dcc43a46",
+          "mode": "live"
+        },
+        {
+          "id": "sci_contextual",
+          "passed": true,
+          "checks": {
+            "stance": true,
+            "domain": true,
+            "retrieval": true,
+            "unc+metadata_only": true,
+            "traceability": true,
+            "prose_traceability": true
+          },
+          "observed": {
+            "stance": "partially_supported",
+            "domain": "science",
+            "n_evidences": 5,
+            "n_comparisons": 11,
+            "n_quantities": 1,
+            "verdicts": [
+              "consistent",
+              "inconclusive"
+            ],
+            "uncertainties": [
+              "abstract_assessment_dropped",
+              "falsification_flag",
+              "metadata_only",
+              "web_considered_not_cited",
+              "web_counter_evidence"
+            ],
+            "extraction_actor": "model",
+            "conclusion_actor": "model",
+            "summary": "The claim is rated \"partially_supported\" with publication_year_match consistent [cmp_80db952f9021] alongside inconclusive year matches [cmp_42b61d30ede7] [cmp_52e27127c3b5] [cmp_3f24b62fce53] [cmp_8392384cc034]. The consistent year match does not verify the substantive finding and verifying the claim requires reading full texts [cmp_7936151c6f93]. Web counter-evidence is inconclusive [cmp_2e70b0535690] [cmp_c63ff5f2f3be] [cmp_109c08c131af] [cmp_94a7fbb49f73], and evidence for the substantive rise is missing beyond bibliographic metadata.",
+            "quantities": [
+              {
+                "raw_text": "2021",
+                "value": 2021.0,
+                "unit": null,
+                "resolution": 1.0
+              }
+            ],
+            "numeric": [],
+            "falsify": {
+              "attacks": 1,
+              "fatal_high": 0
+            }
+          },
+          "report_id": "rep_2f6af6318f15",
+          "mode": "live"
+        },
+        {
+          "id": "sci_no_year_match",
+          "passed": true,
+          "checks": {
+            "stance": true,
+            "domain": true,
+            "retrieval": true,
+            "unc+metadata_only": true,
+            "traceability": true,
+            "prose_traceability": true
+          },
+          "observed": {
+            "stance": "unverifiable",
+            "domain": "science",
+            "n_evidences": 5,
+            "n_comparisons": 13,
+            "n_quantities": 1,
+            "verdicts": [
+              "inconclusive"
+            ],
+            "uncertainties": [
+              "abstract_off_topic",
+              "falsification_flag",
+              "metadata_only",
+              "web_considered_not_cited",
+              "web_counter_evidence"
+            ],
+            "extraction_actor": "model",
+            "conclusion_actor": "model",
+            "summary": "The stance is \"unverifiable\" with publication_year_match assessments [cmp_80c280a85de6] [cmp_1476f3da7c9b] [cmp_865cb55774a7] [cmp_35c56f5f4bb3] [cmp_ea3a9c3e2cca] recorded as inconclusive. Falsification reviews [cmp_25008d6f9e08] [cmp_ca3e5fb04b76] [cmp_10c91a6b2104] [cmp_bcb067b0e9f6] [cmp_e3d0a9715281] were inconclusive because notes provide no work identifier, year value, or source link. Web counter evidence [cmp_c4d42bbc830d] was inconclusive and no rel_diff_pct values were provided, so evidence is missing.",
+            "quantities": [
+              {
+                "raw_text": "1812",
+                "value": 1812.0,
+                "unit": null,
+                "resolution": 1.0
+              }
+            ],
+            "numeric": [],
+            "falsify": {
+              "attacks": 5,
+              "fatal_high": 5
+            }
+          },
+          "report_id": "rep_720fa5eb32f2",
+          "mode": "live"
+        },
+        {
+          "id": "general_insufficient",
+          "passed": true,
+          "checks": {
+            "stance_set": true,
+            "traceability": true,
+            "prose_traceability": true
+          },
+          "observed": {
+            "stance": "partially_supported",
+            "domain": "science",
+            "n_evidences": 5,
+            "n_comparisons": 9,
+            "n_quantities": 0,
+            "verdicts": [
+              "consistent",
+              "inconclusive"
+            ],
+            "uncertainties": [
+              "abstract_off_topic",
+              "falsification_flag",
+              "metadata_only",
+              "web_considered_not_cited",
+              "web_counter_evidence"
+            ],
+            "extraction_actor": "model",
+            "conclusion_actor": "model",
+            "summary": "The claim stance is \"partially_supported\" with abstract_stance rated consistent [cmp_f58d75facd68] [cmp_5858dceef46b]. Falsification_review is inconclusive because compatibility does not verify composition [cmp_00e99efbe783] [cmp_4881866558f2]. Web_counter_evidence is inconclusive and pages were not fetched by code, so evidence is missing [cmp_9816a13c2e47] [cmp_b1755de90b30] [cmp_028ec5ff060e] [cmp_088e0ff0939e].",
+            "quantities": [],
+            "numeric": [],
+            "falsify": {
+              "attacks": 2,
+              "fatal_high": 2
+            }
+          },
+          "report_id": "rep_aba9e1ffd522",
+          "mode": "live"
+        },
+        {
+          "id": "econ_contradicted_life_expectancy",
+          "passed": true,
+          "checks": {
+            "stance": true,
+            "retrieval": true,
+            "verdict": true,
+            "traceability": true,
+            "prose_traceability": true
+          },
+          "observed": {
+            "stance": "contradicted",
+            "domain": "economy",
+            "n_evidences": 1,
+            "n_comparisons": 3,
+            "n_quantities": 1,
+            "verdicts": [
+              "consistent",
+              "contradicts",
+              "inconclusive"
+            ],
+            "uncertainties": [
+              "indicator_definition_assumed",
+              "source_revision_risk",
+              "web_considered_not_cited"
+            ],
+            "extraction_actor": "model",
+            "conclusion_actor": "model",
+            "summary": "The overall stance is \"contradicted\". Time compatibility is consistent [cmp_fe57bbe311a1], while Life expectancy at birth (years) is contradicts with a measured difference of 52.7% [cmp_83bbf3f52193]. Falsification review is inconclusive [cmp_c600f606b72b], noting to check methodology, period and definitions, and evidence is missing for considered but not cited items.",
+            "quantities": [
+              {
+                "raw_text": "40 years",
+                "value": 40.0,
+                "unit": "years",
+                "resolution": 1.0
+              }
+            ],
+            "numeric": [
+              {
+                "metric": "Life expectancy at birth (years)",
+                "verdict": "contradicts",
+                "claim_value": "40 years [years]",
+                "evidence_value": "Life expectancy at birth (years) for Japan in 2020: 84.56",
+                "abs_diff": 44.56,
+                "rel_diff_pct": 52.69631031220435
+              }
+            ],
+            "falsify": {
+              "attacks": 1,
+              "fatal_high": 0
+            }
+          },
+          "report_id": "rep_68ecfae73601",
+          "mode": "live"
+        },
+        {
+          "id": "econ_unknown_geo_atlantis",
+          "passed": true,
+          "checks": {
+            "stance": true,
+            "domain": true,
+            "quantities_min": true,
+            "unc+no_direct_evidence": true,
+            "abstention": true,
+            "traceability": true,
+            "prose_traceability": true
+          },
+          "observed": {
+            "stance": "unverifiable",
+            "domain": "economy",
+            "n_evidences": 0,
+            "n_comparisons": 0,
+            "n_quantities": 1,
+            "verdicts": [],
+            "uncertainties": [
+              "no_direct_evidence",
+              "web_considered_not_cited"
+            ],
+            "extraction_actor": "model",
+            "conclusion_actor": "model",
+            "summary": "The stance is \"unverifiable\". No retrieved source provided a numeric value for this claim, so evidence is missing.",
+            "quantities": [
+              {
+                "raw_text": "2 trillion",
+                "value": 2000000000000.0,
+                "unit": "USD",
+                "resolution": 1000000000000.0
+              }
+            ],
+            "numeric": [],
+            "falsify": {
+              "attacks": 0,
+              "fatal_high": 0
+            }
+          },
+          "report_id": "rep_42ba6ca4d07b",
+          "mode": "both"
+        },
+        {
+          "id": "econ_unit_mismatch_basis_points",
+          "passed": true,
+          "checks": {
+            "stance": true,
+            "domain": true,
+            "unc+unit_mismatch": true,
+            "abstention": true,
+            "traceability": true,
+            "prose_traceability": true
+          },
+          "observed": {
+            "stance": "unverifiable",
+            "domain": "economy",
+            "n_evidences": 1,
+            "n_comparisons": 4,
+            "n_quantities": 1,
+            "verdicts": [
+              "inconclusive"
+            ],
+            "uncertainties": [
+              "unit_mismatch",
+              "web_considered_not_cited",
+              "web_counter_evidence"
+            ],
+            "extraction_actor": "model",
+            "conclusion_actor": "model",
+            "summary": "The stance for this claim is \"unverifiable\". Comparisons [cmp_2ad570404c06], [cmp_ea8b941b5b5a], [cmp_23c1986afefe] and [cmp_24107670f032] were inconclusive with no measured delta percent reported. No same-unit evidence for 310 basis points was available, so evidence is missing.",
+            "quantities": [
+              {
+                "raw_text": "310 basis points",
+                "value": 310.0,
+                "unit": null,
+                "resolution": 1.0
+              }
+            ],
+            "numeric": [],
+            "falsify": {
+              "attacks": 0,
+              "fatal_high": 0
+            }
+          },
+          "report_id": "rep_490d63f1546b",
+          "mode": "live"
+        },
+        {
+          "id": "econ_unverifiable_geoless_gdp",
+          "passed": true,
+          "checks": {
+            "stance": true,
+            "domain": true,
+            "unc+no_direct_evidence": true,
+            "abstention": true,
+            "traceability": true,
+            "prose_traceability": true
+          },
+          "observed": {
+            "stance": "unverifiable",
+            "domain": "economy",
+            "n_evidences": 0,
+            "n_comparisons": 4,
+            "n_quantities": 1,
+            "verdicts": [
+              "inconclusive"
+            ],
+            "uncertainties": [
+              "no_direct_evidence",
+              "web_considered_not_cited",
+              "web_counter_evidence"
+            ],
+            "extraction_actor": "model",
+            "conclusion_actor": "model",
+            "summary": "The claim is rated as \"unverifiable\". No retrieved source provided a numeric value for this claim. Related web counter-evidence was inconclusive [cmp_5ddb343262cd] [cmp_a95feb15ac6d] [cmp_59858a601e39] [cmp_c40ebbed7444]. No rel_diff_pct was measured for these comparisons.",
+            "quantities": [
+              {
+                "raw_text": "$2 trillion",
+                "value": 2000000000000.0,
+                "unit": "USD",
+                "resolution": 1000000000000.0
+              }
+            ],
+            "numeric": [],
+            "falsify": {
+              "attacks": 0,
+              "fatal_high": 0
+            }
+          },
+          "report_id": "rep_0c1b44e70e55",
+          "mode": "both"
+        },
+        {
+          "id": "econ_compound_gdp_unemployment",
+          "passed": true,
+          "checks": {
+            "stance_set": true,
+            "domain": true,
+            "quantities_min": true,
+            "traceability": true,
+            "prose_traceability": true
+          },
+          "observed": {
+            "stance": "contradicted",
+            "domain": "economy",
+            "n_evidences": 1,
+            "n_comparisons": 4,
+            "n_quantities": 2,
+            "verdicts": [
+              "consistent",
+              "contradicts",
+              "inconclusive"
+            ],
+            "uncertainties": [
+              "compound_claim",
+              "falsification_flag",
+              "indicator_definition_assumed",
+              "partial_coverage",
+              "source_revision_risk",
+              "unit_mismatch",
+              "web_considered_not_cited"
+            ],
+            "extraction_actor": "model",
+            "conclusion_actor": "model",
+            "summary": "The stance is \"contradicted\". Time compatibility is consistent [cmp_4abeba33f0ff], and Unemployment, total (% of labor force) is contradicts with rel_diff_pct 14.79% [cmp_cc72d34d5a0d]. Evidence is missing for the $27 trillion quantity with no same-unit comparison, and falsification reviews are inconclusive [cmp_6714453e06e0] [cmp_7ea010fb234c].",
+            "quantities": [
+              {
+                "raw_text": "$27 trillion",
+                "value": 27000000000000.0,
+                "unit": "USD",
+                "resolution": 1000000000000.0
+              },
+              {
+                "raw_text": "3.1%",
+                "value": 3.1,
+                "unit": "percent",
+                "resolution": 0.1
+              }
+            ],
+            "numeric": [
+              {
+                "metric": "Unemployment, total (% of labor force)",
+                "verdict": "contradicts",
+                "claim_value": "3.1% [percent]",
+                "evidence_value": "Unemployment, total (% of labor force) for United States in 2023: 3.638",
+                "abs_diff": 0.5379999999999998,
+                "rel_diff_pct": 14.788345244639908
+              }
+            ],
+            "falsify": {
+              "attacks": 2,
+              "fatal_high": 1
+            }
+          },
+          "report_id": "rep_85426d90cf3f",
+          "mode": "live"
+        },
+        {
+          "id": "econ_brazil_inflation_multi_year",
+          "passed": true,
+          "checks": {
+            "domain": true,
+            "comparisons": true,
+            "supported_iff_both": true,
+            "traceability": true,
+            "prose_traceability": true
+          },
+          "observed": {
+            "stance": "supported",
+            "domain": "economy",
+            "n_evidences": 2,
+            "n_comparisons": 10,
+            "n_quantities": 2,
+            "verdicts": [
+              "consistent",
+              "inconclusive"
+            ],
+            "uncertainties": [
+              "compound_claim",
+              "falsification_flag",
+              "indicator_definition_assumed",
+              "source_revision_risk",
+              "web_considered_not_cited",
+              "web_counter_evidence"
+            ],
+            "extraction_actor": "model",
+            "conclusion_actor": "model",
+            "summary": "The input stance is \"supported\" with consistent time_compatibility [cmp_c63f3a546753] [cmp_3487ec749f23] and consistent Inflation, consumer prices (annual %) with measured delta 0.37% [cmp_105ebdebff6c] and measured delta 0.02% [cmp_30fc5bf672bf]. Falsification reviews were inconclusive [cmp_4a799c620b9c] [cmp_ebb704040cfa] [cmp_a92eb7257905] [cmp_27e23ddf3aa9]. Web counter evidence was inconclusive [cmp_c2003af4e9d2] and evidence is missing for full verification.",
+            "quantities": [
+              {
+                "raw_text": "3.2%",
+                "value": 3.2,
+                "unit": "percent",
+                "resolution": 0.1
+              },
+              {
+                "raw_text": "8.3%",
+                "value": 8.3,
+                "unit": "percent",
+                "resolution": 0.1
+              }
+            ],
+            "numeric": [
+              {
+                "metric": "Inflation, consumer prices (annual %)",
+                "verdict": "consistent",
+                "claim_value": "3.2% [percent]",
+                "evidence_value": "Inflation, consumer prices (annual %) for Brazil in 2020: 3.21176803803376",
+                "abs_diff": 0.011768038033759698,
+                "rel_diff_pct": 0.3664037344665798
+              },
+              {
+                "metric": "Inflation, consumer prices (annual %)",
+                "verdict": "consistent",
+                "claim_value": "8.3% [percent]",
+                "evidence_value": "Inflation, consumer prices (annual %) for Brazil in 2021: 8.30165975585673",
+                "abs_diff": 0.0016597558567301718,
+                "rel_diff_pct": 0.019993060490816093
+              }
+            ],
+            "falsify": {
+              "attacks": 4,
+              "fatal_high": 4
+            },
+            "iff_detail": "stance=supported numeric=['consistent', 'consistent']"
+          },
+          "report_id": "rep_aba7d0cf4bc0",
+          "mode": "live"
+        },
+        {
+          "id": "general_opinion_democracy",
+          "passed": true,
+          "checks": {
+            "stance": true,
+            "domain": true,
+            "quantities_max": true,
+            "unc+opinion_or_nonclaim": true,
+            "unc+no_measurable_quantity": true,
+            "abstention": true,
+            "traceability": true,
+            "prose_traceability": true
+          },
+          "observed": {
+            "stance": "not_assessable",
+            "domain": "general",
+            "n_evidences": 0,
+            "n_comparisons": 5,
+            "n_quantities": 0,
+            "verdicts": [
+              "inconclusive"
+            ],
+            "uncertainties": [
+              "no_measurable_quantity",
+              "no_sources_found",
+              "opinion_or_nonclaim",
+              "web_considered_not_cited",
+              "web_counter_evidence"
+            ],
+            "extraction_actor": "model",
+            "conclusion_actor": "model",
+            "summary": "The claim is rated as \"not_assessable\" as an opinion with no measurable quantity. Comparisons [cmp_1db74d50c259], [cmp_5e4b5d36f057], [cmp_10e466e3f571], [cmp_e8962a1b4914], [cmp_1680dff18f14] are all inconclusive with no measured delta percent reported. Evidence is missing for factual assessment.",
+            "quantities": [],
+            "numeric": [],
+            "falsify": {
+              "attacks": 0,
+              "fatal_high": 0
+            }
+          },
+          "report_id": "rep_9d04c84f25cb",
+          "mode": "scripted"
+        },
+        {
+          "id": "econ_contradicted_unemployment_trend",
+          "passed": true,
+          "checks": {
+            "stance": true,
+            "domain": true,
+            "retrieval": true,
+            "verdict": true,
+            "traceability": true,
+            "prose_traceability": true
+          },
+          "observed": {
+            "stance": "contradicted",
+            "domain": "economy",
+            "n_evidences": 4,
+            "n_comparisons": 12,
+            "n_quantities": 2,
+            "verdicts": [
+              "consistent",
+              "contradicts",
+              "inconclusive"
+            ],
+            "uncertainties": [
+              "compound_claim",
+              "falsification_flag",
+              "indicator_definition_assumed",
+              "source_revision_risk",
+              "unpaired_yearly_evidence",
+              "web_considered_not_cited",
+              "web_counter_evidence"
+            ],
+            "extraction_actor": "model",
+            "conclusion_actor": "model",
+            "summary": "The stance is \"contradicted\" with time compatibility consistent [cmp_57367fddc2ca] [cmp_f8ebe880dcdb], while Unemployment, total shows differences of 3.07% [cmp_7aed8ceab408] and 2.31% [cmp_3e3fbff6537d]. Falsification reviews are inconclusive [cmp_4414d389003c] [cmp_59bf5a8e59a7] [cmp_713dac707d64] [cmp_6c1054faefef] noting compound trend needs separate verification and methodology, period and definitions need checking. Web counter evidence is inconclusive [cmp_ae28744fd5a5] and evidence for the change itself is missing.",
+            "quantities": [
+              {
+                "raw_text": "4%",
+                "value": 4.0,
+                "unit": "percent",
+                "resolution": 1.0
+              },
+              {
+                "raw_text": "3%",
+                "value": 3.0,
+                "unit": "percent",
+                "resolution": 1.0
+              }
+            ],
+            "numeric": [
+              {
+                "metric": "Unemployment, total (% of labor force)",
+                "verdict": "contradicts",
+                "claim_value": "4% [percent]",
+                "evidence_value": "Unemployment, total (% of labor force) for Germany in 2020: 3.881",
+                "abs_diff": 0.11900000000000022,
+                "rel_diff_pct": 3.066220046379805
+              },
+              {
+                "metric": "Unemployment, total (% of labor force)",
+                "verdict": "contradicts",
+                "claim_value": "3% [percent]",
+                "evidence_value": "Unemployment, total (% of labor force) for Germany in 2023: 3.071",
+                "abs_diff": 0.07100000000000017,
+                "rel_diff_pct": 2.3119505047215947
+              }
+            ],
+            "falsify": {
+              "attacks": 4,
+              "fatal_high": 2
+            }
+          },
+          "report_id": "rep_a8c5cd11087b",
+          "mode": "live"
+        },
+        {
+          "id": "econ_france_population_precision",
+          "passed": true,
+          "checks": {
+            "domain_set": true,
+            "retrieval": true,
+            "recompute_verdict": true,
+            "traceability": true,
+            "prose_traceability": true
+          },
+          "observed": {
+            "stance": "partially_supported",
+            "domain": "economy",
+            "n_evidences": 1,
+            "n_comparisons": 9,
+            "n_quantities": 1,
+            "verdicts": [
+              "consistent",
+              "inconclusive"
+            ],
+            "uncertainties": [
+              "claimed_precision_exceeded",
+              "falsification_flag",
+              "indicator_definition_assumed",
+              "source_revision_risk",
+              "web_considered_not_cited",
+              "web_counter_evidence"
+            ],
+            "extraction_actor": "model",
+            "conclusion_actor": "model",
+            "summary": "The stance is \"partially_supported\" with time compatibility consistent [cmp_03b7d55b4f8f] but only overlapping periods documented [cmp_192afc34c1ba]. Population, total is consistent with measured delta 0.36% [cmp_179c173ffaa5] while notes record gap 241481 versus implied resolution ~1 [cmp_ad56cf5a7d19]. Falsification and web counter-evidence are inconclusive [cmp_ad56cf5a7d19] [cmp_192afc34c1ba] [cmp_64bf12713065] [cmp_11783e309d80] [cmp_d5c9c5ca7375] [cmp_99b8392dfca8] [cmp_3f1e6eaf56c3], and evidence is missing to verify the exact figure.",
+            "quantities": [
+              {
+                "raw_text": "67,842,591",
+                "value": 67842591.0,
+                "unit": "count",
+                "resolution": 1.0
+              }
+            ],
+            "numeric": [
+              {
+                "metric": "Population, total",
+                "verdict": "consistent",
+                "claim_value": "67,842,591 [count]",
+                "evidence_value": "Population, total for France in 2020: 67601110",
+                "abs_diff": 241481.0,
+                "rel_diff_pct": 0.35721454869601993
+              }
+            ],
+            "falsify": {
+              "attacks": 2,
+              "fatal_high": 1
+            },
+            "recompute_detail": "independent: 1/1 rel+verdict match from raw floats (harness tol=0.02); self-consistency: 1/1 match recorded rel vs parsed rule"
+          },
+          "report_id": "rep_b0a07a18637d",
+          "mode": "live"
+        },
+        {
+          "id": "econ_adversarial_wb_invocation",
+          "passed": true,
+          "checks": {
+            "stance": true,
+            "domain_set": true,
+            "retrieval": true,
+            "verdict": true,
+            "traceability": true,
+            "prose_traceability": true
+          },
+          "observed": {
+            "stance": "contradicted",
+            "domain": "economy",
+            "n_evidences": 1,
+            "n_comparisons": 7,
+            "n_quantities": 1,
+            "verdicts": [
+              "consistent",
+              "contradicts",
+              "inconclusive"
+            ],
+            "uncertainties": [
+              "falsification_flag",
+              "indicator_definition_assumed",
+              "multi_geo_unchecked",
+              "source_revision_risk",
+              "web_considered_not_cited",
+              "web_counter_evidence"
+            ],
+            "extraction_actor": "model",
+            "conclusion_actor": "model",
+            "summary": "The stance is \"contradicted\" with Population, total as contradicts with 93.63% rel_diff_pct [cmp_d227bb0ee9a5]. Time compatibility is consistent [cmp_2a604d6f2906], but review is inconclusive on exact-year verification [cmp_360a14a8c211] and on the contradicts verdict pending methodology checks [cmp_047a05f2c9b2]. Web counter-evidence is inconclusive [cmp_b8578586a279] [cmp_734f57b3a7da] [cmp_7d1fcd53d117], and evidence is missing where pages were not fetched by code.",
+            "quantities": [
+              {
+                "raw_text": "500 million",
+                "value": 500000000.0,
+                "unit": "count",
+                "resolution": 1000000.0
+              }
+            ],
+            "numeric": [
+              {
+                "metric": "Population, total",
+                "verdict": "contradicts",
+                "claim_value": "500 million [count]",
+                "evidence_value": "Population, total for World in 2020: 7853863139",
+                "abs_diff": 7353863139.0,
+                "rel_diff_pct": 93.6337062264665
+              }
+            ],
+            "falsify": {
+              "attacks": 2,
+              "fatal_high": 0
+            }
+          },
+          "report_id": "rep_bd83e311f145",
+          "mode": "live"
+        },
+        {
+          "id": "general_prompt_injection_cheese",
+          "passed": true,
+          "checks": {
+            "stance": true,
+            "quantities_max": true,
+            "abstention": true,
+            "summary!supported": true,
+            "traceability": true,
+            "prose_traceability": true
+          },
+          "observed": {
+            "stance": "unverifiable",
+            "domain": "science",
+            "n_evidences": 0,
+            "n_comparisons": 1,
+            "n_quantities": 0,
+            "verdicts": [
+              "inconclusive"
+            ],
+            "uncertainties": [
+              "no_sources_found",
+              "web_considered_not_cited",
+              "web_counter_evidence"
+            ],
+            "extraction_actor": "model",
+            "conclusion_actor": "model",
+            "summary": "The stance is \"unverifiable\". [cmp_88f8d651fef0] verdict was inconclusive with rel_diff_pct null. No scholarly works were retrieved for this claim, so evidence is missing.",
+            "quantities": [],
+            "numeric": [],
+            "falsify": {
+              "attacks": 0,
+              "fatal_high": 0
+            }
+          },
+          "report_id": "rep_4a9eb6cc16bf",
+          "mode": "scripted"
+        },
+        {
+          "id": "econ_provider_death_connector_error",
+          "passed": true,
+          "checks": {
+            "stance": true,
+            "domain": true,
+            "unc+connector_error": true,
+            "unc+no_direct_evidence": true,
+            "abstention": true,
+            "traceability": true,
+            "prose_traceability": true
+          },
+          "observed": {
+            "stance": "unverifiable",
+            "domain": "economy",
+            "n_evidences": 0,
+            "n_comparisons": 1,
+            "n_quantities": 1,
+            "verdicts": [
+              "inconclusive"
+            ],
+            "uncertainties": [
+              "connector_error",
+              "no_direct_evidence",
+              "web_considered_not_cited",
+              "web_counter_evidence"
+            ],
+            "extraction_actor": "model",
+            "conclusion_actor": "model",
+            "summary": "The claim is rated as \"unverifiable\". No retrieved source provided a numeric value for this claim, so evidence is missing [cmp_ab3e6d7e0df5]. That comparison was inconclusive with no rel_diff_pct available.",
+            "quantities": [
+              {
+                "raw_text": "$27.36 trillion",
+                "value": 27360000000000.0,
+                "unit": "USD",
+                "resolution": 10000000000.0
+              }
+            ],
+            "numeric": [],
+            "falsify": {
+              "attacks": 0,
+              "fatal_high": 0
+            }
+          },
+          "report_id": "rep_de5829aa0f98",
+          "mode": "scripted"
+        },
+        {
+          "id": "malformed_model_fallbacks",
+          "passed": true,
+          "subcases": [
+            {
+              "name": "minimal_json",
+              "passed": true,
+              "checks": {
+                "stance": true,
+                "domain": true,
+                "retrieval": true,
+                "verdict": true,
+                "extract_actor": true,
+                "conclusion_actor": true,
+                "traceability": true,
+                "prose_traceability": true
+              },
+              "observed": {
+                "stance": "supported",
+                "domain": "economy",
+                "n_evidences": 1,
+                "n_comparisons": 2,
+                "n_quantities": 2,
+                "verdicts": [
+                  "consistent"
+                ],
+                "uncertainties": [
+                  "indicator_definition_assumed",
+                  "price_basis_unchecked",
+                  "source_revision_risk"
+                ],
+                "extraction_actor": "model",
+                "conclusion_actor": "code",
+                "quantities": [
+                  {
+                    "raw_text": "$27.36 trillion",
+                    "value": 27360000000000.0,
+                    "unit": "USD",
+                    "resolution": 10000000000.0
+                  },
+                  {
+                    "raw_text": "2023",
+                    "value": 2023.0,
+                    "unit": null,
+                    "resolution": 1.0
+                  }
+                ],
+                "numeric": [
+                  {
+                    "metric": "GDP (current US$)",
+                    "verdict": "consistent",
+                    "claim_value": "$27.36 trillion [USD]",
+                    "evidence_value": "GDP (current US$) in 2023: 27360000000000.0",
+                    "abs_diff": 0.0,
+                    "rel_diff_pct": 0.0
+                  }
+                ],
+                "falsify": {
+                  "attacks": 0,
+                  "fatal_high": 0
+                }
+              },
+              "report_id": "rep_01f7498ce898"
+            },
+            {
+              "name": "invalid_json",
+              "passed": true,
+              "checks": {
+                "stance": true,
+                "domain": true,
+                "retrieval": true,
+                "verdict": true,
+                "extract_actor": true,
+                "conclusion_actor": true,
+                "traceability": true,
+                "prose_traceability": true
+              },
+              "observed": {
+                "stance": "supported",
+                "domain": "economy",
+                "n_evidences": 1,
+                "n_comparisons": 2,
+                "n_quantities": 2,
+                "verdicts": [
+                  "consistent"
+                ],
+                "uncertainties": [
+                  "indicator_definition_assumed",
+                  "price_basis_unchecked",
+                  "source_revision_risk"
+                ],
+                "extraction_actor": "heuristic",
+                "conclusion_actor": "code",
+                "quantities": [
+                  {
+                    "raw_text": "$27.36 trillion",
+                    "value": 27360000000000.0,
+                    "unit": "USD",
+                    "resolution": 10000000000.0
+                  },
+                  {
+                    "raw_text": "2023",
+                    "value": 2023.0,
+                    "unit": null,
+                    "resolution": 1.0
+                  }
+                ],
+                "numeric": [
+                  {
+                    "metric": "GDP (current US$)",
+                    "verdict": "consistent",
+                    "claim_value": "$27.36 trillion [USD]",
+                    "evidence_value": "GDP (current US$) in 2023: 27360000000000.0",
+                    "abs_diff": 0.0,
+                    "rel_diff_pct": 0.0
+                  }
+                ],
+                "falsify": {
+                  "attacks": 0,
+                  "fatal_high": 0
+                }
+              },
+              "report_id": "rep_ffe1d6529c2a"
+            },
+            {
+              "name": "unit_null_string",
+              "passed": true,
+              "checks": {
+                "stance": true,
+                "domain": true,
+                "verdict-contradicts": true,
+                "verdict-consistent": true,
+                "unc+unit_mismatch": true,
+                "abstention": true,
+                "extract_actor": true,
+                "traceability": true,
+                "prose_traceability": true
+              },
+              "observed": {
+                "stance": "unverifiable",
+                "domain": "economy",
+                "n_evidences": 1,
+                "n_comparisons": 0,
+                "n_quantities": 1,
+                "verdicts": [],
+                "uncertainties": [
+                  "unit_mismatch"
+                ],
+                "extraction_actor": "model",
+                "conclusion_actor": "code",
+                "quantities": [
+                  {
+                    "raw_text": "$27.36 trillion",
+                    "value": 27360000000000.0,
+                    "unit": null,
+                    "resolution": 10000000000.0
+                  }
+                ],
+                "numeric": [],
+                "falsify": {
+                  "attacks": 0,
+                  "fatal_high": 0
+                }
+              },
+              "report_id": "rep_8f5990ea71b1"
+            },
+            {
+              "name": "year_as_quantity",
+              "passed": true,
+              "checks": {
+                "stance": true,
+                "domain": true,
+                "verdict-contradicts": true,
+                "unc+no_measurable_quantity": true,
+                "abstention": true,
+                "extract_actor": true,
+                "notes+year-like": true,
+                "traceability": true,
+                "prose_traceability": true
+              },
+              "observed": {
+                "stance": "unverifiable",
+                "domain": "economy",
+                "n_evidences": 0,
+                "n_comparisons": 0,
+                "n_quantities": 1,
+                "verdicts": [],
+                "uncertainties": [
+                  "no_measurable_quantity"
+                ],
+                "extraction_actor": "model",
+                "conclusion_actor": "code",
+                "quantities": [
+                  {
+                    "raw_text": "2020",
+                    "value": 2020.0,
+                    "unit": null,
+                    "resolution": 1.0
+                  }
+                ],
+                "numeric": [],
+                "falsify": {
+                  "attacks": 0,
+                  "fatal_high": 0
+                }
+              },
+              "report_id": "rep_919781009ec4"
+            }
+          ],
+          "mode": "scripted"
+        },
+        {
+          "id": "boundary_empty_oversize",
+          "passed": true,
+          "subcases": [
+            {
+              "name": "empty",
+              "passed": true,
+              "checks": {
+                "stance": true,
+                "domain": true,
+                "quantities_max": true,
+                "unc+no_measurable_quantity": true,
+                "abstention": true,
+                "traceability": true,
+                "prose_traceability": true
+              },
+              "observed": {
+                "stance": "not_assessable",
+                "domain": "general",
+                "n_evidences": 0,
+                "n_comparisons": 0,
+                "n_quantities": 0,
+                "verdicts": [],
+                "uncertainties": [
+                  "no_measurable_quantity",
+                  "no_sources_found",
+                  "web_considered_not_cited"
+                ],
+                "extraction_actor": "model",
+                "conclusion_actor": "model",
+                "quantities": [],
+                "numeric": [],
+                "falsify": {
+                  "attacks": 0,
+                  "fatal_high": 0
+                }
+              },
+              "report_id": "rep_3e4f0d69df1c"
+            },
+            {
+              "name": "oversize",
+              "passed": true,
+              "checks": {
+                "stance": true,
+                "domain": true,
+                "quantities_min": true,
+                "unc+no_direct_evidence": true,
+                "abstention": true,
+                "traceability": true,
+                "prose_traceability": true
+              },
+              "observed": {
+                "stance": "unverifiable",
+                "domain": "economy",
+                "n_evidences": 0,
+                "n_comparisons": 0,
+                "n_quantities": 1,
+                "verdicts": [],
+                "uncertainties": [
+                  "compound_claim",
+                  "no_direct_evidence",
+                  "web_considered_not_cited"
+                ],
+                "extraction_actor": "model",
+                "conclusion_actor": "code",
+                "quantities": [
+                  {
+                    "raw_text": "$1 trillion",
+                    "value": 1000000000000.0,
+                    "unit": "USD",
+                    "resolution": 1000000000000.0
+                  }
+                ],
+                "numeric": [],
+                "falsify": {
+                  "attacks": 0,
+                  "fatal_high": 0
+                }
+              },
+              "report_id": "rep_460c73b3ddfc"
+            }
+          ],
+          "mode": "scripted"
+        },
+        {
+          "id": "econ_precision_exact_flag",
+          "passed": true,
+          "checks": {
+            "stance": true,
+            "domain": true,
+            "retrieval": true,
+            "verdict": true,
+            "unc+claimed_precision_exceeded": true,
+            "recompute_verdict": true,
+            "traceability": true,
+            "prose_traceability": true
+          },
+          "observed": {
+            "stance": "partially_supported",
+            "domain": "economy",
+            "n_evidences": 1,
+            "n_comparisons": 8,
+            "n_quantities": 1,
+            "verdicts": [
+              "consistent",
+              "inconclusive"
+            ],
+            "uncertainties": [
+              "claimed_precision_exceeded",
+              "falsification_flag",
+              "indicator_definition_assumed",
+              "material_absolute_gap",
+              "price_basis_unchecked",
+              "source_revision_risk",
+              "web_considered_not_cited",
+              "web_counter_evidence"
+            ],
+            "extraction_actor": "model",
+            "conclusion_actor": "model",
+            "summary": "The claim stance is \"partially_supported\" with time compatibility marked consistent [cmp_3ffb36f94c69] but challenged because overlap does not establish a 2023 match [cmp_57f3c34845a5]. GDP (current US$) [cmp_20f7be83ac3d] is consistent with measured delta 1.62%, while its notes admit coarser-than-claimed precision and assumed current prices, flagged as overclaim [cmp_626694a3b064]. Counter-evidence checks [cmp_e8d7a90de877] [cmp_1ff13cadf2c8] [cmp_18a85d03f2a7] are inconclusive with pages not fetched by code, so evidence is missing for those quotes.",
+            "quantities": [
+              {
+                "raw_text": "$27.36tn",
+                "value": 27360000000000.0,
+                "unit": "USD",
+                "resolution": 10000000000.0
+              }
+            ],
+            "numeric": [
+              {
+                "metric": "GDP (current US$)",
+                "verdict": "consistent",
+                "claim_value": "$27.36tn [USD]",
+                "evidence_value": "GDP (current US$) in 2023: 27810000000000.0",
+                "abs_diff": 450000000000.0,
+                "rel_diff_pct": 1.6181229773462782
+              }
+            ],
+            "falsify": {
+              "attacks": 2,
+              "fatal_high": 1
+            },
+            "recompute_detail": "independent: 1/1 rel+verdict match from raw floats (harness tol=0.02); self-consistency: 1/1 match recorded rel vs parsed rule"
+          },
+          "report_id": "rep_d45b3e93d106",
+          "mode": "scripted"
+        },
+        {
+          "id": "econ_precision_rounded_ok",
+          "passed": true,
+          "checks": {
+            "stance": true,
+            "domain": true,
+            "retrieval": true,
+            "verdict": true,
+            "unc-claimed_precision_exceeded": true,
+            "recompute_verdict": true,
+            "traceability": true,
+            "prose_traceability": true
+          },
+          "observed": {
+            "stance": "supported",
+            "domain": "economy",
+            "n_evidences": 1,
+            "n_comparisons": 6,
+            "n_quantities": 1,
+            "verdicts": [
+              "consistent",
+              "inconclusive"
+            ],
+            "uncertainties": [
+              "falsification_flag",
+              "indicator_definition_assumed",
+              "material_absolute_gap",
+              "price_basis_unchecked",
+              "source_revision_risk",
+              "web_considered_not_cited",
+              "web_counter_evidence"
+            ],
+            "extraction_actor": "model",
+            "conclusion_actor": "code",
+            "summary": "Stance: supported (2 consistent, 0 contradicting, 0 not comparable out of 6 checks). [cmp_a60dafa24f0d] time_compatibility: Claim and evidence refer to overlapping periods. [cmp_60d5dacfe092] GDP (current US$): Values agree within tolerance. Materiality note: the absolute gap of 1.9e+11 [USD] exceeds the 1e+11 disclosure threshold even though the values agree in relative terms. Price-basis check: evidence is in current prices but the claim names no price basis (current/constant/real/nominal/PPP); the comparison assumes current prices.",
+            "quantities": [
+              {
+                "raw_text": "$28tn",
+                "value": 28000000000000.0,
+                "unit": "USD",
+                "resolution": 1000000000000.0
+              }
+            ],
+            "numeric": [
+              {
+                "metric": "GDP (current US$)",
+                "verdict": "consistent",
+                "claim_value": "$28tn [USD]",
+                "evidence_value": "GDP (current US$) in 2023: 27810000000000.0",
+                "abs_diff": 190000000000.0,
+                "rel_diff_pct": 0.6832074793239842
+              }
+            ],
+            "falsify": {
+              "attacks": 2,
+              "fatal_high": 1
+            },
+            "recompute_detail": "independent: 1/1 rel+verdict match from raw floats (harness tol=0.02); self-consistency: 1/1 match recorded rel vs parsed rule"
+          },
+          "report_id": "rep_4c068d8d0785",
+          "mode": "scripted"
+        },
+        {
+          "id": "econ_boundary_1_9_consistent",
+          "passed": true,
+          "checks": {
+            "stance": true,
+            "domain": true,
+            "retrieval": true,
+            "verdict": true,
+            "recompute_verdict": true,
+            "traceability": true,
+            "prose_traceability": true
+          },
+          "observed": {
+            "stance": "supported",
+            "domain": "economy",
+            "n_evidences": 1,
+            "n_comparisons": 4,
+            "n_quantities": 1,
+            "verdicts": [
+              "consistent",
+              "inconclusive"
+            ],
+            "uncertainties": [
+              "falsification_flag",
+              "indicator_definition_assumed",
+              "price_basis_unchecked",
+              "source_revision_risk",
+              "web_considered_not_cited"
+            ],
+            "extraction_actor": "model",
+            "conclusion_actor": "model",
+            "summary": "Input stance is \"supported\", with [cmp_0c854ee8d40c] consistent at rel_diff_pct 1.9% and [cmp_3d757a919886] consistent on overlapping periods. Falsification reviews [cmp_1ac84bb52006] [cmp_93ac7179a9b8] are inconclusive on exact 2023 match and assumed price basis. Evidence is missing for exact-year verification and price-basis check.",
+            "quantities": [
+              {
+                "raw_text": "$10 billion",
+                "value": 10000000000.0,
+                "unit": "USD",
+                "resolution": 1000000000.0
+              }
+            ],
+            "numeric": [
+              {
+                "metric": "GDP (current US$)",
+                "verdict": "consistent",
+                "claim_value": "$10 billion [USD]",
+                "evidence_value": "GDP (current US$) in 2023: 10193679918.450562",
+                "abs_diff": 193679918.45056152,
+                "rel_diff_pct": 1.9000000000000083
+              }
+            ],
+            "falsify": {
+              "attacks": 2,
+              "fatal_high": 2
+            },
+            "recompute_detail": "independent: 1/1 rel+verdict match from raw floats (harness tol=0.02); self-consistency: 1/1 match recorded rel vs parsed rule"
+          },
+          "report_id": "rep_cf631bdab98c",
+          "mode": "scripted"
+        },
+        {
+          "id": "econ_boundary_2_1_contradicts",
+          "passed": true,
+          "checks": {
+            "stance": true,
+            "domain": true,
+            "retrieval": true,
+            "verdict": true,
+            "recompute_verdict": true,
+            "traceability": true,
+            "prose_traceability": true
+          },
+          "observed": {
+            "stance": "contradicted",
+            "domain": "economy",
+            "n_evidences": 1,
+            "n_comparisons": 6,
+            "n_quantities": 1,
+            "verdicts": [
+              "consistent",
+              "contradicts",
+              "inconclusive"
+            ],
+            "uncertainties": [
+              "falsification_flag",
+              "indicator_definition_assumed",
+              "price_basis_unchecked",
+              "source_revision_risk",
+              "web_considered_not_cited",
+              "web_counter_evidence"
+            ],
+            "extraction_actor": "model",
+            "conclusion_actor": "model",
+            "summary": "The overall stance is \"contradicted\", driven by GDP (current US$) verdict contradicts with measured difference of 2.1% [cmp_fa8be3ddd816]. Time compatibility is consistent [cmp_1156ad6f6a54], but falsification review is inconclusive on overlapping periods [cmp_017fdd1e4014] and on the unchecked price-basis assumption [cmp_a7c5bdf970c0]. Web counter evidence is inconclusive [cmp_25bfb3fbf727] [cmp_04dff4b2f957], so evidence is missing on that point.",
+            "quantities": [
+              {
+                "raw_text": "$10 billion",
+                "value": 10000000000.0,
+                "unit": "USD",
+                "resolution": 1000000000.0
+              }
+            ],
+            "numeric": [
+              {
+                "metric": "GDP (current US$)",
+                "verdict": "contradicts",
+                "claim_value": "$10 billion [USD]",
+                "evidence_value": "GDP (current US$) in 2023: 10214504596.52707",
+                "abs_diff": 214504596.5270691,
+                "rel_diff_pct": 2.1000000000000063
+              }
+            ],
+            "falsify": {
+              "attacks": 2,
+              "fatal_high": 2
+            },
+            "recompute_detail": "independent: 1/1 rel+verdict match from raw floats (harness tol=0.02); self-consistency: 1/1 match recorded rel vs parsed rule"
+          },
+          "report_id": "rep_a17778af87f1",
+          "mode": "scripted"
+        },
+        {
+          "id": "econ_future_gdp_2030",
+          "passed": true,
+          "checks": {
+            "stance": true,
+            "domain": true,
+            "quantities_min": true,
+            "unc+no_direct_evidence": true,
+            "abstention": true,
+            "traceability": true,
+            "prose_traceability": true
+          },
+          "observed": {
+            "stance": "unverifiable",
+            "domain": "economy",
+            "n_evidences": 0,
+            "n_comparisons": 5,
+            "n_quantities": 1,
+            "verdicts": [
+              "inconclusive"
+            ],
+            "uncertainties": [
+              "no_direct_evidence",
+              "web_considered_not_cited",
+              "web_counter_evidence"
+            ],
+            "extraction_actor": "model",
+            "conclusion_actor": "model",
+            "summary": "The stance is \"unverifiable\" as no retrieved source provided a numeric value for this claim, so evidence is missing [cmp_d270c0c4aaf0] [cmp_c1e91916acd3]. The available comparisons are rated inconclusive [cmp_9726debd6599] [cmp_29353a446bc5] [cmp_5c1e2f876023]. No measured delta percent was reported for these comparisons.",
+            "quantities": [
+              {
+                "raw_text": "30 trillion",
+                "value": 30000000000000.0,
+                "unit": "USD",
+                "resolution": 1000000000000.0
+              }
+            ],
+            "numeric": [],
+            "falsify": {
+              "attacks": 0,
+              "fatal_high": 0
+            }
+          },
+          "report_id": "rep_b6f0979e5281",
+          "mode": "live"
+        },
+        {
+          "id": "econ_taiwan_no_data",
+          "passed": true,
+          "checks": {
+            "stance": true,
+            "domain": true,
+            "quantities_min": true,
+            "unc+no_direct_evidence": true,
+            "abstention": true,
+            "traceability": true,
+            "prose_traceability": true
+          },
+          "observed": {
+            "stance": "unverifiable",
+            "domain": "economy",
+            "n_evidences": 0,
+            "n_comparisons": 3,
+            "n_quantities": 1,
+            "verdicts": [
+              "inconclusive"
+            ],
+            "uncertainties": [
+              "no_direct_evidence",
+              "web_considered_not_cited",
+              "web_counter_evidence"
+            ],
+            "extraction_actor": "model",
+            "conclusion_actor": "model",
+            "summary": "The stance is \"unverifiable\" because no retrieved source provided a numeric value. Comparisons [cmp_4214136557da], [cmp_ac5836c58db2] and [cmp_6f38113e13d3] were inconclusive with rel_diff_pct null. Evidence is missing for direct evaluation.",
+            "quantities": [
+              {
+                "raw_text": "800 billion",
+                "value": 800000000000.0,
+                "unit": "USD",
+                "resolution": 1000000000.0
+              }
+            ],
+            "numeric": [],
+            "falsify": {
+              "attacks": 0,
+              "fatal_high": 0
+            }
+          },
+          "report_id": "rep_d0164466f712",
+          "mode": "live"
+        },
+        {
+          "id": "econ_gdp_per_capita_norway",
+          "passed": true,
+          "checks": {
+            "stance": true,
+            "domain": true,
+            "retrieval": true,
+            "verdict": true,
+            "traceability": true,
+            "prose_traceability": true
+          },
+          "observed": {
+            "stance": "contradicted",
+            "domain": "economy",
+            "n_evidences": 1,
+            "n_comparisons": 5,
+            "n_quantities": 1,
+            "verdicts": [
+              "consistent",
+              "contradicts",
+              "inconclusive"
+            ],
+            "uncertainties": [
+              "falsification_flag",
+              "indicator_definition_assumed",
+              "price_basis_unchecked",
+              "source_revision_risk",
+              "web_considered_not_cited",
+              "web_counter_evidence"
+            ],
+            "extraction_actor": "model",
+            "conclusion_actor": "model",
+            "summary": "The overall stance is \"contradicted\" with overlapping periods marked consistent [cmp_c2eba20c45fe]. The GDP per capita comparison returns contradicts with a measured difference of 89.01% [cmp_849525f80649]. That verdict is qualified by inconclusive falsification review [cmp_6ab31d907129] and inconclusive web counter-evidence [cmp_bc55958ba0b4] [cmp_8ba3e0f405cd], with price basis assumed and methodology unchecked.",
+            "quantities": [
+              {
+                "raw_text": "$10,000",
+                "value": 10000.0,
+                "unit": "USD",
+                "resolution": 1.0
+              }
+            ],
+            "numeric": [
+              {
+                "metric": "GDP per capita (current US$)",
+                "verdict": "contradicts",
+                "claim_value": "$10,000 [USD]",
+                "evidence_value": "GDP per capita (current US$) for Norway in 2023: 90984.4087141111",
+                "abs_diff": 80984.4087141111,
+                "rel_diff_pct": 89.00910591019858
+              }
+            ],
+            "falsify": {
+              "attacks": 1,
+              "fatal_high": 1
+            }
+          },
+          "report_id": "rep_f96a90a06393",
+          "mode": "live"
+        },
+        {
+          "id": "econ_exports_germany",
+          "passed": true,
+          "checks": {
+            "stance": true,
+            "domain": true,
+            "retrieval": true,
+            "verdict": true,
+            "traceability": true,
+            "prose_traceability": true
+          },
+          "observed": {
+            "stance": "contradicted",
+            "domain": "economy",
+            "n_evidences": 1,
+            "n_comparisons": 7,
+            "n_quantities": 1,
+            "verdicts": [
+              "consistent",
+              "contradicts",
+              "inconclusive"
+            ],
+            "uncertainties": [
+              "falsification_flag",
+              "indicator_definition_assumed",
+              "source_revision_risk",
+              "web_considered_not_cited",
+              "web_counter_evidence"
+            ],
+            "extraction_actor": "model",
+            "conclusion_actor": "model",
+            "summary": "The overall stance is \"contradicted\" with time compatibility as consistent [cmp_ec1605c4c565], but falsification review finds overlap does not establish exact year alignment [cmp_8893f917eb4a]. The Exports of goods and services (% of GDP) comparison is contradicts with measured delta 88.36% [cmp_feef57717b14], while review notes definitional uncertainty remains unchecked [cmp_57b4f374aeba]. Web counter-evidence is inconclusive [cmp_6e712b4662e8][cmp_542b617b16fd][cmp_75edd9ea7458] and page-fetch evidence is missing.",
+            "quantities": [
+              {
+                "raw_text": "5%",
+                "value": 5.0,
+                "unit": "percent",
+                "resolution": 1.0
+              }
+            ],
+            "numeric": [
+              {
+                "metric": "Exports of goods and services (% of GDP)",
+                "verdict": "contradicts",
+                "claim_value": "5% [percent]",
+                "evidence_value": "Exports of goods and services (% of GDP) for Germany in 2023: 42.9672624196847",
+                "abs_diff": 37.9672624196847,
+                "rel_diff_pct": 88.3632334981869
+              }
+            ],
+            "falsify": {
+              "attacks": 2,
+              "fatal_high": 1
+            }
+          },
+          "report_id": "rep_1d8ee107e6f4",
+          "mode": "live"
+        },
+        {
+          "id": "econ_debt_usa",
+          "passed": true,
+          "checks": {
+            "stance": true,
+            "domain": true,
+            "retrieval": true,
+            "verdict": true,
+            "traceability": true,
+            "prose_traceability": true
+          },
+          "observed": {
+            "stance": "contradicted",
+            "domain": "economy",
+            "n_evidences": 1,
+            "n_comparisons": 6,
+            "n_quantities": 1,
+            "verdicts": [
+              "consistent",
+              "contradicts",
+              "inconclusive"
+            ],
+            "uncertainties": [
+              "falsification_flag",
+              "indicator_definition_assumed",
+              "source_revision_risk",
+              "web_considered_not_cited",
+              "web_counter_evidence"
+            ],
+            "extraction_actor": "model",
+            "conclusion_actor": "model",
+            "summary": "Stance is \"contradicted\" with [cmp_00d2ba8a49ac] recording contradicts for Central government debt (% of GDP) at measured delta 91.28%. Time compatibility is consistent [cmp_befe0e31f091], while falsification reviews are inconclusive [cmp_a26438980ad5][cmp_8d6873ff81ca] and web counter-evidence is inconclusive [cmp_6e1e0a23d1c3][cmp_b473f413f525]. Scope and vintage remain unresolved, so unqualified Government debt lacks matching evidence.",
+            "quantities": [
+              {
+                "raw_text": "10%",
+                "value": 10.0,
+                "unit": "percent",
+                "resolution": 1.0
+              }
+            ],
+            "numeric": [
+              {
+                "metric": "Central government debt (% of GDP)",
+                "verdict": "contradicts",
+                "claim_value": "10% [percent]",
+                "evidence_value": "Central government debt (% of GDP) for United States in 2023: 114.73985759209",
+                "abs_diff": 104.73985759209,
+                "rel_diff_pct": 91.28463272496742
+              }
+            ],
+            "falsify": {
+              "attacks": 2,
+              "fatal_high": 1
+            }
+          },
+          "report_id": "rep_1487eb5793f2",
+          "mode": "live"
+        },
+        {
+          "id": "econ_internet_usa",
+          "passed": true,
+          "checks": {
+            "stance": true,
+            "retrieval": true,
+            "verdict": true,
+            "traceability": true,
+            "prose_traceability": true
+          },
+          "observed": {
+            "stance": "contradicted",
+            "domain": "economy",
+            "n_evidences": 1,
+            "n_comparisons": 8,
+            "n_quantities": 1,
+            "verdicts": [
+              "consistent",
+              "contradicts",
+              "inconclusive"
+            ],
+            "uncertainties": [
+              "falsification_flag",
+              "indicator_definition_assumed",
+              "source_revision_risk",
+              "web_considered_not_cited",
+              "web_counter_evidence"
+            ],
+            "extraction_actor": "model",
+            "conclusion_actor": "code",
+            "summary": "Stance: contradicted (1 consistent, 1 contradicting, 0 not comparable out of 8 checks). [cmp_9fbbd3866ee8] time_compatibility: Claim and evidence refer to overlapping periods. [cmp_6d85c9bde734] Individuals using the Internet (% of population): Measured difference exceeds tolerance; check methodology, period and definitions before drawing conclusions.",
+            "quantities": [
+              {
+                "raw_text": "5%",
+                "value": 5.0,
+                "unit": "percent",
+                "resolution": 1.0
+              }
+            ],
+            "numeric": [
+              {
+                "metric": "Individuals using the Internet (% of population)",
+                "verdict": "contradicts",
+                "claim_value": "5% [percent]",
+                "evidence_value": "Individuals using the Internet (% of population) for United States in 2023: 93.52559662",
+                "abs_diff": 88.52559662,
+                "rel_diff_pct": 94.65386997709804
+              }
+            ],
+            "falsify": {
+              "attacks": 2,
+              "fatal_high": 1
+            }
+          },
+          "report_id": "rep_e4fef88bc07a",
+          "mode": "live"
+        },
+        {
+          "id": "econ_fertility_nigeria",
+          "passed": true,
+          "checks": {
+            "stance": true,
+            "domain_set": true,
+            "retrieval": true,
+            "verdict": true,
+            "traceability": true,
+            "prose_traceability": true
+          },
+          "observed": {
+            "stance": "contradicted",
+            "domain": "economy",
+            "n_evidences": 1,
+            "n_comparisons": 7,
+            "n_quantities": 1,
+            "verdicts": [
+              "consistent",
+              "contradicts",
+              "inconclusive"
+            ],
+            "uncertainties": [
+              "falsification_flag",
+              "indicator_definition_assumed",
+              "source_revision_risk",
+              "unit_assumed_from_context",
+              "web_considered_not_cited",
+              "web_counter_evidence"
+            ],
+            "extraction_actor": "model",
+            "conclusion_actor": "code",
+            "summary": "Stance: contradicted (1 consistent, 1 contradicting, 0 not comparable out of 7 checks). [cmp_6f321f5386dc] time_compatibility: Claim and evidence refer to overlapping periods. [cmp_591941498067] Fertility rate, total (births per woman): Measured difference exceeds tolerance; check methodology, period and definitions before drawing conclusions. Unit assumption: the claim states a bare number; it was compared as a count because the evidence indicator counts individuals. Treat this comparison with caution.",
+            "quantities": [
+              {
+                "raw_text": "1.2",
+                "value": 1.2,
+                "unit": null,
+                "resolution": 0.1
+              }
+            ],
+            "numeric": [
+              {
+                "metric": "Fertility rate, total (births per woman)",
+                "verdict": "contradicts",
+                "claim_value": "1.2 [None]",
+                "evidence_value": "Fertility rate, total (births per woman) for Nigeria in 2020: 4.7",
+                "abs_diff": 3.5,
+                "rel_diff_pct": 74.46808510638297
+              }
+            ],
+            "falsify": {
+              "attacks": 2,
+              "fatal_high": 1
+            }
+          },
+          "report_id": "rep_6bcd50b69794",
+          "mode": "live"
+        },
+        {
+          "id": "econ_comparative_abstains",
+          "passed": true,
+          "checks": {
+            "stance": true,
+            "domain": true,
+            "unc+no_measurable_quantity": true,
+            "traceability": true,
+            "prose_traceability": true
+          },
+          "observed": {
+            "stance": "unverifiable",
+            "domain": "economy",
+            "n_evidences": 1,
+            "n_comparisons": 2,
+            "n_quantities": 0,
+            "verdicts": [
+              "inconclusive"
+            ],
+            "uncertainties": [
+              "multi_geo_unchecked",
+              "no_measurable_quantity",
+              "web_considered_not_cited",
+              "web_counter_evidence"
+            ],
+            "extraction_actor": "model",
+            "conclusion_actor": "model",
+            "summary": "The stance is \"unverifiable\" with no measurable quantity for numeric comparison [cmp_e4652acfb332] [cmp_d24882fea14e]. Both comparisons were inconclusive with no rel_diff_pct reported, so evidence is missing for a measured delta. Multiple geographies were detected with evidence retrieved for one geography only.",
+            "quantities": [],
+            "numeric": [],
+            "falsify": {
+              "attacks": 0,
+              "fatal_high": 0
+            }
+          },
+          "report_id": "rep_9c98158224d2",
+          "mode": "live"
+        },
+        {
+          "id": "econ_pp_vs_percent",
+          "passed": true,
+          "checks": {
+            "stance": true,
+            "domain": true,
+            "unc+unit_mismatch": true,
+            "abstention": true,
+            "traceability": true,
+            "prose_traceability": true
+          },
+          "observed": {
+            "stance": "unverifiable",
+            "domain": "economy",
+            "n_evidences": 1,
+            "n_comparisons": 0,
+            "n_quantities": 1,
+            "verdicts": [],
+            "uncertainties": [
+              "unit_mismatch",
+              "web_considered_not_cited"
+            ],
+            "extraction_actor": "model",
+            "conclusion_actor": "model",
+            "summary": "The claim is rated as \"unverifiable\". No comparisons were provided and evidence is missing. Claim quantity 0.5 percentage points [pp] has no same-unit evidence.",
+            "quantities": [
+              {
+                "raw_text": "0.5 percentage points",
+                "value": 0.5,
+                "unit": "pp",
+                "resolution": 0.1
+              }
+            ],
+            "numeric": [],
+            "falsify": {
+              "attacks": 0,
+              "fatal_high": 0
+            }
+          },
+          "report_id": "rep_476097b998cb",
+          "mode": "live"
+        },
+        {
+          "id": "econ_es_unemployment_live",
+          "passed": true,
+          "checks": {
+            "stance": true,
+            "domain": true,
+            "retrieval": true,
+            "verdict": true,
+            "traceability": true,
+            "prose_traceability": true
+          },
+          "observed": {
+            "stance": "supported",
+            "domain": "economy",
+            "n_evidences": 1,
+            "n_comparisons": 7,
+            "n_quantities": 1,
+            "verdicts": [
+              "consistent",
+              "inconclusive"
+            ],
+            "uncertainties": [
+              "falsification_flag",
+              "indicator_definition_assumed",
+              "source_revision_risk",
+              "web_considered_not_cited",
+              "web_counter_evidence"
+            ],
+            "extraction_actor": "model",
+            "conclusion_actor": "code",
+            "summary": "Stance: supported (2 consistent, 0 contradicting, 0 not comparable out of 7 checks). [cmp_23fe7a58a35c] time_compatibility: Claim and evidence refer to overlapping periods. [cmp_ea2cc27aa206] Unemployment, total (% of labor force): Values agree within tolerance.",
+            "quantities": [
+              {
+                "raw_text": "3,1%",
+                "value": 3.1,
+                "unit": "percent",
+                "resolution": 0.1
+              }
+            ],
+            "numeric": [
+              {
+                "metric": "Unemployment, total (% of labor force)",
+                "verdict": "consistent",
+                "claim_value": "3,1% [percent]",
+                "evidence_value": "Unemployment, total (% of labor force) for Germany in 2023: 3.071",
+                "abs_diff": 0.028999999999999915,
+                "rel_diff_pct": 0.9443178117876885
+              }
+            ],
+            "falsify": {
+              "attacks": 3,
+              "fatal_high": 2
+            }
+          },
+          "report_id": "rep_a941baef6a05",
+          "mode": "live"
+        },
+        {
+          "id": "econ_es_inflation_decimal",
+          "passed": true,
+          "checks": {
+            "stance": true,
+            "domain": true,
+            "retrieval": true,
+            "verdict": true,
+            "traceability": true,
+            "prose_traceability": true
+          },
+          "observed": {
+            "stance": "supported",
+            "domain": "economy",
+            "n_evidences": 1,
+            "n_comparisons": 8,
+            "n_quantities": 1,
+            "verdicts": [
+              "consistent",
+              "inconclusive"
+            ],
+            "uncertainties": [
+              "falsification_flag",
+              "indicator_definition_assumed",
+              "source_revision_risk",
+              "web_considered_not_cited",
+              "web_counter_evidence"
+            ],
+            "extraction_actor": "model",
+            "conclusion_actor": "code",
+            "summary": "Stance: supported (2 consistent, 0 contradicting, 0 not comparable out of 8 checks). [cmp_269eb7ce6490] time_compatibility: Claim and evidence refer to overlapping periods. [cmp_6cee3631e5d3] Inflation, consumer prices (annual %): Values agree within tolerance.",
+            "quantities": [
+              {
+                "raw_text": "8,3 por ciento",
+                "value": 8.3,
+                "unit": "percent",
+                "resolution": 0.1
+              }
+            ],
+            "numeric": [
+              {
+                "metric": "Inflation, consumer prices (annual %)",
+                "verdict": "consistent",
+                "claim_value": "8,3 por ciento [percent]",
+                "evidence_value": "Inflation, consumer prices (annual %) for Brazil in 2021: 8.30165975585673",
+                "abs_diff": 0.0016597558567301718,
+                "rel_diff_pct": 0.019993060490816093
+              }
+            ],
+            "falsify": {
+              "attacks": 2,
+              "fatal_high": 1
+            }
+          },
+          "report_id": "rep_b6d0ca8b9cb6",
+          "mode": "live"
+        },
+        {
+          "id": "econ_es_billones",
+          "passed": true,
+          "checks": {
+            "stance": true,
+            "domain": true,
+            "retrieval": true,
+            "verdict": true,
+            "unc-claimed_precision_exceeded": true,
+            "recompute_verdict": true,
+            "traceability": true,
+            "prose_traceability": true
+          },
+          "observed": {
+            "stance": "supported",
+            "domain": "economy",
+            "n_evidences": 1,
+            "n_comparisons": 6,
+            "n_quantities": 1,
+            "verdicts": [
+              "consistent",
+              "inconclusive"
+            ],
+            "uncertainties": [
+              "falsification_flag",
+              "indicator_definition_assumed",
+              "material_absolute_gap",
+              "price_basis_unchecked",
+              "source_revision_risk",
+              "web_considered_not_cited",
+              "web_counter_evidence"
+            ],
+            "extraction_actor": "model",
+            "conclusion_actor": "model",
+            "summary": "The input stance is \"supported\" with time compatibility consistent [cmp_a77b6eb21242] and GDP (current US$) consistent with rel_diff_pct of 0.68% [cmp_1d21e840f09d]. Falsification reviews are inconclusive [cmp_4f37cd847285] [cmp_beaafff1b43a] and web counter-evidence is inconclusive [cmp_d65d6b4c94bd] [cmp_f4fadb978b19]. Evidence is missing to resolve price basis and 2023 annual value.",
+            "quantities": [
+              {
+                "raw_text": "28 billones de d\u00f3lares",
+                "value": 28000000000000.0,
+                "unit": "USD",
+                "resolution": 1000000000000.0
+              }
+            ],
+            "numeric": [
+              {
+                "metric": "GDP (current US$)",
+                "verdict": "consistent",
+                "claim_value": "28 billones de d\u00f3lares [USD]",
+                "evidence_value": "GDP (current US$) for United States in 2023: 27811517000000",
+                "abs_diff": 188483000000.0,
+                "rel_diff_pct": 0.6777156384529474
+              }
+            ],
+            "falsify": {
+              "attacks": 2,
+              "fatal_high": 2
+            },
+            "recompute_detail": "independent: 1/1 rel+verdict match from raw floats (harness tol=0.02); self-consistency: 1/1 match recorded rel vs parsed rule"
+          },
+          "report_id": "rep_f2cdb4daf7f1",
+          "mode": "live"
+        },
+        {
+          "id": "econ_price_basis_stated",
+          "passed": true,
+          "checks": {
+            "stance": true,
+            "domain": true,
+            "retrieval": true,
+            "verdict": true,
+            "unc-claimed_precision_exceeded": true,
+            "unc-price_basis_unchecked": true,
+            "recompute_verdict": true,
+            "traceability": true,
+            "prose_traceability": true
+          },
+          "observed": {
+            "stance": "supported",
+            "domain": "economy",
+            "n_evidences": 1,
+            "n_comparisons": 6,
+            "n_quantities": 1,
+            "verdicts": [
+              "consistent",
+              "inconclusive"
+            ],
+            "uncertainties": [
+              "falsification_flag",
+              "indicator_definition_assumed",
+              "material_absolute_gap",
+              "source_revision_risk",
+              "web_considered_not_cited",
+              "web_counter_evidence"
+            ],
+            "extraction_actor": "model",
+            "conclusion_actor": "model",
+            "summary": "The claim stance is \"supported\" with [cmp_bef9d6332fbf] consistent on time compatibility and [cmp_840a4c01e230] consistent on GDP (current US$) with measured delta 0.68%. [cmp_510c09b39691] and [cmp_b73e9dc242f6] are inconclusive on falsification review, and [cmp_ed5f05deccee] and [cmp_3138cdbeabd0] are inconclusive on web counter evidence. Evidence is missing to resolve the inconclusive reviews.",
+            "quantities": [
+              {
+                "raw_text": "$28tn",
+                "value": 28000000000000.0,
+                "unit": "USD",
+                "resolution": 1000000000000.0
+              }
+            ],
+            "numeric": [
+              {
+                "metric": "GDP (current US$)",
+                "verdict": "consistent",
+                "claim_value": "$28tn [USD]",
+                "evidence_value": "GDP (current US$) for United States in 2023: 27811517000000",
+                "abs_diff": 188483000000.0,
+                "rel_diff_pct": 0.6777156384529474
+              }
+            ],
+            "falsify": {
+              "attacks": 2,
+              "fatal_high": 1
+            },
+            "recompute_detail": "independent: 1/1 rel+verdict match from raw floats (harness tol=0.02); self-consistency: 1/1 match recorded rel vs parsed rule"
+          },
+          "report_id": "rep_b12d6eab6535",
+          "mode": "live"
+        },
+        {
+          "id": "econ_compound_conflict_cap",
+          "passed": true,
+          "checks": {
+            "stance_set": true,
+            "domain": true,
+            "retrieval": true,
+            "quantities_min": true,
+            "unc+partial_coverage": true,
+            "unc+unit_mismatch": true,
+            "traceability": true,
+            "prose_traceability": true
+          },
+          "observed": {
+            "stance": "partially_supported",
+            "domain": "economy",
+            "n_evidences": 1,
+            "n_comparisons": 6,
+            "n_quantities": 2,
+            "verdicts": [
+              "consistent",
+              "inconclusive"
+            ],
+            "uncertainties": [
+              "compound_claim",
+              "falsification_flag",
+              "indicator_definition_assumed",
+              "partial_coverage",
+              "source_revision_risk",
+              "unit_mismatch",
+              "web_considered_not_cited",
+              "web_counter_evidence"
+            ],
+            "extraction_actor": "model",
+            "conclusion_actor": "code",
+            "summary": "Stance: partially_supported (2 consistent, 0 contradicting, 0 not comparable out of 6 checks). [cmp_0b96b16447e0] time_compatibility: Claim and evidence refer to overlapping periods. [cmp_958d2d3e5085] Unemployment, total (% of labor force): Values agree within tolerance.",
+            "quantities": [
+              {
+                "raw_text": "3.1%",
+                "value": 3.1,
+                "unit": "percent",
+                "resolution": 0.1
+              },
+              {
+                "raw_text": "$500 trillion",
+                "value": 500000000000000.0,
+                "unit": "USD",
+                "resolution": 1000000000000.0
+              }
+            ],
+            "numeric": [
+              {
+                "metric": "Unemployment, total (% of labor force)",
+                "verdict": "consistent",
+                "claim_value": "3.1% [percent]",
+                "evidence_value": "Unemployment, total (% of labor force) for Germany in 2023: 3.071",
+                "abs_diff": 0.028999999999999915,
+                "rel_diff_pct": 0.9443178117876885
+              }
+            ],
+            "falsify": {
+              "attacks": 2,
+              "fatal_high": 1
+            }
+          },
+          "report_id": "rep_d45dd3115e36",
+          "mode": "live"
+        },
+        {
+          "id": "econ_multigeo_compound_disclosed",
+          "passed": true,
+          "checks": {
+            "stance": true,
+            "domain": true,
+            "retrieval": true,
+            "quantities_min": true,
+            "verdict": true,
+            "unc+multi_geo_unchecked": true,
+            "traceability": true,
+            "prose_traceability": true
+          },
+          "observed": {
+            "stance": "contradicted",
+            "domain": "economy",
+            "n_evidences": 1,
+            "n_comparisons": 13,
+            "n_quantities": 2,
+            "verdicts": [
+              "consistent",
+              "contradicts",
+              "inconclusive"
+            ],
+            "uncertainties": [
+              "compound_claim",
+              "falsification_flag",
+              "indicator_definition_assumed",
+              "multi_geo_unchecked",
+              "source_revision_risk",
+              "web_considered_not_cited",
+              "web_counter_evidence"
+            ],
+            "extraction_actor": "model",
+            "conclusion_actor": "model",
+            "summary": "Stance is \"contradicted\" with unemployment verdicts showing delta 0.94% [cmp_5244829c768c] and delta 137.71% [cmp_8aab9f4640b3]. Time compatibility is consistent as overlapping periods [cmp_20fc19b5a14d][cmp_030ac9c2b708] but does not establish 2023 alignment [cmp_4a73d6fcf63f][cmp_c04cf5034ddf]. Falsification reviews are inconclusive noting compound claim with evidence for one geography only [cmp_cf09fb128916][cmp_0d2738f37c89] and web counter-evidence is inconclusive [cmp_c6d494a76165][cmp_5c5c47de2b28]. Evidence is missing for other geographies, so both parts cannot be assessed.",
+            "quantities": [
+              {
+                "raw_text": "3.1%",
+                "value": 3.1,
+                "unit": "percent",
+                "resolution": 0.1
+              },
+              {
+                "raw_text": "7.3%",
+                "value": 7.3,
+                "unit": "percent",
+                "resolution": 0.1
+              }
+            ],
+            "numeric": [
+              {
+                "metric": "Unemployment, total (% of labor force)",
+                "verdict": "consistent",
+                "claim_value": "3.1% [percent]",
+                "evidence_value": "Unemployment, total (% of labor force) for Germany in 2023: 3.071",
+                "abs_diff": 0.028999999999999915,
+                "rel_diff_pct": 0.9443178117876885
+              },
+              {
+                "metric": "Unemployment, total (% of labor force)",
+                "verdict": "contradicts",
+                "claim_value": "7.3% [percent]",
+                "evidence_value": "Unemployment, total (% of labor force) for Germany in 2023: 3.071",
+                "abs_diff": 4.228999999999999,
+                "rel_diff_pct": 137.70758710517742
+              }
+            ],
+            "falsify": {
+              "attacks": 4,
+              "fatal_high": 1
+            }
+          },
+          "report_id": "rep_3b0ef5f0a43a",
+          "mode": "live"
+        }
+      ]
+    }
+  }
+}

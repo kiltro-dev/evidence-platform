@@ -406,6 +406,17 @@ Run 8's two OpenAlex-429 failures are gone: `OPENALEX_API_KEY` is
 now configured (own $1/day quota), and both science cases retrieve
 and pass. No pin was edited to fit the new code.
 
+## Full run 10 (`--mode full`, V3 + renormalization fix) — 43/43, gate
+
+```text
+[full] 43/43 cases passed (pin conformance 1.00, skipped 0, blocked 0)
+```
+
+Result JSON: `eval/results/20261101T201327Z.json` (force-added).
+Re-run after the E-hb_f06 extraction fix (same-unit digit
+renormalization reset): all 43 pins hold — the fix kills the
+model-path misread without moving any pinned verdict. Current gate.
+
 ## v3 methodology note (what changed since v2)
 
 - Claimed-precision rule: stated digits must survive contact with the
