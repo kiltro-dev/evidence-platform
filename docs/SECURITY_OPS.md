@@ -45,7 +45,7 @@ them):
 | Reports undeletable | **Fixed**: `DELETE /api/reports/{id}` + per-row Delete in the UI history strip | `api/app.py`, `web/index.html` |
 | Reads create files/dirs | **Fixed**: init-on-write — only `save_report` creates the DB; all reads check `_has_reports_table` first and return empty | `storage/store.py` |
 | Error responses leak internals | **Fixed**: unified envelope; tracebacks/bodies never in responses; pipeline crashes map to `analysis_failed` | `api/app.py` handlers |
-| Unbounded abuse of /api/analyze | **Fixed**: 60 quota units/min per IP (429 `rate_limited`; analyze = 1, batch = 8 fixed worst-case); tracker itself capped at 10k IPs | `api/app.py: _check_rate_limit` |
+| Unbounded abuse of /api/analyze | **Fixed**: 60 quota units/min per IP (429 `rate_limited`; analyze = 1, batch = 8 fixed worst-case; loopback spellings share one bucket); tracker itself capped at 10k IPs | `api/app.py: _check_rate_limit` |
 | Non-loopback clients reach an authless server | **Fixed**: loopback guard middleware — non-loopback gets 403 `non_loopback_blocked` unless `ATLAS_ALLOW_NON_LOOPBACK=1` | `api/app.py: _loopback_guard` |
 | Deleted reports resurrect from cache | **Fixed**: DELETE evicts that report's cache entries; `fresh:true` re-runs past the cache | `api/app.py: _cache_evict_report`, `AnalyzeRequest.fresh` |
 | Invented model citations | **Fixed**: `[cmp_*]` ids in model summaries validated; unknown ids stripped + logged | `pipeline/synthesize.py: validate_citations` |

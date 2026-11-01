@@ -179,6 +179,21 @@ def test_retrieve_all_runs_in_parallel(no_retry_sleep):
     assert elapsed < 0.9  # sequential would take >= 0.9s
 
 
+def test_retrieve_all_reports_per_connector_timings(no_retry_sleep):
+    # Perf MEDIUM (observability): each connector's wall time must be
+    # measurable so the audit trail can show it (pre-fix: retrieve_all
+    # returned no timings and audit retrieve steps read ~0.0ms).
+    claim = StructuredClaim(raw_text="x")
+    slow = _FakeConn("slow", [_ev("slow", "s1")], delay=0.3)
+    fast = _FakeConn("fast", [_ev("fast", "f1")])
+    timings: dict = {}
+    evidence, errors = retrieve_all([slow, fast], claim, 5, timings=timings)
+    assert errors == []
+    assert set(timings) == {"slow", "fast"}
+    assert timings["slow"] >= 0.25
+    assert timings["fast"] < 0.25
+
+
 def test_retrieve_all_isolates_failure(no_retry_sleep):
     claim = StructuredClaim(raw_text="x")
     boom = RuntimeError("source exploded")
@@ -326,3 +341,92 @@ def test_cache_none_model_is_own_key(api_ctx, monkeypatch):
     again = client.post("/api/analyze", json={"text": "degraded split"})
     assert again.status_code == 200
     assert len(calls) == 1  # degraded entry hits for degraded requests
+
+
+def test_concurrent_identical_posts_run_pipeline_once(tmp_path, monkeypatch):
+    # API LOW (cache-herd): 20 parallel identical POSTs each ran the full
+    # pipeline (check-then-act race on _cache). Singleflight: the first
+    # request owns the key, the rest wait and share its cached report.
+    import threading
+
+    monkeypatch.setenv("ATLAS_DB", str(tmp_path / "t.db"))
+    monkeypatch.setattr(appmod, "get_llm", lambda: None)
+    appmod._rate_hits.clear()
+    appmod._cache.clear()
+    appmod._inflight.clear()
+    calls: list = []
+    calls_lock = threading.Lock()
+
+    def slow_fake(text, llm=None, limit=5, persist=True, domain="auto", **kw):
+        with calls_lock:
+            calls.append(text)
+        time.sleep(0.3)
+        return _stub_report(text)
+
+    monkeypatch.setattr(runmod, "analyze", slow_fake)
+    n = 12
+    barrier = threading.Barrier(n)
+    results: list = [None] * n
+
+    def worker(i):
+        barrier.wait(timeout=10)
+        results[i] = client.post(
+            "/api/analyze", json={"text": "herd me once", "persist": False}
+        )
+
+    with TestClient(appmod.app, raise_server_exceptions=False) as client:
+        threads = [threading.Thread(target=worker, args=(i,)) for i in range(n)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join(timeout=30)
+    assert all(r is not None and r.status_code == 200 for r in results)
+    assert len(calls) == 1
+    ids = {r.json()["report_id"] for r in results}
+    assert len(ids) == 1
+
+
+def test_singleflight_owner_failure_fails_over_to_joiner(tmp_path, monkeypatch):
+    # The owner reports its own genuine failure (500); a joiner that never
+    # ran must not inherit it — it loops, owns the key, and runs clean.
+    # _inflight must be empty afterwards (no leaked events).
+    import threading
+
+    monkeypatch.setenv("ATLAS_DB", str(tmp_path / "t.db"))
+    monkeypatch.setattr(appmod, "get_llm", lambda: None)
+    appmod._rate_hits.clear()
+    appmod._cache.clear()
+    appmod._inflight.clear()
+    state = {"n": 0}
+    state_lock = threading.Lock()
+
+    def flaky(text, llm=None, limit=5, persist=True, domain="auto", **kw):
+        with state_lock:
+            state["n"] += 1
+            first = state["n"] == 1
+        if first:
+            time.sleep(0.3)  # hold the key so the sibling surely joins
+            raise RuntimeError("boom-first")
+        return _stub_report(text)
+
+    monkeypatch.setattr(runmod, "analyze", flaky)
+    barrier = threading.Barrier(2)
+    results: list = [None, None]
+
+    def worker(i):
+        barrier.wait(timeout=10)
+        results[i] = client.post(
+            "/api/analyze", json={"text": "fail over once", "persist": False}
+        )
+
+    with TestClient(appmod.app, raise_server_exceptions=False) as client:
+        threads = [threading.Thread(target=worker, args=(i,)) for i in range(2)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join(timeout=30)
+    assert {r.status_code for r in results} == {200, 500}
+    assert state["n"] == 2
+    assert appmod._inflight == {}
+    ok = next(r for r in results if r.status_code == 200)
+    assert ok.json()["report_id"]

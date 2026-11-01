@@ -154,3 +154,24 @@ def test_time_compatibility_comparison():
         evidence_time=TimeRef(raw="2010", year=2010, period_type="year"),
     )
     assert bad.verdict == "not_comparable"
+
+
+def test_parse_percentage_points_is_pp_not_percent():
+    # MEDIUM audit: alternation tried 'percent' first, so 'percentage
+    # points' prefix-matched as percent in degraded mode.
+    (q,) = [q for q in parse_quantities("rose 2 percentage points")
+            if q.value == 2.0]
+    assert q.normalized_unit == "pp"
+
+
+def test_parse_pp_abbreviation():
+    for text in ("rose 2 pp", "rose 2pp"):
+        (q,) = [q for q in parse_quantities(text) if q.value == 2.0]
+        assert q.normalized_unit == "pp"
+
+
+def test_parse_percent_still_percent_and_ppm_not_pp():
+    (q,) = [q for q in parse_quantities("rose 2 percent") if q.value == 2.0]
+    assert q.normalized_unit == "percent"
+    (m,) = [q for q in parse_quantities("2 ppm of lead") if q.value == 2.0]
+    assert m.normalized_unit != "pp"

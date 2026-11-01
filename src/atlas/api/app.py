@@ -55,6 +55,14 @@ _state_lock = threading.Lock()
 CACHE_CAP = 128
 CACHE_TTL_S = 3600.0
 _cache: dict[tuple[str, str, int, bool, str | None], tuple[Report, float]] = {}
+# In-flight singleflight: cache_key -> Event set when the owner's pipeline
+# run finishes (success or failure). Concurrent identical requests join the
+# owner's run instead of each running the pipeline (pre-fix: 20 parallel
+# identical POSTs ran analyze() 20x). Guarded by _state_lock; the pipeline
+# itself runs OUTSIDE the lock. The owner's try/finally guarantees the
+# event is set, and a joiner whose owner failed loops back to try owning,
+# so no request waits forever and none fails just because a sibling did.
+_inflight: dict[tuple[str, str, int, bool, str | None], threading.Event] = {}
 
 
 def get_llm() -> MetaClient | None:
@@ -175,6 +183,11 @@ def _check_rate_limit(client_ip: str, cost: int = 1) -> None:
 
 
 def _check_rate_limit_locked(client_ip: str, cost: int) -> None:
+    # Loopback callers share one bucket: 127.0.0.1/::1/localhost are
+    # spellings of the same local user (XFF-controlled under uvicorn's
+    # proxy headers), so per-spelling buckets would multiply the quota.
+    if client_ip in _LOOPBACK_HOSTS:
+        client_ip = "loopback"
     now = time.monotonic()
     hits = _rate_hits.get(client_ip)
     if hits is None:
@@ -233,6 +246,26 @@ def _cache_evict_report(report_id: str) -> None:
         ]
         for key in dead:
             _cache.pop(key, None)
+
+
+def _inflight_acquire(
+    key: tuple[str, str, int, bool, str | None],
+) -> tuple[bool, threading.Event]:
+    """Join or own an in-flight pipeline run. Returns (owner, event)."""
+    with _state_lock:
+        event = _inflight.get(key)
+        if event is not None:
+            return False, event
+        event = threading.Event()
+        _inflight[key] = event
+        return True, event
+
+
+def _inflight_release(key: tuple[str, str, int, bool, str | None]) -> None:
+    with _state_lock:
+        event = _inflight.pop(key, None)
+    if event is not None:
+        event.set()
 
 
 _LOOPBACK_HOSTS = frozenset({"127.0.0.1", "::1", "localhost", "testclient"})
@@ -328,13 +361,36 @@ def analyze_claim(req: AnalyzeRequest, request: Request) -> Report:
     cached = None if req.fresh else _cache_get(cache_key)
     if cached is not None:
         return cached
+    if not req.fresh:
+        # Singleflight: join the owner's run instead of racing it. A
+        # joiner whose owner failed (nothing cached) loops to try owning
+        # rather than inheriting the sibling's failure.
+        while True:
+            owner, event = _inflight_acquire(cache_key)
+            if owner:
+                break
+            event.wait()
+            joined = _cache_get(cache_key)
+            if joined is not None:
+                return joined
+        try:
+            report = _call_pipeline(text, clamped, req.domain, req.persist)
+        except ApiError:
+            raise
+        except Exception:
+            # Pipeline/connector/model faults map to analysis_failed; the
+            # traceback stays server-side and never reaches the client.
+            raise ApiError(500, "analysis_failed", "Analysis failed.") from None
+        else:
+            _cache_put(cache_key, report)
+        finally:
+            _inflight_release(cache_key)
+        return report
     try:
         report = _call_pipeline(text, clamped, req.domain, req.persist)
     except ApiError:
         raise
     except Exception:
-        # Pipeline/connector/model faults map to analysis_failed; the
-        # traceback stays server-side and never reaches the client.
         raise ApiError(500, "analysis_failed", "Analysis failed.") from None
     _cache_put(cache_key, report)
     return report

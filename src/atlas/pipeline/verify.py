@@ -353,7 +353,12 @@ def verify_quantitative(
                 # F6: name the side at fault. When the claim states no year
                 # or period at all, the receipt says so explicitly instead
                 # of sounding like an evidence-side mismatch; the code is
-                # unchanged (same major gap, same skip).
+                # unchanged (same major gap, same skip). This is also the
+                # mrnev rule BY DESIGN: year-less claims retrieve the
+                # most-recent value, but it stays verify-inert — comparing
+                # it against an unstated period would fabricate precision
+                # the claim never asserted. Pinned in
+                # test_e2e_yearless_claim_skips_numeric_compare_with_period_mismatch.
                 if claim_time.year is None and claim_time.start_year is None:
                     mismatch_desc = (
                         "The claim states no year or period; "

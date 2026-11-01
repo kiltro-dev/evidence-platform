@@ -20,6 +20,9 @@ CASES = [
             "verdict_present": "consistent",
             "uncertainty_present": ["claimed_precision_exceeded"],
             "uncertainty_absent": ["no_direct_evidence", "period_mismatch"],
+            # H4: the flagship methodology case re-derives its numeric
+            # verdict from raw floats (8th pin; was the notable gap).
+            "recompute_verdict": True,
         },
     },
     {

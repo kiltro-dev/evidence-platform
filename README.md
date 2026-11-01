@@ -151,8 +151,9 @@ UI at `/`. Full reference: [docs/API.md](docs/API.md).
 ## Tests & evaluation
 
 ```bash
-.venv/bin/python -m pytest tests/unit tests/e2e -q        # offline gate (486 tests)
+.venv/bin/python -m pytest tests/unit tests/e2e -q        # offline gate (506 tests)
 .venv/bin/python -m pytest tests/integration -q -m live   # live sources (needs network)
+cd tests/e2e-browser && npm ci && npm run install-browser-shell && npm test  # 5 browser specs, degraded
 PYTHONPATH=src .venv/bin/python scripts/run_eval.py --mode degraded  # 11 scripted cases, offline
 PYTHONPATH=src .venv/bin/python scripts/run_eval.py --mode full      # all 43 cases, needs network + key
 PYTHONPATH=src .venv/bin/python scripts/run_eval.py --paraphrase     # 36-input stability probe, offline
@@ -161,8 +162,12 @@ bash scripts/smoke.sh --port 8765                           # offline smoke (31 
 bash scripts/smoke.sh --port 8765 --live --eval              # + live API + full eval
 ```
 
-- `tests/unit tests/e2e` is the offline gate: **486 tests, all green**,
-  no network, no key.
+- `tests/unit tests/e2e` is the offline gate: **506 tests, all green**,
+  no network, no key (pytest 9).
+- `tests/e2e-browser` is the browser gate: 5 Playwright specs drive the
+  real UI in degraded mode (a11y contract, abort paths, journeys,
+  render fidelity, UI units) — see
+  [tests/e2e-browser/README.md](tests/e2e-browser/README.md).
 - `-m live` selects the `live` pytest marker (registered in
   `pyproject.toml`): tests that hit real public APIs.
 - Eval: 43 cases total. `--mode degraded` runs the 11 offline-capable

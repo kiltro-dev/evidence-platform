@@ -4,12 +4,28 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Evidence Atlas — traceable claim analysis</title>
+<link rel="icon" href="data:,">
 <style>
   :root { --bg:#0f1420; --panel:#1a2233; --line:#2c3852; --txt:#e8ecf4; --mut:#9aa6bf;
          --acc:#6cb2ff; --ok:#4cc38a; --bad:#e5636f; --warn:#e5a763; --na:#8a93a8; }
   * { box-sizing:border-box; } body { margin:0; background:var(--bg); color:var(--txt);
     font:16px/1.55 -apple-system,"Segoe UI",Roboto,sans-serif; }
   :focus-visible { outline:2px solid var(--acc); outline-offset:2px; border-radius:4px; }
+  .skiplink { position:absolute; left:-9999px; top:0; background:var(--acc); color:#0b1020;
+    padding:8px 14px; font-weight:700; border-radius:0 0 8px 0; z-index:50; }
+  .skiplink:focus { left:0; }
+  /* Long unbroken tokens (URLs, hashes, report ids, big-number spans) must
+     wrap inside 375px cards instead of overflowing them. Page-wide on text
+     elements: anywhere only adds break opportunities, never breaks
+     already-fitting words. Grid children need min-width:0 to shrink. */
+  p, li, td, summary, .claimtext, .card code, .hist .snip, .meta-grid div { overflow-wrap:anywhere; }
+  .sevlane, .grid > div, .vsgrid > div, .meta-grid > div { min-width:0; }
+  /* Small controls sit at ~28px; guarantee >=32px (WCAG 2.2 AA 24px met,
+     AAA 44px explicitly not targeted to preserve density). */
+  button.small, .examples button, .pillbtn, .checksbar button { min-height:32px; }
+  @media (prefers-reduced-motion: reduce) {
+    .flash, tr.flash td, .skelbar { animation:none; }
+  }
   header { padding:28px 24px 8px; max-width:1060px; margin:auto; }
   header h1 { margin:0; font-size:26px; } header h1 span { color:var(--acc); }
   header p { color:var(--mut); margin:6px 0 0; max-width:70ch; }
@@ -173,6 +189,7 @@
 </style>
 </head>
 <body>
+<a class="skiplink" href="#main">Skip to main content</a>
 <header>
   <h1>Evidence <span>Atlas</span></h1>
   <p>Traceable claim analysis: structuring, real sources, deterministic checks.
@@ -186,7 +203,7 @@
     <li><b>Checking AI output?</b> Switch to “Check AI output” below to paste a whole answer and get a verdict per claim.</li>
   </ul>
 </header>
-<main>
+<main id="main" tabindex="-1" style="outline:none">
   <section class="card" aria-labelledby="inputH">
     <h2 id="inputH">Check a claim</h2>
     <div class="modetoggle" role="radiogroup" aria-label="Check mode">
@@ -195,7 +212,7 @@
     </div>
     <div id="singlePanel">
     <label class="lbl" for="claim">Claim text</label>
-    <textarea id="claim" rows="4" aria-describedby="counter svcNote"
+    <textarea id="claim" rows="4" aria-describedby="counter svcNote formErr"
       placeholder="Enter a factual claim, e.g. The GDP of the United States was $27.36 trillion in 2023."></textarea>
     <div class="row">
       <span id="counter" aria-live="off">0 / 4000</span>
@@ -212,7 +229,7 @@
       <button id="retryTop" class="ghost" hidden>Retry</button>
       <span id="busy" class="mut" role="status"></span>
     </p>
-    <p id="formErr" class="err small" hidden></p>
+    <p id="formErr" class="err small" role="alert" hidden></p>
     <p class="mut small">Tip: press Cmd+Enter (Mac) or Ctrl+Enter to run. One-click examples fill the box and run immediately:</p>
     <div class="examples">
       <button data-ex="The GDP of the United States was $27.36 trillion in 2023.">US GDP 2023 (precision cap)</button>
@@ -223,7 +240,7 @@
     </div><!-- /singlePanel -->
     <div id="batchPanel" hidden>
       <label class="lbl" for="batchText">Pasted AI output</label>
-      <textarea id="batchText" rows="8" aria-describedby="batchCounter svcNote"
+      <textarea id="batchText" rows="8" aria-describedby="batchCounter svcNote batchErr"
         placeholder="Paste AI-generated text with statistics, e.g. a full answer about GDP, population, or jobs figures. Every checkable claim gets its own verdict below."></textarea>
       <div class="row">
         <span id="batchCounter" aria-live="off">0 / 12000</span>
@@ -240,7 +257,7 @@
         <button id="batchRetry" class="ghost" hidden>Retry</button>
         <span id="batchBusy" class="mut" role="status"></span>
       </p>
-      <p id="batchErr" class="err small" hidden></p>
+      <p id="batchErr" class="err small" role="alert" hidden></p>
       <p class="mut small">Tip: press Cmd+Enter (Mac) or Ctrl+Enter to run. One-click examples fill the box and run immediately:</p>
       <div class="examples">
         <button data-bex="The GDP of the United States was $27.36 trillion in 2023. The population of Japan was 125 million in 2023.">Two economy stats</button>
@@ -278,7 +295,12 @@
     <h2 id="recentH">Recent analyses</h2>
     <div id="recent"><p class="mut">Loading recent analyses…</p></div>
   </section>
-  <div id="out" aria-live="polite"></div>
+  <!-- Announcement contract (a11y): #out itself is NOT a live region.
+       Every render path announces exactly once: skeletons use a single
+       role=status, error cards use role=alert, and report renders move
+       focus to the verdict/rollup heading. Do NOT re-add aria-live here:
+       it double-announces the whole report on every render. -->
+  <div id="out"></div>
 </main>
 <footer>
   Sources: World Bank Open Data · OpenAlex · Model (when configured): Muse Spark via Meta Model API.
@@ -289,10 +311,14 @@
 "use strict";
 const $ = id => document.getElementById(id);
 /* Single-claim timeout: a full-model analysis with the live-web pass
-   legitimately takes ~20-60s; 45s aborted slow-but-working runs
-   (red-team R2). 150s matches the batch's honest worst case. */
+   legitimately takes ~20-60s; the old 45s budget aborted
+   slow-but-working runs (red-team R2). 150s covers the honest worst
+   case; batch uses its own 300s budget (BATCH_TIMEOUT_MS). */
 const MAXLEN = 4000, TIMEOUT_MS = 150000;
 let serviceDown = false, aborter = null, elapsedTimer = null, lastRun = null;
+/* Monotonic run id shared by both flows: a superseded run must neither
+   paint over the newer run's skeleton nor steal its controller/timers. */
+let reqSeq = 0;
 
 /* ---------- text helpers: everything rendered is escaped + humanized ---------- */
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c =>
@@ -314,6 +340,43 @@ function safeMsg(v) {
     try { return JSON.stringify(v); } catch { return "Unexpected response shape."; }
   }
   return String(v);
+}
+
+/* Meta keys the backend actually sends (audit trail + receipt share this).
+   There is no "usage" key: per-stage usage lives in usage_extract,
+   usage_science, usage_falsify, usage_summary (objects or null). */
+const META_KEYS = ["app_version", "model", "temperature", "max_tokens",
+  "tolerance", "prompt_version", "input_sha256", "usage_extract",
+  "usage_science", "usage_falsify", "usage_summary", "default"];
+function fmtMetaVal(k, v) {
+  if (k.indexOf("usage_") === 0 && v && typeof v === "object") {
+    const num = x => (x == null ? "?" : String(x));
+    return "total " + num(v.total_tokens) + " (in " + num(v.prompt_tokens) +
+      ", out " + num(v.completion_tokens) +
+      (v.cached_tokens ? ", cached " + v.cached_tokens : "") + ")";
+  }
+  return safeMsg(v);
+}
+
+/* Display-only summary humanization. The STORED summary keeps machine
+   tokens ([cmp_<id>], snake_case, raw floats) because the
+   prose_traceability eval gate resolves them; this renders the
+   human-readable form: [Cn] display numbers, spaced stance words,
+   grouped large magnitudes. Unknown tokens pass through verbatim. */
+function prettySummary(text, nums) {
+  if (!text) return "";
+  let s = String(text);
+  const cNum = (nums && nums.cNum) || {};
+  s = s.replace(/\[([A-Za-z0-9_-]+)\]/g, (m, id) =>
+    cNum[id] ? "[" + cNum[id] + "]" : m);
+  s = s.split("partially_supported").join("partially supported")
+       .split("not_assessable").join("not assessable");
+  s = s.replace(/\b(\d+\.\d+e[+-]?\d+)\b/gi, m => {
+    const n = Number(m);
+    if (!isFinite(n) || Math.abs(n) < 1000) return m;
+    return n.toLocaleString("en-US", {maximumFractionDigits: 2});
+  });
+  return s;
 }
 
 /* ---------- label maps (icon + text, never color-only; no snake_case in UI) ---------- */
@@ -457,7 +520,7 @@ function submitClaim() {
   doAnalyze(text, $("domain").value);
 }
 
-/* ---------- run states: staged skeleton, abort + 45s timeout, typed errors ---------- */
+/* ---------- run states: staged skeleton, abort + 150s timeout, typed errors ---------- */
 function showSkeleton() {
   $("out").innerHTML =
     '<div class="card" role="status" aria-label="Analysis in progress">' +
@@ -467,7 +530,7 @@ function showSkeleton() {
     '<div class="skelbar" style="width:92%"></div><div class="skelbar" style="width:78%"></div>' +
     '<div class="skelbar" style="width:64%"></div>' +
     '<p class="mut small">One request, three stages — the highlight advances on elapsed time. ' +
-    'Automatically stops after 45s. <button id="cancelBtn" class="ghost small">Cancel</button></p></div>';
+    'Automatically stops after 150s. <button id="cancelBtn" class="ghost small">Cancel</button></p></div>';
   $("cancelBtn").addEventListener("click", () => { if (aborter) aborter.abort("cancelled"); });
 }
 function startElapsed() {
@@ -489,28 +552,30 @@ function startElapsed() {
 }
 function stopElapsed() { clearInterval(elapsedTimer); elapsedTimer = null; }
 async function parseErrBody(res) {
-  /* PRD envelope {error:{code,message}} with legacy {detail} fallback. */
-  let code = "", message = "";
+  /* PRD envelope {error:{code,message,request_id}} with legacy fallback. */
+  let code = "", message = "", requestId = "";
   try {
     const b = await res.json();
     if (b && typeof b === "object" && b.error && typeof b.error === "object") {
       code = typeof b.error.code === "string" ? b.error.code : "";
       message = safeMsg(b.error.message);
+      requestId = typeof b.error.request_id === "string" ? b.error.request_id : "";
     } else if (b && typeof b === "object" && "detail" in b) {
       message = safeMsg(b.detail);
     } else {
       message = safeMsg(b);
     }
   } catch { message = ""; }
-  return {status: res.status, code, message};
+  return {status: res.status, code, message, requestId};
 }
 function errorCard(title, detail, code, retryable, opts) {
   /* opts.retryTopId / opts.onRetry let the batch flow reuse this card with its
      own retry target; single-claim callers pass nothing and behave as before. */
   opts = opts || {};
   const codeBit = code ? ' <span class="mut small">(code: ' + esc(human(code)) + ")</span>" : "";
+  const refBit = opts.ref ? ' <span class="mut small">(ref: <code>' + esc(opts.ref) + "</code>)</span>" : "";
   $("out").innerHTML =
-    '<div class="card" role="alert"><h2>' + esc(title) + "</h2><p>" + esc(detail) + codeBit + "</p>" +
+    '<div class="card" role="alert"><h2>' + esc(title) + "</h2><p>" + esc(detail) + codeBit + refBit + "</p>" +
     (retryable ? '<p><button id="retryBtn">Retry</button> ' +
       '<span class="mut small">Your claim text is kept above.</span></p>'
       : '<p class="mut small">Your claim text is kept above — edit it and run again.</p>') + "</div>";
@@ -523,19 +588,21 @@ function errorCard(title, detail, code, retryable, opts) {
 }
 async function doAnalyze(text, domain) {
   if (aborter) { try { aborter.abort("superseded"); } catch {} }
+  const mySeq = ++reqSeq;
   lastRun = {text, domain};
   aborter = new AbortController();
+  const mine = aborter;
   showSkeleton();
   startElapsed();
   $("run").disabled = true;
   $("busy").textContent = "Analyzing…";
-  const timer = setTimeout(() => { try { aborter.abort("timeout"); } catch {} }, TIMEOUT_MS);
+  const timer = setTimeout(() => { try { mine.abort("timeout"); } catch {} }, TIMEOUT_MS);
   try {
     const res = await fetch("/api/analyze", {
       method: "POST",
       headers: {"Content-Type": "application/json"},
       body: JSON.stringify({text, limit: 5, domain, persist: true}),
-      signal: aborter.signal
+      signal: mine.signal
     });
     clearTimeout(timer);
     stopElapsed();
@@ -543,9 +610,9 @@ async function doAnalyze(text, domain) {
       const e = await parseErrBody(res);
       const detail = e.message || ("The server answered with status " + e.status + ".");
       if (e.status === 400 || e.status === 404 || e.status === 422) {
-        errorCard("Please check your claim", detail, e.code, false);
+        errorCard("Please check your claim", detail, e.code, false, {ref: e.requestId});
       } else {
-        errorCard("Service issue — please retry", detail, e.code, true);
+        errorCard("Service issue — please retry", detail, e.code, true, {ref: e.requestId});
       }
       return;
     }
@@ -555,28 +622,40 @@ async function doAnalyze(text, domain) {
     afterReport(report);
   } catch (e) {
     clearTimeout(timer);
+    // abort(reason) rejects fetch with the reason VALUE (a string), not a
+    // DOMException, so match the reason first and e.name second. Timeout
+    // is explicit: only a real timeout shows the timeout card.
+    const reason = (mine.signal.reason !== undefined && mine.signal.reason !== null)
+      ? mine.signal.reason : "";
+    const why = (typeof e === "string") ? e
+      : (e && e.name === "AbortError") ? reason : "";
+    /* A superseded run owns nothing on screen anymore: the newer run's
+       skeleton is already painted with its own elapsed ticker. Stay fully
+       silent — no card, no timer/victim side effects. */
+    if (why === "superseded" && mySeq !== reqSeq) return;
     stopElapsed();
-    if (e && e.name === "AbortError") {
-      const reason = (aborter && aborter.signal) ? aborter.signal.reason : "";
-      if (reason === "cancelled") {
-        errorCard("Analysis cancelled", "You stopped the request. Nothing was lost — " +
-          "retry whenever ready.", "cancelled", false);
-      } else if (reason === "superseded") {
-        errorCard("Analysis superseded", "A newer analysis replaced this one; showing the " +
-          "latest result when it arrives.", "superseded", false);
-      } else {
-        errorCard("Analysis stopped", "The request was stopped after 150 seconds without an answer. " +
-          "The server may be busy — retry, or try a shorter claim.", "timeout", true);
-      }
+    if (why === "cancelled") {
+      errorCard("Analysis cancelled", "You stopped the request. Nothing was lost — " +
+        "retry whenever ready.", "cancelled", false);
+    } else if (why === "superseded") {
+      errorCard("Analysis superseded", "A newer analysis replaced this one; showing the " +
+        "latest result when it arrives.", "superseded", false);
+    } else if (why === "timeout") {
+      errorCard("Analysis stopped", "The request was stopped after 150 seconds without an answer. " +
+        "The server may be busy — retry, or try a shorter claim.", "timeout", true);
     } else {
+      const netMsg = safeMsg(e && e.message);
       errorCard("Service issue — please retry",
-        "Could not reach the analysis service (" + safeMsg(e && e.message) + "). " +
+        "Could not reach the analysis service" + (netMsg ? " (" + netMsg + ")" : "") + ". " +
         "Check your connection and retry.", "network", true);
     }
   } finally {
     clearTimeout(timer);
-    stopElapsed();
-    aborter = null;
+    /* Only the newest run tears down shared state: a stale finally must
+       not null the newer run's controller (breaks its cancel/timeout and
+       the next supersede) nor stop its elapsed ticker. Buttons/busy are
+       per-flow and always safe to reset. */
+    if (mySeq === reqSeq) { stopElapsed(); aborter = null; }
     if (!serviceDown) $("run").disabled = false;
     $("busy").textContent = "";
   }
@@ -597,7 +676,13 @@ function buildNums(report) {
 function jumpTo(id) {
   const t = document.getElementById(id);
   if (!t) return;
-  t.scrollIntoView({behavior: "smooth", block: "center"});
+  const reduceMotion = window.matchMedia &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  t.scrollIntoView({behavior: reduceMotion ? "auto" : "smooth", block: "center"});
+  /* Keyboard parity: the tab position must follow the viewport, otherwise
+     a keyboard user tabs from the pill while looking at the check. */
+  if (t.tabIndex < 0) t.tabIndex = -1;
+  t.focus({preventScroll: true});
   t.classList.remove("flash");
   void t.offsetWidth;
   t.classList.add("flash");
@@ -629,8 +714,9 @@ function verdictHTML(report, nums, pfx) {
     .map(id => ({id, n: nums.cNum[id] || String(id)}));
   const con = (Array.isArray(k.contradict_comparison_ids) ? k.contradict_comparison_ids : [])
     .map(id => ({id, n: nums.cNum[id] || String(id)}));
-  const pills = list => list.length
-    ? list.map(x => '<button class="pillbtn" data-cmp="' + esc(x.n) + '">' + esc(x.n) + "</button>").join("")
+  const pills = (list, kind) => list.length
+    ? list.map(x => '<button class="pillbtn" data-cmp="' + esc(x.n) + '" aria-label="' +
+        esc(x.n + ", " + kind + " check — jump to check") + '">' + esc(x.n) + "</button>").join("")
     : '<span class="mut small">none</span>';
   const elapsed = isNum(report.elapsed_ms) ? fmtDur(report.elapsed_ms)
     : (isNum(report.elapsedMs) ? fmtDur(report.elapsedMs) : "");
@@ -638,7 +724,7 @@ function verdictHTML(report, nums, pfx) {
     '<h2 id="' + pfx + 'verdictH" tabindex="-1"><span class="stance s-' + esc(String(k.stance || "unverifiable")) +
     '">' + esc(st.icon) + " " + esc(st.label) + "</span> " + actorBadge(k.actor) + "</h2>" +
     "<p>" + esc(st.def) + "</p>" +
-    (k.summary ? "<p>" + esc(k.summary) + "</p>" : "") +
+    (k.summary ? "<p>" + esc(prettySummary(k.summary, nums)) + "</p>" : "") +
     '<p class="small">Based on <b>' + nSrc + "</b> source" + (nSrc === 1 ? "" : "s") +
     " and <b>" + nCmp + "</b> check" + (nCmp === 1 ? "" : "s") +
     (elapsed ? " · analyzed in " + esc(elapsed) : "") + "</p>" +
@@ -646,8 +732,8 @@ function verdictHTML(report, nums, pfx) {
     '<span class="badge b-model">MODEL</span> model output · ' +
     '<span class="badge b-heur">HEURISTIC</span> rule-based fallback</p>' +
     checksBarHTML(report, nums) +
-    '<p class="small">Consistent checks: ' + pills(sup) +
-    "<br>Contradicting checks: " + pills(con) + "</p></section>";
+    '<p class="small">Consistent checks: ' + pills(sup, "consistent") +
+    "<br>Contradicting checks: " + pills(con, "contradicting") + "</p></section>";
 }
 /* Checks bar: one equal-width clickable segment per comparison (counts only,
    no fake confidence). Reuses jumpTo() via the shared [data-cmp] wiring. */
@@ -665,6 +751,7 @@ function checksBarHTML(report, nums) {
     else if (x.verdict === "contradicts") { cls = "cb-bad"; nBad++; }
     else { cls = x.verdict === "inconclusive" ? "cb-warn" : "cb-na"; nOther++; }
     return '<button class="' + cls + '" data-cmp="' + esc(cn) + '" title="' +
+      esc(cn + ": " + v.label + " — jump to check") + '" aria-label="' +
       esc(cn + ": " + v.label + " — jump to check") + '">' +
       esc(v.icon + " " + cn) + "</button>";
   }).join("");
@@ -711,7 +798,7 @@ function vsStripHTML(report, nums) {
   return '<section class="card" id="vsStrip" aria-labelledby="vsH">' +
     '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px">' +
     '<h2 id="vsH" style="margin:0">Why not just ask a chatbot?</h2>' +
-    '<button id="vsHide" class="ghost small">Dismiss</button></div>' +
+    '<button id="vsHide" class="ghost small" aria-label="Dismiss the chatbot-comparison panel">Dismiss</button></div>' +
     '<details open><summary class="small">Show the honest comparison</summary>' +
     '<div class="vsgrid" style="margin-top:10px">' +
     '<div class="mockbox"><p class="mocklabel">ILLUSTRATIVE MOCK — NOT A LIVE CALL, NOT A REAL COMPETITOR RESULT</p>' +
@@ -771,15 +858,27 @@ function evidenceHTML(report, nums, pfx) {
     const bits = [cap(e.source_kind), cap(e.evidence_kind), connectorName(e.connector)]
       .filter(x => x && x !== "—");
     const dt = fmtDate(e.retrieved_at || e.retrievedAt);
+    /* Source vintage was stored in the payload but surfaced nowhere; a
+       2021 observation answering a 2023 claim must be visible, not just
+       comparable. obs_status/decimal render only when the source sends
+       them (World Bank rows do, OpenAlex rows don't). */
+    const pl = (e.payload && typeof e.payload === "object") ? e.payload : {};
+    const vintBits = [];
+    if (pl.source_vintage) vintBits.push("data vintage " + pl.source_vintage);
+    if (pl.obs_status) vintBits.push("status " + pl.obs_status);
+    if (pl.source_decimal !== null && pl.source_decimal !== undefined && pl.source_decimal !== "")
+      vintBits.push("decimals " + pl.source_decimal);
     return '<article class="ev" id="' + pfx + "ev-" + esc(en) + '"' + (i >= 3 ? ' data-extra="1" hidden' : "") + ">" +
       '<div><span class="enum">' + esc(en) + "</span><b>" + esc(e.source_name || "Unnamed source") +
       '</b><span class="tier ' + tier.c + '">' + esc(tier.t) + "</span><br>" +
       '<span class="small mut">' + esc(bits.join(" · ")) + "</span></div>" +
       '<p><span id="' + pfx + "ex-" + esc(en) + '">' + esc(cut ? full.slice(0, 280) + "…" : (full || "No excerpt provided.")) +
       "</span>" + (cut ? ' <button class="ghost small" data-exbtn="' + esc(en) + '" data-full="' +
-        esc(full) + '" data-cut="' + esc(full.slice(0, 280) + "…") + '">Expand</button>' : "") + "</p>" +
+        esc(full) + '" data-cut="' + esc(full.slice(0, 280) + "…") +
+        '" aria-expanded="false" aria-controls="' + pfx + "ex-" + esc(en) + '">Expand</button>' : "") + "</p>" +
       (e.locator ? '<p class="small mut">' + esc(e.locator) + "</p>" : "") +
       (dt ? '<p class="small mut">Retrieved: ' + esc(dt) + "</p>" : "") +
+      (vintBits.length ? '<p class="small mut">Source vintage: ' + esc(vintBits.join(" · ")) + "</p>" : "") +
       "<p>" + srcLink(e.source_url) + "</p></article>";
   }).join("");
   const more = evs.length > 3
@@ -823,7 +922,8 @@ function comparisonsHTML(report, nums, pfx) {
   const more = cmps.length > 5
     ? '<p><button id="' + pfx + 'cmpMore" class="ghost small">Show all ' + cmps.length + " checks</button></p>" : "";
   return '<section class="card" aria-labelledby="' + pfx + 'cmpH"><h2 id="' + pfx + 'cmpH">Comparisons (' + cmps.length + ")</h2>" +
-    '<div class="tblwrap"><table><caption class="small mut" style="text-align:left">' +
+    '<div class="tblwrap" tabindex="0" role="region" aria-label="Detailed checks table, scrolls horizontally">' +
+    '<table><caption class="small mut" style="text-align:left">' +
     "Each check compares a claimed value with a sourced value.</caption>" +
     "<tr><th>Check</th><th>Claim</th><th>Evidence</th><th>Difference</th><th>Verdict</th><th>Why</th><th>Source</th></tr>" +
     rows + "</table></div>" + more + "</section>";
@@ -836,7 +936,8 @@ function uncertaintiesHTML(report, pfx) {
   const lanes = {HIGH: [], MED: [], LOW: []};
   uncs.forEach(u => {
     const s = sevInfo(u && u.severity);
-    const item = "<li>" + esc((u && u.description) || "Undisclosed gap.") +
+    const desc = prettySummary((u && u.description) || "Undisclosed gap.", null);
+    const item = "<li>" + esc(desc) +
       (u && u.code ? " <code>" + esc(human(u.code)) + "</code>" : "") + "</li>";
     (lanes[s.t] || lanes.LOW).push(item);
   });
@@ -889,24 +990,23 @@ function auditHTML(report) {
       "<td class=\"small\">" + esc(a.detail || "—") + "</td><td>" + esc(dur) + "</td></tr>";
   }).join("");
   const m = report.meta && typeof report.meta === "object" ? report.meta : null;
-  const metaKeys = ["app_version", "model", "temperature", "max_tokens", "tolerance",
-    "prompt_version", "input_sha256", "usage"];
   let meta = "";
   if (m) {
-    const cells = metaKeys.filter(k => m[k] != null && m[k] !== "").map(k =>
-      "<div><b>" + esc(cap(k)) + ":</b> " + esc(safeMsg(m[k])) + "</div>").join("");
+    const cells = META_KEYS.filter(k => m[k] != null && m[k] !== "").map(k =>
+      "<div><b>" + esc(cap(k)) + ":</b> " + esc(fmtMetaVal(k, m[k])) + "</div>").join("");
     meta = cells ? '<h3 class="small">Run metadata</h3><div class="meta-grid">' + cells + "</div>"
       : '<p class="small mut">No run metadata recorded.</p>';
   }
   return "<details><summary>Audit trail" + (steps.length ? " (" + steps.length + " steps)" : "") + "</summary>" +
-    (rows ? '<div class="tblwrap"><table><tr><th>Step</th><th>Actor</th><th>Detail</th><th>Duration</th></tr>' +
+    (rows ? '<div class="tblwrap" tabindex="0" role="region" aria-label="Audit trail table, scrolls horizontally">' +
+      '<table><tr><th>Step</th><th>Actor</th><th>Detail</th><th>Duration</th></tr>' +
       rows + "</table></div>" : "<p>No audit steps recorded.</p>") + meta + "</details>";
 }
 function footHTML(report) {
   return '<div class="card small"><span class="mut">Report </span><code id="repId">' +
     esc(report.report_id || "unknown") + "</code> " +
     '<button id="copyLink" class="ghost small">Copy link</button> ' +
-    '<span id="copyMsg" class="mut"></span><br><br>' +
+    '<span id="copyMsg" class="mut" role="status"></span><br><br>' +
     '<button id="rerunBtn" class="ghost small">Re-run (determinism check)</button> ' +
     '<button id="receiptBtn" class="ghost small">Export receipt (.md)</button>' +
     '<p id="rerunMsg" class="mut" role="status"></p></div>';
@@ -1008,9 +1108,8 @@ function exportReceipt(report, nums) {
     (u.description || "?") + (u.code ? " (" + u.code + ")" : "")));
   L.push("");
   L.push("## Run metadata");
-  ["app_version", "model", "temperature", "max_tokens", "tolerance",
-    "prompt_version", "input_sha256", "usage"].forEach(key => {
-    if (m[key] != null && m[key] !== "") L.push("- " + key + ": " + safeMsg(m[key]));
+  META_KEYS.forEach(key => {
+    if (m[key] != null && m[key] !== "") L.push("- " + key + ": " + fmtMetaVal(key, m[key]));
   });
   L.push("- report_id: " + (report.report_id || "unknown"));
   try {
@@ -1043,6 +1142,7 @@ function wireReport(root, report, pfx) {
       const open = b.textContent === "Expand";
       span.textContent = open ? b.dataset.full : b.dataset.cut;
       b.textContent = open ? "Collapse" : "Expand";
+      b.setAttribute("aria-expanded", open ? "true" : "false");
     }));
   const evMore = document.getElementById(pfx + "evMore");
   if (evMore) evMore.addEventListener("click", () => {
@@ -1183,6 +1283,7 @@ function startBatchElapsed() {
 }
 async function doCheck(text, domain) {
   if (aborter) { try { aborter.abort("superseded"); } catch {} }
+  const mySeq = ++reqSeq;
   lastBatch = {text, domain};
   const retryLast = () => {
     $("batchText").value = lastBatch.text;
@@ -1190,17 +1291,18 @@ async function doCheck(text, domain) {
     doCheck(lastBatch.text, lastBatch.domain);
   };
   aborter = new AbortController();
+  const mine = aborter;
   showBatchSkeleton();
   startBatchElapsed();
   $("batchRun").disabled = true;
   $("batchBusy").textContent = "Checking…";
-  const timer = setTimeout(() => { try { aborter.abort("timeout"); } catch {} }, BATCH_TIMEOUT_MS);
+  const timer = setTimeout(() => { try { mine.abort("timeout"); } catch {} }, BATCH_TIMEOUT_MS);
   try {
     const res = await fetch("/api/check", {
       method: "POST",
       headers: {"Content-Type": "application/json"},
       body: JSON.stringify({text, limit: 5, domain, persist: true}),
-      signal: aborter.signal
+      signal: mine.signal
     });
     clearTimeout(timer);
     stopElapsed();
@@ -1209,10 +1311,10 @@ async function doCheck(text, domain) {
       const detail = e.message || ("The server answered with status " + e.status + ".");
       if (e.status === 400 || e.status === 404 || e.status === 422) {
         errorCard("Please check your text", detail, e.code, false,
-          {retryTopId: "batchRetry", onRetry: retryLast});
+          {retryTopId: "batchRetry", onRetry: retryLast, ref: e.requestId});
       } else {
         errorCard("Service issue — please retry", detail, e.code, true,
-          {retryTopId: "batchRetry", onRetry: retryLast});
+          {retryTopId: "batchRetry", onRetry: retryLast, ref: e.requestId});
       }
       return;
     }
@@ -1221,33 +1323,39 @@ async function doCheck(text, domain) {
     renderBatch(body);
   } catch (e) {
     clearTimeout(timer);
+    // Same contract as the single-claim path: abort(reason) rejects with
+    // the reason string itself, so match it before e.name.
+    const reason = (mine.signal.reason !== undefined && mine.signal.reason !== null)
+      ? mine.signal.reason : "";
+    const why = (typeof e === "string") ? e
+      : (e && e.name === "AbortError") ? reason : "";
+    /* Stale superseded runs stay fully silent (see doAnalyze). */
+    if (why === "superseded" && mySeq !== reqSeq) return;
     stopElapsed();
-    if (e && e.name === "AbortError") {
-      const reason = (typeof aborter !== "undefined" && aborter && aborter.signal)
-        ? aborter.signal.reason : "";
-      if (reason === "cancelled") {
-        errorCard("Check cancelled", "You stopped the request. Nothing was lost — " +
-          "retry whenever ready.", "cancelled", false,
-          {retryTopId: "batchRetry", onRetry: retryLast});
-      } else if (reason === "superseded") {
-        errorCard("Check superseded", "A newer check replaced this one; showing the " +
-          "latest result when it arrives.", "superseded", false,
-          {retryTopId: "batchRetry", onRetry: retryLast});
-      } else {
-        errorCard("Check stopped", "The request was stopped after 5 minutes without an answer. " +
-          "The server may be busy — retry, or paste a shorter text.", "timeout", true,
-          {retryTopId: "batchRetry", onRetry: retryLast});
-      }
+    if (why === "cancelled") {
+      errorCard("Check cancelled", "You stopped the request. Nothing was lost — " +
+        "retry whenever ready.", "cancelled", false,
+        {retryTopId: "batchRetry", onRetry: retryLast});
+    } else if (why === "superseded") {
+      errorCard("Check superseded", "A newer check replaced this one; showing the " +
+        "latest result when it arrives.", "superseded", false,
+        {retryTopId: "batchRetry", onRetry: retryLast});
+    } else if (why === "timeout") {
+      errorCard("Check stopped", "The request was stopped after 5 minutes without an answer. " +
+        "The server may be busy — retry, or paste a shorter text.", "timeout", true,
+        {retryTopId: "batchRetry", onRetry: retryLast});
     } else {
+      const netMsg = safeMsg(e && e.message);
       errorCard("Service issue — please retry",
-        "Could not reach the analysis service (" + safeMsg(e && e.message) + "). " +
+        "Could not reach the analysis service" + (netMsg ? " (" + netMsg + ")" : "") + ". " +
         "Check your connection and retry.", "network", true,
         {retryTopId: "batchRetry", onRetry: retryLast});
     }
   } finally {
     clearTimeout(timer);
-    stopElapsed();
-    aborter = null;
+    /* Newest run only (see doAnalyze): stale runs must not null the
+       newer run's controller or stop its elapsed ticker. */
+    if (mySeq === reqSeq) { stopElapsed(); aborter = null; }
     if (!serviceDown) $("batchRun").disabled = false;
     $("batchBusy").textContent = "";
   }
@@ -1314,7 +1422,7 @@ function batchCardHTML(rep, i, total) {
     '<p><span class="stance s-' + esc(String(k.stance || "unverifiable")) + '">' +
     esc(st.icon) + " " + esc(st.label) + "</span> " + actorBadge(k.actor) + "</p>" +
     "<p>" + esc(st.def) + "</p>" +
-    (k.summary ? "<p>" + esc(k.summary) + "</p>" : "") +
+    (k.summary ? "<p>" + esc(prettySummary(k.summary, nums)) + "</p>" : "") +
     '<p class="small">Based on <b>' + nSrc + "</b> source" + (nSrc === 1 ? "" : "s") +
     " and <b>" + nCmp + "</b> check" + (nCmp === 1 ? "" : "s") +
     (elapsed ? " · analyzed in " + esc(elapsed) : "") + "</p>" +
@@ -1331,10 +1439,14 @@ function batchCardHTML(rep, i, total) {
     '<p id="' + pfx + 'rerunMsg" class="mut" role="status"></p></div></article>';
 }
 /* Error entries are rendered distinctly — badge + explanation, never a stance. */
-function batchErrorHTML(entry, i, total) {
+function batchErrorHTML(entry, i, total, alert) {
   const text = (entry && entry.claim_text) || "";
   const detail = entry && entry.error ? safeMsg(entry.error) : "";
-  return '<article class="card batchcard batcherr" role="alert" aria-labelledby="b' + i + 'h">' +
+  /* One assertive announcement per batch: the first error card keeps
+     role=alert, the rest are groups (the roll-up errcount line already
+     states the total). alert defaults true for direct callers. */
+  const role = alert === false ? "group" : "alert";
+  return '<article class="card batchcard batcherr" role="' + role + '" aria-labelledby="b' + i + 'h">' +
     '<h2 id="b' + i + 'h">Claim ' + (i + 1) + " of " + total + " — not checked</h2>" +
     (text ? '<p class="claimtext">“' + esc(text) + "”</p>" : "") +
     '<p><span class="badge b-err">ERROR</span> This claim could not be checked, ' +
@@ -1354,10 +1466,15 @@ function renderBatch(body) {
         notes.map(x => "<li>" + esc(safeMsg(x)) + "</li>").join("") + "</ul>" : "") +
       "</div>";
   } else {
+    let alerted = false;
     list.forEach((rep, i) => {
-      html += (rep && rep.error && !rep.conclusion)
-        ? batchErrorHTML(rep, i, list.length)
-        : batchCardHTML(rep, i, list.length);
+      if (rep && rep.error && !rep.conclusion) {
+        const first = !alerted;
+        alerted = true;
+        html += batchErrorHTML(rep, i, list.length, first);
+      } else {
+        html += batchCardHTML(rep, i, list.length);
+      }
     });
   }
   $("out").innerHTML = html;
@@ -1409,7 +1526,8 @@ function renderRecent(list) {
       esc(st.icon) + " " + esc(st.short || st.label) + "</span>" +
       '<span class="snip">' + esc(snip || "(no text)") + "</span>" +
       '<span class="mut small">' + esc(fmtDate(r.created_at || r.createdAt)) + "</span></button>" +
-      '<button class="ghost small" data-del="' + esc(r.report_id) + '">Delete</button></div>';
+      '<button class="ghost small" data-del="' + esc(r.report_id) +
+      '" aria-label="Delete report ' + esc(r.report_id) + '">Delete</button></div>';
   }).join("");
   box.querySelectorAll("[data-load]").forEach(b =>
     b.addEventListener("click", () => loadReport(b.dataset.load)));

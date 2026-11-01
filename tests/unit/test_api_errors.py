@@ -102,3 +102,27 @@ def test_request_ids_unique_per_error(client):
     a = client.post("/api/analyze", json={"text": ""}).json()["error"]["request_id"]
     b = client.post("/api/analyze", json={"text": ""}).json()["error"]["request_id"]
     assert a != b
+
+
+def test_rate_limit_loopback_variants_share_one_bucket():
+    # Sec LOW (xff-rate): 127.0.0.1/::1/localhost/testclient resolve to the
+    # same localhost caller, so XFF spellings must not multiply the quota.
+    appmod._rate_hits.clear()
+    for _ in range(60):
+        appmod._check_rate_limit_locked("127.0.0.1", 1)
+    with pytest.raises(appmod.ApiError):
+        appmod._check_rate_limit_locked("localhost", 1)
+    with pytest.raises(appmod.ApiError):
+        appmod._check_rate_limit_locked("::1", 1)
+    # A genuinely different caller keeps its own bucket.
+    appmod._check_rate_limit_locked("203.0.113.9", 1)
+
+
+def test_openapi_doc_matches_served_schema(client):
+    # Contract LOW (openapi-bytes): the checked-in schema must describe
+    # the served app. Parsed comparison (not bytes): formatting drift is
+    # not a contract break, schema drift is.
+    import json
+
+    doc_path = Path(__file__).resolve().parents[2] / "docs" / "openapi.json"
+    assert client.get("/openapi.json").json() == json.loads(doc_path.read_text())

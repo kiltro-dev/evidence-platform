@@ -56,12 +56,18 @@ def _retrieve_one(
     claim: StructuredClaim,
     limit: int,
     retry_delay_s: float,
-) -> tuple[bool, object]:
-    """Run one connector, capturing its exception instead of raising."""
+) -> tuple[bool, object, float]:
+    """Run one connector, capturing its exception instead of raising.
+
+    Returns (ok, payload, elapsed_s): the connector's own wall time
+    (including its retry sleep) so callers can audit it honestly.
+    """
+    t0 = time.perf_counter()
     try:
-        return (True, _retrieve_with_retry(conn, claim, limit, retry_delay_s))
+        return (True, _retrieve_with_retry(conn, claim, limit, retry_delay_s),
+                time.perf_counter() - t0)
     except Exception as exc:  # same net as run.py's per-connector handler
-        return (False, exc)
+        return (False, exc, time.perf_counter() - t0)
 
 
 def retrieve_all(
@@ -70,6 +76,7 @@ def retrieve_all(
     limit: int = 5,
     *,
     retry_delay_s: float | None = None,
+    timings: dict[str, float] | None = None,
 ) -> tuple[list[Evidence], list[tuple[str, BaseException]]]:
     """Retrieve from all connectors in parallel.
 
@@ -78,6 +85,9 @@ def retrieve_all(
     (connector_name, exception) per failed connector, in connector order.
     `retry_delay_s` defaults to this module's RETRY_DELAY_S (None reads
     the current module value so tests can monkeypatch it, as with run's).
+    When `timings` is given, it is filled with per-connector wall seconds
+    keyed by connector name (failed connectors included: their elapsed
+    time until the exception is still honest latency data).
     """
     if retry_delay_s is None:
         retry_delay_s = RETRY_DELAY_S
@@ -96,7 +106,9 @@ def retrieve_all(
         )
     evidences: list[Evidence] = []
     errors: list[tuple[str, BaseException]] = []
-    for conn, (ok, payload) in zip(ordered, outcomes):
+    for conn, (ok, payload, elapsed_s) in zip(ordered, outcomes):
+        if timings is not None:
+            timings[conn.name] = elapsed_s
         if ok:
             evidences.extend(payload)  # type: ignore[arg-type]
         else:

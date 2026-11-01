@@ -184,3 +184,26 @@ def test_detect_ukraine_single_geo_clean():
                    [_pct("x", 1.0)])
     flags = detect_claim_shape(claim)
     assert not any(u.code == "multi_geo_unchecked" for u in flags)
+
+
+def test_bare_us_resolves_and_flags_multi_geo():
+    # HIGH-2: bare 'US' was unresolvable, so China+US claims concluded
+    # without any multi_geo disclosure.
+    assert resolve_all_countries(
+        "The populations of China and the US were 1.4 billion "
+        "and 330 million in 2023.") == ["CHN", "USA"]
+
+
+def test_short_codes_need_standalone_uppercase():
+    # 'us' pronoun, 'usage', Spanish 'usa' verb, and 'euro' must not
+    # resolve; sloppy-lowercase codes degrade to geo-less (honest).
+    assert "USA" not in resolve_all_countries("The data told us little.")
+    assert resolve_all_countries("GDP usage grew 5% in 2023.") == []
+    assert resolve_all_countries("El desempleo usa cifras de 2023.") == []
+    assert "EUU" not in resolve_all_countries("The euro fell in France.")
+    assert resolve_all_countries("Travel to usa was cheap.") == []
+
+
+def test_dotted_and_spanish_usa_forms_still_resolve():
+    assert resolve_all_countries("U.S. GDP was $27tn in 2023.") == ["USA"]
+    assert resolve_all_countries("El PIB de EE. UU. fue alto.") == ["USA"]

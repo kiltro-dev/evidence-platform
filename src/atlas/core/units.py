@@ -59,6 +59,7 @@ UNIT_ALIASES: dict[str, str] = {
     "%": "percent",
     "percentage point": "pp",
     "percentage points": "pp",
+    "pp": "pp",
     "people": "count",
     "inhabitants": "count",
     "deaths": "count",
@@ -127,9 +128,13 @@ _QUANTITY_RE = re.compile(
 # The optional "de" handles Spanish "5 millones de personas" (the
 # preposition sits between scale word and unit). EN-safe: "de" + space is
 # not an English construction after a bare number.
+# Alternation is longest-first within each family: "percentage points"
+# must precede "percent" (regex alternation is ordered, and the prefix
+# would otherwise win). Bare "pp" needs a trailing guard so "2 ppm"
+# (parts per million) does not read as percentage points.
 _UNIT_AFTER_RE = re.compile(
     r"^\s*(?:de\s+)?(usd|us\$|dollars?|dólares|dolares|dólar|dolar|eur|euros?|gbp|pounds?|libras?|jpy|yen|"
-    r"percent|percentage points?|por ciento|puntos? porcentuales?|"
+    r"percentage points?|percent|pp(?![a-zA-Z])|por ciento|puntos? porcentuales?|"
     r"people|personas?|inhabitants|habitantes?|deaths|muertes?|cases|casos?|"
     r"m/s|meters per second|metres per second|km/s|"
     r"celsius|fahrenheit|kelvin|°c|°f|years?|años?|anos?)",

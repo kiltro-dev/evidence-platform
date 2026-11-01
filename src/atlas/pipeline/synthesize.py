@@ -221,6 +221,10 @@ def template_summary(
     comparisons: list[Comparison],
     uncertainties: list[Uncertainty],
 ) -> tuple[str, list[str]]:
+    # The headline tallies every check verdict, including ceiling-allowlisted
+    # time_compatibility — the same boundary as decide_stance/support ids
+    # (falsify metrics only ever emit "inconclusive", so advisory checks
+    # can never inflate these counts). Triaged, not a defect.
     n_cons = sum(1 for c in comparisons if c.verdict == "consistent")
     n_con = sum(1 for c in comparisons if c.verdict == "contradicts")
     n_nc = sum(1 for c in comparisons if c.verdict == "not_comparable")

@@ -2,7 +2,9 @@
 
 Base URL (local): `http://127.0.0.1:8765`. Machine-readable schema:
 [openapi.json](openapi.json) (exported from the live app's `/openapi.json`;
-byte-identical to the served document).
+byte-identical at export time; the served document is authoritative —
+regenerate with `curl -s http://127.0.0.1:8765/openapi.json -o docs/openapi.json`
+while the app runs, and keep `test_openapi_doc_matches_served_schema` green).
 
 All endpoints are localhost-only with no authentication (single-user demo).
 Every request and response body is JSON.
@@ -58,12 +60,16 @@ Request (`AnalyzeRequest`):
   shared bucket across `/api/analyze` (cost 1) and `/api/check`
   (fixed worst-case cost 8 — charging actuals would need a model
   split before the gate, an abuse vector). Validation runs before
-  the charge, so malformed (400) requests are free.
+  the charge, so malformed (400) requests are free. Loopback
+  spellings (`127.0.0.1`/`::1`/`localhost`) share one bucket.
 - Cache: identical `(text, domain, limit, persist, model)` hits return
   the cached `Report` without running the pipeline (128 entries FIFO,
-  1h TTL), unless `fresh: true`. `/api/check` has no cache: every
-  call re-runs. `DELETE /api/reports/{id}` also evicts that report's
-  cache entries (no deleted-id resurrection).
+  1h TTL), unless `fresh: true`. Concurrent identical misses are
+  coalesced: one request runs the pipeline while the others wait and
+  share its cached report (a waiter whose owner failed runs the
+  pipeline itself instead of inheriting the error). `/api/check` has
+  no cache: every call re-runs. `DELETE /api/reports/{id}` also evicts
+  that report's cache entries (no deleted-id resurrection).
 - Loopback only: non-`127.0.0.1`/`::1`/`localhost` clients get 403
   `non_loopback_blocked` unless `ATLAS_ALLOW_NON_LOOPBACK=1` (the
   demo server has no auth, so it must not serve the network).
@@ -117,6 +123,9 @@ single claim):
 - Guards: same 60-units/min/IP bucket (a batch costs 8, charged
   after validation). No identical-text cache: every call re-runs.
   Sub-claims run in parallel (one thread each, input order kept).
+  Batch wall time is the slowest sub-claim: there is no batch-level
+  deadline, each leaf times out on its own (connectors 20s + one
+  retry, model 120s). Per-claim elapsed times ride in each sub-report.
 - Cost scales with sub-claims: each runs the full pipeline (up to 5
   model calls per claim, plus 1 split call per batch — an 8-claim batch
   costs up to 1+8×5=41 calls). Post-hoc use, not inline.
@@ -162,6 +171,11 @@ with server logs. Tracebacks and request bodies never appear in responses.
 | 405 | `bad_request` | Framework 4xx (e.g. wrong method); unforeseen validation shapes also use this code |
 | 429 | `rate_limited` | More than 60 quota units/min from one IP (`/api/analyze` = 1, `/api/check` = 8; malformed requests are free) |
 | 500 | `analysis_failed` | Pipeline fault (traceback stays server-side), or any unhandled error |
+
+Codes name the failing check; the HTTP status distinguishes a malformed
+shape (422, FastAPI validation before the handler runs) from a semantic
+rejection (400, the handler's own rules) — so 422s reuse the 400-code of
+the field at fault (e.g. wrong-typed `text` is 422 `empty_claim`).
 
 Example:
 

@@ -4,11 +4,21 @@ from __future__ import annotations
 
 import os
 import sqlite3
+import threading
 from pathlib import Path
 
 from ..core.types import Report
 
 DEFAULT_DB = Path("data/atlas.db")
+
+# Paths whose PRAGMA+DDL init already ran in this process. save_report
+# used to re-run init_db's connect+PRAGMA+DDL on every write (~12% of a
+# degraded analysis); the guard below skips it once the reports table is
+# known present. The table check (not just the set) keeps the guard
+# correct if the file is deleted mid-run; concurrent first-writers may
+# both run the idempotent DDL, which is safe.
+_init_lock = threading.Lock()
+_init_done: set[str] = set()
 
 
 def db_path() -> Path:
@@ -17,6 +27,10 @@ def db_path() -> Path:
 
 def init_db(path: Path | None = None) -> Path:
     p = path or db_path()
+    key = str(p)
+    with _init_lock:
+        if key in _init_done and _has_reports_table(p):
+            return p
     p.parent.mkdir(parents=True, exist_ok=True)
     # WAL + generous busy timeout: parallel batch sub-claims (and
     # concurrent server requests) persist on separate connections;
@@ -32,6 +46,8 @@ def init_db(path: Path | None = None) -> Path:
                    report_json TEXT NOT NULL
                )"""
         )
+    with _init_lock:
+        _init_done.add(key)
     return p
 
 

@@ -362,6 +362,33 @@ the no-conversion rule; #14 model-path `partially_supported`; #15
 `contradicted` with the tripwire firing; GDP methodology stable.
 43 cases, 0 skips, 0 blocks — the gate is green on the final tree.
 
+## Full run 8 (`--mode full`, quality-wave tree) — 41/43, rate-limit-blocked
+
+```text
+[full] 41/43 cases passed (pin conformance 0.98, skipped 0, blocked 0)
+  [FAIL] sci_contextual failed=['stance', 'retrieval', 'unc+metadata_only']
+  [FAIL] sci_no_year_match failed=['retrieval', 'unc+metadata_only']
+```
+
+Result JSON: `eval/results/20261101T132340Z.json` (force-added —
+the unfavorable result is part of the record, not hidden). Both
+failures are one environmental cause: OpenAlex returned HTTP 429 for
+the whole run window (`retry-after: 36676`, anonymous-pool cap — no
+`OPENALEX_API_KEY` is configured), so both science cases retrieved
+zero evidence (`n_evidences: 0`, `connector_error` +
+`no_sources_found`) and honestly concluded `unverifiable`. No code
+path is implicated: the 429s were reproduced with bare curl during
+and after the run, and the failure signature is retrieval-empty,
+not misjudgment. All 41 runnable cases pass on the quality-wave
+tree — including every semantic change under test: the new GDP H4
+`recompute_verdict` pin, `econ_pp_vs_percent`, the bare-US/UK/EU
+matcher cases (`econ_debt_usa`, `econ_internet_usa`,
+`econ_multigeo_compound_disclosed`), and the no-conversion bp case.
+Degraded/paraphrase/abstention on the same tree: 11/11, 36/36,
+17/20 (unchanged from baseline). The clean 43/43 re-run is pending
+the cap reset (~10h) or an `OPENALEX_API_KEY`; run 7 stays the
+pinned green gate until then.
+
 ## v3 methodology note (what changed since v2)
 
 - Claimed-precision rule: stated digits must survive contact with the
@@ -447,6 +474,13 @@ JSON, and classify into one of the five before touching code.
   assertions (`elapsed_ms` recorded, not gated).
 - Live results expire: source values drift. The result JSON (with
   observed values) is the durable artifact, not the PASS count.
+- Price-basis coverage is one-sided and untestable here: the check only
+  fires on current-labeled evidence (every World Bank catalog row is
+  current-US$), so constant-price evidence would compare silently and no
+  case can cover it until the catalog grows one. Year-less claims are
+  covered the other way: they retrieve the most-recent value but stay
+  verify-inert (`period_mismatch`, pinned offline in
+  `test_e2e_yearless_claim_skips_numeric_compare_with_period_mismatch`).
 
 ## v2 history (condensed)
 

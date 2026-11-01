@@ -5,7 +5,7 @@ from __future__ import annotations
 import hashlib
 import time
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from ..connectors import InvalidGeoError, ProviderError, for_domain  # noqa: F401  (registry access)
 from ..core.compare import DEFAULT_REL_TOLERANCE
@@ -154,7 +154,15 @@ def analyze(
     # on its own thread via retrieve_all; evidence stays in connector
     # order and errors keep their types. The per-connector audit steps
     # and handlers below preserve the sequential loop's exact behavior.
-    found_all, retrieve_errors = retrieve_all(connectors, claim, limit)
+    # Per-connector wall seconds, filled by the fan-out below. The audit
+    # steps are created after retrieve_all returns, so each step is
+    # backdated by its connector's measured time (observability fix:
+    # pre-fix every retrieve step read ~0.0ms and the ~140ms network
+    # wait was invisible in the audit trail).
+    retrieve_timings: dict[str, float] = {}
+    found_all, retrieve_errors = retrieve_all(
+        connectors, claim, limit, timings=retrieve_timings
+    )
     by_connector: dict[str, list[Evidence]] = {}
     for ev in found_all:
         by_connector.setdefault(ev.connector, []).append(ev)
@@ -163,6 +171,9 @@ def analyze(
     evidences: list[Evidence] = []
     for conn in connectors:
         rstep = _start_step(audit, "retrieve", "code")
+        fanout_s = retrieve_timings.get(conn.name, 0.0)
+        rstep.__dict__["_t0"] -= fanout_s
+        rstep.started_at -= timedelta(seconds=fanout_s)
         exc = error_by_connector.get(conn.name)
         if isinstance(exc, InvalidGeoError):
             report.uncertainties.append(
@@ -314,6 +325,12 @@ def analyze(
         "usage_summary": usage_summary,
     }
     report.elapsed_ms = elapsed_ms
+    if persist:
+        # Re-store the stamped copy (upsert). The first write above is
+        # timed by the persist step, so it necessarily precedes
+        # meta/elapsed/sha assignment; without this second write,
+        # reloaded reports show meta={} elapsed=0 with no rerun proof.
+        save_report(report)
     return report
 
 

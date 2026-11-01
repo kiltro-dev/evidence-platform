@@ -152,6 +152,34 @@ Persistent record for the autonomous build. Latest entry last.
 - Pinned: run-7 + ns demo-batch artifacts; docs synced (API,
   OpenAPI, EVAL x3, demo, security, README, intel, log).
 
+## 2026-11-01 — Operation Quality & Improvement (audit wave on v0.4.0)
+
+- 9-scope audit wave (UI-live, UI-contract, API-fuzz, extraction,
+  eval-methodology, perf, security, a11y, red-team) merged into 42
+  ranked defects (4 HIGH, 17 MEDIUM, 21 LOW); all HIGHs + triaged
+  MEDIUMs/LOWs fixed test-first, remainder dispositioned in code/docs.
+- Pipeline/API: persist-before-stamp re-save (HIGH-1), bare-US/UK/EU
+  standalone matcher + pp/percentage-points units (HIGH-2), honest
+  retrieve wall-times in audit, sqlite init-once, loopback-shared
+  rate bucket, cache singleflight (+failover), mrnev verify-inert pin,
+  GDP H4 recompute pin (hand-verified to full float precision).
+- UI/a11y: live-region contract (HIGH-3/4), typed abort cards, req-seq
+  supersede silence (incl. controller/timer theft), humanized renders,
+  request_id refs, meta allowlist, skip link, focus jumps, focusable
+  tables, named controls, single batch alert, 32px floors,
+  reduced-motion guard, vintage surfacing, 375px zero-overflow.
+- Infra: tests/e2e-browser (5 Playwright specs, degraded, 5/5 green);
+  openapi.json re-exported + served-schema test; pytest 8.4.2→9.2.0
+  (PYSEC fix, one-line lock change).
+- Verified: 506/506 offline (pytest 9), browser 5/5, offline
+  smoke 31/31, degraded 11/11, paraphrase 36/36, abstention 17/20.
+  Full eval run 8: 41/43 — the 2 failures are both science cases
+  with zero retrieved evidence under an OpenAlex HTTP 429 cap
+  (`retry-after: 36676`, no API key configured; reproduced via
+  curl). Artifact force-added (`20261101T132340Z.json`); run 7
+  stays the pinned green gate. Clean 43/43 re-run + live smoke
+  pending the cap reset (~21:00 -03 Nov 1) or an OPENALEX_API_KEY.
+
 ## Open risks / not done
 
 - Submit-portal fields and video specs unverifiable without login; demo

@@ -33,6 +33,45 @@ def test_round_trip_is_byte_identical(tmp_path):
     assert loaded.conclusion.stance == "unverifiable"
 
 
+def test_repeated_saves_run_init_ddl_once(tmp_path, monkeypatch):
+    # Perf LOW (sqlite-overhead): init_db must not re-run PRAGMA+DDL on
+    # every write (~12% of a degraded analysis). Pre-fix this counted 2.
+    import atlas.storage.store as storemod
+
+    p = tmp_path / "atlas.db"
+    ddl_count = 0
+    real_connect = storemod.sqlite3.connect
+
+    class _ConnProxy:
+        def __init__(self, conn):
+            self._c = conn
+
+        def execute(self, sql, *rest):
+            nonlocal ddl_count
+            if "CREATE TABLE" in str(sql):
+                ddl_count += 1
+            return self._c.execute(sql, *rest)
+
+        def __getattr__(self, name):
+            return getattr(self._c, name)
+
+        def __enter__(self):
+            self._c.__enter__()
+            return self
+
+        def __exit__(self, *exc):
+            return self._c.__exit__(*exc)
+
+    def counting_connect(*args, **kwargs):
+        return _ConnProxy(real_connect(*args, **kwargs))
+
+    monkeypatch.setattr(storemod.sqlite3, "connect", counting_connect)
+    save_report(_report("claim one"), path=p)
+    save_report(_report("claim two"), path=p)
+    assert len(list_reports(path=p)) == 2
+    assert ddl_count == 1
+
+
 def test_get_missing_returns_none_without_creating(tmp_path):
     p = tmp_path / "sub" / "nodb.db"
     assert get_report("rep_doesnotexist", path=p) is None

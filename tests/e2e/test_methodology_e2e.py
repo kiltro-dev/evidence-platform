@@ -101,3 +101,32 @@ def test_e2e_exact_gdp_match_stays_supported_with_methodology_notes():
     assert "material_absolute_gap" not in codes
     assert "price_basis_unchecked" not in codes
     assert "indicator_definition_assumed" in codes
+
+
+def test_e2e_persisted_report_is_fully_stamped(tmp_path, monkeypatch):
+    """HIGH-1: save ran before meta/elapsed stamping, so reloaded
+    reports showed meta={} elapsed=0 with no input_sha for rerun
+    proof and an unfinished persist audit step."""
+    import hashlib
+
+    from atlas.storage.store import get_report
+
+    monkeypatch.setenv("ATLAS_DB", str(tmp_path / "atlas.db"))
+    text = "The GDP of the United States was $27.36 trillion in 2023."
+    orig = runmod.for_domain
+    runmod.for_domain = lambda domain: [  # noqa: E731
+        StubWB("GDP (current US$)", "USD", "2023", 27.81e12)]
+    try:
+        report = analyze(text, llm=None, persist=True)
+    finally:
+        runmod.for_domain = orig
+    loaded = get_report(report.report_id)
+    assert loaded is not None
+    assert loaded.meta["input_sha256"] == hashlib.sha256(
+        text.encode("utf-8")).hexdigest()
+    assert loaded.meta["app_version"] == report.meta["app_version"]
+    assert loaded.elapsed_ms == report.elapsed_ms > 0
+    persist_steps = [s for s in loaded.audit if s.step == "persist"]
+    assert len(persist_steps) == 1
+    assert persist_steps[0].ended_at is not None
+    assert persist_steps[0].duration_ms > 0
