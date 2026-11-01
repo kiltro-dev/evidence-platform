@@ -122,8 +122,16 @@ vanilla JS newsroom UI (no framework), pytest (206+ offline tests).
 - Model detector path hits a detector-budget bug (`finish_reason=length`
   on an 800-token budget consumed by hidden reasoning; falls back to
   heuristic). Source: `live/M1_E2E.md` U1.
-- Formal ablation of per-stage contribution: TODO-M8 (not run; no
-  numbers claimed).
+- Formal ablation (M8, `ablation-20261101-214721-report.json`): Atlas
+  M2d 8/9=0.889 [0.565,0.980] vs model-only baseline run1 30/31=0.968
+  [0.838,0.994] vs run2 31/31=1.000 [0.890,1.000] (31 EN × 2 runs,
+  run1-vs-run2 consistency 30/31; hallucinations 15/15 baseline vs
+  Atlas 1; cost/claim $0.0310 vs $0.0355 vs $0.0281; p50 78.4s vs 4.5s
+  vs 4.2s). The baseline wins everything measured — stated plainly.
+  Atlas keeps only: re-verifiable proof bundles, 0 false-contradicted
+  across M2d+M6 (baseline run1 committed one P0 on T7), and
+  said-vs-shown vision checks. Caveat: baseline urls are model-stated,
+  0/62 code-validated. Source: `live/M8.md`.
 
 ## How to reproduce ($0 judge path + live path)
 

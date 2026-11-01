@@ -131,14 +131,20 @@ Fuente: M2D + `verify-20261101-212343.jsonl.summary.json`
 
 ## 2:30–2:45 — Cierre: ablación + invitación
 
-SE VE: pantalla final: logo Atlas Live, matriz, enlace al repo y al
-paquete de pruebas. Línea "ablación M8" marcada como pendiente.
+SE VE: pantalla final: logo Atlas Live, tabla de ablación (Atlas 8/9
+vs baseline run1 30/31 vs run2 31/31), banner "el baseline gana",
+wedge, enlace al repo y al paquete de pruebas.
 
 SE DICE: «Modelo propone, código dispone, escéptico ataca, auditor mide.
-La ablación formal con y sin cada etapa — TODO-M8 — dirá cuánto aporta
-cada pieza. El código y las pruebas son reproducibles: pruébalo.»
+La ablación honesta: el baseline gana, treinta y uno de treinta y uno.
+Nuestro wedge: prueba re-verificable, cero falsos contradicted, y dicho
+contra mostrado.»
 
-Fuente: M8 pendiente (TODO-M8: sin corrida de ablación en `live/`).
+Fuente: M8 (`ablation-20261101-214721-report.json`: Atlas 8/9=0.889
+[0.565,0.980] vs run1 30/31=0.968 [0.838,0.994] vs run2 31/31=1.000
+[0.890,1.000]; Atlas no lidera ninguna métrica; baseline 15/15
+alucinaciones vs Atlas 1; wedge = bundle re-verificable +
+0 falsos-contradicted + dicho-vs-mostrado).
 
 ---
 
@@ -147,8 +153,11 @@ Fuente: M8 pendiente (TODO-M8: sin corrida de ablación en `live/`).
 - Duración objetivo: 2:45; colchón de 10 s para pausas. No pasar de 2:55.
 - Capturas: UI en `?replay=run-m1e-heuristic` (M4), terminal con
   `verify_bundle.py` (M5), slides 6/7/10 del keynote (M3).
-- TODO-M8 (1): la ablación no existe; no inventar números de aporte por
-  etapa. Si M8 corre antes del video, reemplazar el bloque 2:30–2:45.
+- M8 CERRADO (2026-11-01, ya no TODO): ablación corrida, 31 EN × 2
+  (`ablation-20261101-214721-report.json`). El baseline gana en todo lo
+  medido (run2 31/31=1.000 vs Atlas 8/9=0.889); bloque 2:30–2:45 ya
+  reemplazado con números reales. M8 compara brazos completos, no
+  etapas: no prometer aporte por etapa.
 - TODO-M8 (2): screenshots desktop/móvil reales pendientes desde M4.
 - TODO-M8 (3): si se re-corre M2d, F6 puede volver a decidir (varianza
   del swarm, M2D); no prometer veredictos idénticos entre corridas.

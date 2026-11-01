@@ -1,0 +1,88 @@
+1
+00:00:00,500 --> 00:00:07,463
+One speaker says two things that can't both be true, 57 seconds apart.
+
+2
+00:00:07,463 --> 00:00:15,918
+Atlas Live catches it live — caught live — and shows the proof, not just the verdict.
+
+3
+00:00:16,718 --> 00:00:23,378
+Atlas Live listens to and watches a live video, extracts every checkable claim,
+
+4
+00:00:23,378 --> 00:00:32,821
+investigates it with Muse agents on the open web; deterministic code decides: the model proposes, code disposes.
+
+5
+00:00:33,621 --> 00:00:40,950
+Minute one-ten. The speaker says China fell to 141 million people.
+
+6
+00:00:40,950 --> 00:00:48,168
+Three researchers hit the open web while the video keeps running.
+
+7
+00:00:48,968 --> 00:00:55,922
+Contradicted. The World Bank says 1.409 billion — ten times more.
+
+8
+00:00:55,922 --> 00:01:06,407
+And at minute zero he had said 1.41 billion: self-contradiction verified by code, rel diff of 0.9.
+
+9
+00:01:07,207 --> 00:01:12,742
+And you don't have to take our word for it. Every run exports a proof bundle
+
+10
+00:01:12,742 --> 00:01:20,535
+anyone can re-run with no network and no model: all pass. Literal quote, snapshot hash, reproduced verdict.
+
+11
+00:01:21,335 --> 00:01:29,541
+But there's something better. The speaker says forty percent, and his own chart shows 0.97.
+
+12
+00:01:29,541 --> 00:01:36,033
+The chart contradicts the speaker. Vision reads the frame; code decides.
+
+13
+00:01:36,833 --> 00:01:44,604
+Same trick on two slides: a truncated axis turning five percent into a doubling,
+
+14
+00:01:44,604 --> 00:01:52,181
+and a broken scale putting India above the United States. Two automatic flags.
+
+15
+00:01:52,981 --> 00:01:59,565
+Every supporting verdict is attacked by a skeptic hunting live counter-evidence.
+
+16
+00:01:59,565 --> 00:02:06,971
+Here it found nothing — honest abstention — and the card publishes in Spanish and English.
+
+17
+00:02:07,771 --> 00:02:14,419
+Twelve internal canaries, disjoint from the video, through the real pipeline:
+
+18
+00:02:14,419 --> 00:02:22,621
+perfect accuracy on decided claims, with an honest Wilson interval. And zero false contradicts.
+
+19
+00:02:23,421 --> 00:02:29,265
+The limits, unvarnished: 8 of 31 claims decided correctly,
+
+20
+00:02:29,265 --> 00:02:38,839
+one false claim accepted 0.14 tolerance points from the line, and a 78-second median per claim.
+
+21
+00:02:39,639 --> 00:02:50,871
+Model proposes, code disposes, skeptic attacks, auditor measures. The honest ablation: the baseline wins, 31 of 31.
+
+22
+00:02:50,871 --> 00:02:58,099
+Our wedge: re-verifiable proof, zero false contradicts, and said-vs-shown.
+
