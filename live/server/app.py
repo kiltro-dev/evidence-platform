@@ -10,6 +10,14 @@ Routes:
   ``transcript_path``) through detector -> bus. The video-fed M1a
   pipeline runs separately and plugs into the same bus; the E2E
   player connects in M1c.
+- ``GET /replay`` / ``GET /replay/{run}`` (M4) — list recorded runs
+  and describe one (event counts, span, demo video URL).
+- ``WS /ws?replay=<run>&rate=<x>`` (M4) — re-emit a recorded
+  ``data/runs/*.jsonl`` log with original ``bus_ts`` pacing divided
+  by ``rate``; every frame carries ``replay:true`` and the stream
+  ends with ``replay.done``. Plain ``/ws`` is unchanged (live bus).
+- ``GET /media/{name}`` (M4) — keynote demo mp4s for the player
+  (strict allowlist; the 4.4–5.7 MB repo-local files).
 
 Latency measured here is pipeline latency: ``transcript.final``
 publish -> ``claim.detected`` publish per claim, in ms of wall
@@ -19,6 +27,7 @@ measured by the M1c E2E harness against this server's event log.
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import time
@@ -26,15 +35,24 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 
 from live.detector.claims import ClaimCandidate, Detector
 from live.orchestrator.bus import EventBus
 from live.orchestrator.states import ClaimTracker
+from live.replay.player import (
+    DEFAULT_MAX_GAP_S,
+    iter_schedule,
+    list_runs,
+    load_events,
+    run_info,
+)
 
 log = logging.getLogger(__name__)
 
 UI_PATH = Path(__file__).resolve().parent.parent / "ui" / "index.html"
+MEDIA_DIR = Path(__file__).resolve().parent.parent.parent / "data" / "keynote"
+MEDIA_ALLOW = {"keynote_en.mp4", "keynote_es.mp4"}
 
 # Cap on turns per /run so a bad upload cannot wedge the demo server.
 MAX_RUN_TURNS = 500
@@ -107,8 +125,40 @@ def create_app(
             )
         return HTMLResponse(html)
 
+    @app.get("/replay")
+    async def replay_list() -> dict:
+        """List recorded runs available for replay."""
+        return {"runs": list_runs()}
+
+    @app.get("/replay/{run}")
+    async def replay_get(run: str) -> JSONResponse:
+        """Metadata for one recorded run (event counts, span, video)."""
+        info = run_info(run)
+        if info is None:
+            return JSONResponse({"error": f"unknown run {run!r}"}, status_code=404)
+        info["video"] = _video_for_run(info["run"])
+        info["max_gap_s"] = DEFAULT_MAX_GAP_S
+        return JSONResponse(info)
+
+    @app.get("/media/{name}", response_model=None)
+    async def media(name: str):
+        """Serve keynote demo videos for the <video> player (allowlist)."""
+        if name not in MEDIA_ALLOW:
+            return JSONResponse({"error": f"unknown media {name!r}"}, status_code=404)
+        path = MEDIA_DIR / name
+        if not path.is_file():
+            return JSONResponse({"error": f"missing media {name!r}"}, status_code=404)
+        return FileResponse(path, media_type="video/mp4", filename=name)
+
     @app.websocket("/ws")
-    async def ws_feed(websocket: WebSocket) -> None:
+    async def ws_feed(
+        websocket: WebSocket,
+        replay: str | None = None,
+        rate: float = 1.0,
+    ) -> None:
+        if replay:
+            await _ws_replay(websocket, replay, rate)
+            return
         await websocket.accept()
         app.state.sockets.add(websocket)
         try:
@@ -174,6 +224,86 @@ def create_app(
         )
 
     return app
+
+
+def _video_for_run(run: str) -> str | None:
+    """Demo video URL for a run (keynote runs -> keynote mp4)."""
+    if "model-60s" in run or "heuristic" in run or run.startswith("run-m1"):
+        name = "keynote_en.mp4"
+        if (MEDIA_DIR / name).is_file():
+            return f"/media/{name}"
+    return None
+
+
+async def _ws_replay(websocket: WebSocket, run: str, rate: float) -> None:
+    """Serve one recorded run over WS with original pacing (/rate).
+
+    First frame is ``hello`` (with ``replay``/``rate``), then the
+    recorded events verbatim + ``replay:true``, then ``replay.done``.
+    Pacing sleeps double as the client-disconnect watch: incoming
+    frames are ignored per the /ws contract, a close ends the stream.
+    """
+    await websocket.accept()
+    if not (rate > 0):
+        await websocket.send_text(
+            json.dumps({"type": "error", "error": f"bad rate {rate!r}"})
+        )
+        await websocket.close(code=4400)
+        return
+    events = load_events(run)
+    if events is None:
+        await websocket.send_text(
+            json.dumps({"type": "error", "error": f"unknown run {run!r}"})
+        )
+        await websocket.close(code=4404)
+        return
+    stem = run[:-len(".jsonl")] if run.endswith(".jsonl") else run
+    try:
+        await websocket.send_text(
+            json.dumps(
+                {
+                    "type": "hello",
+                    "milestone": "m1b",
+                    "mode": "replay",
+                    "replay": stem,
+                    "rate": rate,
+                    "events": len(events),
+                }
+            )
+        )
+        for delay, frame in iter_schedule(events, rate=rate):
+            # Pacing wait that also drains (ignored) client frames
+            # and notices disconnects promptly (contract: client frames
+            # never affect the feed, they just don't shorten the wait).
+            deadline = time.monotonic() + delay
+            while True:
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    break
+                try:
+                    await asyncio.wait_for(
+                        websocket.receive_text(), timeout=remaining
+                    )
+                except (asyncio.TimeoutError, TimeoutError):
+                    break
+            try:
+                await websocket.send_text(json.dumps(frame, ensure_ascii=False))
+            except (WebSocketDisconnect, RuntimeError):
+                return
+        await websocket.send_text(
+            json.dumps(
+                {
+                    "type": "replay.done",
+                    "replay": True,
+                    "run": stem,
+                    "events": len(events),
+                }
+            )
+        )
+        while True:
+            await websocket.receive_text()  # stay open; client frames ignored
+    except WebSocketDisconnect:
+        pass
 
 
 def _load_turns(payload: dict) -> list[dict] | None:

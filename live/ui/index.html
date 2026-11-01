@@ -24,13 +24,25 @@
     border:1px solid var(--line); color:var(--mut); }
   #conn.live { color:var(--ok); border-color:var(--ok); }
   #conn.down { color:var(--bad); border-color:var(--bad); }
+  #modeBanner { max-width:1200px; margin:8px auto 0; padding:0 20px; }
+  #modeBanner .in { border-radius:10px; padding:8px 14px; font-size:14px; font-weight:800;
+    letter-spacing:.4px; border:1px solid var(--line); background:var(--panel); }
+  #modeBanner.live .in { color:var(--ok); border-color:var(--ok); }
+  #modeBanner.replay .in { color:var(--warn); border-color:var(--warn); }
+  #modeBanner small { display:block; font-weight:400; color:var(--mut); font-size:12px; }
   main { max-width:1200px; margin:auto; padding:12px 20px 60px;
     display:grid; grid-template-columns:1.2fr 1fr; gap:16px; align-items:start; }
   @media(max-width:860px){ main{grid-template-columns:1fr;} }
   .card { background:var(--panel); border:1px solid var(--line); border-radius:12px;
     padding:14px 16px; margin:0 0 14px; min-width:0; }
   .card h2 { margin:0 0 10px; font-size:16px; }
+  .videowrap { position:relative; }
   video { width:100%; border-radius:8px; background:#000; aspect-ratio:16/9; display:block; }
+  #subOverlay { position:absolute; left:10px; right:10px; bottom:9%;
+    text-align:center; pointer-events:none; }
+  #subOverlay span { display:inline-block; background:rgba(0,0,0,.78); color:#fff;
+    font-size:17px; font-weight:600; padding:4px 12px; border-radius:6px; max-width:100%; }
+  #subOverlay:empty { display:none; }
   .vidnote { color:var(--mut); font-size:13px; margin:8px 0 0; }
   #subs { min-height:64px; }
   #subs .line { padding:6px 10px; border-left:3px solid var(--acc); background:#0d1220;
@@ -38,23 +50,69 @@
   #subs .line .spk { color:var(--acc); font-weight:700; font-size:13px; display:block; }
   #subs .empty { color:var(--mut); font-size:14px; }
   .claim { border-left:3px solid var(--acc); }
+  .claim.st-investigando { border-left-color:var(--warn); }
+  .claim.st-veredicto { border-left-color:var(--ok); }
+  .claim.flash { animation:flash 1.6s ease-out 1; }
+  @keyframes flash { 0% { background:#31405f; } 100% { background:var(--panel); } }
   .claim .claimtext { font-size:15px; margin:0 0 4px; }
   .claim .resolved { font-size:13px; color:var(--mut); margin:0 0 6px; }
   .claim .meta { font-size:12px; color:var(--mut); }
+  .claim .hist { font-size:12px; color:var(--mut); margin-top:6px;
+    border-top:1px dashed var(--line); padding-top:6px; }
+  .claim .hist div { margin:1px 0; }
+  .claim .evd, .claim .ver { font-size:13px; margin-top:6px; padding:6px 10px;
+    border-radius:8px; background:#0d1220; border:1px solid var(--line); }
+  .claim .ver { font-weight:700; }
   .badge { display:inline-block; font-size:12px; font-weight:800; padding:2px 12px;
     border-radius:14px; margin-right:8px; vertical-align:middle; }
   .st-escuchada { color:var(--acc); border:1px solid var(--acc); }
   .st-investigando { color:var(--warn); border:1px solid var(--warn); }
   .st-veredicto { color:var(--ok); border:1px solid var(--ok); }
+  .v-supported { color:var(--ok); border-color:var(--ok); }
+  .v-contradicted { color:var(--bad); border-color:var(--bad); }
+  .v-disputed { color:var(--warn); border-color:var(--warn); }
+  .v-unverifiable { color:var(--na); border-color:var(--na); }
   #claims .empty { color:var(--mut); font-size:14px; }
   .row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:10px; }
   button.act { background:var(--acc); color:#0b1020; border:0; border-radius:8px;
     padding:8px 18px; font-size:14px; font-weight:700; cursor:pointer; min-height:36px; }
+  button.act:disabled { opacity:.45; cursor:default; }
   button.ghost { background:#0d1220; color:var(--acc); border:1px solid var(--line);
     border-radius:8px; padding:8px 16px; font-size:14px; font-weight:600; cursor:pointer;
     min-height:36px; }
-  #status { font-size:13px; color:var(--mut); }
+  select { background:#0d1220; color:var(--txt); border:1px solid var(--line);
+    border-radius:8px; padding:8px 10px; font-size:14px; max-width:100%; }
+  #status, #replayStatus { font-size:13px; color:var(--mut); }
+  #theater .agent { padding:8px 10px; border:1px solid var(--line); border-radius:8px;
+    margin:8px 0; background:#0d1220; font-size:14px; }
+  #theater .agent b { color:var(--warn); }
+  #theater .agent .cid { font-size:12px; color:var(--acc); }
+  #theater .agent .txt { color:var(--mut); font-size:13px; display:block; }
+  #theater .empty { color:var(--mut); font-size:14px; }
+  #timelineWrap { overflow-x:auto; }
+  #timeline { position:relative; height:46px; background:#0d1220; border:1px solid var(--line);
+    border-radius:8px; min-width:280px; }
+  .tl-dot { position:absolute; top:50%; transform:translate(-50%,-50%);
+    width:16px; height:16px; border-radius:50%; border:2px solid var(--acc);
+    background:#0d1220; cursor:pointer; padding:0; }
+  .tl-dot.st-investigando { border-color:var(--warn); }
+  .tl-dot.st-veredicto { border-color:var(--ok); background:var(--ok); }
+  .tl-dot.v-contradicted { border-color:var(--bad); background:var(--bad); }
+  .tl-dot.v-disputed { border-color:var(--warn); background:var(--warn); }
+  .tl-dot.v-unverifiable { border-color:var(--na); background:var(--na); }
+  .tl-axis { display:flex; justify-content:space-between; font-size:12px;
+    color:var(--mut); margin-top:4px; }
+  #tlHint { font-size:12px; color:var(--mut); margin:6px 0 0; }
   footer { max-width:1200px; margin:auto; padding:0 20px 30px; color:var(--mut); font-size:13px; }
+  @media(max-width:520px){
+    body { font-size:15px; }
+    header { padding:14px 12px 4px; } header h1 { font-size:19px; }
+    #modeBanner { padding:0 12px; }
+    main { padding:10px 12px 50px; }
+    #subOverlay span { font-size:14px; }
+    button.act, button.ghost { min-height:44px; }
+    .tl-dot { width:20px; height:20px; }
+  }
 </style>
 </head>
 <body>
@@ -68,15 +126,33 @@
     <button id="langEn" type="button">EN</button>
   </div>
 </header>
+<div id="modeBanner" class="live" role="status"><div class="in"><span id="modeTitle">EN VIVO</span><small id="modeSub"></small></div></div>
 <main>
   <div>
     <section class="card" aria-labelledby="videoH">
       <h2 id="videoH" data-es="Señal en vivo" data-en="Live feed">Señal en vivo</h2>
-      <!-- M1c plugs the E2E player here (src set by the M1a stream). -->
-      <video id="player" controls playsinline preload="none"
-        aria-label="Live video"></video>
-      <p class="vidnote" data-es="M1b: el reproductor E2E se conecta en M1c."
-         data-en="M1b: the E2E player connects in M1c.">M1b: el reproductor E2E se conecta en M1c.</p>
+      <div class="videowrap">
+        <video id="player" controls playsinline preload="metadata"
+          aria-label="Live video"></video>
+        <div id="subOverlay" aria-live="polite"></div>
+      </div>
+      <p class="vidnote" data-es="M1b: el reproductor E2E se conecta en M1c. M4: el replay fija el vídeo de la corrida."
+         data-en="M1b: the E2E player connects in M1c. M4: replay pins the run video.">M1b: el reproductor E2E se conecta en M1c. M4: el replay fija el vídeo de la corrida.</p>
+    </section>
+    <section class="card" aria-labelledby="replayH">
+      <h2 id="replayH" data-es="Replay de corrida real" data-en="Real-run replay">Replay de corrida real</h2>
+      <div class="row">
+        <select id="replaySel" aria-label="Run"></select>
+        <select id="rateSel" aria-label="Rate">
+          <option value="1">1×</option>
+          <option value="2">2×</option>
+          <option value="4" selected>4×</option>
+          <option value="8">8×</option>
+        </select>
+        <button id="replayGo" class="act" type="button" data-es="Ver replay" data-en="Watch replay">Ver replay</button>
+        <button id="liveGo" class="ghost" type="button" data-es="En vivo" data-en="Go live">En vivo</button>
+        <span id="replayStatus" role="status"></span>
+      </div>
     </section>
     <section class="card" aria-labelledby="subH">
       <h2 id="subH" data-es="Subtítulos en vivo" data-en="Live subtitles">Subtítulos en vivo</h2>
@@ -92,6 +168,17 @@
     </section>
   </div>
   <div>
+    <section class="card" aria-labelledby="theaterH">
+      <h2 id="theaterH" data-es="Teatro: agentes activos" data-en="Theater: active agents">Teatro: agentes activos</h2>
+      <div id="theater"><p class="empty" data-es="Sin agentes activos." data-en="No active agents.">Sin agentes activos.</p></div>
+    </section>
+    <section class="card" aria-labelledby="tlH">
+      <h2 id="tlH" data-es="Línea de tiempo" data-en="Timeline">Línea de tiempo</h2>
+      <div id="timelineWrap"><div id="timeline" role="group" aria-label="Timeline"></div></div>
+      <div class="tl-axis"><span id="tlStart">0s</span><span id="tlEnd">–</span></div>
+      <p id="tlHint" data-es="Clic en un punto: salta el vídeo y resalta la tarjeta."
+         data-en="Click a dot: seeks the video and highlights the card.">Clic en un punto: salta el vídeo y resalta la tarjeta.</p>
+    </section>
     <section class="card" aria-labelledby="claimsH">
       <h2 id="claimsH" data-es="Afirmaciones" data-en="Claims">Afirmaciones</h2>
       <div id="claims"><p class="empty" data-es="Sin afirmaciones todavía." data-en="No claims yet.">Sin afirmaciones todavía.</p></div>
@@ -99,27 +186,52 @@
   </div>
 </main>
 <footer>
-  Atlas Live M1b · transcript.final → claim.detected → claim.state ·
+  Atlas Live M1b+M4 · transcript.final → claim.detected → claim.state (+claim.evidence / claim.verdict) ·
   <span id="lat"></span>
 </footer>
 <script>
 (function(){
   "use strict";
   var lang = "es";
+  var qs = new URLSearchParams(location.search);
+  var REPLAY = qs.get("replay") || "";
+  var RATE = parseFloat(qs.get("rate") || "4") || 4;
   var STR = {
     es: { live:"EN VIVO", down:"DESCONECTADO", conn:"conectando…",
       heard:"escuchada", inv:"investigando", verd:"veredicto",
-      res:"resuelta:", demoOf:"demo", turnOf:"turno" },
+      res:"resuelta:", demoOf:"demo", turnOf:"turno",
+      bannerLive:"EN VIVO", bannerLiveSub:"señal en directo del bus · sin replay",
+      bannerReplay:"REPLAY DE CORRIDA REAL", investigating:"investiga",
+      pkgs:"paquetes", degraded:"degradado", noAgents:"Sin agentes activos.",
+      reasons:"motivos", done:"replay terminado", seeking:"vídeo →",
+      demoOnlyLive:"demo disponible solo en modo en vivo" },
     en: { live:"LIVE", down:"OFFLINE", conn:"connecting…",
       heard:"heard", inv:"investigating", verd:"verdict",
-      res:"resolved:", demoOf:"demo", turnOf:"turn" }
+      res:"resolved:", demoOf:"demo", turnOf:"turn",
+      bannerLive:"LIVE", bannerLiveSub:"live bus feed · no replay",
+      bannerReplay:"REAL-RUN REPLAY", investigating:"investigating",
+      pkgs:"packages", degraded:"degraded", noAgents:"No active agents.",
+      reasons:"reasons", done:"replay finished", seeking:"video →",
+      demoOnlyLive:"demo available in live mode only" }
   };
   var subsEl = document.getElementById("subs");
   var claimsEl = document.getElementById("claims");
   var connEl = document.getElementById("conn");
   var statusEl = document.getElementById("status");
   var latEl = document.getElementById("lat");
+  var bannerEl = document.getElementById("modeBanner");
+  var modeTitle = document.getElementById("modeTitle");
+  var modeSub = document.getElementById("modeSub");
+  var player = document.getElementById("player");
+  var overlay = document.getElementById("subOverlay");
+  var theaterEl = document.getElementById("theater");
+  var tlEl = document.getElementById("timeline");
+  var tlEnd = document.getElementById("tlEnd");
+  var replayStatus = document.getElementById("replayStatus");
   var cards = {};
+  var subs = [];
+  var tlDots = {};
+  var agents = {};
 
   function setLang(l){
     lang = l;
@@ -129,20 +241,39 @@
     });
     document.getElementById("langEs").classList.toggle("on", l === "es");
     document.getElementById("langEn").classList.toggle("on", l === "en");
+    paintBanner();
     Object.keys(cards).forEach(paintBadge);
+    renderTheater();
   }
   document.getElementById("langEs").onclick = function(){ setLang("es"); };
   document.getElementById("langEn").onclick = function(){ setLang("en"); };
 
+  function paintBanner(){
+    if (REPLAY) {
+      bannerEl.className = "replay";
+      modeTitle.textContent = STR[lang].bannerReplay + " · " + REPLAY + " · " + RATE + "×";
+      modeSub.textContent = replayStatus.textContent || "";
+    } else {
+      bannerEl.className = "live";
+      modeTitle.textContent = STR[lang].bannerLive;
+      modeSub.textContent = STR[lang].bannerLiveSub;
+    }
+  }
   function stateLabel(s){
     if (s === "investigando") return STR[lang].inv;
     if (s === "veredicto") return STR[lang].verd;
     return STR[lang].heard;
   }
   function clearEmpty(el){ var e = el.querySelector(".empty"); if (e) e.remove(); }
+  function fmtT(t){ return (typeof t === "number") ? t.toFixed(1) + "s" : "?"; }
+  function clock(){ try {
+    return new Date().toLocaleTimeString(lang === "es" ? "es-ES" : "en-GB", {hour12:false});
+  } catch(e){ return ""; } }
 
   function addSub(ev){
     clearEmpty(subsEl);
+    subs.push({t0:ev.t_start, t1:ev.t_end, text:ev.text || "", spk:ev.speaker || "?"});
+    if (subs.length > 200) subs.shift();
     var d = document.createElement("div");
     d.className = "line";
     var spk = document.createElement("span");
@@ -153,13 +284,40 @@
     d.appendChild(spk); d.appendChild(tx);
     subsEl.appendChild(d);
     while (subsEl.children.length > 6) subsEl.removeChild(subsEl.firstChild);
+    paintOverlay();
   }
-  function fmtT(t){ return (typeof t === "number") ? t.toFixed(1) + "s" : "?"; }
+  function paintOverlay(){
+    var t = player.currentTime;
+    var useMedia = player.src && isFinite(t) && t > 0 && subs.length;
+    var line = null;
+    if (useMedia) {
+      for (var i = subs.length - 1; i >= 0; i--) {
+        var s = subs[i];
+        if (typeof s.t0 === "number" && typeof s.t1 === "number" && t >= s.t0 && t <= s.t1) {
+          line = s; break;
+        }
+      }
+    } else if (subs.length) {
+      line = subs[subs.length - 1];
+    }
+    overlay.innerHTML = "";
+    if (line) {
+      var sp = document.createElement("span");
+      var tx = line.text;
+      if (tx.length > 180) tx = "…" + tx.slice(-180);
+      sp.textContent = tx;
+      overlay.appendChild(sp);
+    }
+  }
+  player.addEventListener("timeupdate", paintOverlay);
+  player.addEventListener("loadedmetadata", layoutTimeline);
 
   function addClaim(ev){
+    if (cards[ev.claim_id]) return;
     clearEmpty(claimsEl);
     var d = document.createElement("div");
-    d.className = "card claim";
+    d.className = "card claim st-escuchada";
+    d.id = "card-" + ev.claim_id;
     var badge = document.createElement("span");
     badge.className = "badge st-escuchada";
     badge.textContent = stateLabel("escuchada");
@@ -177,25 +335,194 @@
     m.className = "meta";
     m.textContent = ev.claim_id + " · " + fmtT(ev.t_start) + "–" + fmtT(ev.t_end);
     d.appendChild(m);
+    var hist = document.createElement("div");
+    hist.className = "hist";
+    d.appendChild(hist);
     claimsEl.prepend(d);
-    cards[ev.claim_id] = { el: d, badge: badge, state: "escuchada" };
+    cards[ev.claim_id] = { el: d, badge: badge, hist: hist, state: "escuchada",
+      text: ev.text || "", t0: ev.t_start, t1: ev.t_end, evd: null, ver: null };
+    // History lines come from claim.state events (the detector's
+    // mark_heard always follows claim.detected) — no line here.
+    addTlDot(ev.claim_id);
+  }
+  function histLine(id, state, actor){
+    var c = cards[id]; if (!c) return;
+    var d = document.createElement("div");
+    d.textContent = clock() + " · " + stateLabel(state) + (actor ? " · " + actor : "");
+    c.hist.appendChild(d);
   }
   function paintBadge(id){
     var c = cards[id]; if (!c) return;
-    c.badge.className = "badge st-" + c.state;
-    c.badge.textContent = stateLabel(c.state);
+    var cls = "badge st-" + c.state;
+    if (c.ver) cls += " v-" + c.ver;
+    c.badge.className = cls;
+    c.badge.textContent = stateLabel(c.state) + (c.ver ? " · " + c.ver : "");
   }
   function setState(ev){
     var c = cards[ev.claim_id]; if (!c) return;
     c.state = ev.state || "escuchada";
+    c.el.className = "card claim st-" + c.state;
     paintBadge(ev.claim_id);
+    histLine(ev.claim_id, c.state, ev.actor);
+    paintTlDot(ev.claim_id);
+    theaterState(ev.claim_id, c.state, ev.actor || "?");
+  }
+  function addEvidence(ev){
+    var c = cards[ev.claim_id]; if (!c) return;
+    var pkgs = Array.isArray(ev.packages) ? ev.packages : [];
+    c.evd = { n: pkgs.length, degraded: !!ev.degraded, note: ev.note || "" };
+    var old = c.el.querySelector(".evd"); if (old) old.remove();
+    var d = document.createElement("div");
+    d.className = "evd";
+    d.textContent = "🔎 " + pkgs.length + " " + STR[lang].pkgs +
+      (ev.degraded ? " · ⚠ " + STR[lang].degraded : "") +
+      (ev.note ? " · " + ev.note : "");
+    c.el.appendChild(d);
+    renderTheater();
+  }
+  function addVerdict(ev){
+    var c = cards[ev.claim_id]; if (!c) return;
+    c.ver = ev.verdict || "unverifiable";
+    if (c.state !== "veredicto") {
+      // Silent promotion: the official claim.state=veredicto event
+      // adds the history line when it arrives (no double line).
+      c.state = "veredicto";
+      c.el.className = "card claim st-veredicto";
+    }
+    paintBadge(ev.claim_id);
+    var old = c.el.querySelector(".ver"); if (old) old.remove();
+    var d = document.createElement("div");
+    d.className = "ver v-" + c.ver;
+    var reasons = Array.isArray(ev.reasons) ? ev.reasons.join("; ") : "";
+    d.textContent = "⚖ " + c.ver + (reasons ? " · " + STR[lang].reasons + ": " + reasons : "");
+    c.el.appendChild(d);
+    paintTlDot(ev.claim_id);
+    theaterDone(ev.claim_id);
+  }
+
+  function theaterState(id, state, actor){
+    if (state === "investigando") {
+      if (!agents[actor]) agents[actor] = {};
+      agents[actor][id] = { since: clock() };
+    } else if (state === "veredicto") {
+      theaterDone(id);
+    }
+    renderTheater();
+  }
+  function theaterDone(id){
+    Object.keys(agents).forEach(function(a){
+      delete agents[a][id];
+      if (!Object.keys(agents[a]).length) delete agents[a];
+    });
+    renderTheater();
+  }
+  function renderTheater(){
+    theaterEl.innerHTML = "";
+    var names = Object.keys(agents);
+    if (!names.length) {
+      var p = document.createElement("p");
+      p.className = "empty";
+      p.textContent = STR[lang].noAgents;
+      theaterEl.appendChild(p);
+      return;
+    }
+    names.forEach(function(a){
+      Object.keys(agents[a]).forEach(function(id){
+        var c = cards[id] || { text: id };
+        var d = document.createElement("div");
+        d.className = "agent";
+        var b = document.createElement("b");
+        b.textContent = "🤖 " + a + " " + STR[lang].investigating + " ";
+        var cid = document.createElement("span");
+        cid.className = "cid";
+        cid.textContent = id + (agents[a][id].since ? " · " + agents[a][id].since : "");
+        var tx = document.createElement("span");
+        tx.className = "txt";
+        var snippet = (c.text || "").slice(0, 140);
+        tx.textContent = snippet + (c.evd ? " · 🔎 " + c.evd.n + " " + STR[lang].pkgs : "");
+        d.appendChild(b); d.appendChild(cid); d.appendChild(tx);
+        theaterEl.appendChild(d);
+      });
+    });
+  }
+
+  function addTlDot(id){
+    if (tlDots[id]) return;
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "tl-dot st-escuchada";
+    b.title = id;
+    b.setAttribute("aria-label", id);
+    b.onclick = function(){ seekClaim(id); };
+    tlEl.appendChild(b);
+    tlDots[id] = b;
+    layoutTimeline();
+  }
+  function paintTlDot(id){
+    var b = tlDots[id], c = cards[id]; if (!b || !c) return;
+    var cls = "tl-dot st-" + c.state + (c.ver ? " v-" + c.ver : "");
+    b.className = cls;
+    b.title = (c.text || id).slice(0, 160);
+  }
+  function layoutTimeline(){
+    var ids = Object.keys(cards);
+    if (!ids.length) return;
+    var maxEnd = 0;
+    ids.forEach(function(id){
+      var t1 = cards[id].t1;
+      if (typeof t1 === "number" && t1 > maxEnd) maxEnd = t1;
+    });
+    if (player.src && isFinite(player.duration) && player.duration > maxEnd) {
+      maxEnd = player.duration;
+    }
+    if (!(maxEnd > 0)) maxEnd = 1;
+    tlEnd.textContent = maxEnd.toFixed(0) + "s";
+    ids.forEach(function(id){
+      var b = tlDots[id]; if (!b) return;
+      var t0 = cards[id].t0;
+      var pct = (typeof t0 === "number" && t0 >= 0) ? (t0 / maxEnd) * 100 : 0;
+      b.style.left = Math.min(99, Math.max(1, pct)) + "%";
+      paintTlDot(id);
+    });
+  }
+  function seekClaim(id){
+    var c = cards[id]; if (!c) return;
+    if (player.src && typeof c.t0 === "number" && c.t0 >= 0) {
+      try { player.currentTime = c.t0; } catch(e){}
+      replayStatus.textContent = STR[lang].seeking + " " + fmtT(c.t0);
+    }
+    var el = document.getElementById("card-" + id);
+    if (el) {
+      el.scrollIntoView({behavior:"smooth", block:"center"});
+      el.classList.remove("flash");
+      void el.offsetWidth;
+      el.classList.add("flash");
+    }
+  }
+
+  function onEvent(ev){
+    if (!ev || !ev.type) return;
+    if (ev.type === "transcript.final") addSub(ev);
+    else if (ev.type === "claim.detected") addClaim(ev);
+    else if (ev.type === "claim.state") setState(ev);
+    else if (ev.type === "claim.evidence") addEvidence(ev);
+    else if (ev.type === "claim.verdict") addVerdict(ev);
+    else if (ev.type === "replay.done") {
+      replayStatus.textContent = STR[lang].done + " · " + (ev.events || 0) + " events";
+      paintBanner();
+    }
   }
 
   var wsProto = location.protocol === "https:" ? "wss:" : "ws:";
+  function wsUrl(){
+    if (!REPLAY) return wsProto + "//" + location.host + "/ws";
+    return wsProto + "//" + location.host + "/ws?replay=" +
+      encodeURIComponent(REPLAY) + "&rate=" + encodeURIComponent(String(RATE));
+  }
   function connect(){
     connEl.textContent = STR[lang].conn;
     connEl.className = "";
-    var ws = new WebSocket(wsProto + "//" + location.host + "/ws");
+    var ws = new WebSocket(wsUrl());
     ws.onopen = function(){ connEl.textContent = STR[lang].live; connEl.className = "live"; };
     ws.onclose = function(){
       connEl.textContent = STR[lang].down; connEl.className = "down";
@@ -203,12 +530,58 @@
     };
     ws.onmessage = function(msg){
       var ev; try { ev = JSON.parse(msg.data); } catch(e){ return; }
-      if (ev.type === "transcript.final") addSub(ev);
-      else if (ev.type === "claim.detected") addClaim(ev);
-      else if (ev.type === "claim.state") setState(ev);
+      if (ev.type === "hello" && ev.mode === "replay") {
+        replayStatus.textContent = (ev.events || 0) + " events @ " + (ev.rate || RATE) + "×";
+        paintBanner();
+        return;
+      }
+      onEvent(ev);
     };
   }
+  paintBanner();
   connect();
+
+  fetch("/replay").then(function(r){ return r.json(); }).then(function(j){
+    var sel = document.getElementById("replaySel");
+    (j.runs || []).forEach(function(run){
+      var o = document.createElement("option");
+      o.value = run.run;
+      o.textContent = run.run + " (" + run.events + ")";
+      if (run.run === REPLAY) o.selected = true;
+      sel.appendChild(o);
+    });
+  }).catch(function(){});
+  (function(){
+    var sel = document.getElementById("rateSel");
+    var have = false;
+    for (var i = 0; i < sel.options.length; i++) {
+      if (sel.options[i].value === String(RATE)) { have = true; break; }
+    }
+    if (!have) {
+      var o = document.createElement("option");
+      o.value = String(RATE);
+      o.textContent = RATE + "×";
+      sel.appendChild(o);
+    }
+    sel.value = String(RATE);
+  })();
+  document.getElementById("replayGo").onclick = function(){
+    var run = document.getElementById("replaySel").value;
+    var rate = document.getElementById("rateSel").value;
+    if (run) location.search = "?replay=" + encodeURIComponent(run) + "&rate=" + encodeURIComponent(rate);
+  };
+  document.getElementById("liveGo").onclick = function(){ location.search = ""; };
+  if (REPLAY) {
+    fetch("/replay/" + encodeURIComponent(REPLAY)).then(function(r){ return r.json(); }).then(function(j){
+      if (j.video) player.src = j.video;
+      replayStatus.textContent = (j.events || 0) + " events · " +
+        Math.round(j.span_s || 0) + "s @ " + RATE + "×";
+      paintBanner();
+    }).catch(function(){});
+    var demoBtn = document.getElementById("demoRun");
+    demoBtn.disabled = true;
+    demoBtn.title = STR[lang].demoOnlyLive;
+  }
 
   var DEMO = [
     {turn: 1, speaker: "Anfitriona", text: "Buenas noches, bienvenidos al debate económico.", t_start: 0.0, t_end: 3.2},
@@ -230,6 +603,8 @@
   };
   document.getElementById("demoClear").onclick = function(){
     subsEl.innerHTML = ""; claimsEl.innerHTML = ""; cards = {}; latEl.textContent = "";
+    subs = []; agents = {}; tlDots = {}; tlEl.innerHTML = ""; overlay.innerHTML = "";
+    renderTheater();
   };
 })();
 </script>
