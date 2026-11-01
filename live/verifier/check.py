@@ -31,6 +31,7 @@ from live.evidence.package import (
     EvidencePackage,
     sha256_of_bytes,
     sha256_of_text,
+    source_meta_for_snapshot,
 )
 
 # Atlas core (deterministic). ``src.`` prefix when the repo root is on
@@ -173,13 +174,35 @@ def _check_package(pkg: EvidencePackage, claim: ClaimInput,
     if claim.unit is None:
         return None, "claim_unit_unknown", detail
     compat = [q for q in cands if units_compatible(claim.unit, q.normalized_unit)]
+    scale = 1.0
+    meta_unit: str | None = None
+    if not compat and pkg.source_meta is not None:
+        # M2d structured fallback: unitless JSON quotes (WB API rows) get
+        # their unit from the snapshot-declared indicator — re-derived
+        # from the snapshot bytes here, never trusted from the package.
+        # Values still come from the quote; scale still applies below.
+        rederived = None
+        for text in candidates:
+            rederived = source_meta_for_snapshot(pkg.url, text)
+            if rederived is not None:
+                break
+        if (rederived is not None
+                and rederived.indicator == pkg.source_meta.indicator
+                and units_compatible(claim.unit, rederived.unit)):
+            compat = list(cands)
+            scale = float(rederived.scale)
+            meta_unit = rederived.unit
+            detail["unit_from"] = "source_meta"
+            detail["source_indicator"] = rederived.indicator
     if not compat:
         return None, "unit_mismatch", detail
-    best = min(compat, key=lambda q: abs(claim.value - q.value) / (abs(q.value) or 1.0))
-    detail["evidence_value"] = best.value
-    detail["evidence_unit"] = best.normalized_unit
-    denom = abs(best.value) if best.value != 0 else 1.0
-    rel = abs(claim.value - best.value) / denom
+    best = min(compat, key=lambda q: abs(claim.value - q.value * scale)
+               / (abs(q.value * scale) or 1.0))
+    evidence_value = best.value * scale
+    detail["evidence_value"] = evidence_value
+    detail["evidence_unit"] = best.normalized_unit or meta_unit
+    denom = abs(evidence_value) if evidence_value != 0 else 1.0
+    rel = abs(claim.value - evidence_value) / denom
     detail["rel_diff"] = rel
     if rel > claim.tolerance:
         return "contradict", "numeric_mismatch", detail

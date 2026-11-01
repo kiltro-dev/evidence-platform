@@ -36,6 +36,7 @@ from .roles import (
     RECUPERADOR_SYSTEM,
     REDTEAM_SCHEMA,
     REDTEAM_SYSTEM,
+    extract_balanced_json,
     parse_tool_step,
 )
 
@@ -46,7 +47,11 @@ MAX_CONCURRENCY = 4
 MAX_TOOL_ROUNDS = 4
 MODEL_MAX_TOKENS = 1500
 MODEL_REASONING_EFFORT = "low"
-TOKEN_BUDGET_PER_CLAIM = 12000
+# M2d (cause N3): 12k -> 20k. The 12k cap degraded ~13% of claims
+# (4/31: budget exhausted at recuperador, cutting the redteam round).
+# Wall-cost impact is bounded: usage still accrues per call and the
+# deadline still caps wall time; this only lets the final round finish.
+TOKEN_BUDGET_PER_CLAIM = 20000
 
 # Caps for model-read excerpts (quotes stay verbatim: see _segments()).
 DOC_EXCERPT_CHARS = 6000
@@ -487,6 +492,25 @@ def _is_malformed_reply(exc: Exception) -> bool:
     return isinstance(exc, RuntimeError) and "empty content" in str(exc)
 
 
+def _rescue_reply(exc: Exception) -> dict | None:
+    """Deterministic rescue of a preamble-wrapped JSON reply (M2d).
+
+    json.JSONDecodeError carries the raw model text in ``.doc``; when it
+    embeds one balanced object (preamble/trailer around valid JSON), parse
+    just that span — 0 extra tokens, no new model call. Returns the dict
+    on success, None when there is nothing rescuable (caller retries).
+    """
+    raw = getattr(exc, "doc", "")
+    candidate = extract_balanced_json(raw) if raw else None
+    if candidate is None:
+        return None
+    try:
+        rescued = json.loads(candidate)
+    except ValueError:
+        return None
+    return rescued if isinstance(rescued, dict) else None
+
+
 # ---------------------------------------------------------------------------
 # fetched-document store (url -> snapshot + model excerpt)
 # ---------------------------------------------------------------------------
@@ -826,6 +850,18 @@ def build_package(claim_id: str, url: str, quote: str, doc: Doc,
         return None
     end = start + len(quote)
     sha = doc.fetch.sha256
+    # M2d: structured-source metadata (WB API JSON -> indicator/unit) so
+    # the verifier can resolve unitless JSON quotes. Derived from the
+    # snapshot bytes, never from the model; None for prose/CSV/unknown.
+    meta_fn = _try_import("live.evidence.package", "source_meta_for_snapshot")
+    meta = None
+    if callable(meta_fn):
+        try:
+            found = meta_fn(doc.url, doc.fetch.text or "")
+            meta = ({"indicator": found.indicator, "unit": found.unit,
+                     "scale": found.scale} if found is not None else None)
+        except Exception:
+            meta = None
     pkg = {
         "package_id": f"m2b-{claim_id}-{sha[:12]}-{index}",
         "claim_id": claim_id,
@@ -839,6 +875,7 @@ def build_package(claim_id: str, url: str, quote: str, doc: Doc,
         "numbers": numbers_from_quote(quote),
         "extractor": "model",
         "source_year": source_year,
+        "source_meta": meta,
     }
     try:
         json.dumps(pkg)  # bus contract: JSON-only events
@@ -884,15 +921,35 @@ class _ClaimCtx:
             # sometimes prepends chat text before the JSON object, which
             # surfaces as a JSON decode error). Transport/schema errors
             # are NOT retried here (the transport has its own retries;
-            # a 400 would just fail twice).
+            # a 400 would just fail twice). M2d: before spending the retry,
+            # try a deterministic rescue of the raw reply text (exc.doc);
+            # the retry itself gets the same rescue (live: retries repeat
+            # the preamble, so the retry alone did not fix those claims).
             self.usage.record(llm)
             if not _is_malformed_reply(exc):
                 raise
-            log.warning("malformed model reply, retrying once: %r", exc)
-            out = await asyncio.to_thread(
-                _call, system + "\n\nSTRICT: your reply was not pure JSON. "
-                "Reply again with ONLY the JSON object.")
-            self.usage.record(llm)
+            rescued = _rescue_reply(exc)
+            if rescued is not None:
+                log.warning("rescued preamble-wrapped JSON reply "
+                            "(no retry spent)")
+                out = rescued
+            else:
+                log.warning("malformed model reply, retrying once: %r", exc)
+                try:
+                    out = await asyncio.to_thread(
+                        _call, system + "\n\nSTRICT: your reply was not pure JSON. "
+                        "Reply again with ONLY the JSON object.")
+                except Exception as retry_exc:
+                    self.usage.record(llm)
+                    if not _is_malformed_reply(retry_exc):
+                        raise
+                    rescued = _rescue_reply(retry_exc)
+                    if rescued is None:
+                        raise
+                    log.warning("rescued retry reply with preamble")
+                    out = rescued
+                else:
+                    self.usage.record(llm)
         else:
             self.usage.record(llm)
         if self.usage.total >= self.config.token_budget_per_claim:

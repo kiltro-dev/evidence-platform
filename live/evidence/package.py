@@ -67,6 +67,96 @@ def source_type_for_url(url: str) -> SourceType:
     return "secondary"
 
 
+# Curated World Bank indicator -> canonical unit map (M2d recall fix,
+# cause 1: unitless WB JSON quotes). The indicator id is NEVER trusted
+# from the producer: source_meta_for_snapshot() re-derives it from the
+# snapshot bytes, and the verifier re-checks it the same way. Values are
+# full-precision (scale 1): what the API row says is what it means.
+# Extension policy: add an indicator ONLY when its WB metadata name pins
+# one unambiguous UNIT_VOCAB unit (e.g. "GDP (current US$)" -> USD).
+# Per-capita / growth / rate indicators are deliberately OUT: their unit
+# alone does not determine comparability (total-vs-per-capita confusion
+# would flip verdicts), so they stay unit_mismatch by design.
+WB_INDICATOR_UNITS = {
+    # "Population, total" (SP.POP.TOTL) -> headcount.
+    "SP.POP.TOTL": "count",
+    # "GDP (current US$)" (NY.GDP.MKTP.CD) -> nominal dollars.
+    "NY.GDP.MKTP.CD": "USD",
+}
+
+_WB_API_HOSTS = ("api.worldbank.org",)
+
+
+def source_meta_for_snapshot(url: str, snapshot_text: str) -> "SourceMeta | None":
+    """Structured-source metadata for a snapshot, or None.
+
+    Applies ONLY to World Bank API JSON (``[meta, rows]`` with
+    ``rows[].indicator.id``): returns the single consistent indicator id
+    plus its curated unit when every row agrees and the indicator is in
+    WB_INDICATOR_UNITS. Anything else (prose, CSV, mixed/unknown
+    indicators, malformed JSON, non-WB host) -> None. Never raises:
+    the producer must never crash on an odd snapshot.
+    """
+    try:
+        host = (urllib.parse.urlsplit(url or "").hostname or "").lower()
+    except ValueError:
+        return None
+    if not any(host == h or host.endswith("." + h) for h in _WB_API_HOSTS):
+        return None
+    try:
+        import json
+
+        data = json.loads(snapshot_text or "")
+    except (ValueError, TypeError):
+        return None
+    if not isinstance(data, list) or len(data) < 2:
+        return None
+    rows = data[1]
+    if not isinstance(rows, list) or not rows:
+        return None
+    ids: set[str] = set()
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        indicator = row.get("indicator")
+        code = indicator.get("id") if isinstance(indicator, dict) else None
+        if isinstance(code, str) and code.strip():
+            ids.add(code.strip().upper())
+    if len(ids) != 1:
+        return None
+    (code,) = ids
+    unit = WB_INDICATOR_UNITS.get(code)
+    if unit is None:
+        return None
+    return SourceMeta(indicator=code, unit=unit, scale=1.0)
+
+
+@dataclass(frozen=True)
+class SourceMeta:
+    """Structured-source metadata declared by the snapshot's API JSON.
+
+    ``indicator`` is the API's own indicator id (re-derived from snapshot
+    bytes, never trusted from the model); ``unit`` is the curated
+    WB_INDICATOR_UNITS entry for it; ``scale`` multiplies raw row values
+    (1.0 for WB: values are full-precision). The verifier uses ``unit``
+    to resolve otherwise unitless JSON quotes — values always come from
+    the quote itself, never from this metadata.
+    """
+
+    indicator: str
+    unit: str | None = None
+    scale: float = 1.0
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.indicator, str) or not self.indicator.strip():
+            raise ValueError("SourceMeta.indicator must be a non-empty string")
+        if self.unit is not None and self.unit not in UNIT_VOCAB:
+            raise ValueError(
+                f"SourceMeta.unit must be one of {sorted(UNIT_VOCAB)} or None")
+        if not isinstance(self.scale, (int, float)) or not self.scale > 0:
+            raise ValueError("SourceMeta.scale must be a positive number")
+
+
 @dataclass(frozen=True)
 class NumberMention:
     """One number as extracted from the quote by the researcher."""
@@ -101,6 +191,9 @@ class EvidencePackage:
     numbers: tuple[NumberMention, ...] = ()
     extractor: Extractor = "code"
     source_year: int | None = None  # publication year of the source, if known
+    # Structured-source metadata (M2d): set only when the snapshot is API
+    # JSON declaring a mapped indicator (see source_meta_for_snapshot).
+    source_meta: SourceMeta | None = None
 
     def __post_init__(self) -> None:
         for name in ("package_id", "claim_id", "url", "captured_at",
@@ -126,6 +219,9 @@ class EvidencePackage:
         if self.source_year is not None and not (
                 isinstance(self.source_year, int) and 1000 <= self.source_year <= 2100):
             raise ValueError("source_year must be an int in [1000, 2100] or None")
+        if self.source_meta is not None and not isinstance(
+                self.source_meta, SourceMeta):
+            raise ValueError("source_meta must be a SourceMeta or None")
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -144,6 +240,12 @@ class EvidencePackage:
             ],
             "extractor": self.extractor,
             "source_year": self.source_year,
+            "source_meta": (
+                {"indicator": self.source_meta.indicator,
+                 "unit": self.source_meta.unit,
+                 "scale": self.source_meta.scale}
+                if self.source_meta is not None else None
+            ),
         }
 
     @classmethod
@@ -153,6 +255,13 @@ class EvidencePackage:
                           unit=n.get("unit"),
                           scale_raw=n.get("scale_raw", ""))
             for n in d.get("numbers", [])
+        )
+        raw_meta = d.get("source_meta")
+        meta = (
+            SourceMeta(indicator=raw_meta["indicator"],
+                       unit=raw_meta.get("unit"),
+                       scale=raw_meta.get("scale", 1.0))
+            if isinstance(raw_meta, dict) else None
         )
         return cls(
             package_id=d["package_id"],
@@ -167,6 +276,7 @@ class EvidencePackage:
             numbers=numbers,
             extractor=d.get("extractor", "code"),
             source_year=d.get("source_year"),
+            source_meta=meta,
         )
 
 
@@ -197,8 +307,11 @@ __all__ = [
     "NumberMention",
     "PRIMARY_HOSTS",
     "UNIT_VOCAB",
+    "SourceMeta",
     "SourceType",
+    "WB_INDICATOR_UNITS",
     "sha256_of_bytes",
     "sha256_of_text",
+    "source_meta_for_snapshot",
     "source_type_for_url",
 ]

@@ -249,6 +249,68 @@ TOOL_NAMES = frozenset(
 )
 
 
+def extract_balanced_json(text: str) -> str | None:
+    """Rescue the first balanced JSON value from a model reply (M2d).
+
+    Live cause 2: despite strict ``json_schema`` the model sometimes
+    prepends chat text (DOC-REPR: ``"I'll search for ...{...valid...}"``)
+    and ``json.loads`` on the whole reply fails. This scans from the
+    first ``{`` or ``[`` (whichever comes first, then the other as a
+    fallback), tracks depth string-aware (double quotes + backslash
+    escapes), and returns the balanced span when it parses — leading
+    preamble and trailing text are dropped. Unbalanced / unparseable /
+    no-bracket input returns None (the caller then uses its 1 retry).
+    Pure function, never raises on model-shaped input.
+    """
+    if not isinstance(text, str) or not text:
+        return None
+    starts: list[int] = []
+    for opener in ("{", "["):
+        idx = text.find(opener)
+        if idx >= 0:
+            starts.append(idx)
+    for start in sorted(starts):
+        candidate = _balanced_span(text, start)
+        if candidate is None:
+            continue
+        try:
+            import json
+
+            json.loads(candidate)
+        except ValueError:
+            continue
+        return candidate
+    return None
+
+
+def _balanced_span(text: str, start: int) -> str | None:
+    """Longest balanced {...}/[...] span from ``start`` (None if open)."""
+    depth = 0
+    in_string = False
+    escaped = False
+    for pos in range(start, len(text)):
+        ch = text[pos]
+        if in_string:
+            if escaped:
+                escaped = False
+            elif ch == "\\":
+                escaped = True
+            elif ch == '"':
+                in_string = False
+            continue
+        if ch == '"':
+            in_string = True
+        elif ch in "{[":
+            depth += 1
+        elif ch in "}]":
+            depth -= 1
+            if depth == 0:
+                return text[start:pos + 1]
+            if depth < 0:
+                return None
+    return None
+
+
 def parse_tool_step(step: dict) -> tuple[list[dict], dict | None]:
     """Split a RECUPERADOR step into (tool_calls, final).
 
