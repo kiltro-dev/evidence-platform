@@ -1,0 +1,326 @@
+[
+  {
+    "id": "F2R-RA1",
+    "claim": "RA1",
+    "lang": "en",
+    "category": "a",
+    "text": "Germany had 83.5 million people in 2024, according to the World Bank.",
+    "expected": "true",
+    "ref": "WB SP.POP.TOTL DEU 2024 = 83,516,593",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/DEU/indicator/SP.POP.TOTL?format=json&date=2024",
+        "accessed": "2026-11-01",
+        "note": "primary: World Bank API, fetched by bench author"
+      }
+    ],
+    "ground_truth": "83.52M; claim states 83.5M, rel diff 0.02% -> TRUE",
+    "calculation": null
+  },
+  {
+    "id": "F2R-RA2",
+    "claim": "RA2",
+    "lang": "en",
+    "category": "a",
+    "text": "Mexico had 130.9 million people in 2024, according to the World Bank.",
+    "expected": "true",
+    "ref": "WB SP.POP.TOTL MEX 2024 = 130,861,007",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/MEX/indicator/SP.POP.TOTL?format=json&date=2024",
+        "accessed": "2026-11-01",
+        "note": "primary: World Bank API, fetched by bench author"
+      }
+    ],
+    "ground_truth": "130.86M; claim states 130.9M, rel diff 0.03% -> TRUE",
+    "calculation": null
+  },
+  {
+    "id": "F2R-RA3",
+    "claim": "RA3",
+    "lang": "en",
+    "category": "a",
+    "text": "Canada had 31.3 million people in 2024, according to the World Bank.",
+    "expected": "false",
+    "ref": "WB SP.POP.TOTL CAN 2024 = 41,262,329 (41.3M, not 31.3M)",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/CAN/indicator/SP.POP.TOTL?format=json&date=2024",
+        "accessed": "2026-11-01",
+        "note": "primary: World Bank API, fetched by bench author; refutes the figure"
+      }
+    ],
+    "ground_truth": "41.3M; claim states 31.3M, rel diff 24% -> FALSE",
+    "calculation": null
+  },
+  {
+    "id": "F2R-RB1",
+    "claim": "RB1",
+    "lang": "en",
+    "category": "b",
+    "text": "The European Central Bank kept its deposit facility rate at 2.50 percent on 29 October 2026.",
+    "expected": "true",
+    "ref": "ECB monetary policy decisions 29 Oct 2026: deposit facility 2.50%, MRO 2.65%, MLF 2.90% (unchanged)",
+    "sources": [
+      {
+        "url": "https://www.ecb.europa.eu/press/pr/date/2026/html/ecb.mp261029~9a493adf17.en.html",
+        "accessed": "2026-11-01",
+        "note": "primary: ECB press release, fetched and grepped by bench author (2.50%/2.65%/2.90% confirmed)"
+      }
+    ],
+    "ground_truth": "2.50% deposit facility held on 29 Oct 2026 per ECB -> TRUE",
+    "calculation": null
+  },
+  {
+    "id": "F2R-RB2",
+    "claim": "RB2",
+    "lang": "en",
+    "category": "b",
+    "text": "The Bank of Japan held its policy rate at 1.25 percent on 30 October 2026.",
+    "expected": "true",
+    "ref": "BoJ monetary policy meeting 29-30 Oct 2026: uncollateralized overnight call rate target held at 1.25% (8-1 vote, Takata dissented for 1.5%)",
+    "sources": [
+      {
+        "url": "https://www.boj.or.jp/en/mopo/mpmdeci/index.htm",
+        "accessed": "2026-11-01",
+        "note": "primary: BoJ monetary policy decisions index (30 Oct 2026 statement); figure corroborated by 15+ reports incl. Reuters 30 Oct 2026"
+      }
+    ],
+    "ground_truth": "1.25% held on 30 Oct 2026 per BoJ statement as reported -> TRUE",
+    "calculation": null
+  },
+  {
+    "id": "F2R-RB3",
+    "claim": "RB3",
+    "lang": "en",
+    "category": "b",
+    "text": "The European Central Bank raised its deposit facility rate to 2.75 percent on 29 October 2026.",
+    "expected": "false",
+    "ref": "ECB 29 Oct 2026: HELD at 2.50%; 2.75% is the expected December hike (plausible confusion), not the October decision",
+    "sources": [
+      {
+        "url": "https://www.ecb.europa.eu/press/pr/date/2026/html/ecb.mp261029~9a493adf17.en.html",
+        "accessed": "2026-11-01",
+        "note": "primary: ECB press release, fetched by bench author; refutes the claim (held at 2.50%)"
+      }
+    ],
+    "ground_truth": "held at 2.50%; claim states raised to 2.75% -> FALSE",
+    "calculation": null
+  },
+  {
+    "id": "F2R-RC1",
+    "claim": "RC1",
+    "lang": "en",
+    "category": "c",
+    "text": "India had 1.95 billion people in 2024, according to the World Bank.",
+    "expected": "false",
+    "ref": "WB IND 2024 = 1,450,935,791 (1.45B) — 1.95B invented (extra 500M)",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/IND/indicator/SP.POP.TOTL?format=json&date=2024",
+        "accessed": "2026-11-01",
+        "note": "primary: World Bank API, fetched by bench author; refutes invented figure"
+      }
+    ],
+    "ground_truth": "1.45B; claim states 1.95B, invented -> FALSE",
+    "calculation": null
+  },
+  {
+    "id": "F2R-RC2",
+    "claim": "RC2",
+    "lang": "en",
+    "category": "c",
+    "text": "The United Kingdom had 59.3 million people in 2024, according to the World Bank.",
+    "expected": "false",
+    "ref": "WB GBR 2024 = 69,281,000 (69.3M) — 59.3M invented (digit swap)",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/GBR/indicator/SP.POP.TOTL?format=json&date=2024",
+        "accessed": "2026-11-01",
+        "note": "primary: World Bank API, fetched by bench author; refutes invented figure"
+      }
+    ],
+    "ground_truth": "69.3M; claim states 59.3M, invented -> FALSE",
+    "calculation": null
+  },
+  {
+    "id": "F2R-RC3",
+    "claim": "RC3",
+    "lang": "en",
+    "category": "c",
+    "text": "Nigeria's GDP was 1.25 trillion dollars in 2024.",
+    "expected": "false",
+    "ref": "WB NGA 2024 = 252,261,880,140 (0.25T) — 1.25T invented (5x actual, oil-rich narrative)",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/NGA/indicator/NY.GDP.MKTP.CD?format=json&date=2024",
+        "accessed": "2026-11-01",
+        "note": "primary: World Bank API, fetched by bench author; refutes invented figure"
+      }
+    ],
+    "ground_truth": "0.25T; claim states 1.25T, invented -> FALSE",
+    "calculation": null
+  },
+  {
+    "id": "F2R-RD1",
+    "claim": "RD1",
+    "lang": "en",
+    "category": "d",
+    "text": "Colombia's GDP grew 14.6 percent from 2023 to 2024, according to the World Bank.",
+    "expected": "true",
+    "ref": "WB COL GDP 366,901,643,683 (2023) -> 420,504,033,143 (2024): +14.609%",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/COL/indicator/NY.GDP.MKTP.CD?format=json&date=2023:2024",
+        "accessed": "2026-11-01",
+        "note": "primary: World Bank API, fetched by bench author"
+      }
+    ],
+    "ground_truth": "14.609% growth; claim states 14.6% (1dp rounding) -> TRUE",
+    "calculation": "(420,504,033,143 - 366,901,643,683) / 366,901,643,683 = 53,602,389,460 / 366,901,643,683 = 0.14609 = 14.609%"
+  },
+  {
+    "id": "F2R-RD2",
+    "claim": "RD2",
+    "lang": "en",
+    "category": "d",
+    "text": "The average population of Spain and Italy in 2024 was 53.9 million people, according to the World Bank.",
+    "expected": "true",
+    "ref": "WB 2024: (ESP 48,848,840 + ITA 58,952,704) / 2 = 53,900,772 (53.90M)",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/ESP;ITA/indicator/SP.POP.TOTL?format=json&date=2024",
+        "accessed": "2026-11-01",
+        "note": "primary: World Bank API, fetched by bench author"
+      }
+    ],
+    "ground_truth": "53.90M average; claim states 53.9M -> TRUE",
+    "calculation": "(48,848,840 + 58,952,704) / 2 = 107,801,544 / 2 = 53,900,772"
+  },
+  {
+    "id": "F2R-RD3",
+    "claim": "RD3",
+    "lang": "en",
+    "category": "d",
+    "text": "In 2024, Canada's GDP was 175 percent of Mexico's GDP, according to the World Bank.",
+    "expected": "false",
+    "ref": "WB 2024: CAN 2,270,076,189,683 / MEX 1,830,489,311,089 = 1.2401x = 124.01%, not 175%",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/CAN;MEX/indicator/NY.GDP.MKTP.CD?format=json&date=2024",
+        "accessed": "2026-11-01",
+        "note": "primary: World Bank API, fetched by bench author; refutes the ratio"
+      }
+    ],
+    "ground_truth": "124.01% actual; claim states 175% -> FALSE",
+    "calculation": "2,270,076,189,683 / 1,830,489,311,089 = 1.2401 = 124.01%"
+  },
+  {
+    "id": "F2R-RE1",
+    "claim": "RE1",
+    "lang": "en",
+    "category": "e",
+    "text": "Argentina's GDP was 638 billion dollars in 2024.",
+    "expected": "true",
+    "ref": "WB NY.GDP.MKTP.CD ARG 2024 = 638,365,455,340 (638.4B) — correct scale anchor",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/ARG/indicator/NY.GDP.MKTP.CD?format=json&date=2024",
+        "accessed": "2026-11-01",
+        "note": "primary: World Bank API, fetched by bench author"
+      }
+    ],
+    "ground_truth": "638.4B; claim states 638B, rel diff 0.06% -> TRUE",
+    "calculation": null
+  },
+  {
+    "id": "F2R-RE2",
+    "claim": "RE2",
+    "lang": "en",
+    "category": "e",
+    "text": "South Korea's GDP was 187.5 billion dollars in 2024.",
+    "expected": "false",
+    "ref": "WB KOR 2024 = 1,875,388,209,407 (1.875T) — 187.5B is x10 off (scale trap)",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/KOR/indicator/NY.GDP.MKTP.CD?format=json&date=2024",
+        "accessed": "2026-11-01",
+        "note": "primary: World Bank API, fetched by bench author"
+      }
+    ],
+    "ground_truth": "1.875T; claim states 187.5B (x10 off) -> FALSE",
+    "calculation": null
+  },
+  {
+    "id": "F2R-RE3",
+    "claim": "RE3",
+    "lang": "en",
+    "category": "e",
+    "text": "Germany's GDP was 4.69 billion dollars in 2024.",
+    "expected": "false",
+    "ref": "WB DEU 2024 = 4,685,592,577,805 — 4.69 TRILLION, not billion (x1000 scale trap)",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/DEU/indicator/NY.GDP.MKTP.CD?format=json&date=2024",
+        "accessed": "2026-11-01",
+        "note": "primary: World Bank API, fetched by bench author; right digits, wrong scale word"
+      }
+    ],
+    "ground_truth": "4.69T; claim states 4.69B (x1000 off, explicit scale) -> FALSE",
+    "calculation": null
+  },
+  {
+    "id": "F2R-RF1",
+    "claim": "RF1",
+    "lang": "en",
+    "category": "f",
+    "text": "Nigeria had 232.7 million people in 2024, according to the World Bank.",
+    "expected": "true",
+    "ref": "WB SP.POP.TOTL NGA 2024 = 232,679,478 (232.68M)",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/NGA/indicator/SP.POP.TOTL?format=json&date=2024",
+        "accessed": "2026-11-01",
+        "note": "primary: World Bank API, fetched by bench author"
+      }
+    ],
+    "ground_truth": "232.68M; claim states 232.7M, rel diff 0.01% -> TRUE",
+    "calculation": null
+  },
+  {
+    "id": "F2R-RF2",
+    "claim": "RF2",
+    "lang": "en",
+    "category": "f",
+    "text": "South Korea's GDP was 1.88 trillion dollars in 2024.",
+    "expected": "true",
+    "ref": "WB NY.GDP.MKTP.CD KOR 2024 = 1,875,388,209,407 (1.875T)",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/KOR/indicator/NY.GDP.MKTP.CD?format=json&date=2024",
+        "accessed": "2026-11-01",
+        "note": "primary: World Bank API, fetched by bench author"
+      }
+    ],
+    "ground_truth": "1.875T; claim states 1.88T, rel diff 0.2% -> TRUE",
+    "calculation": null
+  },
+  {
+    "id": "F2R-RF3",
+    "claim": "RF3",
+    "lang": "en",
+    "category": "f",
+    "text": "Indonesia had 183.5 million people in 2024, according to the World Bank.",
+    "expected": "false",
+    "ref": "WB IDN 2024 = 283,487,931 (283.5M) — 183.5M invented (dropped 100M)",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/IDN/indicator/SP.POP.TOTL?format=json&date=2024",
+        "accessed": "2026-11-01",
+        "note": "primary: World Bank API, fetched by bench author; refutes the figure"
+      }
+    ],
+    "ground_truth": "283.5M; claim states 183.5M, invented -> FALSE",
+    "calculation": null
+  }
+]

@@ -1,0 +1,644 @@
+[
+  {
+    "id": "F2D-A1",
+    "claim": "A1",
+    "lang": "en",
+    "category": "a",
+    "text": "India had 1.45 billion people in 2024, according to the World Bank.",
+    "expected": "true",
+    "ref": "WB SP.POP.TOTL IND 2024 = 1,450,935,791",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/IND/indicator/SP.POP.TOTL?format=json&date=2024",
+        "accessed": "2026-11-01",
+        "note": "primary: World Bank API, fetched by bench author"
+      }
+    ],
+    "ground_truth": "1,450,935,791 people (1.4509B); claim states 1.45B, rel diff 0.06% -> TRUE",
+    "calculation": null
+  },
+  {
+    "id": "F2D-A2",
+    "claim": "A2",
+    "lang": "en",
+    "category": "a",
+    "text": "Canada's GDP was 2.27 trillion dollars in 2024, according to the World Bank.",
+    "expected": "true",
+    "ref": "WB NY.GDP.MKTP.CD CAN 2024 = 2,270,076,189,683",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/CAN/indicator/NY.GDP.MKTP.CD?format=json&date=2024",
+        "accessed": "2026-11-01",
+        "note": "primary: World Bank API, fetched by bench author"
+      }
+    ],
+    "ground_truth": "2,270,076,189,683 USD (2.2701T); claim states 2.27T, rel diff 0.00% -> TRUE",
+    "calculation": null
+  },
+  {
+    "id": "F2D-A3",
+    "claim": "A3",
+    "lang": "en",
+    "category": "a",
+    "text": "Sound travels at 343 meters per second in dry air at 20 degrees Celsius.",
+    "expected": "true",
+    "ref": "Standard physics: v = 331.3 + 0.606*T = 343.4 m/s at 20C dry air (textbook constant)",
+    "sources": [],
+    "ground_truth": "343.4 m/s by the standard linear formula; claim states 343 m/s, rel diff 0.1% -> TRUE",
+    "calculation": null
+  },
+  {
+    "id": "F2D-A4",
+    "claim": "A4",
+    "lang": "en",
+    "category": "a",
+    "text": "Mexico's GDP was 2.83 trillion dollars in 2024, according to the World Bank.",
+    "expected": "false",
+    "ref": "WB NY.GDP.MKTP.CD MEX 2024 = 1,830,489,311,089 (1.83T, not 2.83T)",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/MEX/indicator/NY.GDP.MKTP.CD?format=json&date=2024",
+        "accessed": "2026-11-01",
+        "note": "primary: World Bank API, fetched by bench author; refutes the claim"
+      }
+    ],
+    "ground_truth": "1,830,489,311,089 USD (1.83T); claim states 2.83T, rel diff 55% -> FALSE",
+    "calculation": null
+  },
+  {
+    "id": "F2D-A5",
+    "claim": "A5",
+    "lang": "en",
+    "category": "a",
+    "text": "Nigeria had 132 million people in 2024, according to the World Bank.",
+    "expected": "false",
+    "ref": "WB SP.POP.TOTL NGA 2024 = 232,679,478 (232.7M, not 132M)",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/NGA/indicator/SP.POP.TOTL?format=json&date=2024",
+        "accessed": "2026-11-01",
+        "note": "primary: World Bank API, fetched by bench author; refutes the claim"
+      }
+    ],
+    "ground_truth": "232,679,478 people (232.7M); claim states 132M, rel diff 43% -> FALSE",
+    "calculation": null
+  },
+  {
+    "id": "F2D-A6",
+    "claim": "A6",
+    "lang": "en",
+    "category": "a",
+    "text": "South Korea's GDP reached 2.88 trillion dollars in 2024, according to the World Bank.",
+    "expected": "false",
+    "ref": "WB NY.GDP.MKTP.CD KOR 2024 = 1,875,388,209,407 (1.88T, not 2.88T)",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/KOR/indicator/NY.GDP.MKTP.CD?format=json&date=2024",
+        "accessed": "2026-11-01",
+        "note": "primary: World Bank API, fetched by bench author; refutes the claim"
+      }
+    ],
+    "ground_truth": "1,875,388,209,407 USD (1.875T); claim states 2.88T, rel diff 54% -> FALSE",
+    "calculation": null
+  },
+  {
+    "id": "F2D-B1",
+    "claim": "B1",
+    "lang": "en",
+    "category": "b",
+    "text": "The IMF's October 2026 World Economic Outlook projects global growth of 3.1 percent in 2026.",
+    "expected": "true",
+    "ref": "IMF WEO Oct 2026 'Resilience Under Strain, Urgent Choices': global growth 3.1% in 2026 (3.4% in 2027)",
+    "sources": [
+      {
+        "url": "https://www.imf.org/en/publications/weo/issues/2026/10/13/world-economic-outlook-october-2026",
+        "accessed": "2026-11-01",
+        "note": "primary: IMF WEO Oct 2026 page (released 13 Oct 2026, Bangkok); direct fetch bot-walled (Akamai 403), figure confirmed via IMF page snippet + 8 independent reports of the release; full-report PDF is the primary hard copy"
+      }
+    ],
+    "ground_truth": "3.1% global growth in 2026 per IMF WEO Oct 2026 -> TRUE",
+    "calculation": null
+  },
+  {
+    "id": "F2D-B2",
+    "claim": "B2",
+    "lang": "en",
+    "category": "b",
+    "text": "The IMF's October 2026 World Economic Outlook projects global growth of 2.1 percent in 2026.",
+    "expected": "false",
+    "ref": "Same IMF WEO: 3.1% global for 2026; 2.1% is the ADVANCED-economies figure (plausible confusion)",
+    "sources": [
+      {
+        "url": "https://www.imf.org/en/publications/weo/issues/2026/10/13/world-economic-outlook-october-2026",
+        "accessed": "2026-11-01",
+        "note": "primary, same as B1; refutes the claim (3.1% global vs claimed 2.1%)"
+      }
+    ],
+    "ground_truth": "3.1% global; claim states 2.1%, rel diff 32% -> FALSE",
+    "calculation": null
+  },
+  {
+    "id": "F2D-B3",
+    "claim": "B3",
+    "lang": "en",
+    "category": "b",
+    "text": "The United States unemployment rate was 4.2 percent in September 2026, according to the Bureau of Labor Statistics.",
+    "expected": "true",
+    "ref": "BLS Employment Situation Sep 2026 (USDL-26-1549, released 2 Oct 2026): unemployment rate 4.2%",
+    "sources": [
+      {
+        "url": "https://www.bls.gov/news.release/pdf/empsit.pdf",
+        "accessed": "2026-11-01",
+        "note": "primary PDF: Employment Situation Sep 2026; direct fetch bot-walled (Akamai 403), figure confirmed via BLS page snippet + AARP Employment Data Digest Sep 2026 (4.1% -> 4.2%)"
+      }
+    ],
+    "ground_truth": "4.2% per BLS empsit Sep 2026 -> TRUE",
+    "calculation": null
+  },
+  {
+    "id": "F2D-B4",
+    "claim": "B4",
+    "lang": "en",
+    "category": "b",
+    "text": "The United States unemployment rate fell to 3.2 percent in September 2026, according to the Bureau of Labor Statistics.",
+    "expected": "false",
+    "ref": "BLS empsit Sep 2026: 4.2% (rose from 4.1%), not 3.2% and not falling",
+    "sources": [
+      {
+        "url": "https://www.bls.gov/news.release/pdf/empsit.pdf",
+        "accessed": "2026-11-01",
+        "note": "primary PDF, same as B3; refutes the claim (4.2% vs claimed 3.2%)"
+      }
+    ],
+    "ground_truth": "4.2%; claim states 3.2%, rel diff 24% -> FALSE",
+    "calculation": null
+  },
+  {
+    "id": "F2D-B5",
+    "claim": "B5",
+    "lang": "en",
+    "category": "b",
+    "text": "7.1 million people were unemployed in the United States in September 2026, according to the Bureau of Labor Statistics.",
+    "expected": "true",
+    "ref": "BLS Employment Situation Sep 2026: 7.1 million unemployed people",
+    "sources": [
+      {
+        "url": "https://www.bls.gov/news.release/pdf/empsit.pdf",
+        "accessed": "2026-11-01",
+        "note": "primary PDF, same release as B3; number of unemployed 7.1M"
+      }
+    ],
+    "ground_truth": "7.1M unemployed per BLS empsit Sep 2026 -> TRUE",
+    "calculation": null
+  },
+  {
+    "id": "F2D-B6",
+    "claim": "B6",
+    "lang": "en",
+    "category": "b",
+    "text": "8.1 million people were unemployed in the United States in September 2026, according to the Bureau of Labor Statistics.",
+    "expected": "false",
+    "ref": "BLS empsit Sep 2026: 7.1M unemployed, not 8.1M",
+    "sources": [
+      {
+        "url": "https://www.bls.gov/news.release/pdf/empsit.pdf",
+        "accessed": "2026-11-01",
+        "note": "primary PDF, same release as B3; refutes the claim (7.1M vs claimed 8.1M)"
+      }
+    ],
+    "ground_truth": "7.1M; claim states 8.1M, rel diff 14% -> FALSE",
+    "calculation": null
+  },
+  {
+    "id": "F2D-C1",
+    "claim": "C1",
+    "lang": "en",
+    "category": "c",
+    "text": "Spain's GDP was 2.73 trillion dollars in 2024, overtaking France.",
+    "expected": "false",
+    "ref": "WB ES 2024 = 1,725,671,652,742 (1.73T); FRA 2024 = 3.16T — Spain neither 2.73T nor above France",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/ESP/indicator/NY.GDP.MKTP.CD?format=json&date=2024",
+        "accessed": "2026-11-01",
+        "note": "primary: World Bank API, fetched by bench author; refutes the invented figure"
+      }
+    ],
+    "ground_truth": "1.73T actual; claim states 2.73T + overtaking France, both invented -> FALSE",
+    "calculation": null
+  },
+  {
+    "id": "F2D-C2",
+    "claim": "C2",
+    "lang": "en",
+    "category": "c",
+    "text": "Argentina's population fell to 38.2 million people in 2024.",
+    "expected": "false",
+    "ref": "WB AR 2024 = 45,696,159 (45.7M, UP from 45.54M in 2023) — neither 38.2M nor falling",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/ARG/indicator/SP.POP.TOTL?format=json&date=2023:2024",
+        "accessed": "2026-11-01",
+        "note": "primary: World Bank API, fetched by bench author; refutes invented decline"
+      }
+    ],
+    "ground_truth": "45.7M and rising; claim states 38.2M and falling -> FALSE",
+    "calculation": null
+  },
+  {
+    "id": "F2D-C3",
+    "claim": "C3",
+    "lang": "en",
+    "category": "c",
+    "text": "The United Kingdom produced 4.70 trillion dollars of GDP in 2024, overtaking Germany.",
+    "expected": "false",
+    "ref": "WB GB 2024 = 3,695,539,513,534 (3.70T); DE 2024 = 4,685,592,577,805 (4.69T) — UK below Germany",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/GBR;DEU/indicator/NY.GDP.MKTP.CD?format=json&date=2024",
+        "accessed": "2026-11-01",
+        "note": "primary: World Bank API, fetched by bench author; refutes invented overtake"
+      }
+    ],
+    "ground_truth": "UK 3.70T < DE 4.69T; claim states 4.70T + overtake, invented -> FALSE",
+    "calculation": null
+  },
+  {
+    "id": "F2D-C4",
+    "claim": "C4",
+    "lang": "en",
+    "category": "c",
+    "text": "Indonesia has 383 million people, making it the world's third most populous country.",
+    "expected": "false",
+    "ref": "WB ID 2024 = 283,487,931 (283.5M, 4th) — 383M invented (extra 100M), rank invented",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/IDN/indicator/SP.POP.TOTL?format=json&date=2024",
+        "accessed": "2026-11-01",
+        "note": "primary: World Bank API, fetched by bench author; refutes invented figure + rank"
+      }
+    ],
+    "ground_truth": "283.5M actual (4th); claim states 383M (3rd), invented -> FALSE",
+    "calculation": null
+  },
+  {
+    "id": "F2D-C5",
+    "claim": "C5",
+    "lang": "en",
+    "category": "c",
+    "text": "Colombia's GDP doubled to 840 billion dollars in 2024.",
+    "expected": "false",
+    "ref": "WB CO 2024 = 420,504,033,143 (420.5B) — 840B is exactly 2x actual; no doubling happened",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/COL/indicator/NY.GDP.MKTP.CD?format=json&date=2024",
+        "accessed": "2026-11-01",
+        "note": "primary: World Bank API, fetched by bench author; refutes invented doubling"
+      }
+    ],
+    "ground_truth": "420.5B actual; claim states 840B via doubling, invented -> FALSE",
+    "calculation": null
+  },
+  {
+    "id": "F2D-C6",
+    "claim": "C6",
+    "lang": "en",
+    "category": "c",
+    "text": "Italy has 68.6 million inhabitants.",
+    "expected": "false",
+    "ref": "WB IT 2024 = 58,952,704 (59.0M); 68.6M is FRANCE's population (entity swap)",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/ITA;FRA/indicator/SP.POP.TOTL?format=json&date=2024",
+        "accessed": "2026-11-01",
+        "note": "primary: World Bank API; ITA 58.95M fetched by bench author, FRA 68.55M per truth.json T6 ref"
+      }
+    ],
+    "ground_truth": "Italy 59.0M; claim states France's 68.6M for Italy -> FALSE",
+    "calculation": null
+  },
+  {
+    "id": "F2D-D1",
+    "claim": "D1",
+    "lang": "en",
+    "category": "d",
+    "text": "The United States GDP grew 5.3 percent from 2023 to 2024, according to the World Bank.",
+    "expected": "true",
+    "ref": "WB USA GDP 27,811,517,000,000 (2023) -> 29,298,013,000,000 (2024): +5.345%",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/USA/indicator/NY.GDP.MKTP.CD?format=json&date=2023:2024",
+        "accessed": "2026-11-01",
+        "note": "primary: World Bank API values (same as truth.json T10/T3 refs)"
+      }
+    ],
+    "ground_truth": "5.345% growth; claim states 5.3% (1dp rounding) -> TRUE",
+    "calculation": "(29,298,013,000,000 - 27,811,517,000,000) / 27,811,517,000,000 = 1,486,496,000,000 / 27,811,517,000,000 = 0.05345 = 5.345%"
+  },
+  {
+    "id": "F2D-D2",
+    "claim": "D2",
+    "lang": "en",
+    "category": "d",
+    "text": "India's GDP grew 12.4 percent from 2023 to 2024, according to the World Bank.",
+    "expected": "false",
+    "ref": "WB IND GDP 3,500,906,030,645 (2023) -> 3,760,813,470,501 (2024): +7.424%, not 12.4%",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/IND/indicator/NY.GDP.MKTP.CD?format=json&date=2023:2024",
+        "accessed": "2026-11-01",
+        "note": "primary: World Bank API, fetched by bench author; refutes the growth figure"
+      }
+    ],
+    "ground_truth": "7.424% actual growth; claim states 12.4% -> FALSE",
+    "calculation": "(3,760,813,470,501 - 3,500,906,030,645) / 3,500,906,030,645 = 259,907,439,856 / 3,500,906,030,645 = 0.07424 = 7.424%"
+  },
+  {
+    "id": "F2D-D3",
+    "claim": "D3",
+    "lang": "en",
+    "category": "d",
+    "text": "In 2024, the United States GDP was 779 percent of India's GDP, according to the World Bank.",
+    "expected": "true",
+    "ref": "WB 2024: USA 29,298,013,000,000 / IND 3,760,813,470,501 = 7.7903x = 779.03%",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/USA;IND/indicator/NY.GDP.MKTP.CD?format=json&date=2024",
+        "accessed": "2026-11-01",
+        "note": "primary: World Bank API (USA per truth.json T3; IND fetched by bench author)"
+      }
+    ],
+    "ground_truth": "779.03%; claim states 779% -> TRUE",
+    "calculation": "29,298,013,000,000 / 3,760,813,470,501 = 7.7903 = 779.03%"
+  },
+  {
+    "id": "F2D-D4",
+    "claim": "D4",
+    "lang": "en",
+    "category": "d",
+    "text": "In 2024, Germany's GDP was 175 percent of the United Kingdom's GDP, according to the World Bank.",
+    "expected": "false",
+    "ref": "WB 2024: DEU 4,685,592,577,805 / GBR 3,695,539,513,534 = 1.2679x = 126.79%, not 175%",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/DEU;GBR/indicator/NY.GDP.MKTP.CD?format=json&date=2024",
+        "accessed": "2026-11-01",
+        "note": "primary: World Bank API, fetched by bench author; refutes the ratio"
+      }
+    ],
+    "ground_truth": "126.79% actual; claim states 175% -> FALSE",
+    "calculation": "4,685,592,577,805 / 3,695,539,513,534 = 1.2679 = 126.79%"
+  },
+  {
+    "id": "F2D-D5",
+    "claim": "D5",
+    "lang": "en",
+    "category": "d",
+    "text": "The average GDP of Spain and Italy in 2024 was 2.05 trillion dollars, according to the World Bank.",
+    "expected": "true",
+    "ref": "WB 2024: (ESP 1,725,671,652,742 + ITA 2,383,435,562,458) / 2 = 2,054,553,607,600 (2.0546T)",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/ESP;ITA/indicator/NY.GDP.MKTP.CD?format=json&date=2024",
+        "accessed": "2026-11-01",
+        "note": "primary: World Bank API, fetched by bench author"
+      }
+    ],
+    "ground_truth": "2.0546T average; claim states 2.05T, rel diff 0.2% -> TRUE",
+    "calculation": "(1,725,671,652,742 + 2,383,435,562,458) / 2 = 4,109,107,215,200 / 2 = 2,054,553,607,600"
+  },
+  {
+    "id": "F2D-D6",
+    "claim": "D6",
+    "lang": "en",
+    "category": "d",
+    "text": "The average population of Canada and Argentina in 2024 was 48.5 million people, according to the World Bank.",
+    "expected": "false",
+    "ref": "WB 2024: (CAN 41,262,329 + ARG 45,696,159) / 2 = 43,479,244 (43.48M), not 48.5M",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/CAN;ARG/indicator/SP.POP.TOTL?format=json&date=2024",
+        "accessed": "2026-11-01",
+        "note": "primary: World Bank API, fetched by bench author; refutes the average"
+      }
+    ],
+    "ground_truth": "43.48M actual average; claim states 48.5M, rel diff 11.5% -> FALSE",
+    "calculation": "(41,262,329 + 45,696,159) / 2 = 86,958,488 / 2 = 43,479,244"
+  },
+  {
+    "id": "F2D-E1",
+    "claim": "E1",
+    "lang": "en",
+    "category": "e",
+    "text": "Italy's GDP was 2.38 trillion dollars in 2024.",
+    "expected": "true",
+    "ref": "WB NY.GDP.MKTP.CD ITA 2024 = 2,383,435,562,458 (2.383T) — correct scale anchor",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/ITA/indicator/NY.GDP.MKTP.CD?format=json&date=2024",
+        "accessed": "2026-11-01",
+        "note": "primary: World Bank API, fetched by bench author"
+      }
+    ],
+    "ground_truth": "2.383T; claim states 2.38T, rel diff 0.1% -> TRUE",
+    "calculation": null
+  },
+  {
+    "id": "F2D-E2",
+    "claim": "E2",
+    "lang": "en",
+    "category": "e",
+    "text": "South Korea had 51.8 million people in 2024, according to the World Bank.",
+    "expected": "true",
+    "ref": "WB SP.POP.TOTL KOR 2024 = 51,751,065 (51.75M) — correct scale anchor",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/KOR/indicator/SP.POP.TOTL?format=json&date=2024",
+        "accessed": "2026-11-01",
+        "note": "primary: World Bank API, fetched by bench author"
+      }
+    ],
+    "ground_truth": "51.75M; claim states 51.8M, rel diff 0.1% -> TRUE",
+    "calculation": null
+  },
+  {
+    "id": "F2D-E3",
+    "claim": "E3",
+    "lang": "en",
+    "category": "e",
+    "text": "The United Kingdom had 69.3 million people in 2024, according to the World Bank.",
+    "expected": "true",
+    "ref": "WB SP.POP.TOTL GBR 2024 = 69,281,000 (69.28M) — correct scale anchor",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/GBR/indicator/SP.POP.TOTL?format=json&date=2024",
+        "accessed": "2026-11-01",
+        "note": "primary: World Bank API, fetched by bench author"
+      }
+    ],
+    "ground_truth": "69.28M; claim states 69.3M, rel diff 0.03% -> TRUE",
+    "calculation": null
+  },
+  {
+    "id": "F2D-E4",
+    "claim": "E4",
+    "lang": "en",
+    "category": "e",
+    "text": "Mexico's GDP was 1.83 billion dollars in 2024.",
+    "expected": "false",
+    "ref": "WB MEX 2024 = 1,830,489,311,089 — 1.83 TRILLION, not billion (x1000 scale trap)",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/MEX/indicator/NY.GDP.MKTP.CD?format=json&date=2024",
+        "accessed": "2026-11-01",
+        "note": "primary: World Bank API, fetched by bench author; right digits, wrong scale word"
+      }
+    ],
+    "ground_truth": "1.83T; claim states 1.83B (x1000 off, explicit scale) -> FALSE",
+    "calculation": null
+  },
+  {
+    "id": "F2D-E5",
+    "claim": "E5",
+    "lang": "en",
+    "category": "e",
+    "text": "Germany had 8.35 million people in 2024.",
+    "expected": "false",
+    "ref": "WB DEU 2024 = 83,516,593 (83.5M) — 8.35M is x10 off (dropped digit trap)",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/DEU/indicator/SP.POP.TOTL?format=json&date=2024",
+        "accessed": "2026-11-01",
+        "note": "primary: World Bank API, fetched by bench author"
+      }
+    ],
+    "ground_truth": "83.5M; claim states 8.35M (x10 off) -> FALSE",
+    "calculation": null
+  },
+  {
+    "id": "F2D-E6",
+    "claim": "E6",
+    "lang": "en",
+    "category": "e",
+    "text": "Canada's GDP was 2.27 trillion euros in 2024.",
+    "expected": "false",
+    "ref": "WB CAN 2024 = 2,270,076,189,683 USD — right magnitude, wrong currency (euros != dollars unit trap)",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/CAN/indicator/NY.GDP.MKTP.CD?format=json&date=2024",
+        "accessed": "2026-11-01",
+        "note": "primary: World Bank API (USD series); claim uses euros — unit mismatch by construction"
+      }
+    ],
+    "ground_truth": "2.27T USD; claim states 2.27T euros (wrong unit) -> FALSE",
+    "calculation": null
+  },
+  {
+    "id": "F2D-F1",
+    "claim": "F1",
+    "lang": "en",
+    "category": "f",
+    "text": "Colombia had 52.9 million people in 2024, according to the World Bank.",
+    "expected": "true",
+    "ref": "WB SP.POP.TOTL COL 2024 = 52,886,363 (52.89M)",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/COL/indicator/SP.POP.TOTL?format=json&date=2024",
+        "accessed": "2026-11-01",
+        "note": "primary: World Bank API, fetched by bench author"
+      }
+    ],
+    "ground_truth": "52.89M; claim states 52.9M, rel diff 0.02% -> TRUE",
+    "calculation": null
+  },
+  {
+    "id": "F2D-F2",
+    "claim": "F2",
+    "lang": "en",
+    "category": "f",
+    "text": "Spain's GDP was 1.73 trillion dollars in 2024.",
+    "expected": "true",
+    "ref": "WB NY.GDP.MKTP.CD ESP 2024 = 1,725,671,652,742 (1.726T)",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/ESP/indicator/NY.GDP.MKTP.CD?format=json&date=2024",
+        "accessed": "2026-11-01",
+        "note": "primary: World Bank API, fetched by bench author"
+      }
+    ],
+    "ground_truth": "1.726T; claim states 1.73T, rel diff 0.2% -> TRUE",
+    "calculation": null
+  },
+  {
+    "id": "F2D-F3",
+    "claim": "F3",
+    "lang": "en",
+    "category": "f",
+    "text": "Indonesia's GDP was 1.40 trillion dollars in 2024.",
+    "expected": "true",
+    "ref": "WB NY.GDP.MKTP.CD IDN 2024 = 1,396,301,788,462 (1.396T)",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/IDN/indicator/NY.GDP.MKTP.CD?format=json&date=2024",
+        "accessed": "2026-11-01",
+        "note": "primary: World Bank API, fetched by bench author"
+      }
+    ],
+    "ground_truth": "1.396T; claim states 1.40T, rel diff 0.3% -> TRUE",
+    "calculation": null
+  },
+  {
+    "id": "F2D-F4",
+    "claim": "F4",
+    "lang": "en",
+    "category": "f",
+    "text": "Argentina's GDP was 1.64 trillion dollars in 2024.",
+    "expected": "false",
+    "ref": "WB NY.GDP.MKTP.CD ARG 2024 = 638,365,455,340 (0.64T) — 1.64T invented",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/ARG/indicator/NY.GDP.MKTP.CD?format=json&date=2024",
+        "accessed": "2026-11-01",
+        "note": "primary: World Bank API, fetched by bench author; refutes the figure"
+      }
+    ],
+    "ground_truth": "0.64T; claim states 1.64T, rel diff 157% -> FALSE",
+    "calculation": null
+  },
+  {
+    "id": "F2D-F5",
+    "claim": "F5",
+    "lang": "en",
+    "category": "f",
+    "text": "Nigeria's GDP grew to 687 billion dollars in 2024.",
+    "expected": "false",
+    "ref": "WB NGA 2024 = 252,261,880,140 (252B, DOWN from 487B in 2023) — neither 687B nor growing",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/NGA/indicator/NY.GDP.MKTP.CD?format=json&date=2023:2024",
+        "accessed": "2026-11-01",
+        "note": "primary: World Bank API, fetched by bench author; refutes figure + direction"
+      }
+    ],
+    "ground_truth": "252B and falling; claim states 687B and growing -> FALSE",
+    "calculation": null
+  },
+  {
+    "id": "F2D-F6",
+    "claim": "F6",
+    "lang": "en",
+    "category": "f",
+    "text": "South Korea had 61.8 million people in 2024.",
+    "expected": "false",
+    "ref": "WB KOR 2024 = 51,751,065 (51.8M) — 61.8M invented",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/KOR/indicator/SP.POP.TOTL?format=json&date=2024",
+        "accessed": "2026-11-01",
+        "note": "primary: World Bank API, fetched by bench author; refutes the figure"
+      }
+    ],
+    "ground_truth": "51.8M; claim states 61.8M, rel diff 19% -> FALSE",
+    "calculation": null
+  }
+]
