@@ -38,7 +38,12 @@ DETECT_INPUT_CHARS = 2000
 DETECT_MAX_TOKENS = 800
 # Detection is the cheapest judgment step: keep hidden reasoning minimal
 # so end-phrase -> card latency stays low.
-DETECT_REASONING_EFFORT = "low"
+# LIVE PROBE 2026-11-01 (M1e U1): with the full DETECT_SYSTEM prompt,
+# reasoning_effort="low" burns all 800 max_tokens in hidden reasoning
+# (finish_reason=length, empty content, silent heuristic fallback).
+# "minimal" completes (257 reasoning tokens on probe); "none" is rejected
+# by the API (supported: minimal/low/medium/high/xhigh/max).
+DETECT_REASONING_EFFORT = "minimal"
 # Minimum headroom (tokens) the caller must keep under the model limit.
 HEADROOM_TOKENS = 1500
 # Conservative context assumption for the headroom check. The real

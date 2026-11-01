@@ -94,7 +94,9 @@ def test_model_call_uses_strict_schema_and_budgets():
     call = fake.calls[0]
     assert call["schema"] == "live_claim_detect"
     assert call["max_tokens"] == DETECT_MAX_TOKENS
-    assert call["reasoning_effort"] == "low"
+    # Pinned by LIVE PROBE 2026-11-01 (M1e U1): "low" burns all 800
+    # max_tokens in hidden reasoning (finish_reason=length, empty content).
+    assert call["reasoning_effort"] == "minimal"
 
 
 def test_not_worthy_and_nonverbatim_dropped():
