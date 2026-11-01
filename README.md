@@ -106,7 +106,9 @@ single-page UI, httpx connectors, SQLite persistence, pydantic models.
 The only model dependency is the Meta Model API: Chat Completions
 (`muse-spark-1.3`, strict `json_schema` decoding) for structuring and
 judgment calls, Responses API + `web_search` for live counter-evidence.
-Eight dependencies total (seven runtime + hypothesis for property tests) — see [requirements.txt](requirements.txt).
+Eleven dependencies total (nine runtime incl. imageio-ffmpeg,
+websockets and matplotlib for Atlas Live + pytest and hypothesis) —
+see [requirements.txt](requirements.txt).
 
 Architecture: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) ·
 API: [docs/API.md](docs/API.md) ·
