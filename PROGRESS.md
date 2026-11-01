@@ -94,11 +94,28 @@ Persistent record for the autonomous build. Latest entry last.
 - Verified: 185/185 offline, smoke 29 PASS, full eval 24/24 stance 1.00,
   EN+ES+opinion live, reviewer SIGN OFF. Server :8765 full mode.
 
+## 2026-11-01 — Operation First Place (v0.3.0)
+
+- 7-team competitive research (rubric, landscape, strategy, frontier,
+  methodology, UX/demo, red team) → docs/COMPETITIVE_READINESS.md.
+- Winning strategy: "the stat-checker that refuses to lie" —
+  precision-aware verification + adversarial Muse Spark + receipt/re-run.
+- 6 implementation agents (M1 methodology, M2 falsification, M3 science
+  abstracts, M4 infra, M5 UX, M6 eval) + lead integration: run.py wiring
+  (parallel retrieve, falsify stage, abstract stance, usage attribution),
+  verbatim-span recovery, NON_VERIFYING abstract_stance, APP 0.3.0.
+- Methodology change (designed a priori, ADR-0008): claimed-precision
+  rule caps exact-figure claims at partially_supported; GDP case
+  re-pinned with rationale; UI never renders bare "Supported".
+- Verified: 306/306 offline, degraded 11/11, paraphrase 36/36,
+  abstention probe 17/20 documented; full-mode eval re-run (see
+  docs/EVAL_REPORT.md). Demo script rewritten (precision star beat).
+
 ## Open risks / not done
 
 - Submit-portal fields and video specs unverifiable without login; demo
   video recording itself is a human task (script ready in docs/).
-- No per-report token accounting yet; truncation fallback possible
-  under load (handled by degradation).
+- Truncation fallback possible under load (handled by degradation).
+- Falsifier false-alarm rate measured per run, not yet gated.
 - Deferred per PRD §2: full compound split, async jobs, grounding
-  integration, retention TTL, gateway rate limits, charts/export/i18n.
+  integration, retention TTL, gateway rate limits, charts/i18n UI.

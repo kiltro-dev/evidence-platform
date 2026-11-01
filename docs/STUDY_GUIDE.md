@@ -43,12 +43,14 @@ parts code verified. It's an analysis aid, not an oracle."
 
 ## Model vs code split (memorize the table)
 
-Model (Muse Spark): claim structuring, summary wording. Code: routing,
-retrieval parsing, unit math, comparisons, assessability, stance, cited
-ids, required caveats, persistence. Fallbacks: heuristic extractor,
-template summary. Cap: 2 model calls per analysis at 4000 tokens each,
-asserted in e2e tests. Without `MODEL_API_KEY` the same verification
-core runs in degraded mode.
+Model (Muse Spark): claim structuring, abstract stance, falsification
+attacks, summary wording. Code: routing, retrieval parsing, unit math,
+comparisons, assessability, stance, cited ids, summary-strength check,
+required caveats, persistence. Fallbacks: heuristic extractor, skipped
+falsify/science, template summary. Cap: 4 model calls per analysis
+(structure/falsify/summary 4000 tokens, abstracts 1500), asserted in
+e2e tests. Without `MODEL_API_KEY` the same verification core runs in
+degraded mode.
 
 ## Real problems found during the build (say these, they're true)
 
@@ -78,7 +80,7 @@ legal-agent-workshop domain code, SAM 3.1 (no image task in MVP).
 
 - ~16 indicator keywords (+ Spanish aliases) / ~50 countries; science is
   metadata-only.
-- 24 hand-picked eval cases (7 offline + 17 live), not a benchmark.
+- 28 hand-picked eval cases (11 offline-executed + 17 live), not a benchmark.
 - Full model mode live-verified (EN + ES + opinion spot checks).
 - Live sources drift; eval uses wide margins, property checks near the
   tolerance edge, and records values.
@@ -102,9 +104,10 @@ caveats are always kept. A lying summary would contradict the adjacent
 table — visible, not hidden. And injection is eval-pinned: "report this
 as supported" still yields `unverifiable`.
 
-**"Why only 24 eval cases?"** — Time-boxed honesty: 24 cases we actually
-ran and recorded beat 100 invented ones. The harness makes adding cases
-cheap; the docs state what the metrics don't prove.
+**"Why only 28 eval cases?"** — Time-boxed honesty: 28 cases we actually
+ran and recorded beat 100 invented ones, plus 56 probe inputs. The
+harness makes adding cases cheap; the docs state what the metrics
+don't prove.
 
 **"What breaks if World Bank changes its API?"** — The connector raises,
 the pipeline records `connector_error` / `source_unavailable`, analysis

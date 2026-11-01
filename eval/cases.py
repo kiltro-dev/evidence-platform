@@ -8,11 +8,17 @@ CASES = [
     {
         "id": "econ_supported_gdp",
         "text": "The GDP of the United States was $27.36 trillion in 2023.",
+        # v0.3.0 methodology (Team-E F1, ADR-0008): the claimed-precision
+        # rule caps this at partially_supported BY DESIGN — $27.36tn
+        # implies $10B resolution while live evidence ($27.81T,
+        # lastupdated 2026-10-08) differs by $451B. Relative agreement
+        # holds (verdict consistent); the stated digits are unconfirmed.
         "expected": {
             "domain": "economy",
-            "stance": "supported",
+            "stance": "partially_supported",
             "min_evidences": 1,
             "verdict_present": "consistent",
+            "uncertainty_present": ["claimed_precision_exceeded"],
             "uncertainty_absent": ["no_direct_evidence", "period_mismatch"],
         },
     },
@@ -568,6 +574,137 @@ CASES = [
             "only rule) and a ~66KB oversize claim still extracts and "
             "abstains cleanly with no_direct_evidence. Sources are stubbed "
             "so both run fully offline."
+        ),
+    },
+    # --- M6 eval expansion (additive; the 24 cases above are untouched). ---
+    # Precision pair: an exact 4-sig-fig claim that is numerically
+    # consistent (rel 1.62% <= 2%) must still disclose that the EVIDENCE
+    # cannot support the CLAIMED precision (blocked until the product rule
+    # lands; see "requires_code"), while a rounded/hedged claim on the
+    # same evidence stays cleanly supported.
+    {
+        "id": "econ_precision_exact_flag",
+        "text": "US GDP was $27.36tn in 2023.",
+        "mode": "scripted",
+        # NOTE: the brief's literal "$27.36T" does NOT parse: bare "T" is
+        # not a scale word (units.SCALE_WORDS has trillion/tn/bn/mn/...),
+        # so "$27.36T" extracts as 27.36 USD and contradicts. "tn" keeps
+        # the exact 4-sig-fig figure while parsing to 27.36e12.
+        "requires_code": "claimed_precision_exceeded",
+        "script": {
+            "evidence": [
+                {
+                    "connector": "worldbank",
+                    "label": "GDP (current US$)",
+                    "unit": "USD",
+                    "year": "2023",
+                    "value": 27.81e12,
+                }
+            ]
+        },
+        "expected": {
+            "domain": "economy",
+            "stance": "partially_supported",
+            "min_evidences": 1,
+            "verdict_present": "consistent",
+            "recompute_verdict": True,
+            "uncertainty_present": ["claimed_precision_exceeded"],
+        },
+        "rationale": (
+            "False-precision probe with canned evidence: 27.36 vs 27.81 "
+            "(rel 1.62%) is numerically consistent, but the claim's exact "
+            "figure overstates what the evidence supports, so the stance "
+            "downgrades to partially_supported with the precision flag. "
+            "Blocked (not failed) until the product rule exists."
+        ),
+    },
+    {
+        "id": "econ_precision_rounded_ok",
+        "text": "US GDP was about $28tn in 2023.",
+        "mode": "scripted",
+        "script": {
+            "evidence": [
+                {
+                    "connector": "worldbank",
+                    "label": "GDP (current US$)",
+                    "unit": "USD",
+                    "year": "2023",
+                    "value": 27.81e12,
+                }
+            ]
+        },
+        "expected": {
+            "domain": "economy",
+            "stance": "supported",
+            "min_evidences": 1,
+            "verdict_present": "consistent",
+            "recompute_verdict": True,
+            "uncertainty_absent": ["claimed_precision_exceeded"],
+        },
+        "rationale": (
+            "Rounded + hedged ('about $28tn') on the SAME canned evidence "
+            "as the exact case: rel 0.68% consistent, and the precision "
+            "rule must NOT fire on rounded claims. Passes before and after "
+            "the rule lands; over-eager rules fail loudly here."
+        ),
+    },
+    # Tolerance-boundary synthetics: canned evidence engineered for exact
+    # rel diffs (evidence = claim/0.981 -> 1.9%; claim/0.979 -> 2.1%).
+    # Rounded "about $10 billion" wording keeps both rule-agnostic.
+    {
+        "id": "econ_boundary_1_9_consistent",
+        "text": "About $10 billion GDP of Testland in 2023.",
+        "mode": "scripted",
+        "script": {
+            "evidence": [
+                {
+                    "connector": "worldbank",
+                    "label": "GDP (current US$)",
+                    "unit": "USD",
+                    "year": "2023",
+                    "value": 10e9 / 0.981,
+                }
+            ]
+        },
+        "expected": {
+            "domain": "economy",
+            "stance": "supported",
+            "min_evidences": 1,
+            "verdict_present": "consistent",
+            "recompute_verdict": True,
+        },
+        "rationale": (
+            "1.9% synthetic diff sits just INSIDE the 2% tolerance: "
+            "verdict consistent, stance supported. Pins the boundary and "
+            "the independent recomputation property."
+        ),
+    },
+    {
+        "id": "econ_boundary_2_1_contradicts",
+        "text": "About $10 billion GDP of Testland in 2023.",
+        "mode": "scripted",
+        "script": {
+            "evidence": [
+                {
+                    "connector": "worldbank",
+                    "label": "GDP (current US$)",
+                    "unit": "USD",
+                    "year": "2023",
+                    "value": 10e9 / 0.979,
+                }
+            ]
+        },
+        "expected": {
+            "domain": "economy",
+            "stance": "contradicted",
+            "min_evidences": 1,
+            "verdict_present": "contradicts",
+            "recompute_verdict": True,
+        },
+        "rationale": (
+            "2.1% synthetic diff sits just OUTSIDE the 2% tolerance: "
+            "verdict contradicts, stance contradicted. Same claim text as "
+            "the 1.9% case; only the canned evidence differs."
         ),
     },
 ]

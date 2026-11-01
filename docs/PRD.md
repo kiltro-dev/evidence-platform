@@ -51,20 +51,25 @@ conclusion{stance∈{supported,contradicted,partially_supported,
 unverifiable,not_assessable}, summary, caveats (code∪model),
 support/contradict ids}, audit[] (with duration_ms), meta{app_version,
 model, temperature, max_tokens, tolerance, prompt_version,
-input_sha256, usage?}, elapsed_ms`.
+input_sha256, usage_extract, usage_science, usage_falsify,
+usage_summary}, elapsed_ms`.
 
-**Stance semantics:** supported (verifying consistent, no blocking unc.),
+**Stance semantics:** supported (verifying consistent, no blocking unc.,
+claimed precision holds, all real quantities verified on compounds),
 contradicted (any verifying contradicts), partially_supported (context
-only or blocked consistent), unverifiable (searched, insufficient),
-not_assessable (opinion/non-claim/compound-unresolvable/empty-after-
-extract — no retrieval attempted or retrieval meaningless).
+only, blocked consistent, claimed-precision exceeded, or compound
+under-verified), unverifiable
+(searched, insufficient), not_assessable (opinion/non-claim/empty —
+no retrieval attempted or retrieval meaningless). UI copy never renders
+bare "Supported": "Consistent with evidence (within 2% relative)".
 
 ## 5. Non-functional decisions
 
 - Reliability: no silent failure; connector/LLM faults labeled with cause.
 - Perf: sync analyze; UI aborts >45s; elapsed + skeleton shown.
-- Cost: ≤2 model calls/analysis; identical-text cache (size-capped,
-  in-memory); per-IP rate limit (generous, documented).
+- Cost: ≤4 model calls/analysis (structure + science + falsify +
+  summary); identical-text cache (size-capped, in-memory, model-aware);
+  per-IP rate limit (generous, documented); per-stage usage in meta.
 - Security: localhost-only documented property; iso3 allowlist; finite
   floats + list caps; http(s) link allowlist; no key in responses/logs/DB.
 - Reproducibility: README-verbatim install; `scripts/smoke.sh` gate.

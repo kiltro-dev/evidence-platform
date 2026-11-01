@@ -29,7 +29,7 @@ Single-number benchmarks hide exactly this distinction.
 
 | Criterion | Question | MVP operationalization |
 |---|---|---|
-| Consistency | Same input → same verdict? | deterministic core; temperature-0 model calls; 7/7 repeatable offline eval |
+| Consistency | Same input → same verdict? | deterministic core; temperature-0 model calls; 11/11 repeatable offline eval + 36/36 paraphrase agreement |
 | Correctness | Are the checks right? | unit tests on comparison/stance rules; strict comparability |
 | Traceability | Does every conclusion resolve to evidence? | `traceability` eval check (must be 1.0) |
 | Disclosure | Are model/code roles and limits explicit? | audit trail badges; limitations block; no hidden scores |
@@ -47,13 +47,22 @@ Single-number benchmarks hide exactly this distinction.
 ## Application to this MVP (honest self-grade)
 
 - E: strong for economy (direct values, stable URLs); weak-by-design for
-  science (metadata only — disclosed, capped at `partially_supported`).
+  science (metadata + abstract stance — disclosed, capped at
+  `partially_supported`).
 - V: strong on traceability (1.0, enforced; prose citations checked too),
   consistency (deterministic), disclosure (badges + limitations); narrow
-  on correctness coverage (24 hand-picked cases).
+  on correctness coverage (28 hand-picked cases).
 - Known gaps: no full-text science verification, no retrieval-relevance
   scoring beyond year/indicator matching, only two pinned adversarial
   phrasing cases (authority invocation, prompt injection).
+
+## E/V on stage (demo tie-in)
+
+The demo makes the split legible in one beat each: the GDP precision cap
+is high-V/low-E on the stated digits (the instrument works; the evidence
+does not confirm the digits); the ⊘ opinion refusal is the instrument
+declining to score E at all. When the falsifier fires, say so: V
+auditing itself, live.
 
 ## Limitations of the proposal
 

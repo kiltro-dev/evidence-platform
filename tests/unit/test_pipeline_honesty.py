@@ -365,8 +365,11 @@ def test_full_model_extraction_has_no_backfill_marker():
 
 
 def test_model_caveats_appended_to_required_template_caveats():
+    # F5b: the scripted summary quotes the stance token verbatim so the
+    # strength validator accepts it (no numeric rel -> no delta required).
     llm = ScriptedClient(
-        {"stance": {"summary": "Scripted.", "caveats": ["model-note", "block happened"]}}
+        {"stance": {"summary": "Scripted partially_supported verdict.",
+                    "caveats": ["model-note", "block happened"]}}
     )
     conclusion = synthesize(
         _claim(),
@@ -414,7 +417,8 @@ def test_synthesize_validates_model_summary_citations():
     llm = ScriptedClient(
         {
             "stance": {
-                "summary": "Verdict per [cmp_abc123] plus [cmp_fake].",
+                # F5b: quotes the stance token so strength validation passes.
+                "summary": "Verdict per [cmp_abc123] plus [cmp_fake]: supported.",
                 "caveats": [],
             }
         }

@@ -310,19 +310,89 @@ def test_duration_ms_positive_on_a_stage(monkeypatch):
     assert all(isinstance(d, float) and d >= 0 for d in durations)
     assert any(d > 0 for d in durations)
     assert [a.step for a in report.audit] == ["extract", "route", "retrieve",
-                                              "verify", "synthesize"]
+                                              "verify", "falsify",
+                                              "synthesize"]
+
+
+# --- 7. M3: abstract retrieval (additive) -------------------------------------
+
+def test_reconstruct_abstract_basic():
+    work = {"abstract_inverted_index": {"Cats": [0], "are": [1], "lovely": [2]}}
+    assert oamod.reconstruct_abstract(work) == "Cats are lovely"
+
+
+def test_reconstruct_abstract_inverts_positions():
+    work = {"abstract_inverted_index": {"b": [2, 4], "a": [0], "c": [1, 3]}}
+    assert oamod.reconstruct_abstract(work) == "a c b c b"
+
+
+def test_reconstruct_abstract_missing_or_invalid():
+    assert oamod.reconstruct_abstract({}) is None
+    assert oamod.reconstruct_abstract({"abstract_inverted_index": None}) is None
+    assert oamod.reconstruct_abstract({"abstract_inverted_index": "text"}) is None
+    assert oamod.reconstruct_abstract({"abstract_inverted_index": {}}) is None
+    assert oamod.reconstruct_abstract(
+        {"abstract_inverted_index": {"x": ["0", -1, True, None]}}) is None
+
+
+def test_reconstruct_abstract_caps_length():
+    inv = {f"w{i}": [i] for i in range(1000)}
+    text = oamod.reconstruct_abstract({"abstract_inverted_index": inv})
+    assert text is not None
+    assert len(text) <= oamod.ABSTRACT_MAX_CHARS == 2000
+
+
+def test_search_works_selects_abstract(monkeypatch):
+    seen = {}
+
+    class _Resp:
+        def raise_for_status(self):
+            pass
+
+        def json(self):
+            return {"results": []}
+
+    def fake_get(self, url, params=None, **kw):
+        seen["params"] = params
+        return _Resp()
+
+    monkeypatch.setattr(httpx.Client, "get", fake_get)
+    assert oamod.search_works("climate") == []
+    assert "abstract_inverted_index" in seen["params"]["select"]
+
+
+def test_retrieve_stores_abstract_in_payload(monkeypatch):
+    monkeypatch.setattr(oamod, "search_works", lambda query, per_page=5: [
+        {"id": "W1", "title": "T", "publication_year": 2020, "doi": "",
+         "cited_by_count": 0, "authorships": [], "primary_location": {},
+         "type": "article",
+         "abstract_inverted_index": {"Some": [0], "finding": [1]}},
+        {"id": "W2", "title": "U", "publication_year": 2021, "doi": "",
+         "cited_by_count": 0, "authorships": [], "primary_location": {},
+         "type": "article"},
+    ])
+    found = OpenAlexConnector().retrieve(_claim(subject="climate"))
+    assert found[0].payload["abstract"] == "Some finding"
+    assert found[1].payload["abstract"] is None
 
 
 def test_meta_and_elapsed_ms(monkeypatch):
     monkeypatch.setattr(runmod, "for_domain", lambda domain: [])
     text = "GDP grew strongly"
     report = analyze(text, persist=False)
-    assert APP_VERSION == "0.2.0"
+    assert APP_VERSION == "0.3.0"
     meta = report.meta
-    assert meta["app_version"] == "0.2.0"
+    assert meta["app_version"] == "0.3.0"
     for key in ("model", "temperature", "max_tokens", "tolerance",
-                "default", "prompt_version", "input_sha256"):
+                "default", "prompt_version", "input_sha256",
+                "usage_extract", "usage_science", "usage_falsify",
+                "usage_summary"):
         assert key in meta
+    # Degraded run: no stage made a model call, so every usage is None.
+    assert meta["usage_extract"] is None
+    assert meta["usage_science"] is None
+    assert meta["usage_falsify"] is None
+    assert meta["usage_summary"] is None
     assert meta["input_sha256"] == hashlib.sha256(text.encode()).hexdigest()
     assert meta["tolerance"] == 0.02
     assert isinstance(report.elapsed_ms, float) and report.elapsed_ms > 0

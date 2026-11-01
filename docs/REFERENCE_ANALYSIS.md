@@ -19,7 +19,7 @@ legal_agent, verification, tests, scripts), `cases/northbridge-v-caldera/`
 - **File-decoupled UI** — adapted as API/UI separation (UI only consumes
   HTTP, never imports the pipeline).
 - **Bounded budgets** (max docs/call, max facts/item) — adapted as
-  `limit` clamping and at-most-2 model calls per analysis.
+  `limit` clamping and at-most-4 model calls per analysis.
 
 ## Adapted, not copied
 

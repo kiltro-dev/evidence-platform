@@ -22,13 +22,21 @@ Given a factual claim, Evidence Atlas:
 
 1. **Structures** it (domain, quantities, units, time, geography, conditions)
    with Muse Spark, falling back to deterministic heuristics offline.
-2. **Retrieves** evidence from real, keyless public sources:
-   World Bank Open Data (economy) and OpenAlex (science).
+2. **Retrieves** evidence from real, keyless public sources — World Bank
+   Open Data (economy) and OpenAlex (science, incl. abstracts) — in parallel.
 3. **Verifies** with deterministic code: unit normalization, same-period
-   gating, numeric comparison with an explicit 2% tolerance rule.
-4. **Reports** stance (one of five, including `not_assessable` for opinions
-   and non-claims), evidence for/against, uncertainties, limitations, and a
-   full audit trail where every step is badged `CODE`, `MODEL`, or `HEURISTIC`.
+   gating, numeric comparison under an explicit 2% tolerance rule, plus a
+   claimed-precision rule (stated digits vs. retrieved value), absolute-gap
+   disclosure, and methodological uncertainties.
+4. **Red-teams itself**: Muse Spark attacks the draft verdict through a
+   falsify-only schema; code validates every attack and surfaces it as
+   doubt (advisory only — stances stay code-decided). Science abstracts
+   get a bounded stance assessment that corroborates but never verifies.
+5. **Reports** stance (one of five, including `not_assessable` for opinions
+   and non-claims), evidence for/against, uncertainties, limitations, a
+   full audit trail where every step is badged `CODE`, `MODEL`, or
+   `HEURISTIC`, and per-stage token usage. Reports export as methods
+   receipts and re-run deterministically.
 
 No confidence scores, no invented citations. When evidence is missing or
 incomparable, the report says so. Snippets and excerpts are pointers to
@@ -44,13 +52,14 @@ PYTHONPATH=src .venv/bin/python -m uvicorn atlas.api.app:app --host 127.0.0.1 --
 
 Open [http://127.0.0.1:8765](http://127.0.0.1:8765) and try:
 
-- `The GDP of the United States was $27.36 trillion in 2023.` → supported
+- `Unemployment in Germany was 3.1% in 2023.` → consistent with evidence
+- `The GDP of the United States was $27.36 trillion in 2023.` → partially
+  supported (within tolerance, but the stated digits exceed what the
+  retrieved value confirms — the claimed-precision cap)
 - `The population of Japan was 500 million in 2020.` → contradicted
 - `Democracy is the best form of government.` → not assessable (opinion)
 
 Full script: [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md).
-Screenshots: none — no browser is available in this build environment,
-so no screenshots were captured.
 
 ## Stack
 
@@ -120,27 +129,30 @@ Full reference: [docs/API.md](docs/API.md).
 ## Tests & evaluation
 
 ```bash
-.venv/bin/python -m pytest tests/unit tests/e2e -q        # offline gate (185 tests)
+.venv/bin/python -m pytest tests/unit tests/e2e -q        # offline gate (306 tests)
 .venv/bin/python -m pytest tests/integration -q -m live   # live sources (needs network)
-PYTHONPATH=src .venv/bin/python scripts/run_eval.py --mode degraded  # 7 scripted cases, offline
-PYTHONPATH=src .venv/bin/python scripts/run_eval.py --mode full      # all 24 cases, needs network + key
+PYTHONPATH=src .venv/bin/python scripts/run_eval.py --mode degraded  # 11 scripted cases, offline
+PYTHONPATH=src .venv/bin/python scripts/run_eval.py --mode full      # all 28 cases, needs network + key
+PYTHONPATH=src .venv/bin/python scripts/run_eval.py --paraphrase     # 36-input stability probe, offline
+PYTHONPATH=src .venv/bin/python scripts/run_eval.py --unanswerable   # 20-variant abstention probe, offline
 bash scripts/smoke.sh --port 8765                           # offline smoke (29 checks)
 bash scripts/smoke.sh --port 8765 --live --eval              # + live API + full eval
 ```
 
-- `tests/unit tests/e2e` is the offline gate: **185 tests, all green**,
+- `tests/unit tests/e2e` is the offline gate: **306 tests, all green**,
   no network, no key.
 - `-m live` selects the `live` pytest marker (registered in
   `pyproject.toml`): tests that hit real public APIs.
-- Eval: 24 cases total. `--mode degraded` runs the 7 offline-capable cases
-  (2 `both` + 5 `scripted`) and skips the 17 `live` ones; `--mode full`
-  runs everything but needs network and takes several minutes
-  (live source latency plus up to 2 model calls per case).
-- Current results: **185/185 offline, 7/7 degraded eval, 24/24 full-mode
-  eval with real muse-spark-1.3** (stance accuracy 1.00; includes EN/ES,
-  adversarial, injection, and provider-failure cases).
+- Eval: 28 cases total. `--mode degraded` runs the 11 offline-capable
+  cases and skips the 17 `live` ones; `--mode full` runs everything but
+  needs network and takes several minutes (live source latency plus up
+  to 4 model calls per case).
+- Current results: **306/306 offline, 11/11 degraded eval, 36/36
+  paraphrase agreement, full-mode eval with real muse-spark-1.3** —
+  see [docs/EVAL_REPORT.md](docs/EVAL_REPORT.md) for the pinned run.
+  What these numbers do and do not prove is stated there honestly:
+  pinned regressions green, not an accuracy benchmark.
   Methodology: [docs/EVAL.md](docs/EVAL.md).
-  Latest run detail: [docs/EVAL_REPORT.md](docs/EVAL_REPORT.md).
   Project's evaluation proposal: [docs/FRAMEWORK.md](docs/FRAMEWORK.md).
 
 ## Limitations
@@ -148,9 +160,17 @@ bash scripts/smoke.sh --port 8765 --live --eval              # + live API + full
 - Economy verification covers the World Bank indicator/country catalog coded
   in [src/atlas/connectors/](src/atlas/connectors/) (~16 indicator keywords
   plus Spanish aliases, ~50 countries).
-- Science evidence is bibliographic metadata; full texts are not read.
+- Science evidence is OpenAlex metadata plus abstract-stance judgments;
+  full texts are not read and abstracts never verify a claim.
 - Bare numbers are compared as counts only, with an explicit flag.
-- Tolerance default is 2% relative; methodology differences are the user's call.
+- Tolerance default is 2% relative (an explicit engineering prior, not a
+  validated constant); methodology differences are the user's call. The
+  claimed-precision rule additionally requires stated digits to survive
+  contact with the retrieved value. Absolute-gap guides ($100B, 1M,
+  0.5pp) are order-of-magnitude disclosure thresholds with the same
+  honesty status.
+- Heuristic scale abbreviations are limited (e.g. bare "T" for trillion
+  is not parsed); the model path handles the general case.
 - No authentication or multi-user support (single-user demo; localhost-only).
 - Stored reports never expire (no TTL); delete unneeded ones via the UI or
   `DELETE /api/reports/{id}`.
@@ -168,7 +188,10 @@ bash scripts/smoke.sh --port 8765 --live --eval              # + live API + full
 
 ## Project status
 
-v2 (0.2.0) complete and verified end-to-end. Progress log: [PROGRESS.md](PROGRESS.md).
+v3 (0.3.0) complete and verified end-to-end: adversarial self-review,
+claimed-precision methodology, abstract-stance science path, per-stage
+token accounting, receipt export + deterministic re-run. Progress log:
+[PROGRESS.md](PROGRESS.md).
 Study/defense guide: [docs/STUDY_GUIDE.md](docs/STUDY_GUIDE.md).
 Developer guide: [docs/DEVELOPER_GUIDE.md](docs/DEVELOPER_GUIDE.md).
 

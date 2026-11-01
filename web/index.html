@@ -111,6 +111,45 @@
   code { background:#0d1220; padding:1px 6px; border-radius:4px; font-size:13px; }
   .meta-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
     gap:4px 20px; font-size:13px; }
+  /* --- M5 demo surface: checks bar, vs strip, severity rail, method panel --- */
+  .checksbar { display:flex; gap:4px; margin:12px 0 4px; }
+  .checksbar button { flex:1 1 0; min-width:0; border-radius:6px; padding:6px 4px;
+    font-size:13px; font-weight:800; cursor:pointer; border:1px solid var(--line);
+    background:#0d1220; color:var(--txt); white-space:nowrap; overflow:hidden;
+    text-overflow:ellipsis; }
+  .checksbar button.cb-ok { border-color:var(--ok); color:var(--ok); }
+  .checksbar button.cb-bad { border-color:var(--bad); color:var(--bad); }
+  .checksbar button.cb-warn { border-color:var(--warn); color:var(--warn); }
+  .checksbar button.cb-na { border-color:var(--na); color:var(--na); }
+  .vsgrid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  @media(max-width:760px){ .vsgrid{grid-template-columns:1fr;} }
+  .mockbox { border:1px dashed var(--na); border-radius:8px; padding:10px 14px;
+    background:#0d1220; font-size:14px; }
+  .mocklabel { font-size:11px; font-weight:800; letter-spacing:.04em; color:var(--warn);
+    border:1px solid var(--warn); border-radius:6px; display:inline-block;
+    padding:2px 8px; margin:0 0 8px; }
+  .atlasbox { border:1px solid var(--ok); border-radius:8px; padding:10px 14px;
+    background:#0e1f17; font-size:14px; }
+  .sevrail { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-top:8px; }
+  @media(max-width:760px){ .sevrail{grid-template-columns:1fr;} }
+  .sevlane { border:1px solid var(--line); border-radius:8px; padding:10px 12px;
+    background:#0d1220; font-size:13px; }
+  .sevlane h3 { margin:0 0 8px; font-size:13px; }
+  .sevlane ul { margin:0; padding-left:18px; }
+  .sevlane li { margin:6px 0; }
+  .sevlane code { font-size:11px; }
+  .chips { display:flex; gap:8px; flex-wrap:wrap; margin:8px 0; }
+  .chip { border:1px solid var(--line); border-radius:16px; padding:4px 12px;
+    font-size:13px; background:#0d1220; }
+  .chip b { color:var(--mut); font-weight:600; margin-right:6px; font-size:12px; }
+  .auditstrip { display:flex; gap:8px; flex-wrap:wrap; margin:8px 0 4px; padding:0; list-style:none; }
+  .auditstrip li { border:1px solid var(--line); border-radius:8px; padding:6px 10px;
+    font-size:12px; background:#0d1220; }
+  .coverage { margin-top:12px; font-size:13px; }
+  .coverage ul { margin:6px 0; padding-left:20px; columns:2; }
+  @media(max-width:760px){ .coverage ul{columns:1;} }
+  .coverage li { margin:2px 0; }
+  #rerunMsg { font-size:13px; }
 </style>
 </head>
 <body>
@@ -151,11 +190,33 @@
     <p id="svcNote" class="err small" hidden></p>
     <p class="mut small">Tip: press Cmd+Enter (Mac) or Ctrl+Enter to run. One-click examples fill the box and run immediately:</p>
     <div class="examples">
-      <button data-ex="The GDP of the United States was $27.36 trillion in 2023.">True stat: US GDP 2023</button>
+      <button data-ex="The GDP of the United States was $27.36 trillion in 2023.">US GDP 2023 (precision cap)</button>
       <button data-ex="The population of Japan was 500 million in 2020.">False stat: Japan population</button>
       <button data-ex="A recent study suggests green tea may improve memory.">Vague science: green tea</button>
       <button data-ex="Unemployment in Germany was 3.1% in 2023.">Jobs stat: German unemployment</button>
     </div>
+    <!-- Coverage honesty: static mirror of src/atlas/connectors/worldbank.py INDICATORS (read-only).
+         KEEP IN SYNC with that dict by hand when it changes; this list never auto-grows. -->
+    <details class="coverage">
+      <summary>What this demo can check today</summary>
+      <p class="small mut">Economy stats via World Bank Open Data — only these indicators match:</p>
+      <ul>
+        <li>GDP, GDP per capita</li>
+        <li>Population</li>
+        <li>Inflation / consumer prices</li>
+        <li>Unemployment</li>
+        <li>Life expectancy</li>
+        <li>CO2 / carbon emissions</li>
+        <li>Fertility rate</li>
+        <li>Exports, Imports</li>
+        <li>Government debt</li>
+        <li>Internet use</li>
+        <li>Literacy rate</li>
+        <li>Spanish aliases (PIB, población, …)</li>
+      </ul>
+      <p class="small mut">Science claims via OpenAlex (paper search). Anything else gets an honest
+      “unverifiable” — never a guess. An analysis aid, not an arbiter of truth.</p>
+    </details>
   </section>
   <section class="card" aria-labelledby="recentH">
     <h2 id="recentH">Recent analyses</h2>
@@ -198,18 +259,23 @@ function safeMsg(v) {
 
 /* ---------- label maps (icon + text, never color-only; no snake_case in UI) ---------- */
 function stanceInfo(st) {
+  /* Copy recalibration: never render a bare "Supported" — always the honest
+     "Consistent with evidence (within 2% relative)" form. `short` is for
+     compact contexts (history pills); it also never says "Supported". */
   switch (String(st || "")) {
-    case "supported": return {icon:"✓", label:"Supported",
-      def:"The evidence agrees with the claim as stated."};
-    case "contradicted": return {icon:"✕", label:"Contradicted",
+    case "supported": return {icon:"✓", label:"Consistent with evidence (within 2% relative)",
+      short:"Consistent ✓",
+      def:"Retrieved values agree within tolerance; stated precision checked separately (see flags)."};
+    case "contradicted": return {icon:"✕", label:"Contradicted", short:"Contradicted",
       def:"The evidence disagrees with the claim as stated."};
-    case "partially_supported": return {icon:"◐", label:"Partially supported",
+    case "partially_supported": return {icon:"◐", label:"Partially supported", short:"Partial ◐",
       def:"Some parts check out, but other parts could not be verified."};
-    case "unverifiable": return {icon:"?", label:"Unverifiable",
+    case "unverifiable": return {icon:"?", label:"Unverifiable", short:"Unverifiable",
       def:"Sources were searched, but not enough reliable evidence was found."};
-    case "not_assessable": return {icon:"⊘", label:"Not assessable",
+    case "not_assessable": return {icon:"⊘", label:"Not assessable", short:"Not assessable",
       def:"This text cannot be fact-checked as stated (opinion, too vague, or not a factual claim)."};
-    default: return {icon:"?", label:cap(st) || "Unknown", def:"No verdict explanation available."};
+    default: { const l = cap(st) || "Unknown"; return {icon:"?", label:l, short:l,
+      def:"No verdict explanation available."}; }
   }
 }
 function verdictInfo(v) {
@@ -499,7 +565,116 @@ function verdictHTML(report, nums) {
     '<p class="small mut">Who produced what: <span class="badge b-code">CODE</span> deterministic checks · ' +
     '<span class="badge b-model">MODEL</span> model output · ' +
     '<span class="badge b-heur">HEURISTIC</span> rule-based fallback</p>' +
-    '<p class="small">Supports: ' + pills(sup) + "<br>Contradicts: " + pills(con) + "</p></section>";
+    checksBarHTML(report, nums) +
+    '<p class="small">Consistent checks: ' + pills(sup) +
+    "<br>Contradicting checks: " + pills(con) + "</p></section>";
+}
+/* Checks bar: one equal-width clickable segment per comparison (counts only,
+   no fake confidence). Reuses jumpTo() via the shared [data-cmp] wiring. */
+function checksBarHTML(report, nums) {
+  const cmps = Array.isArray(report.comparisons) ? report.comparisons : [];
+  if (!cmps.length) return "";
+  const sorted = [...cmps].sort((a, b) =>
+    String(a.comparison_id || "").localeCompare(String(b.comparison_id || "")));
+  let nOk = 0, nBad = 0, nOther = 0;
+  const segs = sorted.map((x, i) => {
+    const cn = nums.cNum[x.comparison_id] || ("C" + (i + 1));
+    const v = verdictInfo(x.verdict);
+    let cls = "cb-na";
+    if (x.verdict === "consistent") { cls = "cb-ok"; nOk++; }
+    else if (x.verdict === "contradicts") { cls = "cb-bad"; nBad++; }
+    else { cls = x.verdict === "inconclusive" ? "cb-warn" : "cb-na"; nOther++; }
+    return '<button class="' + cls + '" data-cmp="' + esc(cn) + '" title="' +
+      esc(cn + ": " + v.label + " — jump to check") + '">' +
+      esc(v.icon + " " + cn) + "</button>";
+  }).join("");
+  const rule = sorted.map(x => x.tolerance_rule).find(r => r) ||
+    "|claim-evidence|/|evidence| <= 0.02 (relative)";
+  return '<div class="checksbar" role="group" aria-label="Checks">' + segs + "</div>" +
+    '<p class="small mut">' + nOk + " ✓ · " + nBad + " ✕ · " + nOther + " ?/other" +
+    " — counts only, no confidence score. Tolerance: " + esc(rule) + "</p>";
+}
+/* Chatbot-vs-Atlas strip: STATIC honest comparison. Left is a LABELED
+   illustrative mock (never a live call, never a real competitor result). */
+function vsStripHTML(report, nums) {
+  const k = report.conclusion || {};
+  const st = stanceInfo(k.stance);
+  const cmps = Array.isArray(report.comparisons) ? report.comparisons : [];
+  const evs = Array.isArray(report.evidences) ? report.evidences : [];
+  let chain = '<span class="mut small">No checks or sources to trace for this report.</span>';
+  if (cmps.length || evs.length) {
+    const c0 = [...cmps].sort((a, b) =>
+      String(a.comparison_id || "").localeCompare(String(b.comparison_id || "")))[0];
+    const e0 = c0 && c0.evidence_id
+      ? evs.find(e => e.evidence_id === c0.evidence_id) : evs[0];
+    const cn = (c0 && nums.cNum[c0.comparison_id]) || (c0 ? "C1" : "—");
+    const en = (e0 && nums.eNum[e0.evidence_id]) || (e0 ? "E1" : "—");
+    const bits = [];
+    if (c0) {
+      const v = verdictInfo(c0.verdict);
+      bits.push('<button class="pillbtn" data-cmp="' + esc(cn) + '">' + esc(cn) + "</button>");
+      bits.push('<span class="small">' + esc(cap(c0.metric) || "check") + ": " +
+        esc(deltaText(c0)) + " " + esc(v.icon + " " + v.label) + "</span>");
+    }
+    if (c0 && e0) bits.push('<span aria-hidden="true">→</span>');
+    if (e0) {
+      bits.push('<button class="pillbtn" data-ev="' + esc(en) + '">' + esc(en) + "</button>");
+      bits.push('<span class="small">' + esc(e0.source_name || "source") + "</span>");
+    }
+    const url = e0 && e0.source_url;
+    if (url && /^https?:\/\//i.test(String(url))) {
+      bits.push('<span aria-hidden="true">→</span>');
+      bits.push('<a href="' + esc(String(url)) + '" target="_blank" rel="noopener">link</a>');
+    }
+    chain = bits.join(" ");
+  }
+  return '<section class="card" id="vsStrip" aria-labelledby="vsH">' +
+    '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px">' +
+    '<h2 id="vsH" style="margin:0">Why not just ask a chatbot?</h2>' +
+    '<button id="vsHide" class="ghost small">Dismiss</button></div>' +
+    '<details open><summary class="small">Show the honest comparison</summary>' +
+    '<div class="vsgrid" style="margin-top:10px">' +
+    '<div class="mockbox"><p class="mocklabel">ILLUSTRATIVE MOCK — NOT A LIVE CALL, NOT A REAL COMPETITOR RESULT</p>' +
+    '<p><i>“Yes, that figure sounds about right — I believe it grew a lot in recent years.”</i></p>' +
+    '<p class="small mut">A generic chatbot-style answer: fluent, no source links, no measured ' +
+    "difference, no stated tolerance. You cannot audit it.</p></div>" +
+    '<div class="atlasbox"><p style="margin-top:0"><span class="stance s-' +
+    esc(String(k.stance || "unverifiable")) + '" style="font-size:13px">' +
+    esc(st.icon) + " " + esc(st.label) + "</span></p>" +
+    '<p class="small">Atlas: every number traces to a source.</p>' +
+    "<p>" + chain + "</p></div></div></details></section>";
+}
+/* Method panel: judge-facing summary promoted above the collapsed details.
+   Chips capped at ~6; audit strip capped at 4 steps. Defensive: hides gaps. */
+function methodPanelHTML(report) {
+  const c = report.claim || null;
+  const steps = Array.isArray(report.audit) ? report.audit : [];
+  if (!c && !steps.length) return "";
+  const chips = [];
+  if (c) {
+    if (c.domain) chips.push(["Domain", cap(c.domain)]);
+    if (c.claim_type) chips.push(["Type", cap(c.claim_type)]);
+    if (c.subject) chips.push(["Subject", String(c.subject).slice(0, 40)]);
+    const qs = Array.isArray(c.quantities) ? c.quantities : [];
+    if (qs.length) chips.push(["Quantities", qs.length + " × " +
+      String(qs[0].raw_text || qs[0].rawText || qs[0].value || "").slice(0, 24)]);
+    const ts = Array.isArray(c.time_refs) ? c.time_refs : [];
+    if (ts.length) chips.push(["Time", String(ts[0].raw || ts[0].year || "?").slice(0, 24)]);
+    const gs = Array.isArray(c.geo_refs) ? c.geo_refs : [];
+    if (gs.length) chips.push(["Place", String(gs[0].name || gs[0].raw || "?").slice(0, 24)]);
+  }
+  const chipHTML = chips.slice(0, 6).map(([k, v]) =>
+    '<span class="chip"><b>' + esc(k) + "</b>" + esc(v) + "</span>").join("");
+  const strip = steps.slice(0, 4).map(a => "<li>" + esc(cap(a.step) || "?") + " " +
+    actorBadge(a.actor) + ' <span class="mut">' +
+    esc(fmtDur(isNum(a.duration_ms) ? a.duration_ms : a.durationMs) || "—") +
+    "</span></li>").join("");
+  return '<section class="card" aria-labelledby="methodH"><h2 id="methodH">Method at a glance</h2>' +
+    (c ? '<p class="small mut">Claim as understood ' + actorBadge(c.extraction_actor) + "</p>" : "") +
+    (chipHTML ? '<div class="chips">' + chipHTML + "</div>" : "") +
+    (strip ? '<ul class="auditstrip">' + strip + "</ul>" +
+      '<p class="small mut">First ' + Math.min(4, steps.length) + " of " + steps.length +
+      " audit steps — full tables below.</p>" : "") + "</section>";
 }
 function evidenceHTML(report, nums) {
   const evs = Array.isArray(report.evidences) ? report.evidences : [];
@@ -574,17 +749,30 @@ function comparisonsHTML(report, nums) {
 function uncertaintiesHTML(report) {
   const uncs = Array.isArray(report.uncertainties) ? report.uncertainties : [];
   const lims = Array.isArray(report.limitations) ? report.limitations : [];
-  const items = uncs.length ? "<ul>" + uncs.map(u => {
-    const s = sevInfo(u.severity);
-    return "<li><span class=\"sev " + s.c + "\">" + esc(s.t) + "</span>" +
-      esc(u.description || "Undisclosed gap.") + ' <span class="small mut">' + esc(s.d) + "</span>" +
-      (u.code ? ' <span class="why" title="Diagnostic code: ' + esc(human(u.code)) + '">Why</span>' : "") + "</li>";
-  }).join("") + "</ul>" : "<p>None recorded.</p>";
+  /* Severity rail: 3 lanes (HIGH blocks / MED weakens / LOW caveat). */
+  const lanes = {HIGH: [], MED: [], LOW: []};
+  uncs.forEach(u => {
+    const s = sevInfo(u && u.severity);
+    const item = "<li>" + esc((u && u.description) || "Undisclosed gap.") +
+      (u && u.code ? " <code>" + esc(human(u.code)) + "</code>" : "") + "</li>";
+    (lanes[s.t] || lanes.LOW).push(item);
+  });
+  const lane = (t, title, sub) => '<div class="sevlane"><h3><span class="sev ' +
+    (t === "HIGH" ? "sev-h" : t === "MED" ? "sev-m" : "sev-l") + '">' + t + "</span> " +
+    esc(title) + '</h3><p class="small mut" style="margin:0 0 6px">' + esc(sub) + "</p>" +
+    (lanes[t].length ? "<ul>" + lanes[t].join("") + "</ul>"
+      : '<p class="small mut">None.</p>') + "</div>";
+  const rail = uncs.length
+    ? '<div class="sevrail" role="group" aria-label="Uncertainties by severity">' +
+      lane("HIGH", "Blocks", "These block a firm conclusion.") +
+      lane("MED", "Weakens", "These weaken confidence.") +
+      lane("LOW", "Caveat", "Minor caveats to keep in mind.") + "</div>"
+    : "<p>None recorded.</p>";
   const limBox = '<div class="limbox"><h3>Method and limits</h3>' +
     (lims.length ? "<ul>" + lims.map(l => "<li>" + esc(safeMsg(l)) + "</li>").join("") + "</ul>"
       : "<p class=\"small\">No method limits were recorded for this report.</p>") + "</div>";
   return '<section class="card" aria-labelledby="uncH"><h2 id="uncH">Uncertainties (' + uncs.length +
-    ")</h2>" + items + limBox + "</section>";
+    ")</h2>" + rail + limBox + "</section>";
 }
 function claimHTML(report) {
   const c = report.claim || {};
@@ -635,12 +823,119 @@ function footHTML(report) {
   return '<div class="card small"><span class="mut">Report </span><code id="repId">' +
     esc(report.report_id || "unknown") + "</code> " +
     '<button id="copyLink" class="ghost small">Copy link</button> ' +
-    '<span id="copyMsg" class="mut"></span></div>';
+    '<span id="copyMsg" class="mut"></span><br><br>' +
+    '<button id="rerunBtn" class="ghost small">Re-run (determinism check)</button> ' +
+    '<button id="receiptBtn" class="ghost small">Export receipt (.md)</button>' +
+    '<p id="rerunMsg" class="mut" role="status"></p></div>';
+}
+/* Re-run: re-POST the same claim text and compare input_sha256 — a match is
+   the determinism proof. Defensive: missing hashes are reported, never throw. */
+async function reRunDeterminism(report) {
+  const msg = $("rerunMsg");
+  const text = (report.claim && report.claim.raw_text) || (lastRun && lastRun.text) || "";
+  if (!text) { msg.textContent = "Re-run unavailable: no claim text on this report."; return; }
+  const oldHash = report.meta && report.meta.input_sha256;
+  msg.textContent = "Re-running the same claim…";
+  try {
+    const res = await fetch("/api/analyze", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({text, limit: 5,
+        domain: (lastRun && lastRun.domain) || "auto", persist: false})
+    });
+    if (!res.ok) {
+      const e = await parseErrBody(res);
+      msg.textContent = "Re-run failed: " + (e.message || ("status " + e.status));
+      return;
+    }
+    const fresh = await res.json();
+    const newHash = fresh.meta && fresh.meta.input_sha256;
+    if (!oldHash || !newHash) {
+      msg.textContent = "Re-run done, but input_sha256 was not recorded on " +
+        (!oldHash ? "the original" : "the re-run") + " — no proof either way.";
+      return;
+    }
+    const match = String(oldHash) === String(newHash);
+    const stOld = stanceInfo(report.conclusion && report.conclusion.stance);
+    const stNew = stanceInfo(fresh.conclusion && fresh.conclusion.stance);
+    msg.textContent = match
+      ? "✓ Determinism proof: input_sha256 match (" + String(oldHash).slice(0, 12) +
+        "…). Verdicts: “" + stOld.label + "” → “" + stNew.label + "”."
+      : "✕ input_sha256 MISMATCH: " + String(oldHash).slice(0, 12) + "… vs " +
+        String(newHash).slice(0, 12) + "… — investigate before trusting this report.";
+  } catch (e) {
+    msg.textContent = "Re-run failed: " + safeMsg(e && e.message);
+  }
+}
+/* Export receipt: client-side markdown download (no backend call). */
+function exportReceipt(report, nums) {
+  const k = report.conclusion || {};
+  const st = stanceInfo(k.stance);
+  const c = report.claim || {};
+  const cmps = Array.isArray(report.comparisons) ? report.comparisons : [];
+  const evs = Array.isArray(report.evidences) ? report.evidences : [];
+  const m = report.meta && typeof report.meta === "object" ? report.meta : {};
+  const L = [];
+  L.push("# Evidence Atlas receipt");
+  L.push("");
+  L.push("Claim: " + (c.raw_text || "(missing)"));
+  L.push("Verdict: " + st.icon + " " + st.label);
+  L.push("Meaning: " + st.def);
+  if (k.summary) L.push("Summary: " + k.summary);
+  L.push("");
+  L.push("## Checks");
+  if (!cmps.length) { L.push("(no comparisons recorded)"); }
+  [...cmps].sort((a, b) => String(a.comparison_id || "")
+    .localeCompare(String(b.comparison_id || ""))).forEach((x, i) => {
+    const cn = nums.cNum[x.comparison_id] || ("C" + (i + 1));
+    const v = verdictInfo(x.verdict);
+    L.push("- " + cn + " [" + (x.metric || "?") + "] claim=" +
+      (x.claim_value || "—") + " evidence=" + (x.evidence_value || "—") +
+      " Δ=" + deltaText(x) + " → " + v.icon + " " + v.label);
+    if (x.tolerance_rule) L.push("  tolerance: " + x.tolerance_rule);
+  });
+  L.push("");
+  L.push("## Sources");
+  if (!evs.length) { L.push("(no evidence retrieved)"); }
+  evs.forEach((e, i) => {
+    const en = nums.eNum[e.evidence_id] || ("E" + (i + 1));
+    L.push("- " + en + " " + (e.source_name || "Unnamed source") +
+      (e.source_url ? " <" + e.source_url + ">" : " (no link)"));
+  });
+  L.push("");
+  L.push("## Caveats");
+  const cavs = Array.isArray(k.caveats) ? k.caveats : [];
+  const uncs = Array.isArray(report.uncertainties) ? report.uncertainties : [];
+  if (!cavs.length && !uncs.length) { L.push("(none recorded)"); }
+  cavs.forEach(x => L.push("- " + safeMsg(x)));
+  uncs.forEach(u => L.push("- [" + sevInfo(u.severity).t + "] " +
+    (u.description || "?") + (u.code ? " (" + u.code + ")" : "")));
+  L.push("");
+  L.push("## Run metadata");
+  ["app_version", "model", "temperature", "max_tokens", "tolerance",
+    "prompt_version", "input_sha256", "usage"].forEach(key => {
+    if (m[key] != null && m[key] !== "") L.push("- " + key + ": " + safeMsg(m[key]));
+  });
+  L.push("- report_id: " + (report.report_id || "unknown"));
+  try {
+    L.push("- report link: " + location.origin + location.pathname +
+      "?report=" + encodeURIComponent(report.report_id || ""));
+  } catch {}
+  L.push("");
+  L.push("_An analysis aid, not an arbiter of truth._");
+  const blob = new Blob([L.join("\n")], {type: "text/markdown"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "atlas-receipt-" + (report.report_id || "unknown") + ".md";
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { try { URL.revokeObjectURL(a.href); } catch {} a.remove(); }, 500);
 }
 function render(report) {
   const nums = buildNums(report);
-  $("out").innerHTML = verdictHTML(report, nums) + evidenceHTML(report, nums) +
-    comparisonsHTML(report, nums) + uncertaintiesHTML(report) +
+  $("out").innerHTML = verdictHTML(report, nums) + vsStripHTML(report, nums) +
+    evidenceHTML(report, nums) + comparisonsHTML(report, nums) +
+    uncertaintiesHTML(report) + methodPanelHTML(report) +
     claimHTML(report) + auditHTML(report) + footHTML(report);
   /* wire traceability pills + expanders + copy link */
   document.querySelectorAll("#out [data-cmp]").forEach(b =>
@@ -669,6 +964,15 @@ function render(report) {
       (Array.isArray(report.comparisons) ? report.comparisons.length : 0) + " checks";
   });
   $("copyLink").addEventListener("click", () => copyLink(report.report_id));
+  const vsHide = $("vsHide");
+  if (vsHide) vsHide.addEventListener("click", () => {
+    const s = $("vsStrip");
+    if (s) s.hidden = true;
+  });
+  const rerunBtn = $("rerunBtn");
+  if (rerunBtn) rerunBtn.addEventListener("click", () => reRunDeterminism(report));
+  const receiptBtn = $("receiptBtn");
+  if (receiptBtn) receiptBtn.addEventListener("click", () => exportReceipt(report, nums));
   const vh = $("verdictH");
   if (vh) vh.focus({preventScroll: true});
 }
@@ -724,7 +1028,7 @@ function renderRecent(list) {
     return '<div class="hist" id="hist-' + esc(r.report_id) + '">' +
       '<button class="linklike" data-load="' + esc(r.report_id) + '">' +
       '<span class="stance s-' + esc(String(r.stance || "unverifiable")) + '" style="font-size:12px">' +
-      esc(st.icon) + " " + esc(st.label) + "</span>" +
+      esc(st.icon) + " " + esc(st.short || st.label) + "</span>" +
       '<span class="snip">' + esc(snip || "(no text)") + "</span>" +
       '<span class="mut small">' + esc(fmtDate(r.created_at || r.createdAt)) + "</span></button>" +
       '<button class="ghost small" data-del="' + esc(r.report_id) + '">Delete</button></div>';

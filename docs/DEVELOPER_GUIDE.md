@@ -13,20 +13,44 @@ src/atlas/
   core/compare.py       # numeric + time comparison, tolerance
   connectors/__init__.py# SourceConnector protocol + REGISTRY + for_domain
   connectors/worldbank.py, openalex.py, countries.py
-  models/meta.py        # MetaClient (real model)
+  models/meta.py        # MetaClient (real model, usage, effort)
   models/heuristic.py   # regex fallback extractor
   models/scripted.py    # test doubles (ScriptedClient, FaultClient)
-  pipeline/extract.py   # structure_claim (+ sanitize + backfill)
+  pipeline/extract.py   # structure_claim (+ sanitize + spans + backfill)
+  pipeline/retrieve.py  # parallel connector fan-out
   pipeline/verify.py    # verify_quantitative, assess_science
-  pipeline/synthesize.py# decide_stance, summaries, citation validation
+  pipeline/science.py   # abstract-stance assessment (non-verifying)
+  pipeline/falsify.py   # adversarial self-review (advisory only)
+  pipeline/synthesize.py# decide_stance, summaries, citation+strength checks
   pipeline/run.py       # analyze() orchestrator, APP_VERSION, meta block
   storage/store.py      # SQLite save/get/list/delete
 web/index.html          # static UI (HTTP only, never imports pipeline)
-eval/cases.py           # 24 eval cases + rationale strings
-scripts/run_eval.py     # eval runner (--mode degraded|full|both)
+eval/cases.py           # 28 eval cases + rationale strings
+eval/paraphrases.py     # 6x5 stability probe inputs
+eval/unanswerable.py    # 20-variant abstention probe inputs
+scripts/run_eval.py     # eval runner (--mode, --paraphrase, --unanswerable)
 scripts/smoke.sh        # 29-check smoke (offline default)
-tests/unit tests/e2e tests/integration  # 179 offline + live-marked
+tests/unit tests/e2e tests/integration  # 306 offline + live-marked
 ```
+
+## Add a model-assisted stage (falsify/science pattern)
+
+New model calls must follow the `falsify.py` / `science.py` contract:
+
+1. One narrow JSON schema with a falsify/judge-only job; the model may
+   point at flaws, never assert verdicts.
+2. Code validates everything: ids must resolve, enums must be known,
+   malformed output degrades to a logged no-op (never raises).
+3. Stages are advisory: they surface doubt (comparisons/uncertainties),
+   never move stances — eval run 1 fired 5 falsify overrides, all
+   spurious on inspection, plus 2 reproduced live (see
+   `docs/EVAL_REPORT.md`). New metrics that must not verify go into
+   `NON_VERIFYING_METRICS`.
+4. Degraded-safe: `llm=None`/unavailable returns empty with an audit
+   skip entry. Wire usage via `_usage_seq`/`_take_usage` in `run.py`
+   so `meta.usage_*` attributes spend to the spending stage.
+5. Tests: scripted-client unit tests (valid/invalid/degraded) + e2e
+   call-count update in `tests/e2e/test_pipeline_offline.py`.
 
 ## Add a domain (e.g. `climate`)
 
@@ -95,7 +119,7 @@ tests/unit tests/e2e tests/integration  # 179 offline + live-marked
 ## Test commands
 
 ```bash
-.venv/bin/python -m pytest tests/unit tests/e2e -q       # offline gate (179)
+.venv/bin/python -m pytest tests/unit tests/e2e -q       # offline gate (306)
 .venv/bin/python -m pytest tests/unit/test_verify.py -q  # one file
 .venv/bin/python -m pytest tests/integration -q -m live  # live sources
 .venv/bin/python -m pytest --collect-only -q tests/unit tests/e2e  # count only

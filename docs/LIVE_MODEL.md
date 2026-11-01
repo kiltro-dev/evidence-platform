@@ -25,28 +25,46 @@
 ## v2 live verification (2026-11-01)
 
 Full-mode spot checks against the live app (`muse-spark-1.3`): EN GDP
-claim → `supported`; ES unemployment claim
-(`El desempleo en Alemania fue del 3,1% en 2023`) → `supported`;
+claim → `supported` (under the v2 tolerance-only rule); ES unemployment
+claim (`El desempleo en Alemania fue del 3,1% en 2023`) → `supported`;
 pure opinion → `not_assessable`. Degraded offline eval: 7/7.
 Detail: [EVAL_REPORT.md](EVAL_REPORT.md).
+
+## v3 live verification (2026-11-01)
+
+Same claims under the claimed-precision rule: EN GDP →
+`partially_supported` + `claimed_precision_exceeded` (Δ1.62% within
+tolerance, stated digits unconfirmed); ES unemployment → `supported`;
+opinion → `not_assessable`. Falsify stage returns real attacks at
+`reasoning_effort="low"` (2 attacks, 0 fatal/high on the unemployment
+claim). Per-stage usage persists in `meta.usage_*`; observed totals
+~2–4k tokens/analysis. Detail: [EVAL_REPORT.md](EVAL_REPORT.md).
 
 ## Operational findings (muse-spark-1.3)
 
 - The model spends heavily on hidden reasoning tokens (~48+ even for
   trivial prompts; `response_format: json_object` does not reduce it).
   Budgets under ~1500 tokens risk `finish_reason=length` with `None`
-  content. Both pipeline calls now use `max_tokens=4000`.
+  content. Structure/falsify/summary use `max_tokens=4000`, abstracts
+  1500 — and small judgment calls (falsify, abstract stance) pass
+  `reasoning_effort="low"`: at default depth the falsify call burned
+  3998 reasoning tokens and truncated to empty content (observed live).
 - Empty content raises a descriptive `RuntimeError` (no silent `{}`),
-  and both fallbacks (heuristic extract, template summary) log a
+  and all fallbacks (heuristic extract, skipped falsify/science,
+  template summary) log a
   warning naming the cause. No credentials appear in these logs.
 - Summary payload was slimmed to id/metric/verdict/notes + code/
   description/severity to cut prompt + reasoning cost.
-- Single-analysis cost observed: 2 model calls, a few thousand tokens
-  total (exact usage varies with reasoning length).
+- Single-analysis cost observed: up to 4 model calls (structure +
+  abstract-stance + falsify + summary; 3 on non-science paths), a few
+  thousand tokens total (exact usage varies with reasoning length;
+  per-stage usage persists in `meta.usage_*`).
 
 ## Limits
 
-- No per-call usage accounting persisted (usage object available on the
-  raw response; not yet recorded per report).
+- Per-call usage IS persisted (`meta.usage_*` per stage); totals vary
+  with reasoning length and are point-in-time observations.
 - Reasoning length is non-deterministic; truncation fallbacks remain
   possible under load and are handled by degradation, not retry.
+- `reasoning_effort` values other than `"low"` on falsify/science are
+  untested; structure/summary stay at default depth by design.

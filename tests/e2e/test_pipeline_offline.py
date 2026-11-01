@@ -49,9 +49,12 @@ class StubWB:
 
 
 def _run_with_stub(value: float):
+    # F5b: the scripted summary quotes the stance token and states the
+    # measured delta so the strength validator accepts the model path.
     llm = ScriptedClient(
         {"Claim:": LLM_STRUCTURE,
-         "stance": {"summary": "Scripted summary.", "caveats": ["scripted"]}},
+         "stance": {"summary": "Stance supported: measured delta 0.00%.",
+                    "caveats": ["scripted"]}},
         default={},
     )
     orig = runmod.for_domain
@@ -64,15 +67,22 @@ def _run_with_stub(value: float):
 
 
 def test_e2e_supported_path_uses_model_and_code():
-    report, llm = _run_with_stub(27.81e12)
+    # Exact evidence match: the claimed-precision rule (Team-E F1) stays
+    # silent at zero gap, so the happy supported path keeps its stance.
+    # (A $27.36tn claim vs $27.81tn evidence now caps at
+    # partially_supported; that path is pinned in
+    # tests/e2e/test_methodology_e2e.py and the eval precision pair.)
+    report, llm = _run_with_stub(27.36e12)
     assert report.conclusion.stance == "supported"
     assert report.claim.extraction_actor == "model"
     assert report.conclusion.actor == "model"  # scripted summary
     assert any(c.actor == "code" and c.verdict == "consistent"
                for c in report.comparisons)
-    assert len(llm.calls) == 2  # structure + summary, no redundant loops
+    # structure + falsify + summary; each stage calls at most once
+    assert len(llm.calls) == 3
     steps = [a.step for a in report.audit]
-    assert steps == ["extract", "route", "retrieve", "verify", "synthesize"]
+    assert steps == ["extract", "route", "retrieve", "verify", "falsify",
+                     "synthesize"]
 
 
 def test_e2e_contradicted_path():

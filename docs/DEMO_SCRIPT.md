@@ -1,74 +1,103 @@
-# 3-minute demo script
+# 3-minute demo script (v0.3.0)
 
 Setup: server running
 (`PYTHONPATH=src .venv/bin/python -m uvicorn atlas.api.app:app --host 127.0.0.1 --port 8765`),
 browser on http://127.0.0.1:8765, this file open for the exact claim strings.
 Check `GET /api/status` first so you can name the mode (full vs degraded).
+Pre-warm: run each claim once before recording so the cache + connectors
+are warm; clear Recent analyses for a clean take.
 
-## 0:00–0:25 — Problem (25s)
+Narrative spine: chatbots assert without receipts → Atlas inverts it
+(model reads, only code judges) → the precision beat (refusing full
+credit is the feature) → refusal as first-class verdict → live
+reproducibility proof (re-run + receipt export).
 
-"Fact-checking chatbots give you 'true or false' with no receipts: no
-sources you can open, no math you can check, no line between what the
-model guessed and what was actually verified. Evidence Atlas is the
-opposite: a workbench that shows its work for every claim."
+## 0:00–0:20 — Problem (20s)
 
-## 0:25–1:10 — Supported claim (45s)
+"Every fact-checking chatbot gives you 'true or false' with no receipts —
+no sources you can open, no math you can check, and no line between what
+the model guessed and what was actually verified. Evidence Atlas inverts
+that: the model is allowed to *read*, but only code is allowed to
+*judge*. And the page proves it on every claim."
 
-Click the **True stat: US GDP 2023** example (or paste
-`The GDP of the United States was $27.36 trillion in 2023.`).
-Narrate while it loads:
+Point at the footer ("Deterministic checks always run in code and cannot
+be skipped by the model") and name the `#modeBanner` state.
 
-- "Structured: economy, quantitative, 27.36 trillion USD, USA, 2023 —
-  badge shows who extracted it."
-- "Evidence: one World Bank row, link included, retrieved live."
-- "Comparison: same unit, same year, Δ1.6% inside the explicit 2% rule —
-  consistent, computed in code, not by the model."
-- "Stance: supported, with the audit trail below."
-- Click a **trace pill** (C1/C2, E1): "Every verdict number jumps to the
-  exact comparison and evidence behind it. That is the traceability
-  guarantee, clickable."
+## 0:20–1:00 — Clean supported claim + traceability (40s)
 
-## 1:10–1:50 — Contradicted claim (40s)
+Click **Jobs stat: German unemployment**
+(`Unemployment in Germany was 3.1% in 2023.`). Narrate over the staged
+skeleton:
+
+"Watch the verdict card: Consistent with evidence, based on N sources
+and M checks — and the checks bar visualizes the work, not a confidence
+score we refuse to invent. Now the before/after — *before*, that's a
+chatbot sentence. *After*, click this C1 pill…"
+
+**Click a `C1` trace pill.** The page scrolls and flashes the exact row:
+claimed vs. World Bank value, measured Δ inside the explicit 2% rule,
+`✓ Consistent`, `CODE` badge.
+
+"…and you land on the exact check: claimed vs. sourced value, measured
+difference, computed in code, badged CODE. Click E1 and you land on the
+World Bank row with a live outbound link. Every number jumps to its
+receipt."
+
+## 1:00–1:35 — Contradicted claim (35s)
 
 Click **False stat: Japan population**
 (`The population of Japan was 500 million in 2020.`):
 
-- "Same pipeline, different outcome: World Bank says ~126 million —
-  measured difference, flagged as contradicts."
-- "Note the honesty flag: the claim states a bare number, so the report
-  marks the count assumption explicitly instead of hiding it."
-- Scroll to **Recent analyses**: "Both reports persisted automatically.
-  Each re-opens by deep link, and each can be deleted — no dead data."
+"Same pipeline, no mercy: World Bank says ~126 million — measured gap,
+✕ Contradicts. And the honesty flag: the claim states a bare number,
+so the report marks the count assumption instead of reinterpreting it."
 
-## 1:50–2:25 — What it refuses to do (35s)
+## 1:35–2:10 — The precision beat: refusing full credit (35s) — STAR
 
-Paste `Democracy is the best form of government.` (opinion):
+Click **US GDP 2023** (`The GDP of the United States was $27.36 trillion
+in 2023.`):
 
-- "Not assessable — the ⊘ badge. An opinion is not a factual claim, so
-  the system refuses a verdict instead of laundering one through
-  retrieval noise. That fifth stance exists so 'I can't judge this' is a
-  first-class answer."
+"Now watch it refuse full credit. Δ1.6% is inside the 2% tolerance —
+but the claim states digits down to $10 billion while the retrieved
+value differs by $451 billion. So the verdict caps at ◐ Partially
+supported, with a claimed-precision flag, an absolute-gap disclosure,
+and the self-review note. A chatbot would say 'true'. Atlas says:
+'relatively close, but not as stated.'"
 
-If time allows, paste the Spanish claim
-`El desempleo en Alemania fue del 3,1% en 2023` (decimal comma, ES
-keywords): "Same verification core in Spanish — supported."
+Point at the severity rail (flags next to the verdict) and, if the
+falsify step fired, its attack note: "It argued with its own draft."
 
-For the science refusal story instead, click **Vague science: green tea**:
-"Real OpenAlex works — but titles aren't verification. The system caps
-itself at partially supported and records WHY: metadata only. It would
-rather underclaim than overclaim."
+## 2:10–2:30 — The honest refusal (20s)
 
-## 2:25–3:00 — Close (35s)
+Paste `Democracy is the best form of government.`:
 
-"Three ideas: real sources with links, deterministic checks the model
-can't skip, and uncertainties printed next to conclusions. Muse Spark
-structures and summarizes; code verifies. Everything you saw — 179
-offline tests, 7/7 offline eval cases plus live full-mode checks —
-reruns from a clean checkout. Evidence Atlas: show your work."
+"And the beat no chatbot gives you: ⊘ Not assessable. An opinion is
+not a factual claim, so Atlas returns 'I can't judge this' as a
+first-class verdict instead of laundering one through retrieval noise."
+
+## 2:30–2:50 — Reproducibility proof: re-run + receipt (20s)
+
+On any report, hit **Re-run**: "Same input, same verdict, same
+input hash — live. ChatGPT cannot do this." Then **Export receipt**:
+"And the methods appendix a journalist could file: claim, verdict, Δ,
+sources with links, caveats, versions."
+
+Optional ES beat (swap with refusal if judges are technical): paste
+`El desempleo en Alemania fue del 3,1% en 2023` — "Same core in
+Spanish: decimal comma, Spanish phrasing, still structured by Muse
+Spark, still judged by code."
+
+## 2:50–3:00 — Close (10s)
+
+"Real sources with links you can open. Deterministic checks the model
+can't skip. Uncertainties printed next to conclusions. 306 offline
+tests, 28 pinned eval cases plus paraphrase and abstention probes.
+Evidence Atlas: show your work."
 
 ## Backup (if network dies mid-demo)
 
-- `eval/results/*.json` contains a recorded 7/7 offline run; show the JSON.
+- `eval/results/*.json` contains recorded runs; show the JSON.
 - `tests/e2e` runs the full pipeline offline with scripted doubles.
-- The **Recent analyses** history still opens previously persisted
-  reports (they render fully offline once stored).
+- **Recent analyses** history opens previously persisted reports fully
+  offline once stored.
+- Record the golden path on video regardless: the submission IS video.

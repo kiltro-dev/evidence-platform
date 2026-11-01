@@ -1,4 +1,4 @@
-# API reference (v0.2.0)
+# API reference (v0.3.0)
 
 Base URL (local): `http://127.0.0.1:8765`. Machine-readable schema:
 [openapi.json](openapi.json) (exported from the live app's `/openapi.json`;
@@ -25,7 +25,7 @@ No parameters. Use it to check full vs degraded mode before a demo:
 ```json
 {
   "service": "evidence-atlas",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "llm_available": true,
   "llm_model": "muse-spark-1.3",
   "mode": "full (model + deterministic)",
@@ -126,9 +126,13 @@ curl -s -X POST http://127.0.0.1:8765/api/analyze \
 | `meta` | object | Reproducibility block (below) |
 | `elapsed_ms` | number | Wall ms for `analyze()` |
 
-`meta` block: `app_version` ("0.2.0"), `model` (name or null),
+`meta` block: `app_version` ("0.3.0"), `model` (name or null),
 `temperature` (0), `max_tokens` (4000), `tolerance` (0.02),
-`default` (limit default 5), `prompt_version` ("2"), `input_sha256`.
+`default` (limit default 5), `prompt_version` ("3"), `input_sha256`,
+plus per-stage token usage `usage_extract`, `usage_science`,
+`usage_falsify`, `usage_summary` (each
+`{prompt_tokens, completion_tokens, reasoning_tokens, total_tokens}`
+or null when the stage made no model call).
 
 Stances: `supported`, `partially_supported`, `contradicted`,
 `unverifiable`, `not_assessable`.
@@ -137,10 +141,10 @@ Actors: `code`, `model`, `heuristic`.
 Full field shapes are in [openapi.json](openapi.json) and
 `src/atlas/core/types.py`.
 
-## Worked example 1 — supported GDP claim
+## Worked example 1 — GDP claim capped by the precision rule
 
-Source: local run #1 of 2 (`analyze(llm=None, persist=False)`, degraded
-mode, live World Bank source). Request:
+Source: local run (`analyze(llm=None, persist=False)`, degraded mode,
+live World Bank source, 2026-11-01). Request:
 
 ```json
 {"text": "The GDP of the United States was $27.36 trillion in 2023."}
@@ -154,10 +158,16 @@ Observed (ids shortened):
 - `comparisons`: `time_compatibility → consistent`;
   `GDP (current US$) → consistent`, `rel_diff_pct ≈ 1.62`,
   tolerance rule `rel_diff_pct <= 2.0`.
-- `uncertainties`: none. `conclusion.stance`: `supported`
-  (actor `code`, template summary in degraded mode).
-- `meta`: `app_version 0.2.0`, `model null`, `temperature 0`,
-  `max_tokens 4000`, `tolerance 0.02`, plus `input_sha256`.
+- `uncertainties`: `claimed_precision_exceeded` (major),
+  `material_absolute_gap` (minor), `indicator_definition_assumed`
+  (minor), `price_basis_unchecked` (major), `source_revision_risk`
+  (minor). `conclusion.stance`: `partially_supported` (actor `code`,
+  template summary in degraded mode): relative agreement holds, but the
+  stated digits ($10B resolution) exceed what the retrieved value
+  confirms ($451B gap).
+- `meta`: `app_version 0.3.0`, `model null`, `temperature 0`,
+  `max_tokens 4000`, `tolerance 0.02`, plus `input_sha256`; all
+  `usage_*` null (degraded mode made no model call).
 
 ## Worked example 2 — opinion (not_assessable)
 

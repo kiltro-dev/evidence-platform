@@ -6,7 +6,7 @@ import logging
 import math
 
 from ..core.types import GeoRef, Quantity, StructuredClaim, TimeRef
-from ..core.units import normalize_unit
+from ..core.units import normalize_unit, parse_quantities
 from ..models.heuristic import extract_heuristic
 from .verify import _looks_like_year
 
@@ -20,7 +20,8 @@ Return ONLY a JSON object with exactly these keys:
   "subject": "short search-query style subject, max 20 words",
   "indicator_hint": "economic indicator name if any, else null",
   "entities": ["named entities"],
-  "quantities": [{"label": "", "value": 0.0, "unit": <canonical unit or null>}],
+  "quantities": [{"label": "", "raw": "<exact numeric phrase copied from the claim>",
+                 "value": 0.0, "unit": <canonical unit or null>}],
   "time_refs": [{"raw": "", "year": 0|null, "start_year": 0|null, "end_year": 0|null,
                  "period_type": "year|range|date|vague|none"}],
   "geo_refs": [{"raw": "", "name": null, "iso3": null}],
@@ -39,6 +40,9 @@ Never emit the string "null"; unknown or absent units are JSON null.
 Literal-presence rule: extract ONLY values, years and places literally
 present in the claim text. Never infer, compute, guess or invent numbers,
 years or places; if unsure, omit the item and use period_type "vague"/"none".
+Span rule: "raw" must be the EXACT numeric phrase copied verbatim from the
+claim (e.g. "27.36 trillion", "3,1%"), number plus scale words as written.
+Code keeps it only when it is a verbatim substring of the claim.
 Years are time_refs, never quantities: do not list a calendar year
 (e.g. 2023) in "quantities" even when it looks like a number.
 Compound claims: list EVERY quantity stated (do not merge, summarize or
@@ -89,11 +93,55 @@ def structure_claim(raw_text: str, llm=None) -> StructuredClaim:
     return extract_heuristic(text)
 
 
-def _parse_llm_quantities(raw_items: object, notes: list[str]) -> list[Quantity]:
+def _model_span(raw: object, claim_text: str) -> str:
+    """Model-proposed raw span, kept only when verbatim in the claim."""
+    if not isinstance(raw, str) or not raw.strip():
+        return ""
+    span = raw.strip()
+    if span in claim_text:
+        return span
+    return ""
+
+
+def _recover_raw_spans(claim_text: str, quantities: list[Quantity]) -> None:
+    """Attach verbatim raw_text spans to model quantities missing them.
+
+    Operation First Place lead fix for the full-vs-degraded asymmetry:
+    model extraction used to emit raw_text="" always, which silently
+    disabled the claimed-precision rule in full mode. Recovery reuses the
+    tested heuristic number parser (scales, ES decimal commas) and adopts
+    a span only when its parsed value matches the model value — no
+    guessing, no invention. Spans that cannot be matched stay "" and the
+    precision rule keeps skipping them (documented limitation).
+    """
+    pending = [q for q in quantities if not q.raw_text]
+    if not pending or not claim_text.strip():
+        return
+    try:
+        heur = parse_quantities(claim_text)
+    except Exception as exc:  # never let span recovery break extraction
+        log.warning("Raw-span recovery failed, keeping empty spans: %r", exc)
+        return
+    unused = list(heur)
+    for q in pending:
+        for h in unused:
+            if h.raw_text and math.isclose(
+                h.value, q.value, rel_tol=1e-9, abs_tol=1e-12
+            ):
+                q.raw_text = h.raw_text
+                unused.remove(h)
+                break
+
+
+def _parse_llm_quantities(
+    raw_items: object, notes: list[str], claim_text: str = ""
+) -> list[Quantity]:
     """Validate model quantity dicts. Drops (with counts recorded in `notes`):
     non-dict/missing/unparseable values, non-finite floats, and year-like
     entries per verify._looks_like_year. Units are validated against
-    KNOWN_UNITS (unknown, incl. the string "null", -> None)."""
+    KNOWN_UNITS (unknown, incl. the string "null", -> None). The model's
+    "raw" span is kept only when it is a verbatim substring of the claim;
+    deterministic span recovery runs later in _from_llm_json."""
     quantities: list[Quantity] = []
     dropped_invalid = 0
     dropped_nonfinite = 0
@@ -115,20 +163,20 @@ def _parse_llm_quantities(raw_items: object, notes: list[str]) -> list[Quantity]
         unit = _valid_unit(q.get("unit"))
         candidate = Quantity(
             label=label,
-            raw_text="",
+            raw_text=_model_span(q.get("raw"), claim_text),
             value=value,
             unit=unit,
             normalized_value=value,
             normalized_unit=unit,
         )
-        # LLM JSON carries no raw_text span; the label is the only anchor
-        # for year detection, so probe with label-as-raw under the SAME rule
-        # verify uses (imported, not duplicated), then restore raw_text="".
+        # Year probe: use label-as-raw under the SAME rule verify uses
+        # (imported, not duplicated), then restore the accepted span.
+        kept_span = candidate.raw_text
         candidate.raw_text = label
         if _looks_like_year(candidate):
             dropped_years += 1
             continue
-        candidate.raw_text = ""
+        candidate.raw_text = kept_span
         quantities.append(candidate)
     if dropped_invalid:
         notes.append(f"dropped {dropped_invalid} invalid quantities")
@@ -142,7 +190,7 @@ def _parse_llm_quantities(raw_items: object, notes: list[str]) -> list[Quantity]
 def _from_llm_json(raw_text: str, data: dict, model_name: str) -> StructuredClaim:
     notes: list[str] = []
     quantities = _cap(
-        _parse_llm_quantities(data.get("quantities", []), notes),
+        _parse_llm_quantities(data.get("quantities", []), notes, raw_text),
         "quantities",
         notes,
     )
@@ -187,6 +235,11 @@ def _from_llm_json(raw_text: str, data: dict, model_name: str) -> StructuredClai
     if not quantities and heur.quantities:
         quantities = heur.quantities
         backfilled.append("quantities")
+    else:
+        # Deterministic span recovery: model quantities whose "raw" was
+        # missing or non-verbatim get a span only when the heuristic
+        # parser finds the same value in the claim text.
+        _recover_raw_spans(raw_text, quantities)
     # Mixed provenance (A2a): the model drove extraction, so the actor stays
     # "model", but backfilled fields are marked audit-visibly on the model
     # name — run.py logs "{actor}:{model}" in the extract audit step.

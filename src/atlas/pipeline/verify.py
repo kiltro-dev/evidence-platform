@@ -2,19 +2,22 @@
 
 from __future__ import annotations
 
+import os
 import re
 
-from ..core.compare import check_time_compatibility, compare_numbers
+from ..core.compare import (
+    check_time_compatibility,
+    compare_numbers,
+    implied_resolution,
+    is_year_quantity,
+    materiality_threshold,
+)
 from ..core.types import Comparison, Evidence, StructuredClaim, TimeRef, Uncertainty
 from ..core.units import normalize_unit
 
 
 def _looks_like_year(q) -> bool:
-    return (
-        q.raw_text.strip().isdigit()
-        and len(q.raw_text.strip()) == 4
-        and 1000 <= q.value <= 2100
-    )
+    return is_year_quantity(q)
 
 
 # Conservative opinion/non-claim lexicon: whole-word match only, so
@@ -26,6 +29,40 @@ _HAS_NUMBER_RE = re.compile(r"\d")
 _SENT_SPLIT_RE = re.compile(r"[.!?]+(?:\s+|$)")
 
 COMPOUND_CAVEAT = "analyzed as one unit; verify parts separately"
+
+# Team-E F3/F4: price-basis lexicon (EN+ES). Whole-word match only: the
+# claim must name its price basis explicitly, otherwise a comparison
+# against "current US$" evidence earns `price_basis_unchecked` (major).
+# Extended (red-team M7): multi-word forms + spelled-out PPP + year-
+# dollars ("in 2015 dollars", "dólares de 2015"). Known limitation: the
+# trigger only fires on current-labeled evidence (the catalog's World
+# Bank rows are current-US$); constant-price evidence is never examined.
+_PRICE_BASIS_RE = re.compile(
+    r"\b(current|constant|real|nominal|ppp|purchasing power parity|"
+    r"inflation-adjusted|inflation adjusted|chained|constant prices|"
+    r"constant dollars|real terms|actuales|constantes|reales|nominales|"
+    r"ajustado por inflaci[oó]n|t[eé]rminos reales)\b",
+    re.IGNORECASE,
+)
+_PRICE_BASIS_YEAR_DOLLARS_RE = re.compile(
+    r"\b(in \d{4} dollars|d[oó]lares de \d{4})\b",
+    re.IGNORECASE,
+)
+
+
+def _states_price_basis(raw_text: str) -> bool:
+    """True when the claim text explicitly names its price basis."""
+    text = raw_text or ""
+    return bool(
+        _PRICE_BASIS_RE.search(text)
+        or _PRICE_BASIS_YEAR_DOLLARS_RE.search(text)
+    )
+
+
+def _precision_rule_enabled() -> bool:
+    """Team-E F3 gate: ATLAS_PRECISION_RULE=0 disables the claimed-
+    precision rule; any other value (default 1) enables it."""
+    return os.environ.get("ATLAS_PRECISION_RULE", "1") != "0"
 
 
 def _looks_opinionated(text: str, n_real_quantities: int) -> bool:
@@ -90,6 +127,132 @@ def detect_claim_shape(claim: StructuredClaim) -> list[Uncertainty]:
     return flags
 
 
+def _post_numeric_rules(
+    *,
+    claim: StructuredClaim,
+    quantity,
+    evidence: Evidence,
+    comparison: Comparison,
+    uncertainties: list[Uncertainty],
+    price_basis_done: set[str],
+) -> None:
+    """Team-E F3/F4: precision, materiality and methodological codes.
+
+    Runs after compare_numbers on every numeric comparison. Never changes
+    the verdict (the relative rule owns it, so eval recomputation still
+    holds); findings land in notes + uncertainty codes.
+    """
+    cmp = comparison
+    if cmp.verdict == "consistent" and cmp.abs_diff is not None:
+        if _precision_rule_enabled():
+            resolution = implied_resolution(quantity.raw_text, quantity.value)
+            if resolution is None:
+                # Red-team M8: the rule fails open WITHOUT telling the
+                # user no more — disclose the skip (minor, deduped).
+                uncertainties.append(
+                    Uncertainty(
+                        code="precision_unchecked",
+                        description=(
+                            "No usable numeric span for the claimed "
+                            "quantity, so the claimed-precision rule "
+                            "could not bind; relative agreement stands "
+                            "without a precision check."
+                        ),
+                        severity="minor",
+                        related_ids=[cmp.comparison_id],
+                    )
+                )
+            elif cmp.abs_diff > resolution:
+                cmp.notes += (
+                    " Claimed-precision check: the claim as written implies "
+                    f"resolution ~{resolution:g} [{cmp.unit}], but the measured "
+                    f"gap is {cmp.abs_diff:g}; the agreement is coarser than "
+                    "the claimed precision."
+                )
+                uncertainties.append(
+                    Uncertainty(
+                        code="claimed_precision_exceeded",
+                        description=(
+                            f"Claim quantity {quantity.raw_text or quantity.value} "
+                            f"implies resolution ~{resolution:g} [{cmp.unit}] but "
+                            f"differs from evidence by {cmp.abs_diff:g}; stance "
+                            "capped at partially_supported."
+                        ),
+                        severity="major",
+                        related_ids=[cmp.comparison_id],
+                    )
+                )
+        threshold = materiality_threshold(cmp.unit, cmp.metric)
+        if threshold is not None and cmp.abs_diff > threshold:
+            cmp.notes += (
+                f" Materiality note: the absolute gap of {cmp.abs_diff:g} "
+                f"[{cmp.unit}] exceeds the {threshold:g} disclosure threshold "
+                "even though the values agree in relative terms."
+            )
+            uncertainties.append(
+                Uncertainty(
+                    code="material_absolute_gap",
+                    description=(
+                        f"Absolute gap {cmp.abs_diff:g} [{cmp.unit}] on "
+                        f"{cmp.metric} exceeds the {threshold:g} materiality "
+                        "threshold; reported for disclosure, verdict unchanged."
+                    ),
+                    severity="minor",
+                    related_ids=[cmp.comparison_id],
+                )
+            )
+    if evidence.connector != "worldbank":
+        return
+    uncertainties.append(
+        Uncertainty(
+            code="indicator_definition_assumed",
+            description=(
+                f"World Bank indicator "
+                f"{evidence.payload.get('label', cmp.metric)!r} was matched by "
+                "keyword; its definition is assumed to match the claim's "
+                "intent without checking methodology notes."
+            ),
+            severity="minor",
+            related_ids=[cmp.comparison_id],
+        )
+    )
+    label = str(evidence.payload.get("label", ""))
+    if (
+        "current" in label.lower()
+        and "price_basis" not in price_basis_done
+        and not _states_price_basis(claim.raw_text or "")
+    ):
+        price_basis_done.add("price_basis")
+        cmp.notes += (
+            " Price-basis check: evidence is in current prices but the claim "
+            "names no price basis (current/constant/real/nominal/PPP); the "
+            "comparison assumes current prices."
+        )
+        uncertainties.append(
+            Uncertainty(
+                code="price_basis_unchecked",
+                description=(
+                    f"Evidence {label!r} is in current prices but the claim "
+                    "states no price basis; compared as current prices "
+                    "(unchecked assumption)."
+                ),
+                severity="major",
+                related_ids=[cmp.comparison_id],
+            )
+        )
+    uncertainties.append(
+        Uncertainty(
+            code="source_revision_risk",
+            description=(
+                "World Bank historical values are revised over time; today's "
+                "match may not hold against past or future vintages."
+            ),
+            severity="minor",
+            related_ids=[cmp.comparison_id],
+        )
+    )
+
+
 def _evidence_year(ev: Evidence) -> TimeRef:
     year = ev.payload.get("year")
     try:
@@ -142,6 +305,7 @@ def verify_quantitative(
     # Bare numbers (no recognizable unit) may only match count evidence, and
     # the assumption is flagged explicitly on the comparison + as uncertainty.
     candidates: list[tuple] = [(q, False) for q in measured] + [(q, True) for q in bare]
+    price_basis_done: set[str] = set()
     for q, is_bare in candidates:
         matched_unit = False
         for ev in numeric:
@@ -200,6 +364,14 @@ def verify_quantitative(
                         related_ids=[cmp.comparison_id],
                     )
                 )
+            _post_numeric_rules(
+                claim=claim,
+                quantity=q,
+                evidence=ev,
+                comparison=cmp,
+                uncertainties=uncertainties,
+                price_basis_done=price_basis_done,
+            )
             comparisons.append(cmp)
         if not matched_unit:
             uncertainties.append(

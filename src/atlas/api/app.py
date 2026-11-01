@@ -39,14 +39,17 @@ RATE_WINDOW_S = 60.0
 _MAX_TRACKED_IPS = 10_000  # hygiene cap so one dict cannot grow unbounded
 _rate_hits: dict[str, list[float]] = {}
 
-# --- Identical-text cache: (text, domain, limit, persist) -> (Report, ts).
+# --- Identical-text cache: (text, domain, limit, persist, model) -> (Report, ts).
 # Dependency-free dict, FIFO eviction at 128 entries, TTL 1h. A hit skips
 # analyze() entirely (no pipeline, no connectors, no model, no persist).
 # `persist` is part of the key: a cached persist=false report must never
 # satisfy a persist=true request (the report_id would 404 on re-fetch).
+# `model` is part of the key (stale-model fix): a report synthesized by one
+# model must never satisfy a request that would run under another model.
+# None marks the degraded path (no LLM configured).
 CACHE_CAP = 128
 CACHE_TTL_S = 3600.0
-_cache: dict[tuple[str, str, int, bool], tuple[Report, float]] = {}
+_cache: dict[tuple[str, str, int, bool, str | None], tuple[Report, float]] = {}
 
 
 def get_llm() -> MetaClient | None:
@@ -164,7 +167,7 @@ def _check_rate_limit(client_ip: str) -> None:
     hits.append(now)
 
 
-def _cache_get(key: tuple[str, str, int, bool]) -> Report | None:
+def _cache_get(key: tuple[str, str, int, bool, str | None]) -> Report | None:
     entry = _cache.get(key)
     if entry is None:
         return None
@@ -175,7 +178,9 @@ def _cache_get(key: tuple[str, str, int, bool]) -> Report | None:
     return report
 
 
-def _cache_put(key: tuple[str, str, int, bool], report: Report) -> None:
+def _cache_put(
+    key: tuple[str, str, int, bool, str | None], report: Report
+) -> None:
     if key not in _cache and len(_cache) >= CACHE_CAP:
         _cache.pop(next(iter(_cache)))  # evict oldest-inserted (FIFO)
     _cache[key] = (report, time.monotonic())
@@ -234,7 +239,9 @@ def analyze_claim(req: AnalyzeRequest, request: Request) -> Report:
     # BACKLOG decision: keep clamp (documented) instead of 400 for
     # out-of-range limits; non-integer limits 422 via the validator.
     clamped = max(1, min(req.limit, 10))
-    cache_key = (text, req.domain, clamped, req.persist)
+    key_llm = get_llm()
+    model_name = key_llm.model if key_llm is not None else None
+    cache_key = (text, req.domain, clamped, req.persist, model_name)
     cached = _cache_get(cache_key)
     if cached is not None:
         return cached

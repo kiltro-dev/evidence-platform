@@ -56,8 +56,9 @@ Accepted / remaining (conscious, documented):
   `127.0.0.1` and ops must keep it that way.
 - **No TTL on stored reports.** Rows persist until explicitly deleted.
   Disk use grows ~KBs per report; prune via the UI or DELETE.
-- **No per-report token accounting.** Model usage is observable only in
-  server logs (call counts); cost control is the ≤2-calls/4000-token cap.
+- **Per-report token accounting present.** Each report's `meta.usage_*`
+  records per-stage prompt/completion/reasoning/total tokens (None when
+  a stage made no call); cost control is the ≤4-calls/token-budget cap.
 - **In-memory rate limit + cache.** Both reset on restart and do not span
   processes. Fine for one demo server; not a distributed control.
 - **HTTP timeouts only (20s sources, 120s model).** No circuit breaker;

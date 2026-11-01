@@ -12,7 +12,10 @@ from ..core.types import AuditStep, Evidence, Report, Uncertainty
 from ..storage.store import save_report
 from . import extract as _extract  # noqa: F401
 from .extract import structure_claim
-from .synthesize import synthesize
+from .falsify import falsify_draft
+from .retrieve import retrieve_all
+from .science import assess_science_abstracts
+from .synthesize import decide_stance, synthesize
 from .verify import assess_science, verify_quantitative
 
 import atlas.connectors.openalex  # noqa: F401  (self-register)
@@ -21,8 +24,8 @@ import atlas.connectors.worldbank  # noqa: F401  (self-register)
 # Single app-version constant. NOTE (A2b integration): api/app.py is owned by
 # another agent; it should `from atlas.pipeline.run import APP_VERSION` rather
 # than defining its own copy, until the constant moves to a shared module.
-APP_VERSION = "0.2.0"
-PROMPT_VERSION = "2"
+APP_VERSION = "0.3.0"
+PROMPT_VERSION = "3"
 MODEL_TEMPERATURE = 0
 MODEL_MAX_TOKENS = 4000
 DEFAULT_LIMIT = 5
@@ -59,6 +62,27 @@ def _end_step(s: AuditStep, detail: str = "") -> AuditStep:
 
 def _truncate(text: str) -> str:
     return text[:EXC_TEXT_LIMIT]
+
+
+def _usage_seq(llm) -> int:
+    """Monotonic usage counter of the LLM client (0 when absent)."""
+    if llm is None:
+        return 0
+    seq = getattr(llm, "last_usage_seq", 0)
+    return seq if isinstance(seq, int) else 0
+
+
+def _take_usage(llm, seq_before: int) -> dict | None:
+    """Usage spent since `seq_before`, or None when the stage made no call.
+
+    MetaClient records `last_usage` + bumps `last_usage_seq` after every
+    call that gets an HTTP response; other clients lack both attributes.
+    The copy matters: each new model call overwrites the client's record.
+    """
+    if llm is None or _usage_seq(llm) == seq_before:
+        return None
+    usage = getattr(llm, "last_usage", None)
+    return dict(usage) if isinstance(usage, dict) else None
 
 
 def _retrieve_with_retry(conn, claim, limit: int) -> list[Evidence]:
@@ -101,7 +125,9 @@ def analyze(
     audit: list[AuditStep] = []
 
     es = _start_step(audit, "extract", "code")
+    seq_before = _usage_seq(llm)
     report = Report(claim=structure_claim(raw_text, llm))
+    usage_extract = _take_usage(llm, seq_before)
     claim = report.claim
     es.actor = f"{claim.extraction_actor}:{claim.extraction_model or 'heuristic'}"
     _end_step(
@@ -121,12 +147,21 @@ def analyze(
     connectors = for_domain(effective_domain)
     _end_step(rs, f"connectors={[c.name for c in connectors]}" + override_note)
 
+    # Parallel fan-out (Operation First Place M4): every connector runs
+    # on its own thread via retrieve_all; evidence stays in connector
+    # order and errors keep their types. The per-connector audit steps
+    # and handlers below preserve the sequential loop's exact behavior.
+    found_all, retrieve_errors = retrieve_all(connectors, claim, limit)
+    by_connector: dict[str, list[Evidence]] = {}
+    for ev in found_all:
+        by_connector.setdefault(ev.connector, []).append(ev)
+    error_by_connector = {name: exc for name, exc in retrieve_errors}
+
     evidences: list[Evidence] = []
     for conn in connectors:
         rstep = _start_step(audit, "retrieve", "code")
-        try:
-            found = _retrieve_with_retry(conn, claim, limit)
-        except InvalidGeoError as exc:
+        exc = error_by_connector.get(conn.name)
+        if isinstance(exc, InvalidGeoError):
             report.uncertainties.append(
                 Uncertainty(
                     code="invalid_geo",
@@ -144,7 +179,7 @@ def analyze(
                 f"{conn.name}: status=invalid_geo count=0 iso3={exc.iso3!r}",
             )
             continue
-        except ProviderError as exc:
+        if isinstance(exc, ProviderError):
             code = "connector_error" if exc.transient else "source_unavailable"
             report.uncertainties.append(
                 Uncertainty(
@@ -163,7 +198,7 @@ def analyze(
             detail += f" error={_truncate(str(exc))}"
             _end_step(rstep, detail)
             continue
-        except Exception as exc:  # a dead source degrades, never kills analysis
+        if exc is not None:  # a dead source degrades, never kills analysis
             report.uncertainties.append(
                 Uncertainty(
                     code="connector_error",
@@ -181,6 +216,7 @@ def analyze(
             detail += f" error={_truncate(str(exc))}"
             _end_step(rstep, detail)
             continue
+        found = by_connector.get(conn.name, [])
         evidences.extend(found)
         query = _retrieve_query(conn, found)
         detail = f"{conn.name}: status=ok count={len(found)}"
@@ -189,8 +225,17 @@ def analyze(
         _end_step(rstep, detail)
 
     vs = _start_step(audit, "verify", "code")
+    usage_science = None
     if claim.domain == "science":
         comparisons, uncertainties = assess_science(claim, evidences)
+        # Additive abstract stance (M3): one bounded model call over the
+        # top-3 abstracts; non-verifying by construction. Science-branch
+        # only, so general-domain runs stay byte-identical.
+        seq_before = _usage_seq(llm)
+        extra_c, extra_u = assess_science_abstracts(claim, evidences, llm)
+        usage_science = _take_usage(llm, seq_before)
+        comparisons.extend(extra_c)
+        uncertainties.extend(extra_u)
     else:
         comparisons, uncertainties = verify_quantitative(claim, evidences)
         if claim.domain == "general" and not comparisons:
@@ -202,8 +247,26 @@ def analyze(
         f"{len(comparisons)} comparison(s), {len(uncertainties)} uncertaintie(s)",
     )
 
+    # Adversarial self-review (M2): the model attacks the draft verdict
+    # through a falsify-only schema; code validates every attack and
+    # surfaces it as doubt. ADVISORY ONLY — falsify never moves stances
+    # (see falsify.py docstring). Degraded-safe no-op without an LLM.
+    fs = _start_step(audit, "falsify", "code")
+    draft_stance = decide_stance(comparisons, uncertainties, claim)
+    seq_before = _usage_seq(llm)
+    new_cmps, new_uncs, fals_entry = falsify_draft(
+        claim, comparisons, uncertainties, draft_stance, llm
+    )
+    comparisons.extend(new_cmps)
+    uncertainties.extend(new_uncs)
+    usage_falsify = _take_usage(llm, seq_before)
+    fs.actor = fals_entry.actor
+    _end_step(fs, fals_entry.detail)
+
     ss = _start_step(audit, "synthesize", "code")
+    seq_before = _usage_seq(llm)
     conclusion = synthesize(claim, comparisons, uncertainties, llm)
+    usage_summary = _take_usage(llm, seq_before)
     ss.actor = f"{conclusion.actor}:{conclusion.model or 'deterministic-rules'}"
     _end_step(ss, f"stance={conclusion.stance}")
 
@@ -241,6 +304,11 @@ def analyze(
         "default": DEFAULT_LIMIT,
         "prompt_version": PROMPT_VERSION,
         "input_sha256": hashlib.sha256(raw_text.encode("utf-8")).hexdigest(),
+        # Per-stage token usage (None when the stage made no model call).
+        "usage_extract": usage_extract,
+        "usage_science": usage_science,
+        "usage_falsify": usage_falsify,
+        "usage_summary": usage_summary,
     }
     report.elapsed_ms = elapsed_ms
     return report

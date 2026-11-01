@@ -129,9 +129,13 @@ connector over HTTP. Consequences, enforced in code:
 - `limit` clamped to 1–10 evidences per connector per claim.
 - Claim text capped at 4000 chars; OpenAlex query truncated to 300.
 - HTTP timeouts 20s (sources), 120s (model, 3 SDK retries).
-- No loops over model calls: at most 2 model calls per analysis
-  (structure + summary), verified by `tests/e2e/test_pipeline_offline.py`.
-- Both model calls capped at `max_tokens=4000`, `temperature=0`
-  (hidden reasoning consumes the budget; see `docs/LIVE_MODEL.md`).
+- No loops over model calls: at most 4 model calls per analysis
+  (structure + abstract-stance + falsify + summary; abstracts only for
+  science claims), verified by `tests/e2e/test_pipeline_offline.py`.
+- Structure/falsify/summary capped at `max_tokens=4000`, abstracts at
+  1500; all `temperature=0` (hidden reasoning consumes the budget; see
+  `docs/LIVE_MODEL.md`). Falsify/abstracts pass `reasoning_effort="low"`
+  (default depth truncated them live). Per-stage usage persists in
+  `meta.usage_*`.
 - Model list fields truncated past 20 items; persisted exception text
   truncated to 200 chars.

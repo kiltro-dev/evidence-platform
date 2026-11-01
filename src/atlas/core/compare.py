@@ -8,10 +8,47 @@ uncertainty instead of a number.
 
 from __future__ import annotations
 
-from .types import Comparison, TimeRef
-from .units import convert_temperature, normalize_unit, units_compatible
+import re
+
+from .types import Comparison, Quantity, TimeRef
+from .units import (
+    SCALE_WORDS,
+    convert_temperature,
+    normalize_unit,
+    units_compatible,
+)
 
 DEFAULT_REL_TOLERANCE = 0.02  # 2%: explicit, documented, overridable per call
+
+# Team-E F1: absolute materiality thresholds by normalized unit. A
+# "consistent" verdict whose absolute gap exceeds the threshold is still
+# consistent (the relative rule owns the verdict) but the gap is disclosed
+# on the comparison + as a minor `material_absolute_gap` uncertainty.
+#
+# Rationale (red-team M6): these are ORDER-OF-MAGNITUDE disclosure guides,
+# not validated constants — same honesty status as the 2% prior. USD/EUR/
+# GBP share $100B (same order of magnitude); count 1M (a city); percent
+# 0.5pp (binds only when the value exceeds 25, since consistent implies
+# abs <= 2% of value). JPY is DELIBERATELY absent (~150x FX would need its
+# own row; no JPY claims in scope). Units absent here (years, t, m/s,
+# temperatures, JPY) get no materiality check (None).
+MATERIALITY: dict[str, float] = {
+    "USD": 100e9,
+    "EUR": 100e9,
+    "GBP": 100e9,
+    "count": 1e6,
+    "percent": 0.5,
+    "pp": 0.5,
+}
+
+
+def materiality_threshold(unit: str | None, metric: str = "") -> float | None:
+    """Absolute materiality threshold for a comparison, or None when the
+    unit has no materiality rule. `metric` is accepted for future
+    metric-specific rules; the current table is unit-keyed only."""
+    if not unit:
+        return None
+    return MATERIALITY.get(unit.strip())
 
 
 def compare_numbers(
@@ -118,10 +155,79 @@ def check_time_compatibility(
     )
 
 
+_NUMBER_TOKEN_RE = re.compile(r"\d[\d.,]*")
+_THOUSANDS_RE = re.compile(r"\d{1,3}(?:,\d{3})+(?:\.\d+)?")
+_ES_DECIMAL_COMMA_RE = re.compile(r"\d+,\d{1,2}")
+
+
+def _scale_after_number(raw_text: str) -> float:
+    """Scale factor from a scale word in the raw quantity text (EN+ES).
+
+    Multi-letter words match whole-word; 2-letter abbreviations match
+    attached or spaced ("27tn", "27 tn"); SINGLE letters match attached
+    only ("$27m") — a spaced single letter is a unit, not a scale
+    ("100 m" = meters, mirror of the units.py guard). First
+    (longest-first) hit wins.
+    """
+    lowered = raw_text.lower()
+    for word in sorted(SCALE_WORDS, key=len, reverse=True):
+        if len(word) == 1:
+            pat = r"[\d]" + re.escape(word) + r"\b"
+        elif len(word) == 2:
+            pat = r"[\d\s]" + re.escape(word) + r"\b"
+        else:
+            pat = r"\b" + re.escape(word) + r"\b"
+        if re.search(pat, lowered):
+            return SCALE_WORDS[word]
+    return 1.0
+
+
+def implied_resolution(raw_text: str, value: float) -> float | None:
+    """Implied resolution of a claimed quantity: last-place unit x scale.
+
+    "$27.36 trillion" -> 0.01 x 1e12 = 1e10; "3,1%" (ES decimal comma) ->
+    0.1; "67,842,591" -> 1.0; "500 million" -> 1e6. Unparseable text (no
+    digits, e.g. model extraction which carries raw_text="") -> None.
+    `value` is part of the signature for call-site symmetry; the parsing
+    uses the raw text only.
+    """
+    _ = value
+    if not raw_text or not isinstance(raw_text, str):
+        return None
+    m = _NUMBER_TOKEN_RE.search(raw_text)
+    if not m:
+        return None
+    token = m.group(0).strip(".,")
+    if not token or not token[0].isdigit():
+        return None
+    if _THOUSANDS_RE.fullmatch(token):
+        decimals = len(token.split(".")[1]) if "." in token else 0
+    elif _ES_DECIMAL_COMMA_RE.fullmatch(token):
+        decimals = len(token.split(",")[1])
+    elif "." in token:
+        decimals = len(token.rsplit(".", 1)[1])
+    else:
+        decimals = 0
+    return (10.0 ** -decimals) * _scale_after_number(raw_text)
+
+
+def is_year_quantity(q: Quantity) -> bool:
+    """True when a parsed quantity is really a calendar year (4 digits)."""
+    return (
+        q.raw_text.strip().isdigit()
+        and len(q.raw_text.strip()) == 4
+        and 1000 <= q.value <= 2100
+    )
+
+
 __all__ = [
     "DEFAULT_REL_TOLERANCE",
+    "MATERIALITY",
     "compare_numbers",
     "check_time_compatibility",
+    "implied_resolution",
+    "is_year_quantity",
+    "materiality_threshold",
     "time_refs_overlap",
     "units_compatible",
 ]

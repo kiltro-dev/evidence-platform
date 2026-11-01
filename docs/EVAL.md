@@ -1,31 +1,35 @@
 # Evaluation
 
-Runner: `scripts/run_eval.py --mode {degraded,full,both}`.
-Cases: `eval/cases.py` (24 cases). Results: `eval/results/*.json` (gitignored).
+Runner: `scripts/run_eval.py --mode {degraded,full,both}` plus probes
+`--paraphrase` and `--unanswerable` (with `--ablation` for the
+precision-rule on/off flip set).
+Cases: `eval/cases.py` (28 cases). Results: `eval/results/*.json` (gitignored).
 
 ```bash
-PYTHONPATH=src .venv/bin/python scripts/run_eval.py --mode degraded  # offline: 7 cases
-PYTHONPATH=src .venv/bin/python scripts/run_eval.py --mode full      # all 24: needs network + key
+PYTHONPATH=src .venv/bin/python scripts/run_eval.py --mode degraded  # offline: 11 cases
+PYTHONPATH=src .venv/bin/python scripts/run_eval.py --mode full      # all 28: needs network + key
 PYTHONPATH=src .venv/bin/python scripts/run_eval.py --mode both      # degraded pass + full pass
+PYTHONPATH=src .venv/bin/python scripts/run_eval.py --paraphrase     # 36-input stability probe
+PYTHONPATH=src .venv/bin/python scripts/run_eval.py --unanswerable   # 20-variant abstention probe
 ```
 
 Case modes (`mode` key; absent = `live`):
 
 - `live` (17 cases): needs real sources; skipped in degraded runs.
-- `scripted` (5 cases): offline harness — stubbed connectors and/or
+- `scripted` (9 cases): offline harness — stubbed connectors and/or
   scripted/fault-injected model clients. With no client spec the runner LLM
   applies, so the same case probes the template summary in degraded mode
   and the model summary in full mode.
 - `both` (2 cases): run everywhere (offline-safe: geo resolution fails
   before any request is sent).
 
-## Cases (v2, 24)
+## Cases (v3, 28)
 
 The original 10 (`live`):
 
 | id | claim type | expected stance |
 |---|---|---|
-| econ_supported_gdp | backed by evidence | supported |
+| econ_supported_gdp | relative agreement, digits unconfirmed | partially_supported (+ `claimed_precision_exceeded`) |
 | econ_supported_unemployment | backed by evidence | supported |
 | econ_contradicted_population | contradicting data | contradicted |
 | econ_contradicted_wrong_year_value | contradicting data | contradicted |
@@ -55,10 +59,27 @@ The 14 new v2 cases:
 | malformed_model_fallbacks | scripted ×4 | minimal/invalid JSON, unit `"null"` string, year-as-quantity |
 | boundary_empty_oversize | scripted ×2 | empty → `not_assessable`; ~66KB oversize extracts + abstains |
 
+The 4 new v3 cases (all `scripted`):
+
+| id | what it pins |
+|---|---|
+| econ_precision_exact_flag | exact "$27.36tn" vs $27.81tn evidence → `partially_supported` + `claimed_precision_exceeded` |
+| econ_precision_rounded_ok | rounded "about $28tn", same evidence → `supported`, flag absent |
+| econ_boundary_1_9_consistent | engineered 1.9% diff → `consistent` |
+| econ_boundary_2_1_contradicts | engineered 2.1% diff → `contradicts` |
+
+Probes (separate harnesses, not stance pins):
+
+| probe | inputs | gate |
+|---|---|---|
+| `--paraphrase` (`eval/paraphrases.py`) | 6 bases × (base + 5 paraphrases), EN/ES, scale words | 100% stance agreement offline |
+| `--unanswerable` (`eval/unanswerable.py`) | 20 unanswerable variants | abstention rate reported (target 1.0); `--ablation` reports the ATLAS_PRECISION_RULE=0/1 flip set |
+
 Coverage vs mission §7: backed ✓, contradicting ✓, incomplete ✓,
 temporally ambiguous ✓, insufficient sources ✓, unit differences ✓,
 cannot-conclude ✓ — plus opinion refusal, injection resistance, provider
-death, malformed-model fallbacks, and input boundaries.
+death, malformed-model fallbacks, input boundaries, precision/boundary
+pins, paraphrase stability, and abstention probing.
 
 ## Metrics (definitions, not marketing)
 
@@ -96,33 +117,39 @@ New in v2:
 - **quantity bounds** — `min_quantities` / `max_quantities` pin extraction
   completeness (compound claims) or emptiness (opinions, injections).
 
-What these metrics do NOT prove: real-world accuracy (24 hand-picked
-cases), robustness to arbitrary adversarial phrasing, source correctness,
-or — in degraded runs — model-assisted behavior. Live cases depend on
-current source values; see the caveat below and [EVAL_REPORT.md](EVAL_REPORT.md).
+What these metrics do NOT prove: real-world accuracy (28 hand-picked
+cases + probes), robustness to arbitrary adversarial phrasing, source
+correctness, or — in degraded runs — model-assisted behavior. Live cases
+depend on current source values; see the caveat below and
+[EVAL_REPORT.md](EVAL_REPORT.md). "N/N" below is a green regression
+suite, not a benchmark score.
 
 ## Last results
 
-2026-11-01, degraded mode, offline: **7/7 passed, stance 1.00**
-(17 live cases skipped). Full-mode spot checks live-verified: EN GDP →
-supported, ES unemployment → supported, opinion → not_assessable.
-Result JSONs preserved under `eval/results/`. Detail:
-[EVAL_REPORT.md](EVAL_REPORT.md).
+2026-11-01 (v0.3.0), degraded mode, offline: **11/11 passed**
+(17 live cases skipped); paraphrase probe 36/36 agreement; abstention
+probe 17/20 (3 documented non-abstentions under review — see
+[EVAL_REPORT.md](EVAL_REPORT.md)). Full-mode run: see EVAL_REPORT.
+Result JSONs preserved under `eval/results/`.
 
 ## Live-source caveat
 
 World Bank revises historical values; OpenAlex rankings shift. Cases pin
-stances with wide margins (e.g. 500M vs ~126M; 2% tolerance vs 1.6%
-observed Δ). If a revision flips a case, the failure is informative, not
-a regression per se — record the new source value in the result JSON.
-Cases near the tolerance edge (France population) pin recomputation
-properties instead of fixed stances for exactly this reason.
+stances with wide margins (e.g. 500M vs ~126M). If a revision flips a
+case, the failure is informative, not a regression per se — record the
+new source value in the result JSON. Cases near the tolerance edge
+(France population) pin recomputation properties instead of fixed
+stances for exactly this reason. Note the GDP case pins
+`partially_supported` by methodology (claimed-precision cap), not by
+margin: a future revision that closes the absolute gap would
+legitimately flip it back to `supported`.
 
 ## Test suites (pytest)
 
-- `tests/unit` + `tests/e2e` — 179 tests, offline: units, comparison,
+- `tests/unit` + `tests/e2e` — 306 tests, offline: units, comparison,
   stance rules, verification edge cases, i18n, API errors, store,
-  provider/fallback behavior, scripted LLM + stub connectors (≤2 model
+  provider/fallback behavior, falsification, abstract stance, span
+  recovery, usage attribution, scripted LLM + stub connectors (≤4 model
   calls, model/code actor split, conclusion traceability). The offline gate.
 - `tests/integration -m live` — tests against real APIs (not in the
   offline gate; fail on network/source breakage, honestly labeled).

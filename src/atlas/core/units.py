@@ -10,6 +10,9 @@ SCALE_WORDS: dict[str, float] = {
     "trillion": 1e12,
     "tn": 1e12,
     "billion": 1e9,
+    # "b" (attached only, e.g. "$27b") = billion; bare "t" is DELIBERATELY
+    # absent — "5 t" reads as 5 tonnes, never 5 trillion (M6 finding).
+    "b": 1e9,
     "bn": 1e9,
     "million": 1e6,
     "mn": 1e6,
@@ -107,12 +110,16 @@ UNIT_ALIASES: dict[str, str] = {
 # thousand even in Spanish text — a documented limitation.
 _DECIMAL_COMMA_RE = re.compile(r"\d+,\d{1,2}$")
 
+# Single-letter scales (k/m/b) count ONLY when attached to the digits
+# ("$27m", "5k"): space-separated single letters are units, not scales
+# ("100 m" = 100 meters, never 100 million — SI convention). Multi-char
+# scale words allow the space ("27.36 trillion", "5 mil").
 _QUANTITY_RE = re.compile(
     r"(?P<symbol>[$€£¥])?\s*(?P<num>\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+,\d{1,2}(?!\d)|\d+(?:\.\d+)?)"
-    r"\s*(?P<scale>trillion|billion|million|thousand|hundred|tn|bn|mn|"
+    r"(?:\s*(?P<scale>trillion|billion|million|thousand|hundred|tn|bn|mn|"
     r"billones|billón|billon|millones|millón|millon|millardos|millardo|"
-    r"mil(?![a-zA-Z/])|"
-    r"k(?![a-zA-Z/])|m(?![a-zA-Z/])|b(?![a-zA-Z/]))?"
+    r"mil(?![a-zA-Z/]))"
+    r"|(?P<scale_short>k(?![a-zA-Z/])|m(?![a-zA-Z/])|b(?![a-zA-Z/])))?"
     r"(?P<pct>\s*%)?",
     re.IGNORECASE,
 )
@@ -159,7 +166,9 @@ def parse_quantities(text: str, label: str = "") -> list[Quantity]:
             num = float(raw_num.replace(",", "."))
         else:
             num = float(raw_num.replace(",", ""))
-        scale_word = (m.group("scale") or "").lower()
+        scale_word = (
+            m.group("scale") or m.group("scale_short") or ""
+        ).lower()
         scale = SCALE_WORDS.get(scale_word, 1.0)
         if m.group("pct"):
             unit: str | None = "percent"

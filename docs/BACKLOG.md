@@ -1,10 +1,17 @@
 # Mission backlog (living, lead-owned)
 
-STATUS 2026-11-01: Waves A–D landed and integrated. 185 unit+e2e green,
-smoke 29 PASS, full-mode eval 24/24 (stance 1.00) after lead reconciliation
-(not_assessable rule fix, expected_full overlays, transient retry).
-Reviewer REJECT→fixes→SIGN OFF. Deferred list unchanged with impact notes.
-Exit gate: milestone commit + push.
+STATUS 2026-11-01 (Operation First Place, v0.3.0): 7-team competitive
+research → readiness report → 6-agent implementation wave (M1 methodology
+core, M2 falsification pass, M3 science abstracts, M4 infra, M5 UX,
+M6 eval) + lead integration (run.py wiring, span recovery, usage
+attribution). 306 unit+e2e green; eval 28 cases + paraphrase/abstention
+probes. Methodology change: claimed-precision rule caps exact-figure
+GDP-style claims at partially_supported (designed a priori, Team-E F1).
+Exit gate: red-team re-review + milestone commit + push.
+
+Prior STATUS (v0.2.0): Waves A–D landed and integrated. 185 unit+e2e
+green, smoke 29 PASS, full-mode eval 24/24 after lead reconciliation.
+Reviewer REJECT→fixes→SIGN OFF.
 
 FROZEN CONTRACTS (frontend builds against these; backend must match):
 - Errors: `{error:{code,message,request_id}}`, codes per PRD §4.

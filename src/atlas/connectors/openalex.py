@@ -23,7 +23,8 @@ def search_works(query: str, per_page: int = 5) -> list[dict]:
         "per-page": per_page,
         "select": (
             "id,title,publication_year,doi,cited_by_count,"
-            "authorships,primary_location,open_access,type"
+            "authorships,primary_location,open_access,type,"
+            "abstract_inverted_index"
         ),
         "mailto": MAILTO,
     }
@@ -55,6 +56,44 @@ def venue(work: dict) -> str:
     loc = work.get("primary_location") or {}
     source = loc.get("source") or {}
     return source.get("display_name", "") or ""
+
+
+# Cap for reconstructed abstracts: keeps payloads and downstream prompts slim.
+ABSTRACT_MAX_CHARS = 2000
+
+
+def reconstruct_abstract(work: dict) -> str | None:
+    """Rebuild plain-text abstract from OpenAlex `abstract_inverted_index`.
+
+    The index maps each word to its token positions; inverting the map
+    restores reading order. Returns None when the work carries no usable
+    index (absent, wrong type, or empty after sanitizing). Output is
+    capped at ABSTRACT_MAX_CHARS. Never raises on malformed input.
+    """
+    inv = work.get("abstract_inverted_index")
+    if not isinstance(inv, dict) or not inv:
+        return None
+    try:
+        positions: dict[int, str] = {}
+        for word, idxs in inv.items():
+            if not isinstance(word, str) or not word:
+                continue
+            if not isinstance(idxs, list):
+                continue
+            for i in idxs:
+                # bool is an int subclass; exclude explicitly.
+                if isinstance(i, bool) or not isinstance(i, int) or i < 0:
+                    continue
+                positions.setdefault(i, word)
+        if not positions:
+            return None
+        # Sorted emission (not range allocation): robust to absurd indices.
+        text = " ".join(w for _, w in sorted(positions.items())).strip()
+        if not text:
+            return None
+        return text[:ABSTRACT_MAX_CHARS]
+    except Exception:
+        return None
 
 
 class OpenAlexConnector:
@@ -99,6 +138,7 @@ class OpenAlexConnector:
                         "authors": author_names(work),
                         "venue": venue(work),
                         "type": work.get("type"),
+                        "abstract": reconstruct_abstract(work),
                         "query": query,
                     },
                 )

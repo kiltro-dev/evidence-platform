@@ -14,6 +14,26 @@ DEFAULT_BASE_URL = "https://api.meta.ai/v1"
 DEFAULT_MODEL = "muse-spark-1.3"
 
 
+def _usage_to_dict(usage) -> dict[str, int | None] | None:
+    """Flatten an OpenAI-style usage object to plain ints.
+
+    Live shape (probe 2026-11-01): prompt_tokens, completion_tokens and
+    total_tokens are ints; reasoning tokens ride along inside
+    completion_tokens_details.reasoning_tokens. Defensive getattr access:
+    any missing piece becomes None rather than raising.
+    """
+    if usage is None:
+        return None
+    details = getattr(usage, "completion_tokens_details", None)
+    reasoning = getattr(details, "reasoning_tokens", None)
+    return {
+        "prompt_tokens": getattr(usage, "prompt_tokens", None),
+        "completion_tokens": getattr(usage, "completion_tokens", None),
+        "reasoning_tokens": reasoning,
+        "total_tokens": getattr(usage, "total_tokens", None),
+    }
+
+
 class MetaClient:
     name = "meta-model-api"
 
@@ -35,6 +55,21 @@ class MetaClient:
         self.model = model or os.environ.get("MODEL_API_MODEL", DEFAULT_MODEL)
         self.timeout_s = timeout_s
         self._client = None
+        # Token usage from the most recent complete_json call that got an
+        # HTTP response: {"prompt_tokens", "completion_tokens",
+        # "reasoning_tokens", "total_tokens"} (values int|None), or None when
+        # no call has completed yet / the response carried no usage object.
+        # DESIGN (M4): usage is stored here — NOT returned as (data, usage)
+        # — because the existing call sites (extract.structure_claim,
+        # synthesize.synthesize) take a plain dict return and live in files
+        # this change must not touch. The pipeline reads llm.last_usage
+        # after each call and persists it into report meta. Transport
+        # failures (no response) leave last_usage untouched.
+        self.last_usage: dict[str, int | None] | None = None
+        # Monotonic counter: incremented every time last_usage is recorded.
+        # Lets the pipeline attribute usage to the exact stage that spent
+        # it (a stage that made no call sees an unchanged counter).
+        self.last_usage_seq: int = 0
 
     @property
     def available(self) -> bool:
@@ -52,19 +87,36 @@ class MetaClient:
             )
         return self._client
 
-    def complete_json(self, system: str, user: str, max_tokens: int = 1500) -> dict:
+    def complete_json(
+        self,
+        system: str,
+        user: str,
+        max_tokens: int = 1500,
+        reasoning_effort: str | None = None,
+    ) -> dict:
         if not self.available:
             raise RuntimeError("MODEL_API_KEY not configured; MetaClient unavailable.")
-        resp = self._get_client().chat.completions.create(
-            model=self.model,
-            messages=[
+        # LIVE PROBE 2026-11-01 (1 call, value "low"): the API ACCEPTS
+        # reasoning_effort, so it is sent when explicitly provided. Default
+        # None keeps current behavior: the field is omitted entirely and the
+        # request is byte-identical to before this change.
+        kwargs: dict = {
+            "model": self.model,
+            "messages": [
                 {"role": "system", "content": system},
                 {"role": "user", "content": user},
             ],
-            response_format={"type": "json_object"},
-            temperature=0,
-            max_tokens=max_tokens,
-        )
+            "response_format": {"type": "json_object"},
+            "temperature": 0,
+            "max_tokens": max_tokens,
+        }
+        if reasoning_effort is not None:
+            kwargs["reasoning_effort"] = reasoning_effort
+        resp = self._get_client().chat.completions.create(**kwargs)
+        # Recorded before the empty-content check: a truncated call still
+        # spent tokens (probe: 48 reasoning tokens on an empty reply).
+        self.last_usage = _usage_to_dict(getattr(resp, "usage", None))
+        self.last_usage_seq += 1
         content = resp.choices[0].message.content
         if not content or not content.strip():
             raise RuntimeError(

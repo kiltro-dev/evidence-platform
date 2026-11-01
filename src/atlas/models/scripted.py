@@ -17,7 +17,14 @@ class ScriptedClient:
     def available(self) -> bool:
         return True
 
-    def complete_json(self, system: str, user: str, max_tokens: int = 1500) -> dict:
+    def complete_json(
+        self,
+        system: str,
+        user: str,
+        max_tokens: int = 1500,
+        reasoning_effort: str | None = None,
+    ) -> dict:
+        _ = reasoning_effort  # test double: accepted, ignored
         self.calls.append(user)
         for key, payload in self.responses.items():
             if key in user:
@@ -54,7 +61,14 @@ class FaultClient(ScriptedClient):
         super().__init__(responses or {}, default)
         self.faults = faults or {}
 
-    def complete_json(self, system: str, user: str, max_tokens: int = 1500) -> dict:
+    def complete_json(
+        self,
+        system: str,
+        user: str,
+        max_tokens: int = 1500,
+        reasoning_effort: str | None = None,
+    ) -> dict:
+        _ = reasoning_effort  # test double: accepted, ignored
         self.calls.append(user)
         for key, mode in self.faults.items():
             if key in user:
