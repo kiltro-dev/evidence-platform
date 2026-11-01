@@ -126,9 +126,10 @@ def test_no_llm_uses_heuristic():
 
 def test_heuristic_splits_sentences_verbatim():
     text = "First claim here, with numbers 5%.\nSecond claim follows in 2021! Hi."
-    out = split_heuristic(text)
+    out, notes = split_heuristic(text)
     assert out == ["First claim here, with numbers 5%.",
                    "Second claim follows in 2021!"]
+    assert notes == ["dropped 1 too-short segment(s)"]  # F8: "Hi." disclosed
     for seg in out:  # exact substrings, never invented
         assert seg in text
 
@@ -136,9 +137,35 @@ def test_heuristic_splits_sentences_verbatim():
 def test_heuristic_caps_and_drops_fragments():
     text = " ".join([f"Long enough sentence number {i} ok. Hi."
                      for i in range(10)])
-    out = split_heuristic(text)
+    out, notes = split_heuristic(text)
     assert len(out) == MAX_SUBCLAIMS
     assert all(len(s) >= 12 for s in out)
+    assert notes == ["dropped 10 too-short segment(s)",
+                     f"truncated split from 10 to {MAX_SUBCLAIMS}"]
+
+
+def test_heuristic_abbreviation_guard():
+    # Red-team F1: "U.S." must not split geo from quantity.
+    text = ("The GDP of the U.S. was $27.36 trillion in 2023. "
+            "The population of Japan was 125 million in 2023.")
+    out, _ = split_heuristic(text)
+    assert out == ["The GDP of the U.S. was $27.36 trillion in 2023.",
+                   "The population of Japan was 125 million in 2023."]
+    for seg in out:
+        assert seg in text  # masking restores exact substrings
+    out2, _ = split_heuristic(
+        "GDP rose, e.g. in 2021 greatly. Something else happened here.")
+    assert out2 == ["GDP rose, e.g. in 2021 greatly.",
+                    "Something else happened here."]
+
+
+def test_heuristic_truncation_note_reaches_batch():
+    # Red-team F2: silent 12-claim drops are a coverage lie.
+    text = " ".join(f"Numbered economy sentence {i} recorded." for i in range(12))
+    claims, actor, _, notes = split_claims(text, None)
+    assert actor == "heuristic"
+    assert len(claims) == MAX_SUBCLAIMS
+    assert any("truncated split from 12 to" in n for n in notes)
 
 
 def test_long_input_truncated_with_note():
@@ -148,3 +175,20 @@ def test_long_input_truncated_with_note():
     assert actor == "heuristic"
     assert any("truncated to" in n for n in notes)
     assert len(claims) <= MAX_SUBCLAIMS
+
+
+def test_heuristic_too_short_note_reaches_batch():
+    # Red-team F8: short-sentence drops surface in splitter_notes.
+    text = "It grew 5% this year. Wow! The GDP of France was $3 trillion in 2023."
+    claims, actor, _, notes = split_claims(text, None)
+    assert actor == "heuristic"
+    assert len(claims) == 2
+    assert any("dropped 1 too-short" in n for n in notes)
+
+
+def test_input_truncation_names_rollup_scope():
+    # Red-team F9: the receipt says the roll-up covers analyzed claims only.
+    text = ("A sufficiently long sentence with a 5% figure inside. "
+            * (SPLIT_INPUT_CHARS // 50 + 10))
+    _, _, _, notes = split_claims(text, None)
+    assert any("roll-up covers analyzed claims only" in n for n in notes)

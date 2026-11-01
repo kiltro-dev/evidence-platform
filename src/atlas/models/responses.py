@@ -26,7 +26,7 @@ from urllib.parse import urlsplit
 
 import httpx
 
-from .meta import DEFAULT_BASE_URL, DEFAULT_MODEL
+from .meta import DEFAULT_BASE_URL, DEFAULT_MODEL, PROMPT_CACHE_KEY
 
 log = logging.getLogger(__name__)
 
@@ -72,11 +72,28 @@ class WebCitation:
 
 
 @dataclass(frozen=True)
+class WebCandidate:
+    """One raw web_search result the model retrieved (F2-A honesty).
+
+    Candidates reuse URL hygiene but carry NO span requirement and are
+    NEVER evidence: `cited` marks the ones the model also cited (also
+    present in `parse_url_citations` output). The falsify stage lists
+    uncited candidates as minor doubt so the report shows what was
+    considered, not just what was cited.
+    """
+
+    url: str
+    title: str
+    cited: bool
+
+
+@dataclass(frozen=True)
 class CounterEvidence:
     """Parsed result of one web counter-evidence call."""
 
     text: str
     citations: list[WebCitation] = field(default_factory=list)
+    candidates: list[WebCandidate] = field(default_factory=list)
 
 
 def _iter_text_parts(response: object):
@@ -155,21 +172,15 @@ def _host_blocked(host: str) -> bool:
 MIN_SPAN_CHARS = 8
 
 
-def validate_citation(url: object, span: object, title: object = "") -> WebCitation | None:
-    """Validate one candidate citation. Returns None when rejected.
+def _validate_url(url: object) -> tuple[str, str] | None:
+    """URL hygiene shared by citations and search candidates.
 
-    Rules (deterministic, no model judgment): URL must be an https URL
-    with a real dotted non-IP host outside the garbage blocklist; the
-    quoted span must be non-empty and either carry a digit or reach
-    MIN_SPAN_CHARS. Rejection is silent by design — callers count
-    survivors.
+    Returns (clean_url, host) when the URL is an https URL with a real
+    dotted non-IP host outside the garbage blocklist; None otherwise.
+    Span rules live in `validate_citation`, NOT here: candidates reuse
+    URL hygiene with no span requirement.
     """
     if not isinstance(url, str) or not url.strip():
-        return None
-    if not isinstance(span, str) or not span.strip():
-        return None
-    clean = span.strip()
-    if len(clean) < MIN_SPAN_CHARS and not any(ch.isdigit() for ch in clean):
         return None
     try:
         parsed = urlsplit(url.strip())
@@ -188,12 +199,66 @@ def validate_citation(url: object, span: object, title: object = "") -> WebCitat
         return None  # bare IP literal: no attributable source
     if _host_blocked(host):
         return None
+    return url.strip(), host
+
+
+def validate_citation(url: object, span: object, title: object = "") -> WebCitation | None:
+    """Validate one candidate citation. Returns None when rejected.
+
+    Rules (deterministic, no model judgment): URL must be an https URL
+    with a real dotted non-IP host outside the garbage blocklist; the
+    quoted span must be non-empty and either carry a digit or reach
+    MIN_SPAN_CHARS. Rejection is silent by design — callers count
+    survivors.
+    """
+    if not isinstance(span, str) or not span.strip():
+        return None
+    clean = span.strip()
+    if len(clean) < MIN_SPAN_CHARS and not any(ch.isdigit() for ch in clean):
+        return None
+    checked = _validate_url(url)
+    if checked is None:
+        return None
+    clean_url, host = checked
     return WebCitation(
-        url=url.strip(),
+        url=clean_url,
         title=title if isinstance(title, str) else "",
         span=span.strip(),
         domain=host,
     )
+
+
+# Obvious official sources (statistics agencies, central banks,
+# multilaterals). Used ONLY for stable authoritative-first ordering
+# before caps — never for blocking. A junk domain still surfaces when
+# it is all there is; official sources win ties. This is disclosed
+# selection-ordering, not an endorsement ranking.
+AUTHORITATIVE_DOMAINS = frozenset({
+    "worldbank.org",
+    "data.worldbank.org",
+    "bea.gov",
+    "bls.gov",
+    "census.gov",
+    "insee.fr",
+    "destatis.de",
+    "ons.gov.uk",
+    "stat.go.jp",
+    "oecd.org",
+    "imf.org",
+    "europa.eu",
+    "federalreserve.gov",
+    "openalex.org",
+    "api.openalex.org",
+})
+
+
+def is_authoritative_host(host: object) -> bool:
+    """True for obvious official sources (exact or subdomain match)."""
+    if not isinstance(host, str) or not host:
+        return False
+    host = host.lower().rstrip(".")
+    return any(host == auth or host.endswith("." + auth)
+               for auth in AUTHORITATIVE_DOMAINS)
 
 
 def parse_url_citations(
@@ -204,7 +269,10 @@ def parse_url_citations(
 
     Only `type: "url_citation"` annotations are considered; each is
     validated by `validate_citation` and exact duplicates are dropped.
-    Never raises on model-shaped input — malformed payloads yield [].
+    All survivors collect first, then stable-sort authoritative-first,
+    THEN the cap applies — so junk early in model order can never crowd
+    out an official source. Never raises on model-shaped input —
+    malformed payloads yield [].
     """
     survivors: list[WebCitation] = []
     seen: set[tuple[str, str]] = set()
@@ -236,9 +304,68 @@ def parse_url_citations(
                 continue
             seen.add(key)
             survivors.append(citation)
-            if len(survivors) >= max_citations:
-                return survivors
-    return survivors
+    survivors.sort(key=lambda c: not is_authoritative_host(c.domain))
+    return survivors[:max_citations]
+
+
+def parse_search_candidates(response: object) -> list[WebCandidate]:
+    """Extract raw web_search results as candidates (F2-A honesty).
+
+    Reads `output[]` items of `type: "web_search_call"` and their
+    `results[]` entries ({title, url}); each entry passing URL hygiene
+    becomes a WebCandidate whose `cited` flag is True when the URL is
+    also in `parse_url_citations` output. There is NO span requirement
+    and NO survivor cap here (the falsify stage bounds what it lists
+    but audits the full considered count). Never raises on
+    model-shaped input — missing/non-list results yield [].
+    """
+    try:
+        cited_urls = {c.url for c in parse_url_citations(response)}
+    except Exception:
+        log.debug("parse_search_candidates cited-set failed",
+                  exc_info=True)
+        cited_urls = set()
+    candidates: list[WebCandidate] = []
+    seen: set[str] = set()
+    try:
+        if not isinstance(response, dict):
+            return []
+        output = response.get("output")
+        if not isinstance(output, list):
+            return []
+        for item in output:
+            if not isinstance(item, dict):
+                continue
+            if item.get("type") != "web_search_call":
+                continue
+            results = item.get("results")
+            if not isinstance(results, list):
+                continue
+            for entry in results:
+                if not isinstance(entry, dict):
+                    continue
+                try:
+                    checked = _validate_url(entry.get("url"))
+                except Exception:  # one bad entry never kills the pass
+                    log.debug("candidate URL check failed", exc_info=True)
+                    continue
+                if checked is None:
+                    continue
+                clean_url, _host = checked
+                if clean_url in seen:
+                    continue
+                seen.add(clean_url)
+                title = entry.get("title")
+                candidates.append(WebCandidate(
+                    url=clean_url,
+                    title=title if isinstance(title, str) else "",
+                    cited=clean_url in cited_urls,
+                ))
+    except Exception:
+        log.debug("parse_search_candidates failed on malformed payload",
+                  exc_info=True)
+        return []
+    return candidates
 
 
 def _responses_usage_to_dict(usage: object) -> dict[str, int | None] | None:
@@ -247,16 +374,21 @@ def _responses_usage_to_dict(usage: object) -> dict[str, int | None] | None:
     Responses shape: {"input_tokens", "output_tokens", "total_tokens",
     "output_tokens_details": {"reasoning_tokens"}}. Mapped onto the
     prompt/completion/reasoning/total keys so stage usage stays uniform.
+    cached_tokens (F2-B) comes from input_tokens_details and defaults to
+    0 when the provider omits it.
     """
     if not isinstance(usage, dict):
         return None
     details = usage.get("output_tokens_details")
     reasoning = details.get("reasoning_tokens") if isinstance(details, dict) else None
+    input_details = usage.get("input_tokens_details")
+    cached = input_details.get("cached_tokens") if isinstance(input_details, dict) else None
     return {
         "prompt_tokens": usage.get("input_tokens"),
         "completion_tokens": usage.get("output_tokens"),
         "reasoning_tokens": reasoning,
         "total_tokens": usage.get("total_tokens"),
+        "cached_tokens": cached if isinstance(cached, int) else 0,
     }
 
 
@@ -349,6 +481,8 @@ class ResponsesClient:
             "instructions": instructions,
             "input": user_text,
             "tools": [{"type": "web_search"}],
+            "include": ["web_search_call.results"],
+            "prompt_cache_key": PROMPT_CACHE_KEY,  # F2-B: accounting only
             "reasoning": {"effort": "low"},
             "max_output_tokens": max_output_tokens,
         }
@@ -364,6 +498,7 @@ class ResponsesClient:
         return CounterEvidence(
             text=response_text(data),
             citations=parse_url_citations(data),
+            candidates=parse_search_candidates(data),
         )
 
     def _post_with_retry(

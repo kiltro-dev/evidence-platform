@@ -1,6 +1,15 @@
 # Mission backlog (living, lead-owned)
 
-STATUS 2026-11-01 (Operation Find the Breakthrough, v0.4.0 ShipCheck):
+STATUS 2026-11-01 (Operation Night Shift, hardening on v0.4.0):
+parallel batch analysis, authoritative-first web ordering,
+World Bank vintage/mrnev/indicator upgrades, multi-geo disclosure,
+honesty fixes (best-collocation, claim-side period text, per-item
+time sanitation, overlap-safe geo detection, splitter coverage
+notes, quota-after-validation), 43-case eval. 486 unit+e2e green.
+Exit gate: full-eval green + live smoke + red-team dispositions +
+milestone commit + push.
+
+Prior STATUS (Operation Find the Breakthrough, v0.4.0 ShipCheck):
 8 research agents + red team → ranked opportunities → ONE bet
 (AI-output auditor sidecar; rationale in BREAKTHROUGH_DECISION.md).
 Build: claim-splitter + POST /api/check + strict json_schema decoding
@@ -25,7 +34,7 @@ Reviewer REJECT→fixes→SIGN OFF.
 
 FROZEN CONTRACTS (frontend builds against these; backend must match):
 - Errors: `{error:{code,message,request_id}}`, codes per PRD §4.
-- `POST /api/analyze {text, limit?, domain?, persist?}`; `domain` invalid → 400.
+- `POST /api/analyze {text, limit?, domain?, persist?, fresh?}`; `domain` invalid → 400; `fresh:true` re-runs past the cache.
 - `DELETE /api/reports/{id}` → 200 `{deleted:true}` / 404 envelope.
 - Report adds: `meta{...}`, `elapsed_ms`, `AuditStep.duration_ms`;
   `Stance += not_assessable`; caveats = code ∪ model.

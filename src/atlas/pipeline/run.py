@@ -4,11 +4,13 @@ from __future__ import annotations
 
 import hashlib
 import time
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 
 from ..connectors import InvalidGeoError, ProviderError, for_domain  # noqa: F401  (registry access)
 from ..core.compare import DEFAULT_REL_TOLERANCE
 from ..core.types import AuditStep, Evidence, Report, Uncertainty
+from ..models.meta import MetaClient
 from ..storage.store import save_report
 from . import extract as _extract  # noqa: F401
 from .extract import structure_claim
@@ -325,6 +327,51 @@ ROLLUP_STANCES = (
 )
 
 
+def _fork_llm(llm):
+    """Per-claim model client for parallel batch analysis.
+
+    MetaClient carries mutable per-call state (last_usage + seq), so
+    sharing one across threads would misattribute token usage between
+    sub-claims: each claim gets a fresh client on the same key/model.
+    Stateless doubles (and None) are shared as-is.
+    """
+    if isinstance(llm, MetaClient):
+        return MetaClient(
+            api_key=llm.api_key,
+            base_url=llm.base_url,
+            model=llm.model,
+            timeout_s=llm.timeout_s,
+        )
+    return llm
+
+
+def _analyze_one(args) -> Report | Exception:
+    """Run one sub-claim, capturing its exception instead of raising."""
+    sub, llm, limit, persist, domain = args
+    try:
+        return analyze(sub, llm=llm, limit=limit, persist=persist, domain=domain)
+    except Exception as exc:  # same net as the old sequential loop
+        return exc
+
+
+def _analyze_parallel(claims, llm, limit, persist, domain) -> list:
+    """Analyze sub-claims on one thread each, results in input order."""
+    if not claims:
+        return []
+    with ThreadPoolExecutor(
+        max_workers=len(claims), thread_name_prefix="atlas-batch"
+    ) as pool:
+        return list(
+            pool.map(
+                _analyze_one,
+                [
+                    (sub, _fork_llm(llm), limit, persist, domain)
+                    for sub in claims
+                ],
+            )
+        )
+
+
 def check_document(
     raw_text: str,
     llm=None,
@@ -349,19 +396,25 @@ def check_document(
     seq_before = _usage_seq(llm)
     claims, actor, model, notes = split_claims(raw_text, llm)
     usage_split = _take_usage(llm, seq_before)
+    # Parallel sub-claim analysis (one thread each, input order kept via
+    # executor.map). Semantics mirror the old sequential loop exactly:
+    # per-claim error isolation, same roll-up, same persistence. No
+    # global timeout — each analyze() governs itself, as sequential did.
+    # Thread-safety: MetaClient is forked per claim (mutable usage
+    # state); connectors keep thread-local query echo; SQLite opens a
+    # fresh connection per write; shared doubles are append-only.
+    outcomes = _analyze_parallel(claims, llm, limit, persist, domain)
     reports: list[dict] = []
     rollup: dict[str, int] = {s: 0 for s in ROLLUP_STANCES}
     errors = 0
-    for sub in claims:
-        try:
-            rep = analyze(sub, llm=llm, limit=limit, persist=persist, domain=domain)
-        except Exception as exc:  # one bad apple never kills the batch
+    for sub, outcome in zip(claims, outcomes):
+        if isinstance(outcome, Exception):
             errors += 1
-            reports.append({"claim_text": sub, "error": _truncate(str(exc))})
+            reports.append({"claim_text": sub, "error": _truncate(str(outcome))})
             continue
-        stance = rep.conclusion.stance if rep.conclusion else "unverifiable"
+        stance = outcome.conclusion.stance if outcome.conclusion else "unverifiable"
         rollup[stance] = rollup.get(stance, 0) + 1
-        reports.append(rep.model_dump(mode="json"))
+        reports.append(outcome.model_dump(mode="json"))
     elapsed_ms = (time.perf_counter() - t_start) * 1000.0
     return {
         "claim_count": len(claims),

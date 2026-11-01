@@ -13,6 +13,11 @@ import os
 DEFAULT_BASE_URL = "https://api.meta.ai/v1"
 DEFAULT_MODEL = "muse-spark-1.3"
 
+# Prompt-cache prefix shared by both model clients (F2-B accounting).
+# Pure routing hint for the provider's cache; requests are otherwise
+# byte-identical and behavior is unchanged.
+PROMPT_CACHE_KEY = "shipcheck-v0"
+
 
 def _usage_to_dict(usage) -> dict[str, int | None] | None:
     """Flatten an OpenAI-style usage object to plain ints.
@@ -20,17 +25,22 @@ def _usage_to_dict(usage) -> dict[str, int | None] | None:
     Live shape (probe 2026-11-01): prompt_tokens, completion_tokens and
     total_tokens are ints; reasoning tokens ride along inside
     completion_tokens_details.reasoning_tokens. Defensive getattr access:
-    any missing piece becomes None rather than raising.
+    any missing piece becomes None rather than raising — except
+    cached_tokens (F2-B), which defaults to 0 when the provider omits
+    prompt_tokens_details, so cache accounting never needs None checks.
     """
     if usage is None:
         return None
     details = getattr(usage, "completion_tokens_details", None)
     reasoning = getattr(details, "reasoning_tokens", None)
+    prompt_details = getattr(usage, "prompt_tokens_details", None)
+    cached = getattr(prompt_details, "cached_tokens", None)
     return {
         "prompt_tokens": getattr(usage, "prompt_tokens", None),
         "completion_tokens": getattr(usage, "completion_tokens", None),
         "reasoning_tokens": reasoning,
         "total_tokens": getattr(usage, "total_tokens", None),
+        "cached_tokens": cached if isinstance(cached, int) else 0,
     }
 
 
@@ -57,7 +67,8 @@ class MetaClient:
         self._client = None
         # Token usage from the most recent complete_json call that got an
         # HTTP response: {"prompt_tokens", "completion_tokens",
-        # "reasoning_tokens", "total_tokens"} (values int|None), or None when
+        # "reasoning_tokens", "total_tokens"} (values int|None) plus
+        # "cached_tokens" (int, 0 when the provider omits it), or None when
         # no call has completed yet / the response carried no usage object.
         # DESIGN (M4): usage is stored here — NOT returned as (data, usage)
         # — because the existing call sites (extract.structure_claim,
@@ -125,6 +136,7 @@ class MetaClient:
             "response_format": response_format,
             "temperature": 0,
             "max_tokens": max_tokens,
+            "prompt_cache_key": PROMPT_CACHE_KEY,  # F2-B: accounting only
         }
         if reasoning_effort is not None:
             kwargs["reasoning_effort"] = reasoning_effort

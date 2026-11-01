@@ -87,6 +87,7 @@ def test_last_usage_captures_reasoning_tokens():
         "completion_tokens": 20,
         "reasoning_tokens": 5,
         "total_tokens": 30,
+        "cached_tokens": 0,
     }
 
 

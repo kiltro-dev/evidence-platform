@@ -8,6 +8,7 @@ Docs: https://datahelpdesk.worldbank.org/knowledgebase/articles/889392
 from __future__ import annotations
 
 import re
+import threading
 
 import httpx
 
@@ -48,6 +49,25 @@ INDICATORS: dict[str, tuple[str, str, str]] = {
     "debt": ("GC.DOD.TOTL.GD.ZS", "Central government debt (% of GDP)", "percent"),
     "internet": ("IT.NET.USER.ZS", "Individuals using the Internet (% of population)", "percent"),
     "literacy": ("SE.ADT.LITR.ZS", "Literacy rate, adult total (% 15+)", "percent"),
+    # --- F1-C indicator rows (CO2 deliberately NOT extended: evidence unit
+    # "t" (tonnes) never matches claim units, so new CO2 rows would always
+    # unit_mismatch) ---
+    "gdp growth": ("NY.GDP.MKTP.KD.ZG", "GDP growth (annual %)", "percent"),
+    "poverty": ("SI.POV.DDAY",
+                "Poverty headcount ratio at $2.15 a day (% of population)",
+                "percent"),
+    "gini": ("SI.POV.GINI", "Gini index", "index"),
+    "renewables": ("EG.FEC.RNEW.ZS",
+                   "Renewable energy consumption (% of total final energy "
+                   "consumption)", "percent"),
+    "child mortality": ("SH.DYN.MORT",
+                        "Mortality rate, under-5 (per 1,000 live births)",
+                        "per_1000"),
+    "mobile": ("IT.CEL.SETS.P2",
+               "Mobile cellular subscriptions (per 100 people)", "per_100"),
+    "youth unemployment": ("SL.UEM.1524.ZS",
+                           "Youth unemployment (% of labor force ages 15-24)",
+                           "percent"),
     # --- Spanish (ES) keyword aliases (match_indicator is accent-sensitive,
     # so accented and unaccented variants are both listed) ---
     "pib": ("NY.GDP.MKTP.CD", "GDP (current US$)", "USD"),
@@ -69,6 +89,24 @@ INDICATORS: dict[str, tuple[str, str, str]] = {
     "deuda": ("GC.DOD.TOTL.GD.ZS", "Central government debt (% of GDP)", "percent"),
     "alfabetización": ("SE.ADT.LITR.ZS", "Literacy rate, adult total (% 15+)", "percent"),
     "alfabetizacion": ("SE.ADT.LITR.ZS", "Literacy rate, adult total (% 15+)", "percent"),
+    # --- F1-C Spanish aliases ("gini" is spelled the same in ES) ---
+    "crecimiento pib": ("NY.GDP.MKTP.KD.ZG", "GDP growth (annual %)", "percent"),
+    "pobreza": ("SI.POV.DDAY",
+                "Poverty headcount ratio at $2.15 a day (% of population)",
+                "percent"),
+    "renovables": ("EG.FEC.RNEW.ZS",
+                   "Renewable energy consumption (% of total final energy "
+                   "consumption)", "percent"),
+    "mortalidad infantil": ("SH.DYN.MORT",
+                            "Mortality rate, under-5 (per 1,000 live births)",
+                            "per_1000"),
+    "móviles": ("IT.CEL.SETS.P2",
+                "Mobile cellular subscriptions (per 100 people)", "per_100"),
+    "moviles": ("IT.CEL.SETS.P2",
+                "Mobile cellular subscriptions (per 100 people)", "per_100"),
+    "desempleo juvenil": ("SL.UEM.1524.ZS",
+                          "Youth unemployment (% of labor force ages 15-24)",
+                          "percent"),
 }
 
 
@@ -81,10 +119,28 @@ def match_indicator(text: str) -> tuple[str, str, str] | None:
 
 
 def fetch_observations(
-    indicator: str, iso3: str, start_year: int, end_year: int
+    indicator: str,
+    iso3: str,
+    start_year: int | None = None,
+    end_year: int | None = None,
+    *,
+    mrnev: bool = False,
 ) -> list[dict]:
+    """Fetch observations for an indicator/country.
+
+    Year path: ``date=start:end`` (byte-identical params to pre-F1-B).
+    mrnev path (year-less claims): ``mrnev=1`` — most-recent non-empty value.
+
+    Each returned row is annotated with ``_source_vintage`` (the response
+    header's ``lastupdated``; a local annotation, not a World Bank field).
+    Row fields ``obs_status``/``decimal`` pass through untouched.
+    """
     url = f"{BASE_URL}/country/{iso3}/indicator/{indicator}"
-    params = {"format": "json", "per_page": 50, "date": f"{start_year}:{end_year}"}
+    if mrnev:
+        params = {"format": "json", "per_page": 50, "mrnev": 1}
+    else:
+        params = {"format": "json", "per_page": 50,
+                  "date": f"{start_year}:{end_year}"}
     try:
         with httpx.Client(timeout=TIMEOUT_S, follow_redirects=True) as client:
             resp = client.get(url, params=params)
@@ -94,13 +150,33 @@ def fetch_observations(
         raise as_provider_error(exc, f"worldbank {indicator} {iso3}") from exc
     if not isinstance(data, list) or len(data) < 2 or not data[1]:
         return []
-    return [row for row in data[1] if row.get("value") is not None]
+    vintage = data[0].get("lastupdated") if isinstance(data[0], dict) else None
+    rows = []
+    for row in data[1]:
+        if row.get("value") is None:
+            continue
+        row["_source_vintage"] = vintage
+        rows.append(row)
+    return rows
 
 
 class WorldBankConnector:
     name = "worldbank"
     domains = ("economy", "general")
-    last_query: str | None = None
+
+    def __init__(self) -> None:
+        # Registry instances are shared across threads (parallel batch
+        # sub-claims, concurrent server requests): query echo is
+        # thread-local so audits never show another claim's query.
+        self._query_local = threading.local()
+
+    @property
+    def last_query(self) -> str | None:
+        return getattr(self._query_local, "value", None)
+
+    @last_query.setter
+    def last_query(self, value: str | None) -> None:
+        self._query_local.value = value
 
     def retrieve(self, claim: StructuredClaim, limit: int = 5) -> list[Evidence]:
         self.last_query = None
@@ -124,11 +200,17 @@ class WorldBankConnector:
         ]
         if years:
             start_year, end_year = min(years), max(years)
+            self.last_query = f"{code} {iso3} {start_year}:{end_year}"
         else:
-            start_year, end_year = 2020, 2023
-        self.last_query = f"{code} {iso3} {start_year}:{end_year}"
+            # Year-less claim: most-recent non-empty value (F1-B) instead of
+            # the hardcoded 2020:2023 window.
+            start_year, end_year = None, None
+            self.last_query = f"{code} {iso3} mrnev=1"
         try:
-            rows = fetch_observations(code, iso3, start_year, end_year)
+            if start_year is None:
+                rows = fetch_observations(code, iso3, mrnev=True)
+            else:
+                rows = fetch_observations(code, iso3, start_year, end_year)
         except (httpx.HTTPError, ValueError) as exc:
             raise as_provider_error(exc, f"worldbank {self.last_query}") from exc
         evidences: list[Evidence] = []
@@ -157,6 +239,9 @@ class WorldBankConnector:
                         "year": row.get("date"),
                         "value": row.get("value"),
                         "query": self.last_query,
+                        "source_vintage": row.get("_source_vintage"),
+                        "obs_status": row.get("obs_status"),
+                        "source_decimal": row.get("decimal"),
                     },
                 )
             )

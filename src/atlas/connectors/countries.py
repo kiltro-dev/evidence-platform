@@ -123,6 +123,46 @@ COUNTRIES.update(
 )
 
 
+def resolve_all_countries(text: str) -> list[str]:
+    """Return distinct ISO3s mentioned in `text` (longest-match order).
+
+    Same matching semantics as resolve_country (case- and
+    accent-insensitive substring; longest names first so "united states"
+    wins over shorter overlaps), but collects every distinct ISO3
+    instead of returning only the first. Longest-first span claiming:
+    an accepted match owns its character span, so "uk" inside
+    "ukraine" never becomes a phantom second geography (lead fix;
+    without it every Ukraine claim mis-flagged multi-geo). Overlapping
+    names mapping to the same ISO3 ("korea"/"south korea") collapse
+    to one entry. Known limitation (shared with resolve_country):
+    short keys are plain substrings, so "eu" matches inside "euro".
+    """
+    lowered = _strip_accents(text.lower())
+    found: list[str] = []
+    claimed: list[tuple[int, int]] = []
+    for name in sorted(COUNTRIES, key=len, reverse=True):
+        needle = _strip_accents(name)
+        if not needle:
+            continue
+        start = 0
+        matched = False
+        while True:
+            at = lowered.find(needle, start)
+            if at < 0:
+                break
+            span = (at, at + len(needle))
+            start = at + 1
+            if any(s < span[1] and span[0] < e for s, e in claimed):
+                continue
+            claimed.append(span)
+            matched = True
+        if matched:
+            iso3 = COUNTRIES[name]
+            if iso3 not in found:
+                found.append(iso3)
+    return found
+
+
 def resolve_country(text: str) -> tuple[str | None, str | None]:
     """Return (display_name, iso3) for the first country mentioned, else (None, None).
 

@@ -95,6 +95,29 @@ def test_fetch_helpers_raise_provider_error_directly(monkeypatch):
         oamod.search_works("climate")
 
 
+def test_openalex_api_key_param_when_env_set(monkeypatch):
+    seen: dict = {}
+
+    class _Resp:
+        def raise_for_status(self):
+            pass
+
+        def json(self):
+            return {"results": []}
+
+    def capture(self, url, params=None):
+        seen.update(params or {})
+        return _Resp()
+
+    monkeypatch.setattr(httpx.Client, "get", capture)
+    monkeypatch.delenv("OPENALEX_API_KEY", raising=False)
+    oamod.search_works("climate")
+    assert "api_key" not in seen
+    monkeypatch.setenv("OPENALEX_API_KEY", "oa-test-key")
+    oamod.search_works("climate")
+    assert seen["api_key"] == "oa-test-key"
+
+
 def test_no_match_still_returns_empty_list(monkeypatch):
     def guarded(*a, **k):
         raise AssertionError("no HTTP for no-match claims")
@@ -283,6 +306,38 @@ def test_reads_do_not_create_db(tmp_path):
     assert not (tmp_path / "newdir").exists()
 
 
+def test_init_db_enables_wal_and_busy_timeout(tmp_path):
+    """Parallel batch sub-claims persist concurrently: WAL mode +
+    a generous busy timeout keep short writers from hitting
+    'database is locked'."""
+    import sqlite3
+
+    db = tmp_path / "atlas.db"
+    storemod.init_db(db)
+    with sqlite3.connect(db) as conn:
+        mode = conn.execute("PRAGMA journal_mode").fetchone()[0]
+        assert mode.lower() == "wal"
+    # Concurrent saves from 8 threads all land.
+    import threading
+
+    errs: list = []
+
+    def saver(i: int):
+        try:
+            rep = Report(claim=_claim(raw_text=f"concurrent claim {i}"))
+            storemod.save_report(rep, path=db)
+        except Exception as exc:  # noqa: BLE001 — collected, asserted below
+            errs.append(exc)
+
+    threads = [threading.Thread(target=saver, args=(i,)) for i in range(8)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    assert errs == []
+    assert len(storemod.list_reports(path=db)) == 8
+
+
 def test_delete_report_roundtrip(tmp_path):
     db = tmp_path / "atlas.db"
     report = Report(claim=_claim())
@@ -396,3 +451,199 @@ def test_meta_and_elapsed_ms(monkeypatch):
     assert meta["input_sha256"] == hashlib.sha256(text.encode()).hexdigest()
     assert meta["tolerance"] == 0.02
     assert isinstance(report.elapsed_ms, float) and report.elapsed_ms > 0
+
+
+def test_last_query_is_thread_local():
+    """Shared connector instances serve parallel sub-claims: last_query
+    must not leak across threads (pre-existing server-level race too)."""
+    import threading
+
+    for conn in (WorldBankConnector(), OpenAlexConnector()):
+        barrier = threading.Barrier(2)
+        seen: dict[str, object] = {}
+
+        def worker(tag: str):
+            conn.last_query = tag
+            barrier.wait()  # force interleave: both set before either reads
+            seen[tag] = conn.last_query
+
+        threads = [threading.Thread(target=worker, args=(f"q-{i}",))
+                   for i in range(2)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+        assert seen == {"q-0": "q-0", "q-1": "q-1"}, conn.name
+
+
+# --- 8. F1-A: source vintage + row precision (additive, offline) -------------
+
+def _canned_wb_response(lastupdated="2026-10-08", rows=None):
+    header = {"page": 1, "pages": 1, "per_page": 50, "total": 2,
+              "sourceid": "2", "sourcename": "World Development Indicators"}
+    if lastupdated is not None:
+        header["lastupdated"] = lastupdated
+    if rows is None:
+        rows = [
+            {"indicator": {"id": "NY.GDP.MKTP.CD"},
+             "country": {"value": "France"}, "countryiso3code": "FRA",
+             "date": "2023", "value": 123.0, "unit": "",
+             "obs_status": "", "decimal": "1"},
+            {"indicator": {"id": "NY.GDP.MKTP.CD"},
+             "country": {"value": "France"}, "countryiso3code": "FRA",
+             "date": "2022", "value": None, "unit": "",
+             "obs_status": "", "decimal": "1"},
+        ]
+    return [header, rows]
+
+
+class _CannedResp:
+    def __init__(self, payload):
+        self._payload = payload
+
+    def raise_for_status(self):
+        pass
+
+    def json(self):
+        return self._payload
+
+
+def test_fetch_observations_annotates_vintage_and_keeps_row_fields(monkeypatch):
+    seen = {}
+
+    def fake_get(self, url, params=None, **kw):
+        seen["params"] = params
+        return _CannedResp(_canned_wb_response())
+
+    monkeypatch.setattr(httpx.Client, "get", fake_get)
+    rows = wbmod.fetch_observations("NY.GDP.MKTP.CD", "FRA", 2020, 2023)
+    assert len(rows) == 1  # None values still filtered (behavior unchanged)
+    assert rows[0]["_source_vintage"] == "2026-10-08"
+    assert rows[0]["obs_status"] == ""
+    assert rows[0]["decimal"] == "1"
+
+
+def test_fetch_observations_missing_lastupdated_annotates_none(monkeypatch):
+    monkeypatch.setattr(httpx.Client, "get",
+                        lambda self, url, params=None, **kw: _CannedResp(
+                            _canned_wb_response(lastupdated=None)))
+    rows = wbmod.fetch_observations("NY.GDP.MKTP.CD", "FRA", 2020, 2023)
+    assert len(rows) == 1
+    assert rows[0]["_source_vintage"] is None
+
+
+def test_retrieve_stashes_vintage_fields_in_payload(monkeypatch):
+    monkeypatch.setattr(wbmod, "fetch_observations", lambda *a, **k: [
+        {"value": 123.0, "date": "2021", "country": {"value": "France"},
+         "obs_status": "E", "decimal": "0",
+         "_source_vintage": "2026-10-08"},
+    ])
+    claim = _claim(geo_refs=[GeoRef(raw="France", name="france", iso3="FRA")],
+                   time_refs=[TimeRef(raw="2021", year=2021,
+                                       period_type="year")])
+    found = WorldBankConnector().retrieve(claim)
+    assert len(found) == 1
+    assert found[0].payload["source_vintage"] == "2026-10-08"
+    assert found[0].payload["obs_status"] == "E"
+    assert found[0].payload["source_decimal"] == "0"
+
+
+def test_retrieve_vintage_fields_default_none_for_legacy_rows(monkeypatch):
+    # Rows without the new fields (all pre-existing fakes) keep working.
+    monkeypatch.setattr(wbmod, "fetch_observations", lambda *a, **k: [
+        {"value": 123.0, "date": "2021", "country": {"value": "France"}},
+    ])
+    claim = _claim(geo_refs=[GeoRef(raw="France", name="france", iso3="FRA")],
+                   time_refs=[TimeRef(raw="2021", year=2021,
+                                       period_type="year")])
+    found = WorldBankConnector().retrieve(claim)
+    assert found[0].payload["source_vintage"] is None
+    assert found[0].payload["obs_status"] is None
+    assert found[0].payload["source_decimal"] is None
+
+
+# --- 9. F1-B: mrnev fallback for year-less claims (offline contract) ---------
+
+def test_fetch_observations_year_params_byte_identical(monkeypatch):
+    seen = {}
+
+    def fake_get(self, url, params=None, **kw):
+        seen["url"] = url
+        seen["params"] = params
+        return _CannedResp(_canned_wb_response())
+
+    monkeypatch.setattr(httpx.Client, "get", fake_get)
+    wbmod.fetch_observations("SL.UEM.TOTL.ZS", "FRA", 2020, 2023)
+    assert seen["url"].endswith("/country/FRA/indicator/SL.UEM.TOTL.ZS")
+    assert seen["params"] == {"format": "json", "per_page": 50,
+                              "date": "2020:2023"}
+
+
+def test_fetch_observations_mrnev_params(monkeypatch):
+    seen = {}
+
+    def fake_get(self, url, params=None, **kw):
+        seen["url"] = url
+        seen["params"] = params
+        return _CannedResp(_canned_wb_response())
+
+    monkeypatch.setattr(httpx.Client, "get", fake_get)
+    wbmod.fetch_observations("SL.UEM.TOTL.ZS", "FRA", mrnev=True)
+    assert seen["url"].endswith("/country/FRA/indicator/SL.UEM.TOTL.ZS")
+    assert seen["params"] == {"format": "json", "per_page": 50, "mrnev": 1}
+
+
+def test_retrieve_yearless_uses_mrnev(monkeypatch):
+    seen = {}
+
+    def fake_fetch(indicator, iso3, start_year=None, end_year=None,
+                   mrnev=False):
+        seen.update(indicator=indicator, iso3=iso3,
+                    start_year=start_year, end_year=end_year, mrnev=mrnev)
+        return [{"value": 7.0, "date": "2024",
+                 "country": {"value": "France"}}]
+
+    monkeypatch.setattr(wbmod, "fetch_observations", fake_fetch)
+    claim = _claim(raw_text="Unemployment in France recently fell a lot.",
+                   subject="unemployment france",
+                   geo_refs=[GeoRef(raw="France", name="france", iso3="FRA")],
+                   time_refs=[TimeRef(raw="recently", period_type="vague")])
+    conn = WorldBankConnector()
+    found = conn.retrieve(claim)
+    assert seen["mrnev"] is True
+    assert seen["start_year"] is None
+    assert seen["end_year"] is None
+    assert found[0].payload["query"] == "SL.UEM.TOTL.ZS FRA mrnev=1"
+    assert conn.last_query == "SL.UEM.TOTL.ZS FRA mrnev=1"
+
+
+def test_retrieve_year_path_never_mrnev(monkeypatch):
+    seen = {}
+
+    def fake_fetch(indicator, iso3, start_year=None, end_year=None,
+                   mrnev=False):
+        seen.update(start_year=start_year, end_year=end_year, mrnev=mrnev)
+        return [{"value": 7.0, "date": "2021",
+                 "country": {"value": "France"}}]
+
+    monkeypatch.setattr(wbmod, "fetch_observations", fake_fetch)
+    claim = _claim(raw_text="Unemployment in France was high in 2021.",
+                   subject="unemployment france",
+                   geo_refs=[GeoRef(raw="France", name="france", iso3="FRA")],
+                   time_refs=[TimeRef(raw="2021", year=2021,
+                                       period_type="year")])
+    conn = WorldBankConnector()
+    found = conn.retrieve(claim)
+    assert seen == {"start_year": 2021, "end_year": 2021, "mrnev": False}
+    assert found[0].payload["query"] == "SL.UEM.TOTL.ZS FRA 2021:2021"
+    assert conn.last_query == "SL.UEM.TOTL.ZS FRA 2021:2021"
+
+
+def test_retrieve_yearless_geoless_returns_empty_zero_http(monkeypatch):
+    def guarded(*a, **k):
+        raise AssertionError("no HTTP for geo-less claims")
+
+    monkeypatch.setattr(wbmod, "fetch_observations", guarded)
+    monkeypatch.setattr(httpx.Client, "get", guarded)
+    claim = _claim(raw_text="GDP is $2 trillion.", subject="gdp")
+    assert WorldBankConnector().retrieve(claim) == []

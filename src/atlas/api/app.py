@@ -9,6 +9,8 @@ request bodies into logs or responses.
 
 from __future__ import annotations
 
+import os
+import threading
 import time
 import uuid
 from pathlib import Path
@@ -38,6 +40,9 @@ RATE_LIMIT_PER_MINUTE = 60
 RATE_WINDOW_S = 60.0
 _MAX_TRACKED_IPS = 10_000  # hygiene cap so one dict cannot grow unbounded
 _rate_hits: dict[str, list[float]] = {}
+# Sync endpoints run on uvicorn's threadpool: one lock guards the
+# check-then-act mutations on _rate_hits and _cache below.
+_state_lock = threading.Lock()
 
 # --- Identical-text cache: (text, domain, limit, persist, model) -> (Report, ts).
 # Dependency-free dict, FIFO eviction at 128 entries, TTL 1h. A hit skips
@@ -67,6 +72,9 @@ class AnalyzeRequest(BaseModel):
     limit: int = 5
     domain: str = "auto"
     persist: bool = True
+    # fresh=true skips the identical-text cache READ (re-runs the
+    # pipeline) but still refreshes the cache entry on success.
+    fresh: bool = False
 
 
 class CheckRequest(BaseModel):
@@ -154,43 +162,108 @@ async def _unhandled_handler(request: Request, exc: Exception) -> JSONResponse:
     )
 
 
-def _check_rate_limit(client_ip: str) -> None:
+# Worst-case sub-claims per batch (splitter cap): /api/check is charged
+# this many quota units. Charging actuals would require splitting (a
+# model call) before the gate — an abuse vector — so the fixed
+# worst-case cost is the honest choice.
+BATCH_RATE_COST = 8
+
+
+def _check_rate_limit(client_ip: str, cost: int = 1) -> None:
+    with _state_lock:
+        _check_rate_limit_locked(client_ip, cost)
+
+
+def _check_rate_limit_locked(client_ip: str, cost: int) -> None:
     now = time.monotonic()
     hits = _rate_hits.get(client_ip)
     if hits is None:
         if len(_rate_hits) >= _MAX_TRACKED_IPS:
             _rate_hits.pop(next(iter(_rate_hits)))
-        _rate_hits[client_ip] = [now]
+        if cost > RATE_LIMIT_PER_MINUTE:
+            raise ApiError(
+                429, "rate_limited", "Rate limit exceeded (60 requests/min per IP)."
+            )
+        _rate_hits[client_ip] = [now] * cost
         return
     cutoff = now - RATE_WINDOW_S
     i = 0
     while i < len(hits) and hits[i] <= cutoff:
         i += 1
     del hits[:i]
-    if len(hits) >= RATE_LIMIT_PER_MINUTE:
+    if len(hits) + cost > RATE_LIMIT_PER_MINUTE:
         raise ApiError(
             429, "rate_limited", "Rate limit exceeded (60 requests/min per IP)."
         )
-    hits.append(now)
+    hits.extend([now] * cost)
 
 
 def _cache_get(key: tuple[str, str, int, bool, str | None]) -> Report | None:
-    entry = _cache.get(key)
-    if entry is None:
-        return None
-    report, ts = entry
-    if time.monotonic() - ts > CACHE_TTL_S:
-        _cache.pop(key, None)
-        return None
-    return report
+    with _state_lock:
+        entry = _cache.get(key)
+        if entry is None:
+            return None
+        report, ts = entry
+        if time.monotonic() - ts > CACHE_TTL_S:
+            _cache.pop(key, None)
+            return None
+        return report
 
 
 def _cache_put(
     key: tuple[str, str, int, bool, str | None], report: Report
 ) -> None:
-    if key not in _cache and len(_cache) >= CACHE_CAP:
-        _cache.pop(next(iter(_cache)))  # evict oldest-inserted (FIFO)
-    _cache[key] = (report, time.monotonic())
+    with _state_lock:
+        if key not in _cache and len(_cache) >= CACHE_CAP:
+            _cache.pop(next(iter(_cache)))  # evict oldest-inserted (FIFO)
+        _cache[key] = (report, time.monotonic())
+
+
+def _cache_evict_report(report_id: str) -> None:
+    """Drop cached entries for a deleted report id.
+
+    Without this, DELETE-then-rePOST resurrects the deleted report_id
+    from cache and the re-fetch 404s (red-team R5).
+    """
+    with _state_lock:
+        dead = [
+            key
+            for key, (report, _) in _cache.items()
+            if report.report_id == report_id
+        ]
+        for key in dead:
+            _cache.pop(key, None)
+
+
+_LOOPBACK_HOSTS = frozenset({"127.0.0.1", "::1", "localhost", "testclient"})
+
+
+def _client_allowed(host: str | None) -> bool:
+    """Localhost-only enforcement (code, not just docs).
+
+    The demo server has no auth, so it must not serve the network:
+    non-loopback clients get 403 unless ATLAS_ALLOW_NON_LOOPBACK=1.
+    "testclient" is Starlette's in-process test host — it never
+    traverses a network, so it bypasses the guard by design.
+    """
+    if os.environ.get("ATLAS_ALLOW_NON_LOOPBACK") == "1":
+        return True
+    return (host or "") in _LOOPBACK_HOSTS
+
+
+@app.middleware("http")
+async def _loopback_guard(request: Request, call_next):
+    host = request.client.host if request.client else None
+    if not _client_allowed(host):
+        return JSONResponse(
+            status_code=403,
+            content=_envelope(
+                "non_loopback_blocked",
+                "This server accepts loopback clients only "
+                "(set ATLAS_ALLOW_NON_LOOPBACK=1 to override).",
+            ),
+        )
+    return await call_next(request)
 
 
 def _call_pipeline(text: str, limit: int, domain: str, persist: bool) -> Report:
@@ -229,7 +302,6 @@ def status() -> dict:
 @app.post("/api/analyze", response_model=Report)
 def analyze_claim(req: AnalyzeRequest, request: Request) -> Report:
     client_ip = request.client.host if request.client else "unknown"
-    _check_rate_limit(client_ip)
     text = req.text.strip()
     if not text:
         raise ApiError(400, "empty_claim", "Empty claim text.")
@@ -243,13 +315,17 @@ def analyze_claim(req: AnalyzeRequest, request: Request) -> Report:
             "invalid_domain",
             f"Invalid domain {req.domain!r} (expected one of: auto, economy, science, general).",
         )
+    # R4: quota is charged AFTER validation — malformed requests are
+    # free (localhost-only demo; a future multi-user server should
+    # throttle invalid floods separately, see SECURITY_OPS).
+    _check_rate_limit(client_ip)
     # BACKLOG decision: keep clamp (documented) instead of 400 for
     # out-of-range limits; non-integer limits 422 via the validator.
     clamped = max(1, min(req.limit, 10))
     key_llm = get_llm()
     model_name = key_llm.model if key_llm is not None else None
     cache_key = (text, req.domain, clamped, req.persist, model_name)
-    cached = _cache_get(cache_key)
+    cached = None if req.fresh else _cache_get(cache_key)
     if cached is not None:
         return cached
     try:
@@ -270,7 +346,6 @@ def check_document(req: CheckRequest, request: Request) -> dict:
     claims and analyze each one. Returns per-claim reports + stance roll-up.
     No identical-text cache (unlike /api/analyze): each call re-runs."""
     client_ip = request.client.host if request.client else "unknown"
-    _check_rate_limit(client_ip)
     text = req.text.strip()
     if not text:
         raise ApiError(400, "empty_claim", "Empty claim text.")
@@ -284,6 +359,9 @@ def check_document(req: CheckRequest, request: Request) -> dict:
             "invalid_domain",
             f"Invalid domain {req.domain!r} (expected one of: auto, economy, science, general).",
         )
+    # R4: an invalid batch must not burn 8 quota units — charge after
+    # validation (same localhost-only caveat as /api/analyze).
+    _check_rate_limit(client_ip, cost=BATCH_RATE_COST)
     clamped = max(1, min(req.limit, 10))
     try:
         return pipeline_run.check_document(
@@ -314,6 +392,7 @@ def remove_report(report_id: str) -> dict:
     if get_report(report_id) is None:
         raise ApiError(404, "report_not_found", "Report not found.")
     delete_report(report_id)
+    _cache_evict_report(report_id)
     return {"deleted": True}
 
 

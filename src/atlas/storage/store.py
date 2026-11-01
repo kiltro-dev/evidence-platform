@@ -18,7 +18,11 @@ def db_path() -> Path:
 def init_db(path: Path | None = None) -> Path:
     p = path or db_path()
     p.parent.mkdir(parents=True, exist_ok=True)
-    with sqlite3.connect(p) as conn:
+    # WAL + generous busy timeout: parallel batch sub-claims (and
+    # concurrent server requests) persist on separate connections;
+    # short writers must never see "database is locked".
+    with sqlite3.connect(p, timeout=10.0) as conn:
+        conn.execute("PRAGMA journal_mode=WAL")
         conn.execute(
             """CREATE TABLE IF NOT EXISTS reports (
                    report_id TEXT PRIMARY KEY,
@@ -33,7 +37,7 @@ def init_db(path: Path | None = None) -> Path:
 
 def save_report(report: Report, path: Path | None = None) -> str:
     p = init_db(path)
-    with sqlite3.connect(p) as conn:
+    with sqlite3.connect(p, timeout=10.0) as conn:
         conn.execute(
             "INSERT OR REPLACE INTO reports "
             "(report_id, created_at, claim_text, stance, report_json) "
@@ -85,7 +89,7 @@ def delete_report(report_id: str, path: Path | None = None) -> bool:
     p = path or db_path()
     if not _has_reports_table(p):
         return False
-    with sqlite3.connect(p) as conn:
+    with sqlite3.connect(p, timeout=10.0) as conn:
         cur = conn.execute(
             "DELETE FROM reports WHERE report_id = ?", (report_id,)
         )

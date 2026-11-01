@@ -187,9 +187,19 @@ def decide_stance(
         # Team-E F5b compound cap: a compound claim with fewer verifying
         # comparisons than real (non-year) quantities analyzed only part
         # of itself; supported is capped at partially_supported.
+        # Multi-geo V1: >=2 geographies but evidence for one only — every
+        # comparison shares the same single-geo evidence, so a supported
+        # stance always overclaims and caps unconditionally (unlike
+        # compound, no coverage count can save it). Contradiction still
+        # dominates above; there the flag discloses instead of capping.
         if claim is not None and any(
-            u.code == "compound_claim" for u in uncertainties
+            u.code in ("compound_claim", "multi_geo_unchecked")
+            for u in uncertainties
         ):
+            if any(
+                u.code == "multi_geo_unchecked" for u in uncertainties
+            ):
+                return "partially_supported"
             n_real = sum(
                 1 for q in claim.quantities if not is_year_quantity(q)
             )

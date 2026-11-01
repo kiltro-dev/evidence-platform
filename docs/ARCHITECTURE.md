@@ -383,9 +383,11 @@ SQLite (`storage/store.py`): one `reports` table
 
 `POST /api/check {text (≤12000 chars), limit, domain, persist}` →
 `check_document()`: split into ≤8 verbatim sub-claims, run `analyze()`
-per sub-claim (each persisted and re-fetchable), return full reports +
-stance roll-up. One failing sub-claim becomes an error entry, never a
-batch failure.
+per sub-claim in parallel (one thread each via `ThreadPoolExecutor`,
+input order kept; per-claim forked model clients, thread-local query
+echo, WAL SQLite), each persisted and re-fetchable, return full
+reports + stance roll-up. One failing sub-claim becomes an error
+entry, never a batch failure.
 
 Every stage appends an `AuditStep{step, actor, detail, duration_ms}`; the
 UI renders `CODE` / `MODEL` / `HEURISTIC` badges from it.

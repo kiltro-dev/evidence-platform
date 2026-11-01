@@ -223,3 +223,151 @@ def test_injection_stance_stays_code_computed():
                                               claim)
     assert "supported" not in conclusion.summary.lower()
     assert conclusion.actor == "code"
+
+
+def _unknown_year_client() -> ScriptedClient:
+    return ScriptedClient(responses={"Claim:": {
+        "domain": "economy", "claim_type": "quantitative",
+        "subject": "gdp", "indicator_hint": None, "entities": [],
+        "quantities": [{"label": "gdp", "raw": "$27.36 trillion",
+                        "value": 27.36e12, "unit": "USD"}],
+        "time_refs": [{"raw": "recently", "year": "unknown",
+                       "start_year": None, "end_year": None,
+                       "period_type": "whenever"}],
+        "geo_refs": [{"raw": "United States", "name": "united states",
+                      "iso3": "USA"}],
+        "conditions": [], "context_notes": "",
+    }})
+
+
+def test_unknown_year_string_coerced_model_kept():
+    """R5: year "unknown" + bad period_type coerce per-item; the model
+    extraction (quantities, geo, domain) survives instead of nuking to
+    full-heuristic."""
+    text = "The GDP of the United States was $27.36 trillion."
+    claim = structure_claim(text, _unknown_year_client())
+    assert claim.extraction_actor == "model"  # not heuristic fallback
+    assert len(claim.quantities) == 1
+    assert claim.quantities[0].value == 27.36e12
+    assert claim.time_refs[0].year is None
+    assert claim.time_refs[0].period_type == "none"
+    assert "coerced" in claim.context_notes
+
+
+def test_unknown_year_with_explicit_year_backfills():
+    """R5: an unparseable model year does not block heuristic year recovery;
+    verification then proceeds on model quantities + recovered year."""
+    claim = structure_claim(GDP_TEXT, _unknown_year_client())
+    assert claim.extraction_actor == "model"
+    assert "heuristic-backfill" in claim.extraction_model
+    assert claim.time_refs[0].year == 2023  # recovered deterministically
+    comparisons, uncertainties = verify_quantitative(
+        claim, [_usd_evidence(claim.claim_id)])
+    numeric = [c for c in comparisons if c.metric != "time_compatibility"]
+    assert len(numeric) == 1  # comparison ran, nothing silently skipped
+    assert numeric[0].verdict == "consistent"
+
+
+def _bp_conversion_client() -> ScriptedClient:
+    # Model converted 310 basis points -> 3.1 percent (observed live
+    # 1/3 runs 2026-11-01): extraction computed instead of extracting.
+    return ScriptedClient(responses={"Claim:": {
+        "domain": "economy", "claim_type": "quantitative",
+        "subject": "germany unemployment", "indicator_hint": None,
+        "entities": [],
+        "quantities": [{"label": "unemployment", "raw": "310 basis points",
+                        "value": 3.1, "unit": "percent"}],
+        "time_refs": [{"raw": "2023", "year": 2023,
+                       "start_year": None, "end_year": None,
+                       "period_type": "year"}],
+        "geo_refs": [{"raw": "Germany", "name": "germany", "iso3": "DEU"}],
+        "conditions": [], "context_notes": "",
+    }})
+
+
+def test_model_unit_conversion_reset_to_span_literal():
+    """No-conversion rule: a model value contradicting its own verbatim
+    span (310bp -> 3.1 percent) resets to the span-literal parse."""
+    text = "Unemployment in Germany was 310 basis points in 2023."
+    claim = structure_claim(text, _bp_conversion_client())
+    assert claim.extraction_actor == "model"
+    assert len(claim.quantities) == 1
+    q = claim.quantities[0]
+    assert q.value == 310.0
+    assert q.unit is None and q.normalized_unit is None
+    assert "conversion" in claim.context_notes
+
+
+def test_model_unit_conversion_abstains_downstream():
+    """Reset quantity routes to unit_mismatch, never a verdict."""
+    text = "Unemployment in Germany was 310 basis points in 2023."
+    claim = structure_claim(text, _bp_conversion_client())
+    ev = Evidence(
+        claim_id=claim.claim_id, connector="worldbank",
+        source_name="World Bank Open Data", source_kind="secondary",
+        evidence_kind="direct", locator="SL.UEM.TOTL.ZS DEU 2023",
+        excerpt="Unemployment 2023: 3.071",
+        payload={"label": "Unemployment, total (% of labor force)",
+                 "unit": "percent", "year": "2023", "value": 3.071},
+    )
+    comparisons, uncertainties = verify_quantitative(claim, [ev])
+    numeric = [c for c in comparisons if c.metric != "time_compatibility"]
+    assert numeric == []
+    assert any(u.code == "unit_mismatch" for u in uncertainties)
+    assert synthesize(claim, comparisons, uncertainties).stance == "unverifiable"
+
+
+def test_model_scale_application_not_reset():
+    """Legitimate scale handling ($27.36 trillion -> 27.36e12 USD)
+    survives: the span parses to the same value with a unit."""
+    llm = ScriptedClient(responses={"Claim:": {
+        "domain": "economy", "claim_type": "quantitative",
+        "subject": "gdp", "indicator_hint": None, "entities": [],
+        "quantities": [{"label": "gdp", "raw": "$27.36 trillion",
+                        "value": 27.36e12, "unit": "USD"}],
+        "time_refs": [{"raw": "2023", "year": 2023,
+                       "start_year": None, "end_year": None,
+                       "period_type": "year"}],
+        "geo_refs": [], "conditions": [], "context_notes": "",
+    }})
+    claim = structure_claim(GDP_TEXT, llm)
+    assert claim.quantities[0].value == 27.36e12
+    assert claim.quantities[0].normalized_unit == "USD"
+    assert "conversion" not in claim.context_notes
+
+
+def test_model_unit_inference_same_value_not_reset():
+    """Unit assignment WITHOUT value change (fertility 1.2 + explicit
+    unit) is inference, not conversion: untouched."""
+    llm = ScriptedClient(responses={"Claim:": {
+        "domain": "economy", "claim_type": "quantitative",
+        "subject": "fertility", "indicator_hint": None, "entities": [],
+        "quantities": [{"label": "fertility",
+                        "raw": "1.2 children per woman",
+                        "value": 1.2, "unit": "count"}],
+        "time_refs": [{"raw": "2020", "year": 2020,
+                       "start_year": None, "end_year": None,
+                       "period_type": "year"}],
+        "geo_refs": [], "conditions": [], "context_notes": "",
+    }})
+    text = "The fertility rate in Nigeria was 1.2 children per woman in 2020."
+    claim = structure_claim(text, llm)
+    assert claim.quantities[0].value == 1.2
+    assert claim.quantities[0].normalized_unit == "count"
+    assert "conversion" not in claim.context_notes
+
+
+def test_unparseable_span_trusted_as_today():
+    """Spans the heuristic cannot parse are trusted (conservative:
+    absence of a parse is not evidence of conversion)."""
+    llm = ScriptedClient(responses={"Claim:": {
+        "domain": "economy", "claim_type": "quantitative",
+        "subject": "x", "indicator_hint": None, "entities": [],
+        "quantities": [{"label": "x", "raw": "a dozen",
+                        "value": 12.0, "unit": "count"}],
+        "time_refs": [], "geo_refs": [],
+        "conditions": [], "context_notes": "",
+    }})
+    claim = structure_claim("There were a dozen eggs.", llm)
+    assert claim.quantities[0].value == 12.0
+    assert "conversion" not in claim.context_notes

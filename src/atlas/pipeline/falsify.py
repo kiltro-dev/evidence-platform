@@ -26,7 +26,10 @@ contract holds: every `url_citation` annotation is validated by
 deterministic code (https URL, non-empty quoted span, garbage-domain
 block) and survivors surface as `web_counter_evidence` comparisons
 (verdict `inconclusive`) plus minor uncertainties — stances stay
-decided by verified comparisons alone. Default ON,
+decided by verified comparisons alone. Raw search results the model
+retrieved but did NOT cite surface as minor `web_considered_not_cited`
+uncertainties (never evidence, never stance-moving); the audit records
+`cited=X/considered=Y`. Default ON,
 `ATLAS_WEB_FALSIFY=0` disables; any API/parse failure degrades to skip;
 at most ONE extra model call per analysis. Under test doubles (or no
 LLM) the web pass is skipped without constructing a client, so offline
@@ -37,6 +40,7 @@ from __future__ import annotations
 
 import logging
 import os
+from urllib.parse import urlsplit
 
 from ..core.types import (
     AuditStep,
@@ -45,7 +49,7 @@ from ..core.types import (
     Uncertainty,
 )
 from ..models.meta import MetaClient
-from ..models.responses import ResponsesClient
+from ..models.responses import ResponsesClient, is_authoritative_host
 
 log = logging.getLogger(__name__)
 
@@ -126,6 +130,19 @@ WEB_FALSIFY_DISABLE_VALUES = frozenset({"0", "false", "no", "off"})
 
 # Safety cap: at most this many web citations surface per analysis.
 MAX_WEB_CITATIONS = 5
+
+# Authoritative-source ordering (F11): obvious official statistics and
+# institutional publishers come first when the model retrieves a mix.
+# This is NOT an endorsement ranking — just the hosts whose pages are
+# least likely to be junk (observed failure: whatisgdp.com x4 and a
+# textile-news page outranking real sources while "prefer authoritative
+# sources" was prompt-only). Disclosed selection-ordering, not
+# blocking: junk still surfaces when it's all there is (honest),
+# authoritative wins ties. Matching is exact-or-subdomain,
+# case-insensitive.
+# Authoritative-first ordering uses is_authoritative_host from
+# models.responses (single source of truth; parse-time ordering there
+# already applies it before the citation cap).
 
 WEB_FALSIFY_MAX_OUTPUT_TOKENS = 2000
 
@@ -242,13 +259,23 @@ def _merge_usage(
         return first
     merged: dict = {}
     for key in ("prompt_tokens", "completion_tokens", "reasoning_tokens",
-                "total_tokens"):
+                "total_tokens", "cached_tokens"):
         a, b = first.get(key), second.get(key)
         if isinstance(a, int) and isinstance(b, int):
             merged[key] = a + b
         else:
             merged[key] = a if a is not None else b
     return merged
+
+
+def _candidate_host(url: object) -> str:
+    """Best-effort host label for a considered-not-cited candidate."""
+    if not isinstance(url, str) or not url:
+        return "(unknown host)"
+    try:
+        return (urlsplit(url).hostname or "").lower().rstrip(".") or url[:60]
+    except ValueError:
+        return url[:60]
 
 
 def _run_web_pass(
@@ -294,7 +321,25 @@ def _run_web_pass(
         log.warning("Web counter-evidence skipped: %s: %s",
                     type(exc).__name__, str(exc)[:200])
         return [], [], f"web=skipped(model call failed {type(exc).__name__})", None
-    citations = list(getattr(result, "citations", None) or [])[:MAX_WEB_CITATIONS]
+    # F11: authoritative-FIRST (stable: others keep model order after),
+    # applied BEFORE the <=5 cap so official sources win ties instead of
+    # being crowded out by junk retrieved earlier.
+    citations = sorted(
+        list(getattr(result, "citations", None) or []),
+        key=lambda c: not is_authoritative_host(getattr(c, "domain", "")),
+    )[:MAX_WEB_CITATIONS]
+    # Considered-not-cited (F2-A): raw search results the model retrieved
+    # but did not cite. Same authoritative-first ordering, then bounded
+    # like citations; surfaced as minor uncertainties ONLY — never
+    # comparisons, never evidence, never stance-moving. Doubles without
+    # `candidates` degrade to [] here.
+    considered = sorted(
+        list(getattr(result, "candidates", None) or []),
+        key=lambda c: not is_authoritative_host(
+            _candidate_host(getattr(c, "url", ""))),
+    )
+    uncited = [c for c in considered
+               if not getattr(c, "cited", False)][:MAX_WEB_CITATIONS]
     try:  # attribute the web spend to the falsify stage (best effort)
         usage = getattr(client, "last_usage", None)
         if usage is not None and hasattr(llm, "last_usage_seq"):
@@ -327,11 +372,27 @@ def _run_web_pass(
         )
         for c in citations
     ]
+    considered_uncertainties = [
+        Uncertainty(
+            code="web_considered_not_cited",
+            description=(
+                f"Considered but not cited "
+                f"({_candidate_host(getattr(c, 'url', ''))}): "
+                f"{(getattr(c, 'title', '') or '(untitled)')[:200]} "
+                f"[{str(getattr(c, 'url', ''))[:200]}] — retrieved by "
+                f"the model, listed by code; not evidence."
+            ),
+            severity="minor",  # never blocking: advisory only, stance-neutral
+        )
+        for c in uncited
+    ]
     fragment = (
         f"web_citations={len(citations)}"
         if citations else "web_citations=0(none validated)"
     )
-    return new_comparisons, new_uncertainties, fragment, model_name
+    fragment += f" cited={len(citations)}/considered={len(considered)}"
+    return (new_comparisons, new_uncertainties + considered_uncertainties,
+            fragment, model_name)
 
 
 def falsify_draft(

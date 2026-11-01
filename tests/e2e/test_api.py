@@ -176,3 +176,66 @@ def test_method_not_allowed_uses_neutral_code(ctx):
     err = resp.json()["error"]
     assert err["code"] == "bad_request"
     assert err["request_id"]
+
+
+def test_client_allowed_loopback_only(monkeypatch):
+    monkeypatch.delenv("ATLAS_ALLOW_NON_LOOPBACK", raising=False)
+    assert appmod._client_allowed("127.0.0.1") is True
+    assert appmod._client_allowed("::1") is True
+    assert appmod._client_allowed("localhost") is True
+    assert appmod._client_allowed("testclient") is True
+    assert appmod._client_allowed("192.168.1.10") is False
+    assert appmod._client_allowed(None) is False
+    assert appmod._client_allowed("") is False
+
+
+def test_client_allowed_override(monkeypatch):
+    monkeypatch.setenv("ATLAS_ALLOW_NON_LOOPBACK", "1")
+    assert appmod._client_allowed("192.168.1.10") is True
+    assert appmod._client_allowed(None) is True
+
+
+def test_delete_evicts_cached_report(ctx):
+    # Red-team R5: DELETE-then-rePOST must not resurrect the deleted id.
+    import os
+    from pathlib import Path
+
+    client, _ = ctx
+    db = Path(os.environ["ATLAS_DB"])
+    rep = make_report("Cache me once.")
+    save_report(rep, path=db)
+    appmod._cache_put(("Cache me once.", "auto", 5, True, None), rep)
+    assert client.delete(f"/api/reports/{rep.report_id}").status_code == 200
+    r2 = client.post("/api/analyze", json={"text": "Cache me once."})
+    assert r2.status_code == 200, r2.text
+    assert r2.json()["report_id"] != rep.report_id
+
+
+def test_fresh_bypass_reruns_and_refreshes(ctx):
+    # Red-team F10 backend: fresh=true skips the read, still refreshes.
+    client, calls = ctx
+    r1 = client.post("/api/analyze", json={"text": "Fresh claim here."})
+    assert r1.status_code == 200
+    id1 = r1.json()["report_id"]
+    assert len(calls) == 1
+    r2 = client.post("/api/analyze",
+                     json={"text": "Fresh claim here.", "fresh": True})
+    assert r2.status_code == 200, r2.text
+    id2 = r2.json()["report_id"]
+    assert id2 != id1
+    assert len(calls) == 2
+    r3 = client.post("/api/analyze", json={"text": "Fresh claim here."})
+    assert r3.json()["report_id"] == id2  # cache refreshed by the re-run
+    assert len(calls) == 2
+
+
+def test_invalid_analyze_requests_do_not_consume_quota(ctx):
+    # Red-team R4: validation precedes the charge — 400s are free.
+    client, _ = ctx
+    assert client.post("/api/analyze", json={"text": "   "}).status_code == 400
+    assert client.post(
+        "/api/analyze", json={"text": "x" * 4001}).status_code == 400
+    assert client.post(
+        "/api/analyze",
+        json={"text": "valid claim here", "domain": "nope"}).status_code == 400
+    assert appmod._rate_hits.get("testclient", []) == []

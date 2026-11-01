@@ -134,6 +134,23 @@ Persistent record for the autonomous build. Latest entry last.
   (partially_supported/supported/contradicted, 0 errors), twice —
   2nd run recorded at eval/results/demo_batch_20261101T040906Z.json.
 
+## 2026-11-01 — Operation Night Shift (hardening on v0.4.0)
+
+- Competitive intel DB + 5-agent research cycle (competition,
+  frontier, EVS, hostile-demo, eng-strategy); re-checks same day.
+- Lead + 4 build agents: parallel batch (38.7s vs 95.3s live),
+  authoritative-first web ordering + considered-not-cited, WB
+  vintage/mrnev/14 indicator rows, multi-geo disclosure, F4/F6/R5
+  + overlap-safe geos + F8/F9/R4 + no-conversion rule.
+- Eval 28→43 (14 slate + tripwire; #5 USA redesign, #14 stance_set,
+  moon stance_set). Runs 5/6 triaged honestly (bp conversion ->
+  code rule; moon retrieval -> declared set); run 7 gate 43/43.
+- Verified: 491/491 offline, 11/11 degraded, 36/36 paraphrase,
+  17/20 unanswerable, ablation flips=1, smoke 31 off / 48 live,
+  demo batch 1-1-1 in 38.7s ($0.20, 49.7% cached).
+- Pinned: run-7 + ns demo-batch artifacts; docs synced (API,
+  OpenAPI, EVAL x3, demo, security, README, intel, log).
+
 ## Open risks / not done
 
 - Submit-portal fields and video specs unverifiable without login; demo
@@ -144,6 +161,9 @@ Persistent record for the autonomous build. Latest entry last.
   ATLAS_WEB_FALSIFY=0 when cost matters. Span quality syntactic only.
 - Falsifier attack quality still ungraded (yield counted, correctness
   not claimed); false-alarm rate measured per run, not gated.
+  Abstract-stance judgments likewise ungraded: OpenAlex ranking
+  shifts can flip nonsense-query verdicts within the declared set
+  (moon-cheese run 6; bounded, not fixed).
 - Tolerance (2%) + materiality guides still unvalidated priors;
   no inter-rater κ study (needs 2 humans); no representative benchmark.
 - Deferred per PRD §2: in-pipeline compound split, async jobs,

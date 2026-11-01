@@ -96,3 +96,24 @@ def test_check_no_cache_reruns(ctx):
     assert client.post("/api/check", json=payload).status_code == 200
     assert client.post("/api/check", json=payload).status_code == 200
     assert len(calls) == 2  # documented: each call re-runs
+
+
+def test_check_costs_eight_rate_hits(ctx):
+    # Red-team R4: a batch (up to 41 model calls) must not cost 1 quota unit.
+    client, _ = ctx
+    for i in range(7):
+        resp = client.post("/api/check", json={"text": f"Batch claim {i} filed today."})
+        assert resp.status_code == 200, (i, resp.text)
+    resp = client.post("/api/check", json={"text": "One batch too many today."})
+    assert resp.status_code == 429
+    assert resp.json()["error"]["code"] == "rate_limited"
+
+
+def test_invalid_check_requests_do_not_burn_batch_quota(ctx):
+    # Red-team R4: an invalid batch must not burn 8 quota units.
+    client, _ = ctx
+    assert client.post("/api/check", json={"text": "   "}).status_code == 400
+    assert client.post(
+        "/api/check",
+        json={"text": "valid batch claim", "domain": "nope"}).status_code == 400
+    assert appmod._rate_hits.get("testclient", []) == []

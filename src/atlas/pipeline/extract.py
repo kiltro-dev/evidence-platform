@@ -215,11 +215,14 @@ def _parse_llm_quantities(
     entries per verify._looks_like_year. Units are validated against
     KNOWN_UNITS (unknown, incl. the string "null", -> None). The model's
     "raw" span is kept only when it is a verbatim substring of the claim;
-    deterministic span recovery runs later in _from_llm_json."""
+    deterministic span recovery runs later in _from_llm_json. Model unit
+    conversions (value contradicting its own verbatim span while the
+    span carries no unit) reset to the span-literal parse, counted."""
     quantities: list[Quantity] = []
     dropped_invalid = 0
     dropped_nonfinite = 0
     dropped_years = 0
+    reset_conversions = 0
     items = raw_items if isinstance(raw_items, list) else []
     for q in items:
         if not isinstance(q, dict) or q.get("value") is None:
@@ -251,6 +254,32 @@ def _parse_llm_quantities(
             dropped_years += 1
             continue
         candidate.raw_text = kept_span
+        # No-conversion rule: extraction must not compute. When the
+        # model's own verbatim span deterministically parses to exactly
+        # one number that disagrees with the model value (>1% rel),
+        # while the span carries no unit and the model assigned one,
+        # the model converted units instead of extracting (observed:
+        # "310 basis points" -> 3.1 percent, 1/3 live runs). Reset to
+        # the span-literal parse — the honest extraction. Spans the
+        # heuristic cannot parse (or parses ambiguously) are trusted
+        # as today; equal values never trigger, so scale application
+        # ("$27.36 trillion" -> 27.36e12 USD) and same-value unit
+        # inference are untouched.
+        if kept_span and unit is not None:
+            try:
+                span_parsed = parse_quantities(kept_span)
+            except Exception:
+                span_parsed = []
+            if len(span_parsed) == 1:
+                lit = span_parsed[0]
+                if lit.normalized_unit is None and not math.isclose(
+                    lit.value, value, rel_tol=0.01, abs_tol=0.0
+                ):
+                    reset_conversions += 1
+                    candidate.value = lit.value
+                    candidate.unit = None
+                    candidate.normalized_value = lit.value
+                    candidate.normalized_unit = None
         quantities.append(candidate)
     if dropped_invalid:
         notes.append(f"dropped {dropped_invalid} invalid quantities")
@@ -258,7 +287,79 @@ def _parse_llm_quantities(
         notes.append(f"dropped {dropped_nonfinite} non-finite quantities")
     if dropped_years:
         notes.append(f"dropped {dropped_years} year-like quantities")
+    if reset_conversions:
+        notes.append(
+            f"reset {reset_conversions} model unit conversion(s) "
+            "to span-literal"
+        )
     return quantities
+
+
+def _coerce_year(raw: object) -> int | None:
+    """Model year field -> int or None. Strings like "unknown" become None
+    (a claim-side gap the pipeline discloses) instead of raising."""
+    if raw is None or isinstance(raw, bool):
+        return None
+    if isinstance(raw, int):
+        return raw
+    if isinstance(raw, float) and raw.is_integer():
+        return int(raw)
+    if isinstance(raw, str):
+        try:
+            return int(raw.strip())
+        except ValueError:
+            return None
+    return None
+
+
+def _parse_llm_times(raw_items: object, notes: list[str]) -> list[TimeRef]:
+    """Validate model time_ref dicts per-item.
+
+    R5: one malformed entry (e.g. year "unknown", a bad period_type)
+    must not nuke the whole model extraction into heuristic fallback.
+    Unparseable years coerce to None and unknown period types to
+    "none", each counted in `notes` for the audit trail.
+    """
+    valid_periods = {"year", "range", "date", "vague", "none"}
+    times: list[TimeRef] = []
+    dropped_invalid = 0
+    coerced_years = 0
+    coerced_periods = 0
+    items = raw_items if isinstance(raw_items, list) else []
+    for t in items:
+        if not isinstance(t, dict):
+            dropped_invalid += 1
+            continue
+        year = _coerce_year(t.get("year"))
+        start_year = _coerce_year(t.get("start_year"))
+        end_year = _coerce_year(t.get("end_year"))
+        for raw_key, coerced in (
+            ("year", year),
+            ("start_year", start_year),
+            ("end_year", end_year),
+        ):
+            if t.get(raw_key) is not None and coerced is None:
+                coerced_years += 1
+        period_type = t.get("period_type", "none")
+        if period_type not in valid_periods:
+            coerced_periods += 1
+            period_type = "none"
+        times.append(
+            TimeRef(
+                raw=str(t.get("raw", "")),
+                year=year,
+                start_year=start_year,
+                end_year=end_year,
+                period_type=period_type,
+            )
+        )
+    if dropped_invalid:
+        notes.append(f"dropped {dropped_invalid} invalid time_refs")
+    if coerced_years:
+        notes.append(f"coerced {coerced_years} unparseable years to none")
+    if coerced_periods:
+        notes.append(f"coerced {coerced_periods} unknown period_types to none")
+    return times
 
 
 def _from_llm_json(raw_text: str, data: dict, model_name: str) -> StructuredClaim:
@@ -269,17 +370,7 @@ def _from_llm_json(raw_text: str, data: dict, model_name: str) -> StructuredClai
         notes,
     )
     times = _cap(
-        [
-            TimeRef(
-                raw=str(t.get("raw", "")),
-                year=t.get("year"),
-                start_year=t.get("start_year"),
-                end_year=t.get("end_year"),
-                period_type=t.get("period_type", "none"),
-            )
-            for t in data.get("time_refs", [])
-            if isinstance(t, dict)
-        ],
+        _parse_llm_times(data.get("time_refs", []), notes),
         "time_refs",
         notes,
     )
@@ -300,7 +391,10 @@ def _from_llm_json(raw_text: str, data: dict, model_name: str) -> StructuredClai
     # explicit years or countries present in the raw text.
     heur = extract_heuristic(raw_text)
     backfilled: list[str] = []
-    if not times and heur.time_refs:
+    has_model_year = any(
+        t.year is not None or t.start_year is not None for t in times
+    )
+    if not has_model_year and heur.time_refs:
         times = heur.time_refs
         backfilled.append("time_refs")
     if not geos and heur.geo_refs:

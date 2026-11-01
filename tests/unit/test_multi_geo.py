@@ -1,0 +1,186 @@
+"""Multi-geo compound hole (V1): detection + disclosure + cap (offline).
+
+`resolve_country` returns the LONGEST country name only, so retrieval is
+single-geo: "Unemployment in Germany was 3.1% ... and unemployment in
+France was 7.3% ..." compared BOTH numbers against GERMAN evidence with
+no disclosure (both clauses digit-bearing defeats both H5 signals).
+Fix: disclose via `multi_geo_unchecked` (major) and cap supported at
+partially_supported through the compound-cap path. Per-clause splitting
+is out of scope.
+"""
+
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
+
+from atlas.connectors.countries import resolve_all_countries  # noqa: E402
+from atlas.core.types import (  # noqa: E402
+    Comparison,
+    Evidence,
+    Quantity,
+    StructuredClaim,
+    TimeRef,
+    Uncertainty,
+)
+from atlas.pipeline.synthesize import decide_stance  # noqa: E402
+from atlas.pipeline.verify import detect_claim_shape, verify_quantitative  # noqa: E402
+
+BUG_TEXT = (
+    "Unemployment in Germany was 3.1% in 2023 and "
+    "unemployment in France was 7.3% in 2023."
+)
+GERMANY_ONLY = "Unemployment in Germany was 3.1% in 2023."
+GERMANY_TWICE = "Unemployment in Germany was 3.1% in 2023 and Germany added jobs."
+
+
+def _pct(raw: str, value: float) -> Quantity:
+    return Quantity(raw_text=raw, value=value, unit="percent",
+                    normalized_unit="percent")
+
+
+def _claim(text: str, quantities) -> StructuredClaim:
+    return StructuredClaim(
+        raw_text=text,
+        domain="economy",
+        claim_type="quantitative",
+        quantities=list(quantities),
+        time_refs=[TimeRef(raw="2023", year=2023, period_type="year")],
+    )
+
+
+def _deu_evidence(claim_id: str) -> Evidence:
+    return Evidence(
+        claim_id=claim_id,
+        connector="worldbank",
+        source_name="World Bank Open Data",
+        source_kind="secondary",
+        evidence_kind="direct",
+        locator="SL.UEM.TOTL.ZS DEU 2023",
+        excerpt="Unemployment, total (% of labor force) for Germany in 2023: 3.071",
+        payload={"label": "Unemployment, total (% of labor force)",
+                 "unit": "percent", "iso3": "DEU", "year": "2023",
+                 "value": 3.071},
+    )
+
+
+def _verifying(verdict: str, cid: str) -> Comparison:
+    return Comparison(claim_id="clm_t", metric="Unemployment, total",
+                      verdict=verdict, comparison_id=cid)  # type: ignore[arg-type]
+
+
+def _multi_geo() -> Uncertainty:
+    return Uncertainty(code="multi_geo_unchecked", description="multi-geo flag",
+                       severity="major", related_ids=["clm_t"])  # type: ignore[arg-type]
+
+
+# --- resolve_all_countries ---
+
+
+def test_resolve_all_two_geos():
+    assert resolve_all_countries(BUG_TEXT) == ["DEU", "FRA"]
+
+
+def test_resolve_all_single_geo():
+    assert resolve_all_countries(GERMANY_ONLY) == ["DEU"]
+
+
+def test_resolve_all_dedupes_duplicate_mentions():
+    assert resolve_all_countries(GERMANY_TWICE) == ["DEU"]
+    assert resolve_all_countries("Korea and South Korea") == ["KOR"]
+
+
+def test_resolve_all_unknown_and_empty():
+    assert resolve_all_countries("Atlantis") == []
+    assert resolve_all_countries("") == []
+
+
+# --- detection ---
+
+
+def test_detect_two_geos_flagged():
+    claim = _claim(BUG_TEXT, [_pct("3.1%", 3.1), _pct("7.3%", 7.3)])
+    flags = detect_claim_shape(claim)
+    hit = [u for u in flags if u.code == "multi_geo_unchecked"]
+    assert len(hit) == 1
+    assert hit[0].severity == "major"
+    assert "one geography only" in hit[0].description
+    assert "unchecked" in hit[0].description
+
+
+def test_detect_single_geo_clean():
+    claim = _claim(GERMANY_ONLY, [_pct("3.1%", 3.1)])
+    flags = detect_claim_shape(claim)
+    assert not any(u.code == "multi_geo_unchecked" for u in flags)
+
+
+def test_detect_duplicate_mentions_deduped():
+    claim = _claim(GERMANY_TWICE, [_pct("3.1%", 3.1)])
+    flags = detect_claim_shape(claim)
+    assert not any(u.code == "multi_geo_unchecked" for u in flags)
+
+
+def test_verify_quantitative_carries_flag_with_constructed_evidence():
+    claim = _claim(BUG_TEXT, [_pct("3.1%", 3.1), _pct("7.3%", 7.3)])
+    comparisons, uncertainties = verify_quantitative(
+        claim, [_deu_evidence(claim.claim_id)])
+    # Both quantities compared against the single-geo evidence, as live.
+    numeric = [c for c in comparisons if c.metric != "time_compatibility"]
+    assert {c.verdict for c in numeric} == {"consistent", "contradicts"}
+    hit = [u for u in uncertainties if u.code == "multi_geo_unchecked"]
+    assert len(hit) == 1
+    assert hit[0].severity == "major"
+
+
+def test_verify_quantitative_single_geo_clean():
+    claim = _claim(GERMANY_ONLY, [_pct("3.1%", 3.1)])
+    _, uncertainties = verify_quantitative(
+        claim, [_deu_evidence(claim.claim_id)])
+    assert not any(u.code == "multi_geo_unchecked" for u in uncertainties)
+
+
+# --- cap (existing cap semantics: caps bind supported only) ---
+
+
+def test_cap_would_be_supported_capped_at_partial():
+    # Full coverage (2 verifying for 2 quantities): the compound coverage
+    # check alone would NOT cap here, but single-geo evidence for a
+    # two-geo claim always overclaims, so multi_geo caps unconditionally.
+    claim = _claim(BUG_TEXT, [_pct("3.1%", 3.1), _pct("7.3%", 7.3)])
+    stance = decide_stance(
+        [_verifying("consistent", "cmp_a"), _verifying("consistent", "cmp_b")],
+        [_multi_geo()],
+        claim,
+    )
+    assert stance == "partially_supported"
+
+
+def test_contradicted_stays_contradicted_with_disclosure():
+    # Per existing cap semantics contradiction dominates every cap
+    # (precision, compound, blocking); the multi_geo flag discloses on
+    # this path instead of capping.
+    claim = _claim(BUG_TEXT, [_pct("3.1%", 3.1), _pct("7.3%", 7.3)])
+    stance = decide_stance([_verifying("contradicts", "cmp_a")],
+                           [_multi_geo()], claim)
+    assert stance == "contradicted"
+
+
+def test_resolve_all_overlapping_names_claim_span_once():
+    # Lead fix: "uk" is a substring of "ukraine" — longest-match-first
+    # claims the span, so single-geo Ukraine must not flag multi-geo.
+    assert resolve_all_countries("Ukraine") == ["UKR"]
+    assert resolve_all_countries(
+        "The GDP of Ukraine was $100 billion in 2023.") == ["UKR"]
+
+
+def test_resolve_all_overlap_prone_pair_when_both_named():
+    # Both spans present and non-overlapping -> genuine two-geo hit.
+    assert resolve_all_countries(
+        "Ukraine's trade with the UK grew in 2023.") == ["UKR", "GBR"]
+
+
+def test_detect_ukraine_single_geo_clean():
+    claim = _claim("The GDP of Ukraine was $100 billion in 2023.",
+                   [_pct("x", 1.0)])
+    flags = detect_claim_shape(claim)
+    assert not any(u.code == "multi_geo_unchecked" for u in flags)

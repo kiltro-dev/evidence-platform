@@ -66,16 +66,52 @@ SPLIT_SCHEMA = {
 
 _SENTENCE_BOUNDARY = re.compile(r"(?<=[.!?…])\s+|\n+")
 
+# Abbreviations whose periods must not split sentences (red-team F1:
+# "The GDP of the U.S. was ..." split geo from quantity). Guarded by
+# masking before the boundary split and restoring after, so returned
+# segments stay exact substrings of the input.
+_ABBREVIATIONS = ("U.S.", "U.K.", "E.U.", "e.g.", "i.e.", "U.S.A.")
+
+
+def _mask_abbreviations(text: str) -> tuple[str, dict[str, str]]:
+    masked, table = text, {}
+    for i, abbr in enumerate(_ABBREVIATIONS):
+        if abbr in masked:
+            token = f"\ue000ABBR{i}\ue001"
+            table[token] = abbr
+            masked = masked.replace(abbr, token)
+    return masked, table
+
 
 def _normalize(span: str) -> str:
     return re.sub(r"\s+", " ", span).strip()
 
 
-def split_heuristic(text: str) -> list[str]:
+def split_heuristic(text: str) -> tuple[list[str], list[str]]:
     """Deterministic sentence split. No model, no invention: segments are
-    exact substrings of the input, kept when long enough to assert something."""
-    segments = [s.strip() for s in _SENTENCE_BOUNDARY.split(text.strip())]
-    return [s for s in segments if len(s) >= _MIN_SEGMENT_CHARS][:MAX_SUBCLAIMS]
+    exact substrings of the input, kept when long enough to assert
+    something. Returns (segments, notes): truncation past MAX_SUBCLAIMS
+    is disclosed, never silent (red-team F2)."""
+    masked, table = _mask_abbreviations(text.strip())
+    segments = [s.strip() for s in _SENTENCE_BOUNDARY.split(masked)]
+    restored = []
+    for s in segments:
+        for token, abbr in table.items():
+            s = s.replace(token, abbr)
+        restored.append(s)
+    kept = [s for s in restored if len(s) >= _MIN_SEGMENT_CHARS]
+    notes: list[str] = []
+    # F8: short-sentence drops are disclosed like the model path's
+    # too-short spans (empty fragments from punctuation runs excluded).
+    dropped_short = sum(
+        1 for s in restored if s and len(s) < _MIN_SEGMENT_CHARS
+    )
+    if dropped_short:
+        notes.append(f"dropped {dropped_short} too-short segment(s)")
+    if len(kept) > MAX_SUBCLAIMS:
+        notes.append(f"truncated split from {len(kept)} to {MAX_SUBCLAIMS}")
+        kept = kept[:MAX_SUBCLAIMS]
+    return kept, notes
 
 
 def split_claims(
@@ -92,7 +128,12 @@ def split_claims(
     clean = text.strip()
     if len(clean) > SPLIT_INPUT_CHARS:
         clean = clean[:SPLIT_INPUT_CHARS]
-        notes.append(f"input truncated to {SPLIT_INPUT_CHARS} chars before split")
+        # F9: the roll-up verdicts the analyzed slice, never the whole
+        # document past this cut — say so on the receipt itself.
+        notes.append(
+            f"input truncated to {SPLIT_INPUT_CHARS} chars before split; "
+            "roll-up covers analyzed claims only"
+        )
     if llm is not None and getattr(llm, "available", False):
         try:
             data = llm.complete_json(
@@ -105,7 +146,9 @@ def split_claims(
             notes.append("model split failed; heuristic sentence split used")
     else:
         notes.append("no model available; heuristic sentence split used")
-    return split_heuristic(clean), "heuristic", None, notes
+    segs, hnotes = split_heuristic(clean)
+    notes.extend(hnotes)
+    return segs, "heuristic", None, notes
 
 
 def _from_model_json(
@@ -134,11 +177,15 @@ def _from_model_json(
         seen.add(norm)
         claims.append(span.strip())
     if dropped:
-        notes.append(f"dropped {dropped} non-verbatim/duplicate/empty span(s)")
+        notes.append(
+            f"dropped {dropped} non-verbatim/duplicate/empty/too-short span(s)"
+        )
     if len(claims) > MAX_SUBCLAIMS:
         notes.append(f"truncated split from {len(claims)} to {MAX_SUBCLAIMS}")
         claims = claims[:MAX_SUBCLAIMS]
     if not claims:
         notes.append("model split yielded no usable spans; heuristic used instead")
-        return split_heuristic(clean), "heuristic", None, notes
+        segs, hnotes = split_heuristic(clean)
+        notes.extend(hnotes)
+        return segs, "heuristic", None, notes
     return claims, "model", model_name, notes

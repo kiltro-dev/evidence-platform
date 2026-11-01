@@ -23,6 +23,10 @@ service. The model it defends against:
 - `MetaClient` loads `.env` on construction; a key added later requires a
   **server restart** (documented in README).
 - No other credentials exist: both sources are keyless public APIs.
+  `OPENALEX_API_KEY` (optional, free) buys the project its own
+  $1/day OpenAlex budget instead of the shared keyless $0.10/day IP
+  budget; like the model key it lives in process env/`.env` only and
+  never appears in logs, responses, the DB, or commits.
 
 ## Hardening dispositions (v2 security pass)
 
@@ -41,7 +45,9 @@ them):
 | Reports undeletable | **Fixed**: `DELETE /api/reports/{id}` + per-row Delete in the UI history strip | `api/app.py`, `web/index.html` |
 | Reads create files/dirs | **Fixed**: init-on-write — only `save_report` creates the DB; all reads check `_has_reports_table` first and return empty | `storage/store.py` |
 | Error responses leak internals | **Fixed**: unified envelope; tracebacks/bodies never in responses; pipeline crashes map to `analysis_failed` | `api/app.py` handlers |
-| Unbounded abuse of /api/analyze | **Fixed**: 60 req/min per IP (429 `rate_limited`); tracker itself capped at 10k IPs | `api/app.py: _check_rate_limit` |
+| Unbounded abuse of /api/analyze | **Fixed**: 60 quota units/min per IP (429 `rate_limited`; analyze = 1, batch = 8 fixed worst-case); tracker itself capped at 10k IPs | `api/app.py: _check_rate_limit` |
+| Non-loopback clients reach an authless server | **Fixed**: loopback guard middleware — non-loopback gets 403 `non_loopback_blocked` unless `ATLAS_ALLOW_NON_LOOPBACK=1` | `api/app.py: _loopback_guard` |
+| Deleted reports resurrect from cache | **Fixed**: DELETE evicts that report's cache entries; `fresh:true` re-runs past the cache | `api/app.py: _cache_evict_report`, `AnalyzeRequest.fresh` |
 | Invented model citations | **Fixed**: `[cmp_*]` ids in model summaries validated; unknown ids stripped + logged | `pipeline/synthesize.py: validate_citations` |
 | Model drops required caveats | **Fixed**: caveat union — blocking/major template caveats always retained | `pipeline/synthesize.py: required_caveats` |
 | Prompt injection flips verdicts | **Fixed by construction**: stance/verdicts computed in code before the summary; pinned by eval case | `pipeline/synthesize.py: decide_stance`, `general_prompt_injection_cheese` |
@@ -51,9 +57,13 @@ Accepted / remaining (conscious, documented):
 - **No authentication by design.** The server must stay on loopback;
   binding `0.0.0.0` or placing it behind a proxy without adding auth is
   unsupported and unsafe.
-- **Localhost-only is a deployment property, not a code guarantee.**
-  Nothing stops `--host 0.0.0.0`; the run command in README binds
-  `127.0.0.1` and ops must keep it that way.
+- **Localhost-only is now a code guarantee** (loopback guard, 403
+  otherwise), but binding `0.0.0.0` or proxying without auth stays
+  unsupported — the guard is a backstop, not a network design.
+- **Malformed requests don't consume quota** (validation precedes
+  the charge, so invalid floods are unthrottled). Conscious scope
+  choice for a localhost demo; a multi-user server must throttle
+  invalid traffic separately.
 - **No TTL on stored reports.** Rows persist until explicitly deleted.
   Disk use grows ~KBs per report; prune via the UI or DELETE.
 - **Per-report token accounting present.** Each report's `meta.usage_*`

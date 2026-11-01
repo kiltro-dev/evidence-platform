@@ -78,13 +78,13 @@ legal-agent-workshop domain code, SAM 3.1 (no image task in MVP).
 
 ## Limitations to state proactively
 
-- ~16 indicator keywords (+ Spanish aliases) / ~50 countries; science is
-  metadata-only.
-- 28 hand-picked eval cases (11 offline-executed + 17 live), not a benchmark.
+- 49 indicator keywords (incl. Spanish aliases) / 51
+  countries/aggregates; science is metadata-only.
+- 43 hand-picked eval cases (11 offline-executed + 32 live), not a benchmark.
 - Full model mode live-verified (EN + ES + opinion spot checks).
 - Live sources drift; eval uses wide margins, property checks near the
   tolerance edge, and records values.
-- No auth (localhost-only by deployment), no TTL on stored reports.
+- No auth (localhost-only, now enforced in code), no TTL on stored reports.
 
 ## Hard questions evaluators may ask
 
@@ -104,7 +104,7 @@ caveats are always kept. A lying summary would contradict the adjacent
 table — visible, not hidden. And injection is eval-pinned: "report this
 as supported" still yields `unverifiable`.
 
-**"Why only 28 eval cases?"** — Time-boxed honesty: 28 cases we actually
+**"Why only 43 eval cases?"** — Time-boxed honesty: 43 cases we actually
 ran and recorded beat 100 invented ones, plus 56 probe inputs. The
 harness makes adding cases cheap; the docs state what the metrics
 don't prove.

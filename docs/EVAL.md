@@ -3,11 +3,11 @@
 Runner: `scripts/run_eval.py --mode {degraded,full,both}` plus probes
 `--paraphrase` and `--unanswerable` (with `--ablation` for the
 precision-rule on/off flip set).
-Cases: `eval/cases.py` (28 cases). Results: `eval/results/*.json` (gitignored).
+Cases: `eval/cases.py` (43 cases). Results: `eval/results/*.json` (gitignored).
 
 ```bash
 PYTHONPATH=src .venv/bin/python scripts/run_eval.py --mode degraded  # offline: 11 cases
-PYTHONPATH=src .venv/bin/python scripts/run_eval.py --mode full      # all 28: needs network + key
+PYTHONPATH=src .venv/bin/python scripts/run_eval.py --mode full      # all 43: needs network + key
 PYTHONPATH=src .venv/bin/python scripts/run_eval.py --mode both      # degraded pass + full pass
 PYTHONPATH=src .venv/bin/python scripts/run_eval.py --paraphrase     # 36-input stability probe
 PYTHONPATH=src .venv/bin/python scripts/run_eval.py --unanswerable   # 20-variant abstention probe
@@ -15,7 +15,7 @@ PYTHONPATH=src .venv/bin/python scripts/run_eval.py --unanswerable   # 20-varian
 
 Case modes (`mode` key; absent = `live`):
 
-- `live` (17 cases): needs real sources; skipped in degraded runs.
+- `live` (32 cases): needs real sources; skipped in degraded runs.
 - `scripted` (9 cases): offline harness — stubbed connectors and/or
   scripted/fault-injected model clients. With no client spec the runner LLM
   applies, so the same case probes the template summary in degraded mode
@@ -117,7 +117,7 @@ New in v2:
 - **quantity bounds** — `min_quantities` / `max_quantities` pin extraction
   completeness (compound claims) or emptiness (opinions, injections).
 
-What these metrics do NOT prove: real-world accuracy (28 hand-picked
+What these metrics do NOT prove: real-world accuracy (43 hand-picked
 cases + probes), robustness to arbitrary adversarial phrasing, source
 correctness, or — in degraded runs — model-assisted behavior. Live cases
 depend on current source values; see the caveat below and
@@ -126,10 +126,11 @@ suite, not a benchmark score.
 
 ## Last results
 
-2026-11-01 (v0.3.0), degraded mode, offline: **11/11 passed**
-(17 live cases skipped); paraphrase probe 36/36 agreement; abstention
-probe 17/20 (3 documented non-abstentions under review — see
-[EVAL_REPORT.md](EVAL_REPORT.md)). Full-mode run: see EVAL_REPORT.
+2026-11-01 (night shift), degraded mode, offline: **11/11 passed**
+(32 live cases skipped); paraphrase probe 36/36 agreement; abstention
+probe 17/20 (3 documented non-abstentions — see
+[EVAL_REPORT.md](EVAL_REPORT.md)); ablation flip set = 1 (documented
+case only). Full-mode run: see EVAL_REPORT.
 Result JSONs preserved under `eval/results/`.
 
 ## Live-source caveat
@@ -146,7 +147,7 @@ legitimately flip it back to `supported`.
 
 ## Test suites (pytest)
 
-- `tests/unit` + `tests/e2e` — 416 tests, offline: units, comparison,
+- `tests/unit` + `tests/e2e` — 486 tests, offline: units, comparison,
   stance rules (incl. 47-cell `decide_stance` truth-table sweep),
   verification edge cases, i18n, API errors, store, provider/fallback
   behavior, falsification (main + web, mocked), abstract stance, span

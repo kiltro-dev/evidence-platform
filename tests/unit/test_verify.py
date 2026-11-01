@@ -14,7 +14,11 @@ from atlas.core.types import (
     Uncertainty,
 )
 from atlas.pipeline.synthesize import decide_stance
-from atlas.pipeline.verify import assess_science, verify_quantitative
+from atlas.pipeline.verify import (
+    assess_science,
+    detect_claim_shape,
+    verify_quantitative,
+)
 
 
 def _claim(**kw) -> StructuredClaim:
@@ -173,3 +177,43 @@ def test_science_always_flags_metadata_only():
     assert any(u.code == "metadata_only" for u in uncertainties)
     # ...and that consistency must not flip the stance to supported
     assert decide_stance(comparisons, uncertainties) == "partially_supported"
+
+
+def test_best_estimate_is_not_opinion():
+    """F4: data-quality hedging must not trigger opinion_or_nonclaim."""
+    claim = _claim(raw_text="Our best estimate is that GDP was $27t in 2023.")
+    flags = detect_claim_shape(claim)
+    assert not any(u.code == "opinion_or_nonclaim" for u in flags)
+
+
+def test_best_available_data_is_not_opinion():
+    """F4: 'best available data' collocation is a qualifier, not an opinion."""
+    claim = _claim(raw_text="The best available data show GDP at $27t in 2023.")
+    flags = detect_claim_shape(claim)
+    assert not any(u.code == "opinion_or_nonclaim" for u in flags)
+
+
+def test_bare_best_still_opinion():
+    """F4 guard: the collocation carve-out must not neuter bare 'best'."""
+    claim = _claim(raw_text="This was the best economic year ever.")
+    flags = detect_claim_shape(claim)
+    assert any(u.code == "opinion_or_nonclaim" for u in flags)
+
+
+def test_no_year_claim_names_claim_side_gap():
+    """F6: a claim with no year gets a claim-side description, same code."""
+    claim = _claim(
+        quantities=[
+            Quantity(raw_text="$27t", value=27e12, unit="USD", normalized_value=27e12,
+                     normalized_unit="USD")
+        ],
+        time_refs=[],
+    )
+    ev = _wb_evidence(claim.claim_id, "2023", 27.8e12, unit="USD")
+    comparisons, uncertainties = verify_quantitative(claim, [ev])
+    numeric = [c for c in comparisons if c.metric != "time_compatibility"]
+    assert numeric == []
+    mismatches = [u for u in uncertainties if u.code == "period_mismatch"]
+    assert len(mismatches) == 1
+    assert "no year or period" in mismatches[0].description
+    assert mismatches[0].severity == "major"

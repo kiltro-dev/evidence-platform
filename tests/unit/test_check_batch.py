@@ -72,6 +72,50 @@ def test_invalid_domain_rejected(fake_pipeline):
     assert fake_pipeline == []
 
 
+def test_batch_runs_subclaims_in_parallel(monkeypatch):
+    """3 sub-claims x 0.5s sleep: sequential takes >=1.5s, parallel ~0.5s.
+    The 1.2s bar has 3x headroom over parallel and never passes sequential
+    (sleep releases the GIL, so threads genuinely overlap)."""
+    import time as _time
+
+    def slow(text, **kw):
+        _time.sleep(0.5)
+        return _report(text, "supported")
+
+    monkeypatch.setattr(runmod, "analyze", slow)
+    out = check_document(
+        "First slow claim filed today. Second slow claim filed today. "
+        "Third slow claim filed today.",
+        persist=False,
+    )
+    assert out["claim_count"] == 3
+    assert out["errors"] == 0
+    assert out["elapsed_ms"] < 1200, out["elapsed_ms"]
+    # Order still follows the input, however threads finish.
+    assert [r["claim"]["raw_text"] for r in out["reports"]] == [
+        "First slow claim filed today.",
+        "Second slow claim filed today.",
+        "Third slow claim filed today.",
+    ]
+
+
+def test_fork_llm_clones_metaclient_only():
+    """MetaClient (mutable usage state) is forked per sub-claim; test
+    doubles (stateless) are shared."""
+    from atlas.models.meta import MetaClient
+    from atlas.models.scripted import ScriptedClient
+    from atlas.pipeline.run import _fork_llm
+
+    real = MetaClient(api_key="k", base_url="https://x.test", model="m")
+    fork = _fork_llm(real)
+    assert fork is not real
+    assert (fork.api_key, fork.base_url, fork.model) == ("k", "https://x.test", "m")
+    assert fork.last_usage_seq == 0  # fresh usage state
+    double = ScriptedClient({})
+    assert _fork_llm(double) is double
+    assert _fork_llm(None) is None
+
+
 def test_reports_are_json_serializable(fake_pipeline):
     import json
 

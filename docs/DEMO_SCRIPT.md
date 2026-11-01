@@ -5,10 +5,12 @@ Setup: server running
 browser on http://127.0.0.1:8765, this file open for the exact text.
 Check `GET /api/status` first so you can name the mode (full vs degraded).
 Pre-warm: run the batch once before recording so connectors are warm;
-clear Recent analyses for a clean take. Batch took 95–104s for 3 claims
+clear Recent analyses for a clean take. Batch took 38.7s for 3 claims
 in rehearsal (recorded:
-`eval/results/demo_batch_20261101T040906Z.json`, 95.3s, roll-up 1-1-1);
-edit the wait out of the video — the elapsed timer proves it ran live.
+`eval/results/demo_batch_ns_20261101T062500Z.json`, parallel
+sub-claims, roll-up 1-1-1, 0 errors; the v0.4.0 sequential run took
+95.3s); edit the wait out of the video — the elapsed timer proves it
+ran live.
 
 Narrative spine: AI ships stats nobody checks → paste the whole answer
 → three receipts (caught hallucination + refused full credit +
@@ -37,8 +39,8 @@ Demo text (paste verbatim):
 Hit **Check AI output**. Narrate over the skeleton (edit the wait):
 
 "The splitter found 3 checkable claims — verbatim spans, nothing
-invented. Each one just ran the full pipeline: structure, retrieve,
-verify, self-attack, synthesize."
+invented. Each one just ran the full pipeline in parallel:
+structure, retrieve, verify, self-attack, synthesize."
 
 When the roll-up lands (1 supported / 1 partially_supported /
 1 contradicted):
@@ -64,14 +66,22 @@ On the GDP or Japan card, open the web counter-evidence comparison:
 "And here's the beat no guardrail gives you: after reaching its draft,
 the system searched the LIVE web to disprove itself — on camera. Real
 citations, validated by code, surfaced as attributed doubt. In
-rehearsal the GDP card drew a BEA vintage at $27.83T against the
-claimed $27.36T (in the recorded artifact); live web varies run to
-run, so read whatever this run found — the point is the hunting, not
-any single number. It cannot move the verdict; it can only attach the
-doubt. Intellectual honesty, visible."
+rehearsal the GDP card drew a page quoting a BEA vintage at
+$27.83T against the claimed $27.36T (in the recorded artifact —
+note the citation is the quoting page, not BEA itself; the engine
+now orders official sources first but still shows what it found).
+Live web varies run to run, so read whatever this run found — the
+point is the hunting, not any single number. It cannot move the
+verdict; it can only attach the doubt. Intellectual honesty,
+visible."
 
 If the falsify attacks fired, point at one: "It also argued with its
-own draft from the retrieved evidence."
+own draft from the retrieved evidence." Then scroll the uncertainties:
+"And look — pages it retrieved but did NOT cite, listed as
+considered-not-cited, official sources first. In rehearsal the GDP
+card showed BEA and World Bank files here even though the model
+cited third-party pages. The engine shows its whole hand, not just
+the cards it played."
 
 ## 2:10–2:30 — The honest refusal (20s)
 
@@ -95,7 +105,7 @@ with links, caveats, versions."
 
 "Real sources with links you can open. Deterministic checks the model
 can't skip. A system that hunts counter-evidence against itself — then
-shows its work. 416 offline tests, 28 pinned eval cases plus
+shows its work. 491 offline tests, 43 pinned eval cases plus
 paraphrase, abstention, and decision-table probes. Evidence Atlas:
 verify before it ships."
 

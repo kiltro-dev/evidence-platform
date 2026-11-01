@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 import re
 
+from ..connectors.countries import resolve_all_countries
 from ..core.compare import (
     check_time_compatibility,
     compare_numbers,
@@ -23,6 +24,12 @@ def _looks_like_year(q) -> bool:
 # Conservative opinion/non-claim lexicon: whole-word match only, so
 # "shoulder" or "athletics bests" do not count as opinions.
 _OPINION_RE = re.compile(r"\b(think|believe|best|worst|should)\b", re.IGNORECASE)
+# F4: "best" as a data-quality qualifier ("best estimate", "best
+# available data") is not an opinion marker; strip these collocations
+# before the lexicon test so honest hedging is never misclassified.
+_BEST_COLLOCATION_RE = re.compile(
+    r"\bbest\s+(estimate|available|data)\b", re.IGNORECASE
+)
 _HAS_NUMBER_RE = re.compile(r"\d")
 # Split on sentence-ending punctuation ONLY when followed by whitespace or
 # end-of-text, so decimals ("27.36") never split a sentence in two.
@@ -69,7 +76,8 @@ def _looks_opinionated(text: str, n_real_quantities: int) -> bool:
     """Conservative opinion/question test. Lexicon hit always counts; a bare
     question counts only when the text *ends* in "?" and states no real
     (non-year) quantity."""
-    if _OPINION_RE.search(text):
+    scrubbed = _BEST_COLLOCATION_RE.sub("", text)
+    if _OPINION_RE.search(scrubbed):
         return True
     return text.strip().endswith("?") and n_real_quantities == 0
 
@@ -119,6 +127,25 @@ def detect_claim_shape(claim: StructuredClaim) -> list[Uncertainty]:
                 code="compound_claim",
                 description=(
                     f"Compound claim detected ({reason}); {COMPOUND_CAVEAT}."
+                ),
+                severity="major",
+                related_ids=[claim.claim_id],
+            )
+        )
+    # Multi-geo V1: retrieval resolves ONE country only (resolve_country
+    # returns the longest name), so a claim naming 2+ geographies gets
+    # every quantity compared against single-geo evidence. Detect+disclose
+    # only — per-clause splitting is out of scope.
+    geos = resolve_all_countries(claim.raw_text or "")
+    if len(geos) >= 2:
+        flags.append(
+            Uncertainty(
+                code="multi_geo_unchecked",
+                description=(
+                    f"Multiple geographies detected ({', '.join(geos)}); "
+                    "evidence was retrieved for one geography only — "
+                    "other geographies are unchecked; verify each "
+                    "geography separately."
                 ),
                 severity="major",
                 related_ids=[claim.claim_id],
@@ -323,13 +350,25 @@ def verify_quantitative(
             time_cmp.evidence_id = ev.evidence_id
             comparisons.append(time_cmp)
             if time_cmp.verdict != "consistent":
+                # F6: name the side at fault. When the claim states no year
+                # or period at all, the receipt says so explicitly instead
+                # of sounding like an evidence-side mismatch; the code is
+                # unchanged (same major gap, same skip).
+                if claim_time.year is None and claim_time.start_year is None:
+                    mismatch_desc = (
+                        "The claim states no year or period; "
+                        f"evidence {ev.locator} cannot be compared against "
+                        "an unstated period."
+                    )
+                else:
+                    mismatch_desc = (
+                        f"Evidence {ev.locator} does not overlap the claim period; "
+                        "values compared across periods would mislead."
+                    )
                 uncertainties.append(
                     Uncertainty(
                         code="period_mismatch",
-                        description=(
-                            f"Evidence {ev.locator} does not overlap the claim period; "
-                            "values compared across periods would mislead."
-                        ),
+                        description=mismatch_desc,
                         severity="major",
                         related_ids=[ev.evidence_id, time_cmp.comparison_id],
                     )

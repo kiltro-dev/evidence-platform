@@ -288,7 +288,10 @@
 <script>
 "use strict";
 const $ = id => document.getElementById(id);
-const MAXLEN = 4000, TIMEOUT_MS = 45000;
+/* Single-claim timeout: a full-model analysis with the live-web pass
+   legitimately takes ~20-60s; 45s aborted slow-but-working runs
+   (red-team R2). 150s matches the batch's honest worst case. */
+const MAXLEN = 4000, TIMEOUT_MS = 150000;
 let serviceDown = false, aborter = null, elapsedTimer = null, lastRun = null;
 
 /* ---------- text helpers: everything rendered is escaped + humanized ---------- */
@@ -562,7 +565,7 @@ async function doAnalyze(text, domain) {
         errorCard("Analysis superseded", "A newer analysis replaced this one; showing the " +
           "latest result when it arrives.", "superseded", false);
       } else {
-        errorCard("Analysis stopped", "The request was stopped after 45 seconds without an answer. " +
+        errorCard("Analysis stopped", "The request was stopped after 150 seconds without an answer. " +
           "The server may be busy — retry, or try a shorter claim.", "timeout", true);
       }
     } else {
@@ -908,11 +911,12 @@ function footHTML(report) {
     '<button id="receiptBtn" class="ghost small">Export receipt (.md)</button>' +
     '<p id="rerunMsg" class="mut" role="status"></p></div>';
 }
-/* Re-run: re-POST the same claim text and compare input_sha256 — a match is
-   the determinism proof. Defensive: missing hashes are reported, never throw. */
-async function reRunDeterminism(report, msgEl) {
-  /* msgEl lets batch per-claim cards reuse this logic with their own status
-     line; single-claim callers pass nothing and use the global one. */
+/* Re-run: re-POST the same claim text with fresh:true (bypasses the cache
+   read, so this is a REAL second run, not the report compared to itself)
+   and compare input_sha256 + stance. ✓ prints ONLY when both agree;
+   anything else is shown honestly, never papered over. Callers pass
+   their own domain (single vs batch); default "auto" when unknown. */
+async function reRunDeterminism(report, msgEl, domain) {
   const msg = msgEl || $("rerunMsg");
   if (!msg) return;
   const text = (report.claim && report.claim.raw_text) || (lastRun && lastRun.text) || "";
@@ -924,7 +928,7 @@ async function reRunDeterminism(report, msgEl) {
       method: "POST",
       headers: {"Content-Type": "application/json"},
       body: JSON.stringify({text, limit: 5,
-        domain: (lastRun && lastRun.domain) || "auto", persist: false})
+        domain: domain || "auto", persist: false, fresh: true})
     });
     if (!res.ok) {
       const e = await parseErrBody(res);
@@ -939,13 +943,22 @@ async function reRunDeterminism(report, msgEl) {
       return;
     }
     const match = String(oldHash) === String(newHash);
-    const stOld = stanceInfo(report.conclusion && report.conclusion.stance);
-    const stNew = stanceInfo(fresh.conclusion && fresh.conclusion.stance);
-    msg.textContent = match
-      ? "✓ Determinism proof: input_sha256 match (" + String(oldHash).slice(0, 12) +
-        "…). Verdicts: “" + stOld.label + "” → “" + stNew.label + "”."
-      : "✕ input_sha256 MISMATCH: " + String(oldHash).slice(0, 12) + "… vs " +
-        String(newHash).slice(0, 12) + "… — investigate before trusting this report.";
+    const rawOld = report.conclusion && report.conclusion.stance;
+    const rawNew = fresh.conclusion && fresh.conclusion.stance;
+    const stOld = stanceInfo(rawOld);
+    const stNew = stanceInfo(rawNew);
+    const sameVerdict = String(rawOld || "") === String(rawNew || "");
+    if (!match) {
+      msg.textContent = "✕ input_sha256 MISMATCH: " + String(oldHash).slice(0, 12) +
+        "… vs " + String(newHash).slice(0, 12) + "… — investigate before trusting this report.";
+    } else if (sameVerdict) {
+      msg.textContent = "✓ Determinism proof: same input (" +
+        String(oldHash).slice(0, 12) + "…), same verdict “" + stNew.label + "”.";
+    } else {
+      msg.textContent = "± Same input (" + String(oldHash).slice(0, 12) +
+        "…), DIFFERENT verdict: “" + stOld.label + "” → “" + stNew.label +
+        "” — investigate before trusting this report.";
+    }
   } catch (e) {
     msg.textContent = "Re-run failed: " + safeMsg(e && e.message);
   }
@@ -1061,7 +1074,8 @@ function render(report) {
     if (s) s.hidden = true;
   });
   const rerunBtn = $("rerunBtn");
-  if (rerunBtn) rerunBtn.addEventListener("click", () => reRunDeterminism(report));
+  if (rerunBtn) rerunBtn.addEventListener("click", () =>
+    reRunDeterminism(report, null, (lastRun && lastRun.domain) || "auto"));
   const receiptBtn = $("receiptBtn");
   if (receiptBtn) receiptBtn.addEventListener("click", () => exportReceipt(report, nums));
   const vh = $("verdictH");
@@ -1358,7 +1372,8 @@ function renderBatch(body) {
     if (ex) ex.addEventListener("click", () => exportReceipt(rep, nums));
     const rr = document.getElementById(pfx + "rerun");
     if (rr) rr.addEventListener("click", () =>
-      reRunDeterminism(rep, document.getElementById(pfx + "rerunMsg")));
+      reRunDeterminism(rep, document.getElementById(pfx + "rerunMsg"),
+        (typeof lastBatch !== "undefined" && lastBatch && lastBatch.domain) || "auto"));
   });
   const rh = $("rollH");
   if (rh) rh.focus({preventScroll: true});

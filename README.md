@@ -26,6 +26,8 @@ Given pasted text (e.g. an AI answer), ShipCheck (`POST /api/check`):
 
 0. **Splits** it into atomic checkable claims (model-first under a
    strict schema, verbatim-spans-only, heuristic fallback; max 8).
+   Every coverage cut (8-cap, 6000-char slice, short drops) is
+   disclosed on the receipt.
 1. **Structures** each claim (domain, quantities, units, time,
    geography, conditions) with Muse Spark under strict decoding
    schemas, falling back to deterministic heuristics offline.
@@ -38,15 +40,17 @@ Given pasted text (e.g. an AI answer), ShipCheck (`POST /api/check`):
 4. **Red-teams itself**: Muse Spark attacks the draft verdict through a
    falsify-only schema, then hunts LIVE counter-evidence via Responses
    API `web_search`; code validates every attack and citation and
-   surfaces them as doubt (advisory only — stances stay code-decided).
-   Science abstracts get a bounded stance assessment that corroborates
-   but never verifies.
+   surfaces them as doubt (advisory only — stances stay code-decided),
+   ordering official sources first and listing retrieved-but-uncited
+   results as attributed doubt. Science abstracts get a bounded
+   stance assessment that corroborates but never verifies.
 5. **Reports** per claim: stance (one of five, including
    `not_assessable` for opinions and non-claims), evidence for/against,
    uncertainties, limitations, a full audit trail where every step is
    badged `CODE`, `MODEL`, or `HEURISTIC`, and per-stage token usage —
-   plus a batch roll-up. Reports export as methods receipts and re-run
-   deterministically.
+   plus a batch roll-up. Batch sub-claims run in parallel (input
+   order kept). Reports export as methods receipts and re-run
+   deterministically (cache-bypassing re-run, hash + verdict shown).
 
 No confidence scores, no invented citations. When evidence is missing or
 incomparable, the report says so. Snippets and excerpts are pointers to
@@ -147,25 +151,25 @@ UI at `/`. Full reference: [docs/API.md](docs/API.md).
 ## Tests & evaluation
 
 ```bash
-.venv/bin/python -m pytest tests/unit tests/e2e -q        # offline gate (416 tests)
+.venv/bin/python -m pytest tests/unit tests/e2e -q        # offline gate (486 tests)
 .venv/bin/python -m pytest tests/integration -q -m live   # live sources (needs network)
 PYTHONPATH=src .venv/bin/python scripts/run_eval.py --mode degraded  # 11 scripted cases, offline
-PYTHONPATH=src .venv/bin/python scripts/run_eval.py --mode full      # all 28 cases, needs network + key
+PYTHONPATH=src .venv/bin/python scripts/run_eval.py --mode full      # all 43 cases, needs network + key
 PYTHONPATH=src .venv/bin/python scripts/run_eval.py --paraphrase     # 36-input stability probe, offline
 PYTHONPATH=src .venv/bin/python scripts/run_eval.py --unanswerable   # 20-variant abstention probe, offline
 bash scripts/smoke.sh --port 8765                           # offline smoke (31 checks)
 bash scripts/smoke.sh --port 8765 --live --eval              # + live API + full eval
 ```
 
-- `tests/unit tests/e2e` is the offline gate: **416 tests, all green**,
+- `tests/unit tests/e2e` is the offline gate: **486 tests, all green**,
   no network, no key.
 - `-m live` selects the `live` pytest marker (registered in
   `pyproject.toml`): tests that hit real public APIs.
-- Eval: 28 cases total. `--mode degraded` runs the 11 offline-capable
-  cases and skips the 17 `live` ones; `--mode full` runs everything but
+- Eval: 43 cases total. `--mode degraded` runs the 11 offline-capable
+  cases and skips the 32 `live` ones; `--mode full` runs everything but
   needs network and takes many minutes (live source latency plus up to
   5 model calls per case, incl. the token-hungry web pass).
-- Current results: **416/416 offline, 11/11 degraded eval, 36/36
+- Current results: **486/486 offline, 11/11 degraded eval, 36/36
   paraphrase agreement, full-mode eval with real muse-spark-1.3** —
   see [docs/EVAL_REPORT.md](docs/EVAL_REPORT.md) for the pinned run.
   What these numbers do and do not prove is stated there honestly:
@@ -176,8 +180,8 @@ bash scripts/smoke.sh --port 8765 --live --eval              # + live API + full
 ## Limitations
 
 - Economy verification covers the World Bank indicator/country catalog coded
-  in [src/atlas/connectors/](src/atlas/connectors/) (~16 indicator keywords
-  plus Spanish aliases, ~50 countries).
+  in [src/atlas/connectors/](src/atlas/connectors/) (49 indicator
+  keywords incl. Spanish aliases, 51 countries/aggregates).
 - Science evidence is OpenAlex metadata plus abstract-stance judgments;
   full texts are not read and abstracts never verify a claim.
 - Bare numbers are compared as counts only, with an explicit flag.
@@ -209,7 +213,10 @@ bash scripts/smoke.sh --port 8765 --live --eval              # + live API + full
 v4 (0.4.0) ShipCheck sidecar: multi-claim batch intake, strict decoding
 schemas, live-web adversarial falsification, EVS hardening
 (pin-conformance + Wilson CIs, independent recompute, partial-coverage
-caveat). Prior v3 (0.3.0): adversarial self-review, claimed-precision
+caveat). Night-shift hardening on top: parallel batch analysis,
+authoritative-first web ordering, World Bank vintage/mrnev/coverage
+upgrades, multi-geo disclosure, 43-case eval. Prior v3 (0.3.0):
+adversarial self-review, claimed-precision
 methodology, abstract-stance science path, per-stage token accounting,
 receipt export + deterministic re-run. Direction rationale:
 [docs/BREAKTHROUGH_DECISION.md](docs/BREAKTHROUGH_DECISION.md).

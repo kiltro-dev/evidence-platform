@@ -24,13 +24,16 @@ from atlas.models.meta import MetaClient  # noqa: E402
 from atlas.models.responses import (  # noqa: E402
     CounterEvidence,
     ResponsesClient,
+    WebCandidate,
     WebCitation,
+    parse_search_candidates,
     parse_url_citations,
     validate_citation,
 )
 from atlas.models.scripted import ScriptedClient  # noqa: E402
 from atlas.pipeline.falsify import (  # noqa: E402
     FALSIFY_SCHEMA,
+    _merge_usage,
     falsify_draft,
 )
 from atlas.pipeline.synthesize import decide_stance, synthesize  # noqa: E402
@@ -139,7 +142,8 @@ def test_request_shape_single_web_search_call():
     assert client.last_usage == {"prompt_tokens": 120,
                                  "completion_tokens": 60,
                                  "reasoning_tokens": None,
-                                 "total_tokens": 180}
+                                 "total_tokens": 180,
+                                 "cached_tokens": 0}
 
 
 def test_api_key_only_in_authorization_header():
@@ -550,8 +554,37 @@ def test_usage_merges_with_main_pass_spend(monkeypatch):
     assert (new_c, new_u) == ([], [])
     assert "web_citations=0" in audit.detail
     assert llm.last_usage == {"prompt_tokens": 11, "completion_tokens": 22,
-                              "reasoning_tokens": 5, "total_tokens": 33}
+                              "reasoning_tokens": 5, "total_tokens": 33,
+                              "cached_tokens": None}
     assert llm.last_usage_seq == 2
+
+
+def test_parse_orders_authoritative_before_cap():
+    # Junk early in model order must not crowd out an official source:
+    # collect-all, authoritative-first, THEN cap.
+    text = "Unemployment was 7.4% in 2024."
+    anns = (
+        [_annotation(f"https://junk{i}.dailynewsdesk.info/x", 0, 24) for i in range(4)]
+        + [_annotation("https://www.bea.gov/news/gdp", 0, 24)]
+        + [_annotation(f"https://junk{i}.dailynewsdesk.info/x", 0, 24) for i in range(4, 8)]
+    )
+    out = parse_url_citations(_responses_payload(text, anns), max_citations=5)
+    assert len(out) == 5
+    assert out[0].domain == "www.bea.gov"
+    assert [c.domain for c in out[1:]] == [
+        "junk0.dailynewsdesk.info", "junk1.dailynewsdesk.info",
+        "junk2.dailynewsdesk.info", "junk3.dailynewsdesk.info",
+    ]
+
+
+def test_merge_usage_sums_cached_tokens():
+    first = {"prompt_tokens": 10, "completion_tokens": 5,
+             "reasoning_tokens": 0, "total_tokens": 15, "cached_tokens": 4}
+    second = {"prompt_tokens": 3, "completion_tokens": 1,
+              "reasoning_tokens": 0, "total_tokens": 4, "cached_tokens": 2}
+    assert _merge_usage(first, second)["cached_tokens"] == 6
+    assert _merge_usage(first, None)["cached_tokens"] == 4
+    assert _merge_usage({}, {})["cached_tokens"] is None
 
 
 # --- secrets hygiene ---
@@ -613,3 +646,254 @@ def test_schema_passed_only_when_client_supports_it(monkeypatch):
         ScriptedClient({}, default={"attacks": []}))
     assert (new_c, new_u) == ([], [])
     assert "attacks=0" in audit.detail
+
+
+# --- raw search results: considered-not-cited honesty (F2-A) ---
+
+
+def _search_result(url, title="Result page"):
+    entry: dict = {"title": title}
+    if url is not None:
+        entry["url"] = url
+    return entry
+
+
+def _with_search_call(payload, results):
+    payload["output"].append(
+        {"type": "web_search_call", "id": "ws_test_1",
+         "results": results})
+    return payload
+
+
+def test_request_includes_raw_search_results():
+    transport = MockTransport(payloads=[_responses_payload("ok", [])])
+    _web_client(transport).search_counter_evidence(
+        "Claim: x", instructions="i")
+    # Rollback is this one line: drop `include`, candidates go empty,
+    # and every pre-existing assertion still holds.
+    assert transport.calls[0]["payload"]["include"] == [
+        "web_search_call.results"]
+
+
+def test_parse_search_candidates_marks_cited():
+    text = "The statistics office reports growth was 1.2%."
+    start, end = _good_span(text)
+    payload = _with_search_call(_responses_payload(text, [
+        _annotation("https://stats.example.gov/report", start, end),
+    ]), [
+        _search_result("https://stats.example.gov/report", "Stats office"),
+        _search_result("https://other.example.gov/data", "Other data"),
+    ])
+    candidates = parse_search_candidates(payload)
+    assert all(isinstance(c, WebCandidate) for c in candidates)
+    assert [(c.url, c.title, c.cited) for c in candidates] == [
+        ("https://stats.example.gov/report", "Stats office", True),
+        ("https://other.example.gov/data", "Other data", False),
+    ]
+
+
+def test_parse_search_candidates_hygiene_without_span():
+    payload = _with_search_call(_responses_payload("ok", []), [
+        _search_result("https://good.example.gov/x", "Good"),  # kept
+        _search_result("https://good.example.gov/x", "Good"),  # dup dropped
+        _search_result("http://plain.example.gov/x", "Plain"),  # non-https
+        _search_result("https://www.google.com/search?q=x",
+                       "Search"),  # garbage host
+        _search_result("https://sub.bit.ly/x", "Short"),  # shortener
+        _search_result("https://127.0.0.1/x", "IP"),  # IP literal
+        _search_result("https://localhost/x", "Local"),  # single-label
+        _search_result(None, "No URL"),  # missing URL
+        {"title": "No URL key at all"},
+        "not-a-dict",  # malformed entry
+    ])
+    candidates = parse_search_candidates(payload)
+    # No span requirement: URL hygiene alone decides.
+    assert [(c.url, c.cited) for c in candidates] == [
+        ("https://good.example.gov/x", False)]
+    assert candidates[0].title == "Good"
+
+
+def test_parse_search_candidates_malformed_tolerant():
+    assert parse_search_candidates(None) == []
+    assert parse_search_candidates({}) == []
+    assert parse_search_candidates({"output": "nope"}) == []
+    # A web_search_call without usable results -> [] (never raises).
+    for item in ({"type": "web_search_call"},
+                 {"type": "web_search_call", "results": None},
+                 {"type": "web_search_call", "results": "nope"},
+                 {"type": "web_search_call", "results": [None, 42, "x"]},
+                 {"type": "other_call", "results": [
+                     {"url": "https://a.example.gov/x"}]},
+                 "not-a-dict"):
+        assert parse_search_candidates({"output": [item]}) == [], item
+
+
+def test_uncited_candidates_surface_as_minor_doubt_only(monkeypatch):
+    monkeypatch.delenv("ATLAS_WEB_FALSIFY", raising=False)
+    text = "The statistics office reports growth was 1.2%."
+    start, end = _good_span(text)
+    payload = _with_search_call(_responses_payload(text, [
+        _annotation("https://stats.example.gov/report", start, end),
+    ]), [
+        _search_result("https://stats.example.gov/report", "Stats office"),
+        _search_result("https://a.example.gov/1", "Alpha"),
+        _search_result("https://b.example.gov/2", "Beta"),
+        _search_result("http://c.example.gov/3", "Rejected"),  # hygiene
+    ])
+    transport = MockTransport(payloads=[payload])
+    llm = ScriptedClient({}, default={"attacks": []})
+    claim, cmps = _claim(), [_cmp()]
+    new_c, new_u, audit = falsify_draft(
+        claim, cmps, [], "supported", llm,
+        web_client=_web_client(transport))
+    assert len(new_c) == 1  # only the citation is evidence-adjacent
+    assert new_c[0].metric == "web_counter_evidence"
+    assert len(new_u) == 3  # 1 citation doubt + 2 considered-not-cited
+    considered = [u for u in new_u if u.code == "web_considered_not_cited"]
+    assert len(considered) == 2
+    assert {u.severity for u in considered} == {"minor"}  # never blocking
+    assert "Alpha" in considered[0].description
+    assert "https://a.example.gov/1" in considered[0].description
+    assert "not evidence" in considered[0].description
+    assert "cited=1/considered=3" in audit.detail
+    assert "web_citations=1" in audit.detail
+    assert decide_stance(cmps + new_c, new_u, claim) == "supported"
+
+
+def test_uncited_candidates_capped_at_five(monkeypatch):
+    monkeypatch.delenv("ATLAS_WEB_FALSIFY", raising=False)
+    results = [_search_result(f"https://src{i}.example.gov/x", f"Src {i}")
+               for i in range(8)]
+    transport = MockTransport(payloads=[
+        _with_search_call(_responses_payload("ok", []), results)])
+    llm = ScriptedClient({}, default={"attacks": []})
+    new_c, new_u, audit = falsify_draft(
+        _claim(), [_cmp()], [], "supported", llm,
+        web_client=_web_client(transport))
+    assert new_c == []  # NEVER evidence: no comparisons at all
+    assert len(new_u) == 5  # attached list bounded ...
+    assert {u.code for u in new_u} == {"web_considered_not_cited"}
+    assert "cited=0/considered=8" in audit.detail  # ... audit counts all
+
+
+@pytest.mark.parametrize("verdict,draft", [
+    ("consistent", "supported"),
+    ("contradicts", "contradicted"),
+    ("inconclusive", "unverifiable"),
+    ("not_comparable", "unverifiable"),
+])
+def test_considered_not_cited_leaves_every_stance_untouched(
+        monkeypatch, verdict, draft):
+    monkeypatch.delenv("ATLAS_WEB_FALSIFY", raising=False)
+    payload = _with_search_call(_responses_payload("ok", []), [
+        _search_result("https://a.example.gov/1", "Alpha"),
+    ])
+    transport = MockTransport(payloads=[payload])
+    llm = ScriptedClient({}, default={"attacks": []})
+    claim, cmps = _claim(), [_cmp(verdict=verdict)]
+    assert decide_stance(cmps, [], claim) == draft
+    new_c, new_u, _ = falsify_draft(
+        claim, cmps, [], draft, llm,
+        web_client=_web_client(transport))
+    assert new_c == []  # doubt surfaced as uncertainties only ...
+    assert len(new_u) == 1
+    assert decide_stance(cmps + new_c, new_u, claim) == draft  # ... stance kept
+    assert synthesize(claim, cmps + new_c, new_u, llm=None).stance == draft
+
+
+def test_no_search_results_is_clean_zero_considered(monkeypatch):
+    monkeypatch.delenv("ATLAS_WEB_FALSIFY", raising=False)
+    text = "The statistics office reports growth was 1.2%."
+    start, end = _good_span(text)
+    transport = MockTransport(payloads=[_responses_payload(
+        text, [_annotation("https://stats.example.gov/report", start, end)])])
+    llm = ScriptedClient({}, default={"attacks": []})
+    new_c, new_u, audit = falsify_draft(
+        _claim(), [_cmp()], [], "supported", llm,
+        web_client=_web_client(transport))
+    assert len(new_c) == 1 and len(new_u) == 1  # citation doubt only
+    assert "cited=1/considered=0" in audit.detail
+
+
+# --- authoritative-first ordering under cap pressure (F11) ---
+
+
+def test_authoritative_first_under_cap_pressure(monkeypatch):
+    monkeypatch.delenv("ATLAS_WEB_FALSIFY", raising=False)
+    span = "growth was 1.2 percent"
+    junk_citations = [WebCitation(
+        url=f"https://n{i}.whatisgdp.com/x", title="junk",
+        span=span, domain=f"n{i}.whatisgdp.com") for i in range(6)]
+    auth_citation = WebCitation(
+        url="https://data.worldbank.org/indicator/x", title="World Bank",
+        span=span, domain="data.worldbank.org")
+    junk_candidates = [WebCandidate(
+        url=f"https://fibre2fashion.com/textile-news-{i}", title="textile",
+        cited=False) for i in range(6)]
+    auth_candidate = WebCandidate(
+        url="https://www.bea.gov/news/x", title="BEA", cited=False)
+
+    class CapWeb:
+        name = "cap-web"
+        available = True
+        last_usage = None
+
+        def search_counter_evidence(self, user_text, **kw):
+            return CounterEvidence(
+                text="t",
+                citations=junk_citations + [auth_citation],
+                candidates=junk_candidates + [auth_candidate],
+            )
+
+    llm = ScriptedClient({}, default={"attacks": []})
+    claim, cmps = _claim(), [_cmp()]
+    new_c, new_u, audit = falsify_draft(
+        claim, cmps, [], "supported", llm, web_client=CapWeb())
+    # Citations: authoritative wins the cap instead of being crowded out.
+    assert len(new_c) == 5
+    assert new_c[0].claim_value == "https://data.worldbank.org/indicator/x"
+    assert {c.metric for c in new_c} == {"web_counter_evidence"}
+    # Considered-not-cited: same ordering, bounded the same way.
+    considered = [u for u in new_u if u.code == "web_considered_not_cited"]
+    assert len(considered) == 5
+    assert "bea.gov" in considered[0].description
+    # Advisory-only preserved: inconclusive + minor, stance untouched.
+    assert all(c.verdict == "inconclusive" for c in new_c)
+    assert all(u.severity == "minor" for u in new_u)
+    assert "cited=5/considered=7" in audit.detail
+    assert decide_stance(cmps + new_c, new_u, claim) == "supported"
+
+
+def test_junk_only_still_surfaces(monkeypatch):
+    monkeypatch.delenv("ATLAS_WEB_FALSIFY", raising=False)
+    # Ordering is selection, not blocking: with no authoritative source
+    # anywhere, junk is honestly listed (never silently dropped).
+    span = "growth was 1.2 percent"
+
+    class JunkWeb:
+        name = "junk-web"
+        available = True
+        last_usage = None
+
+        def search_counter_evidence(self, user_text, **kw):
+            return CounterEvidence(
+                text="t",
+                citations=[WebCitation(
+                    url="https://n1.whatisgdp.com/x", title="junk",
+                    span=span, domain="n1.whatisgdp.com")],
+                candidates=[WebCandidate(
+                    url="https://fibre2fashion.com/textile-news-0",
+                    title="textile", cited=False)],
+            )
+
+    llm = ScriptedClient({}, default={"attacks": []})
+    claim, cmps = _claim(), [_cmp()]
+    new_c, new_u, audit = falsify_draft(
+        claim, cmps, [], "supported", llm, web_client=JunkWeb())
+    assert len(new_c) == 1
+    assert "whatisgdp.com" in new_c[0].notes
+    considered = [u for u in new_u if u.code == "web_considered_not_cited"]
+    assert len(considered) == 1
+    assert "fibre2fashion.com" in considered[0].description
+    assert "cited=1/considered=1" in audit.detail
+    assert decide_stance(cmps + new_c, new_u, claim) == "supported"

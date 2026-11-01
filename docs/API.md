@@ -47,17 +47,26 @@ Request (`AnalyzeRequest`):
 | `limit` | int | 5 | Clamped to 1–10 (documented clamp, not an error); non-integers 422 |
 | `domain` | string | `"auto"` | One of `auto`, `economy`, `science`, `general` |
 | `persist` | bool | true | `false` skips SQLite (no row, no `persist` audit step) |
+| `fresh` | bool | false | `true` skips the identical-text cache READ (re-runs the pipeline) but still refreshes the entry — the UI re-run button uses this |
 
 `domain` overrides the extracted domain when it differs from `auto`
 (recorded as `domain_override=A->B` in the route audit step).
 
  guards:
 
-- Rate limit: 60 analysis `POST`s per minute per IP (429 after that),
-  shared bucket across `/api/analyze` and `/api/check`.
+- Rate limit: 60 quota units per minute per IP (429 after that),
+  shared bucket across `/api/analyze` (cost 1) and `/api/check`
+  (fixed worst-case cost 8 — charging actuals would need a model
+  split before the gate, an abuse vector). Validation runs before
+  the charge, so malformed (400) requests are free.
 - Cache: identical `(text, domain, limit, persist, model)` hits return
   the cached `Report` without running the pipeline (128 entries FIFO,
-  1h TTL). `/api/check` has no cache: every call re-runs.
+  1h TTL), unless `fresh: true`. `/api/check` has no cache: every
+  call re-runs. `DELETE /api/reports/{id}` also evicts that report's
+  cache entries (no deleted-id resurrection).
+- Loopback only: non-`127.0.0.1`/`::1`/`localhost` clients get 403
+  `non_loopback_blocked` unless `ATLAS_ALLOW_NON_LOOPBACK=1` (the
+  demo server has no auth, so it must not serve the network).
 
 Response: `200` with the full `Report` object (see Schemas).
 Success bodies carry no `request_id`.
@@ -96,13 +105,18 @@ single claim):
   failure never kills the batch, and error entries stay out of the
   roll-up.
 - At most 8 sub-claims (splitter cap); over-long input is truncated
-  before splitting (disclosed in `splitter_notes`).
+  to the first 6000 chars before splitting, short segments (<12
+  chars) are dropped, and past-the-cap claims are cut — all
+  disclosed in `splitter_notes`, which also states the roll-up
+  covers analyzed claims only. The heuristic path guards common
+  abbreviations (`U.S.`, `e.g.`…) so they never split mid-clause.
 - Splitting limitation: a verbatim span can drop a qualifier living in
   another clause, changing the meaning. Spans are exact substrings,
   never complete interpretations — each report checks the span, not
   the discourse.
-- Guards: same 60 req/min/IP rate limit (shared bucket with
-  `/api/analyze`). No identical-text cache: every call re-runs.
+- Guards: same 60-units/min/IP bucket (a batch costs 8, charged
+  after validation). No identical-text cache: every call re-runs.
+  Sub-claims run in parallel (one thread each, input order kept).
 - Cost scales with sub-claims: each runs the full pipeline (up to 5
   model calls per claim, plus 1 split call per batch — an 8-claim batch
   costs up to 1+8×5=41 calls). Post-hoc use, not inline.
@@ -144,8 +158,9 @@ with server logs. Tracebacks and request bodies never appear in responses.
 | 400 | `invalid_domain` | `domain` not in `auto/economy/science/general` |
 | 422 | `invalid_limit` | Non-integer `limit` (out-of-range integers are clamped, not rejected). Missing/wrong-typed `text` also returns 422 with a field-specific mapping |
 | 404 | `report_not_found` | Unknown report id, or unknown route |
+| 403 | `non_loopback_blocked` | Non-loopback client (demo server is localhost-only; override `ATLAS_ALLOW_NON_LOOPBACK=1`) |
 | 405 | `bad_request` | Framework 4xx (e.g. wrong method); unforeseen validation shapes also use this code |
-| 429 | `rate_limited` | More than 60 analyzes/min from one IP |
+| 429 | `rate_limited` | More than 60 quota units/min from one IP (`/api/analyze` = 1, `/api/check` = 8; malformed requests are free) |
 | 500 | `analysis_failed` | Pipeline fault (traceback stays server-side), or any unhandled error |
 
 Example:
@@ -179,8 +194,9 @@ curl -s -X POST http://127.0.0.1:8765/api/analyze \
 `default` (limit default 5), `prompt_version` ("4"), `input_sha256`,
 plus per-stage token usage `usage_extract`, `usage_science`,
 `usage_falsify`, `usage_summary` (each
-`{prompt_tokens, completion_tokens, reasoning_tokens, total_tokens}`
-or null when the stage made no model call).
+`{prompt_tokens, completion_tokens, reasoning_tokens, total_tokens,
+cached_tokens}` — `cached_tokens` is prompt-cache accounting, 0 when
+the provider omits it — or null when the stage made no model call).
 
 Stances: `supported`, `partially_supported`, `contradicted`,
 `unverifiable`, `not_assessable`.

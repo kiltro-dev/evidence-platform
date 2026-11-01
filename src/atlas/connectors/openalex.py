@@ -1,11 +1,19 @@
-"""OpenAlex scholarly works connector (no API key required).
+"""OpenAlex scholarly works connector (keyless by default, key supported).
 
 Source: https://api.openalex.org — secondary index of scholarly metadata;
 contextual evidence (titles/years/venues), direct only when abstracts or
 full statements are retrieved. Docs: https://docs.openalex.org/
+
+Quota note (observed 2026-11-01): keyless requests share a $0.10/day IP
+budget and `mailto` no longer raises limits; a free key
+(OPENALEX_API_KEY) gives the project its own $1/day budget. Set the env
+var before any demo on shared/hackathon IPs.
 """
 
 from __future__ import annotations
+
+import os
+import threading
 
 import httpx
 
@@ -28,6 +36,9 @@ def search_works(query: str, per_page: int = 5) -> list[dict]:
         ),
         "mailto": MAILTO,
     }
+    api_key = os.environ.get("OPENALEX_API_KEY", "").strip()
+    if api_key:
+        params["api_key"] = api_key
     try:
         with httpx.Client(timeout=TIMEOUT_S, follow_redirects=True) as client:
             resp = client.get(f"{BASE_URL}/works", params=params)
@@ -99,7 +110,19 @@ def reconstruct_abstract(work: dict) -> str | None:
 class OpenAlexConnector:
     name = "openalex"
     domains = ("science", "general")
-    last_query: str | None = None
+
+    def __init__(self) -> None:
+        # Shared registry instance: thread-local query echo, same
+        # rationale as WorldBankConnector (parallel batch + server).
+        self._query_local = threading.local()
+
+    @property
+    def last_query(self) -> str | None:
+        return getattr(self._query_local, "value", None)
+
+    @last_query.setter
+    def last_query(self, value: str | None) -> None:
+        self._query_local.value = value
 
     def retrieve(self, claim: StructuredClaim, limit: int = 5) -> list[Evidence]:
         query = claim.subject or claim.raw_text

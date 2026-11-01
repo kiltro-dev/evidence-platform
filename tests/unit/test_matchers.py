@@ -117,3 +117,34 @@ def test_vague_present_reference():
 
 def test_no_times_for_empty():
     assert extract_times("") == []
+
+
+# --- F1-C: new World Bank indicator rows (keyword routing only, offline) ---
+
+
+def test_match_new_indicator_rows_en():
+    assert match_indicator("GDP growth was strong")[0] == "NY.GDP.MKTP.KD.ZG"
+    assert match_indicator("poverty fell sharply")[0] == "SI.POV.DDAY"
+    assert match_indicator("the gini coefficient rose")[0] == "SI.POV.GINI"
+    assert match_indicator("renewables share rose")[0] == "EG.FEC.RNEW.ZS"
+    assert match_indicator("child mortality declined")[0] == "SH.DYN.MORT"
+    assert match_indicator("mobile subscriptions grew")[0] == "IT.CEL.SETS.P2"
+    assert match_indicator("youth unemployment rose")[0] == "SL.UEM.1524.ZS"
+
+
+def test_match_new_indicator_rows_es():
+    assert match_indicator("el crecimiento pib fue alto")[0] == "NY.GDP.MKTP.KD.ZG"
+    assert match_indicator("la pobreza disminuyó")[0] == "SI.POV.DDAY"
+    assert match_indicator("gini")[0] == "SI.POV.GINI"
+    assert match_indicator("las renovables crecieron")[0] == "EG.FEC.RNEW.ZS"
+    assert match_indicator("la mortalidad infantil bajó")[0] == "SH.DYN.MORT"
+    assert match_indicator("los móviles aumentaron")[0] == "IT.CEL.SETS.P2"
+    assert match_indicator("los moviles aumentaron")[0] == "IT.CEL.SETS.P2"
+    assert match_indicator("el desempleo juvenil subió")[0] == "SL.UEM.1524.ZS"
+
+
+def test_new_rows_do_not_shadow_existing():
+    assert match_indicator("unemployment was low")[0] == "SL.UEM.TOTL.ZS"
+    assert match_indicator("GDP was high")[0] == "NY.GDP.MKTP.CD"
+    assert match_indicator("el desempleo subió")[0] == "SL.UEM.TOTL.ZS"
+    assert match_indicator("el pib creció")[0] == "NY.GDP.MKTP.CD"
