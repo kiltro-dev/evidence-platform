@@ -1,6 +1,12 @@
 # Mission backlog (living, lead-owned)
 
-STATUS 2026-11-01 (War Room, P0 a-o + arch A1-A5 closed):
+STATUS 2026-11-01 (War Room sweeps + RERUN, on top of 64ce0f1):
+OPENALEX_API_KEY configured → full run 9 43/43 (new gate pin);
+smoke live 49/0; sweep fixes (SSE-callback guard, call-count/security
+docs, stale deferred, keyed example, API index); fresh-install verified.
+640 unit+e2e green, repro 55/0.
+
+Prior STATUS 2026-11-01 (War Room, P0 a-o + arch A1-A5 closed):
 false-contradicted fixes (units/geo/rate/multi-year/scale-guard),
 literal times/geos, enum coercion, web-quote + cited-% honesty labels,
 safe public deploy (auth/rate/caps), SSE+deadline, CORS+python client.
@@ -109,5 +115,7 @@ FROZEN CONTRACTS (frontend builds against these; backend must match):
 Full compound split, async jobs, grounding integration, token
 accounting persist (can't bill/attribute per-report cost), retention TTL
 (DB grows unbounded until manual DELETE), rate-limit gateway (in-memory
-limits don't span processes), charts/export/i18n (no visualizations,
-no report export, EN-only UI copy).
+limits don't span processes), charts/i18n (no visualizations, EN-only
+UI copy; report export EXISTS via Export receipt), UI batch over SSE
+(the API streams per-claim events; the UI still uses blocking POST +
+skeleton — deliberately not rewired pre-freeze).

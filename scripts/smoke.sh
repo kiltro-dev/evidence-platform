@@ -602,7 +602,7 @@ phase5_live() {
   local base="http://127.0.0.1:${PORT}"
   local fg="$TMPDIR_SMOKE/r_gdp.json" cg=""
   cg=$(curl_code "$fg" -m 60 -H "Content-Type: application/json" \
-    -d '{"text": "The GDP of the United States was $27.36 trillion in 2023."}' "$base/api/analyze")
+    -d '{"text": "The GDP of the United States was $27.36 trillion in 2023.", "persist": true}' "$base/api/analyze")
   if [ "$cg" = "200" ]; then
     run_check "$fg" "live GDP claim" "live:partially_supported"
   else
@@ -610,7 +610,7 @@ phase5_live() {
   fi
   local fj="$TMPDIR_SMOKE/r_japan.json" cj=""
   cj=$(curl_code "$fj" -m 60 -H "Content-Type: application/json" \
-    -d '{"text": "The population of Japan was 500 million in 2020."}' "$base/api/analyze")
+    -d '{"text": "The population of Japan was 500 million in 2020.", "persist": true}' "$base/api/analyze")
   if [ "$cj" = "200" ]; then
     run_check "$fj" "live Japan claim" "live:contradicted"
   else

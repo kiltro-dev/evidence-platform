@@ -175,3 +175,22 @@ def test_on_event_sequence(fake_pipeline):
     claims = [e for e in events if e["type"] == "claim"]
     assert sorted(e["index"] for e in claims) == [0, 1]
     assert all(e["total"] == 2 for e in claims)
+
+
+def test_fragile_on_event_does_not_kill_batch(fake_pipeline):
+    calls = []
+
+    def flaky(event):
+        calls.append(event)
+        if len(calls) == 2:  # started ok, first claim event explodes
+            raise ConnectionError("dead SSE client")
+
+    out = check_document(
+        "This is good news today. This is bad news today.",
+        persist=False, on_event=flaky,
+    )
+    assert out["claim_count"] == 2
+    assert out["errors"] == 0
+    assert out["rollup"]["supported"] == 1
+    assert out["rollup"]["contradicted"] == 1
+    assert len(calls) == 3  # started + 2 claims attempted

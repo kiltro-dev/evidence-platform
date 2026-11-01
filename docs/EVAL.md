@@ -147,7 +147,7 @@ legitimately flip it back to `supported`.
 
 ## Test suites (pytest)
 
-- `tests/unit` + `tests/e2e` — 639 tests, offline: units, comparison,
+- `tests/unit` + `tests/e2e` — 640 tests, offline: units, comparison,
   stance rules (incl. 47-cell `decide_stance` truth-table sweep),
   verification edge cases, i18n, API errors, store, provider/fallback
   behavior, falsification (main + web, mocked), abstract stance, span

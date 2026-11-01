@@ -153,7 +153,7 @@ UI at `/`. Full reference: [docs/API.md](docs/API.md).
 ## Tests & evaluation
 
 ```bash
-.venv/bin/python -m pytest tests/unit tests/e2e -q        # offline gate (639 tests)
+.venv/bin/python -m pytest tests/unit tests/e2e -q        # offline gate (640 tests)
 .venv/bin/python -m pytest tests/integration -q -m live   # live sources (needs network)
 cd tests/e2e-browser && npm ci && npm run install-browser-shell && npm test  # 5 browser specs, degraded
 PYTHONPATH=src .venv/bin/python scripts/run_eval.py --mode degraded  # 11 scripted cases, offline
@@ -164,7 +164,7 @@ bash scripts/smoke.sh --port 8765                           # offline smoke (32 
 bash scripts/smoke.sh --port 8765 --live --eval              # + live API + full eval
 ```
 
-- `tests/unit tests/e2e` is the offline gate: **639 tests, all green**,
+- `tests/unit tests/e2e` is the offline gate: **640 tests, all green**,
   no network, no key (pytest 9). No `PYTHONPATH` needed: the test
   modules self-insert `src/` on `sys.path`. Direct scripts
   (`scripts/run_eval.py`, `repro_findings.py`, `uvicorn`) DO need
@@ -179,8 +179,8 @@ bash scripts/smoke.sh --port 8765 --live --eval              # + live API + full
   cases and skips the 32 `live` ones; `--mode full` runs everything but
   needs network and takes many minutes (live source latency plus up to
   5 model calls per case, incl. the token-hungry web pass).
-- Current results: **639/639 offline, 11/11 degraded eval, 36/36
-  paraphrase agreement, full-mode eval with real muse-spark-1.3** —
+- Current results: **640/640 offline, 43/43 full-mode eval with real
+  muse-spark-1.3, 11/11 degraded eval, 36/36 paraphrase agreement** —
   see [docs/EVAL_REPORT.md](docs/EVAL_REPORT.md) for the pinned run.
   What these numbers do and do not prove is stated there honestly:
   pinned regressions green, not an accuracy benchmark.

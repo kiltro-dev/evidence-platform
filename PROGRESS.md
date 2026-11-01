@@ -212,3 +212,16 @@ Persistent record for the autonomous build. Latest entry last.
   labels, cited-% must match measured delta.
 - Verified: 639/639 offline, repro 55/0, browser 5/5 (prior wave),
   degraded 11/11 + paraphrase 36/36 (prior pins; re-run pending).
+
+## 2026-11-01 — War Room sweeps + RERUN (on 64ce0f1)
+
+- OPENALEX_API_KEY configured by human → full run 9: 43/43
+  (pin 1.00, new gate artifact `20261101T175353Z.json`); smoke live
+  49/0 (live-phase persist flags fixed); fresh-install verified
+  (clone + README block → 640 + repro 55/0 + degraded boot).
+- Sweep-1: SSE on_event best-effort guard + test, ≤5-calls + reads
+  unthrottled docs, stale deferred fixed, SHIPCHECK_API_KEY env.
+  Sweep-2: run-9 pin + docs, swapped-year probes OK both ways,
+  batch-UI + store + client re-audited clean, README cites 43/43.
+- Verified: 640/640 offline, repro 55/0, full 43/43, smoke live
+  49/0, degraded 11/11, paraphrase 36/36, abstention 17/20.

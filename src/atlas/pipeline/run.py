@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import logging
 import time
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
@@ -24,6 +25,8 @@ from .verify import assess_science, verify_quantitative
 
 import atlas.connectors.openalex  # noqa: F401  (self-register)
 import atlas.connectors.worldbank  # noqa: F401  (self-register)
+
+log = logging.getLogger(__name__)
 
 # Single app-version constant. NOTE (A2b integration): api/app.py is owned by
 # another agent; it should `from atlas.pipeline.run import APP_VERSION` rather
@@ -463,7 +466,10 @@ def check_document(
     contexts = span_contexts(claims)
     usage_split = _take_usage(llm, seq_before)
     if on_event is not None:
-        on_event({"type": "started", "claim_count": len(claims)})
+        try:
+            on_event({"type": "started", "claim_count": len(claims)})
+        except Exception:  # noqa: BLE001 — see _claim_event guard
+            log.debug("batch on_event(started) delivery failed", exc_info=True)
     done_count = 0
 
     def _claim_event(index: int, outcome) -> None:
@@ -481,7 +487,13 @@ def check_document(
                      "stance": outcome.conclusion.stance
                      if outcome.conclusion else "unverifiable"}
         if on_event is not None:
-            on_event(entry)
+            # Sweep-1: a fragile progress callback (e.g. a dead SSE
+            # client) must never kill the batch — deliveries are
+            # best-effort, the roll-up is not.
+            try:
+                on_event(entry)
+            except Exception:  # noqa: BLE001 — batch outlives callbacks
+                log.debug("batch on_event delivery failed", exc_info=True)
 
     # Parallel sub-claim analysis (one thread each, results in input
     # order). Per-claim error isolation, same roll-up, same

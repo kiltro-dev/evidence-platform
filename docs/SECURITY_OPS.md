@@ -68,9 +68,14 @@ Accepted / remaining (conscious, documented):
   Disk use grows ~KBs per report; prune via the UI or DELETE.
 - **Per-report token accounting present.** Each report's `meta.usage_*`
   records per-stage prompt/completion/reasoning/total tokens (None when
-  a stage made no call); cost control is the ≤4-calls/token-budget cap.
+  a stage made no call); cost control is the ≤5-calls/token-budget cap
+  (extract + falsify + web + summary, plus abstract-stance on science).
 - **In-memory rate limit + cache.** Both reset on restart and do not span
   processes. Fine for one demo server; not a distributed control.
+  Only model-spending endpoints consume quota (`analyze`/`check`/
+  `check/stream`); report reads/deletes are cheap local SQLite and
+  unthrottled — flood them and the server slows, but no model budget
+  burns.
 - **HTTP timeouts only (20s sources, 120s model).** No circuit breaker;
   a hung upstream degrades per-analysis, and the live tests fail loudly.
 

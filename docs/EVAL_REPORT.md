@@ -9,7 +9,9 @@ the pinned artifacts below are force-added so a fresh clone can audit
 them: `20261101T033233Z.json` (v0.4.0 run 4),
 `paraphrase_20261101T034909Z.json`, `unanswerable_20261101T034914Z.json`,
 `demo_batch_20261101T040906Z.json`, plus the night-shift
-`20261101T061735Z.json` (run 7, gate)).
+`20261101T061735Z.json` (run 7, gate), the quality-wave
+`20261101T132340Z.json` (run 8, 41/43 under OpenAlex 429), and the
+War-Room `20261101T175353Z.json` (run 9, 43/43, current gate)).
 
 "N/N" below is a green regression suite, not a benchmark score:
 hand-picked cases with wide margins, single-author expectations.
@@ -388,6 +390,21 @@ Degraded/paraphrase/abstention on the same tree: 11/11, 36/36,
 17/20 (unchanged from baseline). The clean 43/43 re-run is pending
 the cap reset (~10h) or an `OPENALEX_API_KEY`; run 7 stays the
 pinned green gate until then.
+
+## Full run 9 (`--mode full`, War-Room hardened tree) — 43/43, gate
+
+```text
+[full] 43/43 cases passed (pin conformance 1.00, skipped 0, blocked 0)
+```
+
+Result JSON: `eval/results/20261101T175353Z.json` (force-added).
+First full run on the P0-hardened tree (`64ce0f1`): every War-Room
+verdict change (rate-vs-level, multi-year pairing, scale guard,
+year-less-latest, literal times/geos, enum coercion) holds all 43
+pins — zero flips against expectations written before the fixes.
+Run 8's two OpenAlex-429 failures are gone: `OPENALEX_API_KEY` is
+now configured (own $1/day quota), and both science cases retrieve
+and pass. No pin was edited to fit the new code.
 
 ## v3 methodology note (what changed since v2)
 

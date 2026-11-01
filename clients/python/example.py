@@ -15,6 +15,7 @@ from shipcheck import ShipCheck, ShipCheckError
 
 BASE = sys.argv[1] if len(sys.argv) > 1 else os.environ.get(
     "SHIPCHECK_BASE", "http://127.0.0.1:8765")
+API_KEY = os.environ.get("SHIPCHECK_API_KEY")  # sweep-1: keyed deploys
 
 TRUE_CLAIM = "The United States GDP reached $27.36 trillion in 2023."
 HALLUCINATED_CLAIM = "The United States GDP reached $50 trillion in 2023."
@@ -26,7 +27,7 @@ BATCH_TEXT = (
 
 def main() -> int:
     try:
-        with ShipCheck(BASE) as sc:
+        with ShipCheck(BASE, api_key=API_KEY) as sc:
             print("status:", sc.status().get("mode", "?"))
 
             r1 = sc.analyze(TRUE_CLAIM)
