@@ -227,11 +227,12 @@ def test_replay_supports_m2_evidence_verdict_flow(tmp_path, monkeypatch):
         "\n".join(json.dumps(e) for e in log) + "\n", encoding="utf-8"
     )
     client = _client()
-    assert client.get("/replay").json() == {
-        "runs": [
-            {"run": "run-m2demo", "events": 10,
-             "path": str(tmp_path / "run-m2demo.jsonl")}
-        ]
+    # Shipped committed logs also list (clean-clone fallback); the local
+    # run must be present with its tmp path.
+    runs = {r["run"]: r for r in client.get("/replay").json()["runs"]}
+    assert runs["run-m2demo"] == {
+        "run": "run-m2demo", "events": 10,
+        "path": str(tmp_path / "run-m2demo.jsonl"),
     }
     info = client.get("/replay/run-m2demo").json()
     assert info["types"]["claim.evidence"] == 1
@@ -327,3 +328,27 @@ def test_index_replay_wiring_in_script():
                     "player.src", "currentTime", "scrollIntoView",
                     "REPLAY DE CORRIDA REAL", "REAL-RUN REPLAY"):
         assert snippet in script
+
+
+def test_shipped_replay_fallback_clean_clone(tmp_path, monkeypatch):
+    """Fresh clone (empty RUNS_DIR) still replays committed logs."""
+    from live.replay import player
+    empty = tmp_path / "noruns"
+    empty.mkdir()
+    monkeypatch.setattr(player, "RUNS_DIR", empty)
+    names = {r["run"] for r in player.list_runs()}
+    assert "run-keynote-en-listen" in names
+    assert "verify-keynote-en-investigate" in names
+    evs = player.load_events("verify-keynote-en-investigate")
+    assert evs and any(e.get("type") == "claim.verdict" for e in evs)
+
+
+def test_runs_dir_wins_over_shipped(tmp_path, monkeypatch):
+    from live.replay import player
+    d = tmp_path / "runs"
+    d.mkdir()
+    (d / "run-keynote-en-listen.jsonl").write_text(
+        '{"type": "transcript.final", "bus_ts": 1.0, "text": "local"}\n')
+    monkeypatch.setattr(player, "RUNS_DIR", d)
+    got = player.resolve_run("run-keynote-en-listen")
+    assert got is not None and str(got).startswith(str(d))

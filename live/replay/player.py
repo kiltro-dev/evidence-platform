@@ -19,14 +19,22 @@ from typing import Any, Iterator
 # evidence-platform/ repo root = parent of live/.
 RUNS_DIR = Path(__file__).resolve().parent.parent.parent / "data" / "runs"
 
+#: Shipped replay logs (committed real runs; data/runs/ is git-ignored so a
+#: fresh clone replays these). RUNS_DIR always wins on name clash.
+SHIPPED_RUNS_DIR = (
+    Path(__file__).resolve().parent.parent / "demo" / "replay"
+)
+
 # Run names are bare file stems: no separators, no traversal.
 _SAFE_RUN_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.~-]*")
 
 #: Default cap for a single inter-event gap (seconds, after /rate).
 DEFAULT_MAX_GAP_S = 10.0
 
-#: Glob for replayable run logs (excludes *.asr.jsonl partial logs).
+#: Globs for replayable run logs (excludes *.asr.jsonl partial logs).
+#: run-* = listen/detect runs, verify-* = investigation/verdict runs.
 _RUN_GLOB = "run-*.jsonl"
+_RUN_GLOBS = ("run-*.jsonl", "verify-*.jsonl")
 
 
 def is_safe_run_name(run: str) -> bool:
@@ -34,21 +42,26 @@ def is_safe_run_name(run: str) -> bool:
     return bool(run) and bool(_SAFE_RUN_RE.fullmatch(run)) and "/" not in run
 
 
+def _resolve_in(base: Path, name: str) -> Path | None:
+    candidate = (base / f"{name}.jsonl").resolve()
+    try:
+        candidate.relative_to(base.resolve())
+    except ValueError:
+        return None
+    return candidate if candidate.is_file() else None
+
+
 def resolve_run(run: str) -> Path | None:
-    """Resolve ``run`` (stem or stem.jsonl) to a log path, or None."""
+    """Resolve ``run`` (stem or stem.jsonl) to a log path, or None.
+
+    RUNS_DIR first, then the shipped committed logs.
+    """
     if not run:
         return None
     name = run[:-len(".jsonl")] if run.endswith(".jsonl") else run
     if not is_safe_run_name(name):
         return None
-    candidate = (RUNS_DIR / f"{name}.jsonl").resolve()
-    try:
-        candidate.relative_to(RUNS_DIR.resolve())
-    except ValueError:
-        return None
-    if not candidate.is_file():
-        return None
-    return candidate
+    return _resolve_in(RUNS_DIR, name) or _resolve_in(SHIPPED_RUNS_DIR, name)
 
 
 def load_events(run: str) -> list[dict] | None:
@@ -76,19 +89,27 @@ def load_events(run: str) -> list[dict] | None:
 
 
 def list_runs() -> list[dict[str, Any]]:
-    """List replayable runs: ``[{run, events, path}]`` sorted by name."""
-    runs: list[dict[str, Any]] = []
-    if not RUNS_DIR.is_dir():
-        return runs
-    for path in sorted(RUNS_DIR.glob(_RUN_GLOB)):
-        if path.name.endswith(".asr.jsonl"):
+    """List replayable runs: ``[{run, events, path}]`` sorted by name.
+
+    Merges RUNS_DIR and shipped logs; RUNS_DIR wins on name clash.
+    """
+    seen: dict[str, Path] = {}
+    for base in (SHIPPED_RUNS_DIR, RUNS_DIR):
+        if not base.is_dir():
             continue
-        events = load_events(path.stem)
+        for glob in _RUN_GLOBS:
+            for path in sorted(base.glob(glob)):
+                if path.name.endswith(".asr.jsonl"):
+                    continue
+                seen[path.stem] = path
+    runs: list[dict[str, Any]] = []
+    for stem in sorted(seen):
+        events = load_events(stem)
         runs.append(
             {
-                "run": path.stem,
+                "run": stem,
                 "events": len(events) if events is not None else 0,
-                "path": str(path),
+                "path": str(seen[stem]),
             }
         )
     return runs

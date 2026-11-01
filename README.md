@@ -1,4 +1,4 @@
-# Evidence Atlas — the truth layer for the agent era
+# Atlas Live — a real-time agent newsroom that checks video as it plays
 
 > **Provenance (hackathon compliance):** all work in this repo was done
 > 2026-10-31 → 2026-11-04 (first commit `757d0e8`, 2026-10-31 — inside
@@ -7,27 +7,25 @@
 > **Atlas Live**, the real-time agent newsroom in [`live/`](live/).
 > New demo work lands only in `live/` with dated commits.
 
-Paste AI-generated text, get a verdict per claim: Evidence Atlas splits
-it into atomic claims, structures each one, retrieves real evidence,
-runs deterministic checks, tries to disprove its own draft against the
-live web, and shows exactly what is evidence, what is interpretation,
-and what remains uncertain.
-
-V3: a Muse agent that uses Atlas as a tool **ships fewer bad figures**
-(8 → 2 contradicted in a live re-run, [$0.04](docs/AGENT_LOOP.md)) —
-PDFs, chart images and video frames enter with page/region/timestamp
-provenance ([docs/INGEST.md](docs/INGEST.md)), sources cover 6/12 → 12/12
-probe claims ([docs/CONNECTORS.md](docs/CONNECTORS.md)), and the open
-HALLUBENCH-NUM ablation measures Muse-judge vs Muse+Atlas honestly
-(20/24 vs 21/24, overlapping Wilson intervals —
-[docs/HALLUBENCH.md](docs/HALLUBENCH.md)). Audio input is NOT supported
-(the API silently drops it — verified, not assumed).
+Play a video and watch agents check it live: Atlas Live transcribes
+speech in real time, extracts checkable claims as they are said,
+investigates each one with parallel Muse agents over the open web,
+verifies with deterministic code, and publishes verdict cards with
+re-verifiable proof over WebSocket — while the video keeps running.
+It also watches the slides: when the speaker says 40% and the chart
+shows 0.97%, that mismatch is caught on screen
+([`live/M3.md`](live/M3.md)).
 
 Built for the **Meta Global AI Developer Hackathon 2026** (Indie track).
 See [docs/HACKATHON.md](docs/HACKATHON.md) for the verified rules and deadlines.
+Judge path (3 min, $0 replay): [`live/demo/README_DEMO.md`](live/demo/README_DEMO.md) ·
+Submission text: [`live/demo/SUBMISSION.md`](live/demo/SUBMISSION.md).
 
-> Evidence Atlas is an analysis aid, not an arbiter of truth. It never
-> invents sources, and every conclusion links back to the evidence behind it.
+> Atlas Live is an analysis aid, not an arbiter of truth. It never
+> invents sources, every verdict links to hashed snapshots anyone can
+> re-verify offline, and when proof is missing it says "unverifiable"
+> instead of guessing. Honest numbers below — including the ones where
+> the Muse-only baseline wins ([`live/M8.md`](live/M8.md)).
 
 ## Problem
 
@@ -35,78 +33,71 @@ AI apps ship statistics nobody checks — and LLM-judge guardrails can
 hallucinate about hallucinations. You get "true or false" without the
 work: which sources were consulted, what each source actually says, how
 numbers were compared, or what the model guessed versus what code
-verified.
+verified. Video makes it worse: claims fly by at speaking pace, and
+charts on screen can contradict the speaker with nobody noticing.
 
 ## What this does
 
-Given pasted text (e.g. an AI answer), ShipCheck (`POST /api/check`):
+Given a video or stream, Atlas Live ([`live/`](live/)):
 
-0. **Splits** it into atomic checkable claims (model-first under a
-   strict schema, verbatim-spans-only, heuristic fallback; max 8).
-   Every coverage cut (8-cap, 6000-char slice, short drops) is
-   disclosed on the receipt.
-1. **Structures** each claim (domain, quantities, units, time,
-   geography, conditions) with Muse Spark under strict decoding
-   schemas, falling back to deterministic heuristics offline.
-2. **Retrieves** evidence from real, keyless public sources — World Bank
-   Open Data (economy) and OpenAlex (science, incl. abstracts) — in parallel.
-3. **Verifies** with deterministic code: unit normalization, same-period
-   gating, numeric comparison under an explicit 2% tolerance rule, plus a
-   claimed-precision rule (stated digits vs. retrieved value), absolute-gap
-   disclosure, and methodological uncertainties.
-4. **Red-teams itself**: Muse Spark attacks the draft verdict through a
-   falsify-only schema, then hunts LIVE counter-evidence via Responses
-   API `web_search`; code validates every attack and citation and
-   surfaces them as doubt (advisory only — stances stay code-decided),
-   ordering official sources first and listing retrieved-but-uncited
-   results as attributed doubt. Science abstracts get a bounded
-   stance assessment that corroborates but never verifies.
-5. **Reports** per claim: stance (one of five, including
-   `not_assessable` for opinions and non-claims), evidence for/against,
-   uncertainties, limitations, a full audit trail where every step is
-   badged `CODE`, `MODEL`, or `HEURISTIC`, and per-stage token usage —
-   plus a batch roll-up. Batch sub-claims run in parallel (input
-   order kept). Reports export as methods receipts and re-run
-   deterministically (cache-bypassing re-run, hash + verdict shown).
+0. **Listens** with `muse-voice-transcribe` over streaming WebSocket
+   (diarization, endpointing, ES/EN) and **watches** slides, tables and
+   charts — each visual claim anchored to its frame and second.
+1. **Detects** checkable claims live (model-first under a strict
+   schema, verbatim spans, coreference resolved, deduped), publishing
+   `claim.detected` ~1.2 s (p50/p95 1240/1314 ms) after end-of-phrase.
+2. **Investigates** with parallel Muse agents (structurer, retriever,
+   red-team) over the open web: responsible fetch (robots.txt,
+   user-agent, rate limits, no paywalls), hashed local snapshots, and
+   literal quotes with offsets — [evidence packages](live/M2_E2E.md).
+3. **Verifies** with deterministic code only: quote-must-exist,
+   number re-extraction, 2% tolerance, scale-error guard, temporal
+   alignment, primary-beats-secondary. No valid package → `unverifiable`.
+   Models never vote on verdicts.
+4. **Cross-checks said-vs-shown**: speech numbers vs on-screen charts
+   (±15 s window), truncated-axis and broken-scale flags.
+5. **Publishes** verdict cards (ES/EN) over WebSocket as the video runs,
+   with live corrections, a canary-measured reliability panel (no
+   invented confidence), and an exportable proof bundle
+   (`verify_bundle.py` re-verifies offline).
 
 No confidence scores, no invented citations. When evidence is missing or
-incomparable, the report says so. Snippets and excerpts are pointers to
-sources, never Evidence on their own — see [docs/AGENTS.md](docs/AGENTS.md).
+incomparable, the card says so. Snippets are pointers, never evidence —
+see [docs/AGENTS.md](docs/AGENTS.md).
 
-## Demo (3 minutes)
+Measured on a synthetic keynote (41 planted claims × EN/ES, ground
+truth in [`live/material/truth.json`](live/material/truth.json)):
+8/31 decided correctly with 0 false-contradicted
+([`live/M2D.md`](live/M2D.md)); said-vs-shown 4/4 planted cases
+([`live/M3.md`](live/M3.md)); canaries 7/7, Wilson 95% [0.65, 1.0]
+([`live/M6.md`](live/M6.md)). The Muse-only baseline scores higher on
+this set (30–31/31, [`live/M8.md`](live/M8.md)) — without snapshots,
+literal-quote checks, or re-verifiable proof; Atlas abstains (71%)
+rather than assert without evidence. Latency p50 ~78 s/claim
+investigated (parallel ×4) is the known bottleneck.
+
+The v1 static checker (paste text → receipts) still works under
+`src/atlas/` + `POST /api/check` (tag `pre-pivot-v1`, 755 offline
+tests, 43/43 eval) and now serves as Atlas Live's numeric library.
+
+## Demo (3 minutes, $0 replay)
 
 ```bash
 git clone https://github.com/kiltro-dev/evidence-platform && cd evidence-platform
 uv venv -p 3.12 && uv pip install --python .venv/bin/python -r requirements.txt
-PYTHONPATH=src .venv/bin/python -m uvicorn atlas.api.app:app --host 127.0.0.1 --port 8765
+PYTHONPATH=src:live .venv/bin/python -m uvicorn live.server.app:create_app --factory --host 127.0.0.1 --port 8891
 ```
 
-Open [http://127.0.0.1:8765](http://127.0.0.1:8765), switch to **Check AI
-output**, and paste:
+Open [http://127.0.0.1:8891](http://127.0.0.1:8891), pick a recorded run
+and press **Watch replay**: live subtitles, verdict cards appearing as
+the video runs, the agent theater, and the timeline — a replay of a
+real run, labeled as such. Live mode needs `MODEL_API_KEY` (see
+[`.env.example`](.env.example)).
 
-> The GDP of the United States was $27.36 trillion in 2023. The
-> population of Japan was 125 million in 2023. Unemployment in Germany
-> was 9.8% in 2023.
+Full judge path: [`live/demo/README_DEMO.md`](live/demo/README_DEMO.md) ·
+3-min video script: [`live/demo/script.md`](live/demo/script.md).
 
-You get three receipts: precision-capped `partially_supported` (Δ≈1.6%
-but the stated digits exceed what the retrieved value confirms),
-`supported`, and `contradicted` (Δ219% — the hallucination, caught) —
-with live-web counter-evidence attached as doubt (recorded run:
-`eval/results/demo_batch_20261101T040906Z.json`). Single-claim mode
-(`POST /api/analyze`) still works: try `The population of Japan was 500
-million in 2020.` → contradicted, or `Democracy is the best form of
-government.` → not assessable (opinion).
-
-![Demo batch: roll-up 1 supported / 1 partial / 1 contradicted with a precision-capped receipt](docs/demo-batch.png)
-
-Judge mode replays real recorded runs instantly at $0 (green banner);
-flip to Live to analyze your own text:
-
-![Judge mode: cached batch replay with $0 instant receipts](docs/judge-batch.png)
-
-Full script: [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md).
-
-> Demo notice: pasted text is sent to Meta's Model API (Standard no-training tier); don't paste sensitive data.
+> Demo notice: live video/audio is sent to Meta's Model API (Standard no-training tier); don't stream sensitive content.
 
 ## Stack
 
