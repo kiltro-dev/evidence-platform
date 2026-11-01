@@ -136,8 +136,9 @@ Persistent record for the autonomous build. Latest entry last.
 
 ## 2026-11-01 — Operation Night Shift (hardening on v0.4.0)
 
-- Competitive intel DB + 5-agent research cycle (competition,
-  frontier, EVS, hostile-demo, eng-strategy); re-checks same day.
+- 5-agent research cycle (competition, frontier, EVS, hostile-demo,
+  eng-strategy) + same-day re-checks; competitive findings internal,
+  engineering gains below.
 - Lead + 4 build agents: parallel batch (38.7s vs 95.3s live),
   authoritative-first web ordering + considered-not-cited, WB
   vintage/mrnev/14 indicator rows, multi-geo disclosure, F4/F6/R5

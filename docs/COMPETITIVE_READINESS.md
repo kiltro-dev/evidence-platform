@@ -80,7 +80,7 @@ headlines (reframe as pinned regressions).
 
 Eight research agents + independent red team killed the fact-checker
 skin (no buyers, ban-adjacent, ambition deficit) and the proposal-audit
-(occupied: UnicornIQ Vera GA 2026-10-07), ad-substantiation (misleading
+(occupied by an incumbent GA launch), ad-substantiation (misleading
 demo), legal, GRC, newsroom, and live-debate directions. The bet:
 **ShipCheck** — the sidecar that checks every stat AI ships
 (post-hoc numeric-claim verification API + defensible receipts).
@@ -98,6 +98,6 @@ Full rationale: [BREAKTHROUGH_DECISION.md](BREAKTHROUGH_DECISION.md).
 Honest ceiling: narrow catalog (WB-16/~50 countries, abstracts-only
 science) caps Impact — most real AI claims land `unverifiable`, which
 the demo discloses rather than hides. Speed/distribution belong to
-funded incumbents (Galileo, Braintrust, TrustScale claims); the
-defensible artifact is the inspectable receipt. No win promised; this
-is the highest real-value, most winnable build found.
+funded incumbents; the defensible artifact is the inspectable
+receipt. No win promised; this is the highest real-value, most
+winnable build found.

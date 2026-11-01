@@ -10,13 +10,13 @@ sources cited per claim or marked UNCERTAIN.
 | # | Opportunity | Commercial | Innovation | Hack bet | Sustainable | Verdict |
 |---|---|---|---|---|---|---|
 | 1 | AI-output auditor sidecar ("verify before it ships" + defensible receipts) | strongest: AI platform budgets exist, self-serve motion, measurable ROI (escape rate, verification hours) | highest shippable: search-grounded adversarial falsification + code-decided verdicts | strongest real-engine demo (Depth/Tooling) | API wedge + OEM path | **GO — the bet** |
-| 2 | Ad-claim pre-flight LINTER (NOT substantiation) | crowded (Blee $27M, Veridat workflow) | medium | most visceral narrative, but wall-of-shrugs demo risk | thin moat | CONDITIONAL: demo scenario only, never "substantiation file" |
-| 3 | Post-hoc stat desk (current skin evolved) | killed: <$500k/yr buyers, free incumbents (Full Fact 40+ orgs) | low ("repo with new CSS") | safe bronze, ban-adjacent | no | FALLBACK floor only |
-| 4 | Proposal/bid auditing vs pinned libraries | feature-not-platform (OEM at best) | — | synthetic-data demo reads as RAG | — | **KILLED: UnicornIQ Vera GA'd 2026-10-07 with this exact product + free trial** |
+| 2 | Ad-claim pre-flight LINTER (NOT substantiation) | crowded (funded ad-tech workflows) | medium | most visceral narrative, but wall-of-shrugs demo risk | thin moat | CONDITIONAL: demo scenario only, never "substantiation file" |
+| 3 | Post-hoc stat desk (current skin evolved) | killed: <$500k/yr buyers, free incumbents (established nonprofit fact-checkers) | low ("repo with new CSS") | safe bronze, ban-adjacent | no | FALLBACK floor only |
+| 4 | Proposal/bid auditing vs pinned libraries | feature-not-platform (OEM at best) | — | synthetic-data demo reads as RAG | — | **KILLED: an incumbent GA'd this exact product with a free trial (details internal)** |
 
 Killed elsewhere: legal/compliance (rebuild + liability/UPL flags), ops/GRC (paradigm
-mismatch), newsroom stat-check (buyers + ban risk), grant/procurement (Google free
-tier), education grading (different product + person-scoring), meeting ledgers
+mismatch), newsroom stat-check (buyers + ban risk), grant/procurement (free
+tiers from large platforms), education grading (different product + person-scoring), meeting ledgers
 (tracking ≠ verification), pharma MLR (validation budgets), live debate verdicts
 (latency + missing splitter + political risk).
 
@@ -90,8 +90,7 @@ tier), education grading (different product + person-scoring), meeting ledgers
   `unverifiable`, disclosed); 2% tolerance + materiality are unvalidated priors;
   repeatability measured 3× full (0 stance flips; see EVAL_REPORT);
   latency ~20s+ per claim, ~100s per 3-claim batch (post-hoc,
-  not inline); incumbents (Galileo 152ms/$0.0002, TrustScale "deterministic"
-  claims, Braintrust autoevals MIT) own speed/distribution — we own the
+  not inline); funded incumbents own speed/distribution — we own the
   inspectable artifact.
 - **Commercial argument:** land free tier + $99–299/mo with AI app builders;
   expand via OEM as "the deterministic numeric layer" under eval stacks;

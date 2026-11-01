@@ -15,8 +15,9 @@ Prior STATUS (Operation Find the Breakthrough, v0.4.0 ShipCheck):
 Build: claim-splitter + POST /api/check + strict json_schema decoding
 + Responses web_search counter-evidence (default on) + EVS hardening
 (H2/H4/H5) + sidecar UI. 416 unit+e2e green. Killed: proposal-audit
-(Vera GA'd), ad-substantiation skin, legal/GRC/newsroom/live-debate,
-image intake (unreliable probes). Exit gate: full-eval green +
+(occupied by an incumbent GA), ad-substantiation skin,
+legal/GRC/newsroom/live-debate, image intake (unreliable probes).
+Exit gate: full-eval green +
 repeatability + red-team sign-off + milestone commit + push.
 
 Prior STATUS (Operation First Place, v0.3.0): 7-team competitive

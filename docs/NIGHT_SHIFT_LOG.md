@@ -5,7 +5,7 @@ Baseline: v0.4.0 `4e13d7d` (416 tests, 28/28 x3, SIGN OFF).
 
 ## Cycle 1 (2026-11-01, in progress)
 Research (5 agents):
-- NS competition scan: DONE (intel DB seeded; RealCAD = nightmare draw).
+- NS competition scan: DONE (findings internal, not published).
 - NS frontier scan: DONE (8 SHIP, incl. WB vintage, raw web results, cache).
 - NS EVS attack: DONE (multi-geo hole = real bug; slate #1-15; full-paraphrase gap).
 - NS eng strategy: DONE (parallel #1, SSE #2, WB rows+FX #3, budgets #4, SDK #5).
@@ -39,8 +39,7 @@ Spend this cycle: ~$0.25 Meta API (1 batch verify).
 - Gates: pytest 491; paraphrase 36/36; unanswerable 17/20;
   ablation flips=1 (documented); smoke offline 31 PASS.
 - Full re-run (run 6) launched; EVAL_REPORT run-5 section written.
-- Intel re-check: RealCAD `4a3cf58` + Verdara auth overhaul today;
-  README heads unchanged; rankings hold.
+- Intel re-check: no strategy changes (details internal, not published).
 
 ## Cycle 4 — run6 triage + moon stance_set (2026-11-01 ~07-08Z)
 - Run 6: 42/43 (bp fix holds live; #14 model-path partial).
