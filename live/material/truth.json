@@ -1,0 +1,822 @@
+[
+  {
+    "id": "U1-en",
+    "claim": "U1",
+    "lang": "en",
+    "slide": 1,
+    "text": "Welcome to the best summit on Earth.",
+    "t_aprox": 0.0,
+    "expected": "unverifiable",
+    "ref": "n/a (opinion)"
+  },
+  {
+    "id": "U9-en",
+    "claim": "U9",
+    "lang": "en",
+    "slide": 1,
+    "text": "This keynote will change how you see the world.",
+    "t_aprox": 0.0,
+    "expected": "unverifiable",
+    "ref": "n/a (prediction about the talk itself)"
+  },
+  {
+    "id": "T1-en",
+    "claim": "T1",
+    "lang": "en",
+    "slide": 1,
+    "text": "We are 8.14 billion people sharing one planet, according to the World Bank's 2024 population data.",
+    "t_aprox": 0.0,
+    "expected": "true",
+    "ref": "WB SP.POP.TOTL WLD 2024 = 8,140,897,523"
+  },
+  {
+    "id": "T2-en",
+    "claim": "T2",
+    "lang": "en",
+    "slide": 2,
+    "text": "China is home to 1.41 billion people, the World Bank reported for 2024.",
+    "t_aprox": 13.29,
+    "expected": "true",
+    "ref": "WB SP.POP.TOTL CHN 2024 = 1,408,975,000"
+  },
+  {
+    "id": "T9-en",
+    "claim": "T9",
+    "lang": "en",
+    "slide": 2,
+    "text": "Brazil has 212 million people, also in 2024.",
+    "t_aprox": 13.29,
+    "expected": "true",
+    "ref": "WB SP.POP.TOTL BRA 2024 = 211,998,573"
+  },
+  {
+    "id": "F13-en",
+    "claim": "F13",
+    "lang": "en",
+    "slide": 2,
+    "text": "That means Brazil gains 212 million new people every single year.",
+    "t_aprox": 13.29,
+    "expected": "false",
+    "ref": "WB BRA pop is a LEVEL (212M total); yearly change is a rate (~2M/yr), not 212M/yr. Level-vs-rate confusion."
+  },
+  {
+    "id": "U3-en",
+    "claim": "U3",
+    "lang": "en",
+    "slide": 2,
+    "text": "Our planet has never been more connected.",
+    "t_aprox": 13.29,
+    "expected": "unverifiable",
+    "ref": "n/a (vague, no measurable content)"
+  },
+  {
+    "id": "T3-en",
+    "claim": "T3",
+    "lang": "en",
+    "slide": 3,
+    "text": "The United States produced 29.3 trillion dollars of GDP in 2024.",
+    "t_aprox": 33.74,
+    "expected": "true",
+    "ref": "WB NY.GDP.MKTP.CD USA 2024 = 29,298,013,000,000"
+  },
+  {
+    "id": "T4-en",
+    "claim": "T4",
+    "lang": "en",
+    "slide": 3,
+    "text": "Its population reached 340 million people that same year.",
+    "t_aprox": 33.74,
+    "expected": "true",
+    "ref": "WB SP.POP.TOTL USA 2024 = 340,003,797"
+  },
+  {
+    "id": "F1-en",
+    "claim": "F1",
+    "lang": "en",
+    "slide": 3,
+    "text": "America first passed 20 trillion dollars of GDP back in 2012, years ahead of everyone else.",
+    "t_aprox": 33.74,
+    "expected": "false",
+    "ref": "WB USA GDP: 2017 = $19.61T, 2018 = $20.66T. First passed $20T in 2018, not 2012 (swapped year)."
+  },
+  {
+    "id": "T5-en",
+    "claim": "T5",
+    "lang": "en",
+    "slide": 4,
+    "text": "Germany's GDP stood at 4.69 trillion dollars in 2024.",
+    "t_aprox": 53.16,
+    "expected": "true",
+    "ref": "WB NY.GDP.MKTP.CD DEU 2024 = 4,685,592,577,805"
+  },
+  {
+    "id": "T6-en",
+    "claim": "T6",
+    "lang": "en",
+    "slide": 4,
+    "text": "France had 68.6 million inhabitants in 2024.",
+    "t_aprox": 53.16,
+    "expected": "true",
+    "ref": "WB SP.POP.TOTL FRA 2024 = 68,551,653"
+  },
+  {
+    "id": "F2-en",
+    "claim": "F2",
+    "lang": "en",
+    "slide": 4,
+    "text": "And France's GDP was also 4.69 trillion dollars, exactly matching its neighbor.",
+    "t_aprox": 53.16,
+    "expected": "false",
+    "ref": "WB NY.GDP.MKTP.CD FRA 2024 = $3.16T. $4.69T is GERMANY's GDP (neighboring-entity swap)."
+  },
+  {
+    "id": "U4-en",
+    "claim": "U4",
+    "lang": "en",
+    "slide": 5,
+    "text": "Many experts agree this decade belongs to Asia.",
+    "t_aprox": 70.23,
+    "expected": "unverifiable",
+    "ref": "n/a (vague attribution, 'many experts')"
+  },
+  {
+    "id": "T7-en",
+    "claim": "T7",
+    "lang": "en",
+    "slide": 5,
+    "text": "Japan's GDP reached 4.19 trillion dollars in 2024.",
+    "t_aprox": 70.23,
+    "expected": "true",
+    "ref": "WB NY.GDP.MKTP.CD JPN 2024 = 4,190,008,188,359"
+  },
+  {
+    "id": "F3-en",
+    "claim": "F3",
+    "lang": "en",
+    "slide": 5,
+    "text": "Meanwhile China's population has fallen to just 141 million people.",
+    "t_aprox": 70.23,
+    "expected": "false",
+    "ref": "WB CHN pop 2024 = 1,408,975,000 (1.41 BILLION). 141M is off by x10."
+  },
+  {
+    "id": "F4-en",
+    "claim": "F4",
+    "lang": "en",
+    "slide": 5,
+    "text": "And Japan's economy has exploded to 41.9 trillion dollars.",
+    "t_aprox": 70.23,
+    "expected": "false",
+    "ref": "WB JPN GDP 2024 = $4.19T. 41.9T is off by x10 (larger than the whole US economy)."
+  },
+  {
+    "id": "T10-en",
+    "claim": "T10",
+    "lang": "en",
+    "slide": 6,
+    "text": "In 2023, American GDP was 27.8 trillion dollars.",
+    "t_aprox": 90.48,
+    "expected": "true",
+    "ref": "WB NY.GDP.MKTP.CD USA 2023 = 27,811,517,000,000"
+  },
+  {
+    "id": "F5-en",
+    "claim": "F5",
+    "lang": "en",
+    "slide": 6,
+    "text": "One year later it had doubled, as this chart clearly shows.",
+    "t_aprox": 90.48,
+    "expected": "false",
+    "ref": "WB USA GDP 27.81T (2023) -> 29.30T (2024): +5.4%, not x2. Chart uses a truncated Y axis (27-30)."
+  },
+  {
+    "id": "U5-en",
+    "claim": "U5",
+    "lang": "en",
+    "slide": 6,
+    "text": "This is the most important chart you will see today.",
+    "t_aprox": 90.48,
+    "expected": "unverifiable",
+    "ref": "n/a (opinion)"
+  },
+  {
+    "id": "T16-en",
+    "claim": "T16",
+    "lang": "en",
+    "slide": 7,
+    "text": "Humanity passed 8 billion people in November 2022, according to the United Nations.",
+    "t_aprox": 103.82,
+    "expected": "true",
+    "ref": "UN: world passed 8 billion on 15 Nov 2022."
+  },
+  {
+    "id": "F14-en",
+    "claim": "F14",
+    "lang": "en",
+    "slide": 7,
+    "text": "The world actually passed 8 billion people back in 2020.",
+    "t_aprox": 103.82,
+    "expected": "false",
+    "ref": "UN Day of 8 Billion was 15 Nov 2022, not 2020 (swapped year; contradicts T16 in this same talk)."
+  },
+  {
+    "id": "F6-en",
+    "claim": "F6",
+    "lang": "en",
+    "slide": 7,
+    "text": "Last year alone, world population grew by nearly 40 percent.",
+    "t_aprox": 103.82,
+    "expected": "false",
+    "ref": "WB WLD pop 2023 = 8,062,923,417; 2024 = 8,140,897,523: +0.97%, not 40%. The slide chart shows 0.97%, contradicting the narration."
+  },
+  {
+    "id": "U6-en",
+    "claim": "U6",
+    "lang": "en",
+    "slide": 7,
+    "text": "Our children will thank us for these numbers.",
+    "t_aprox": 103.82,
+    "expected": "unverifiable",
+    "ref": "n/a (future + vague)"
+  },
+  {
+    "id": "T11-en",
+    "claim": "T11",
+    "lang": "en",
+    "slide": 8,
+    "text": "Light travels at exactly 299,792,458 meters per second.",
+    "t_aprox": 123.53,
+    "expected": "true",
+    "ref": "SI defining constant (BIPM): c = 299,792,458 m/s, exact."
+  },
+  {
+    "id": "T12-en",
+    "claim": "T12",
+    "lang": "en",
+    "slide": 8,
+    "text": "Water boils at 100 degrees Celsius at sea level.",
+    "t_aprox": 123.53,
+    "expected": "true",
+    "ref": "Standard physics: 100 C at 1 atm (sea level)."
+  },
+  {
+    "id": "F7-en",
+    "claim": "F7",
+    "lang": "en",
+    "slide": 8,
+    "text": "Or in friendlier units, light moves at 29,979 kilometers per second.",
+    "t_aprox": 123.53,
+    "expected": "false",
+    "ref": "c = 299,792 km/s. 29,979 km/s is off by x10."
+  },
+  {
+    "id": "F8-en",
+    "claim": "F8",
+    "lang": "en",
+    "slide": 8,
+    "text": "And in a strong kettle, water can boil at 1,000 degrees.",
+    "t_aprox": 123.53,
+    "expected": "false",
+    "ref": "Water boils at 100 C at 1 atm. 1,000 C is off by x10."
+  },
+  {
+    "id": "T14-en",
+    "claim": "T14",
+    "lang": "en",
+    "slide": 9,
+    "text": "Mount Everest rises 8,849 meters above sea level.",
+    "t_aprox": 147.39,
+    "expected": "true",
+    "ref": "8,848.86 m (China-Nepal joint survey, 2020)."
+  },
+  {
+    "id": "T15-en",
+    "claim": "T15",
+    "lang": "en",
+    "slide": 9,
+    "text": "The Sahara, the largest hot desert, spans 9.2 million square kilometers.",
+    "t_aprox": 147.39,
+    "expected": "true",
+    "ref": "Largest hot desert, ~9.2M sq km (Britannica)."
+  },
+  {
+    "id": "F9-en",
+    "claim": "F9",
+    "lang": "en",
+    "slide": 9,
+    "text": "Everest, by the way, lies entirely within the borders of Nepal.",
+    "t_aprox": 147.39,
+    "expected": "false",
+    "ref": "Everest summit sits on the Nepal-CHINA border, not entirely within Nepal (neighboring-entity error)."
+  },
+  {
+    "id": "F10-en",
+    "claim": "F10",
+    "lang": "en",
+    "slide": 9,
+    "text": "And the Sahara covers a modest 920,000 square kilometers.",
+    "t_aprox": 147.39,
+    "expected": "false",
+    "ref": "~9.2M sq km. 920,000 is off by x10."
+  },
+  {
+    "id": "T8-en",
+    "claim": "T8",
+    "lang": "en",
+    "slide": 10,
+    "text": "India's GDP reached 3.76 trillion dollars in 2024.",
+    "t_aprox": 168.14,
+    "expected": "true",
+    "ref": "WB NY.GDP.MKTP.CD IND 2024 = 3,760,813,470,501"
+  },
+  {
+    "id": "F11-en",
+    "claim": "F11",
+    "lang": "en",
+    "slide": 10,
+    "text": "As this chart proves, India's economy is now larger than America's.",
+    "t_aprox": 168.14,
+    "expected": "false",
+    "ref": "WB 2024: IND $3.76T vs USA $29.30T. India is ~8x SMALLER. Chart uses a broken scale that flips the visual ranking."
+  },
+  {
+    "id": "U7-en",
+    "claim": "U7",
+    "lang": "en",
+    "slide": 10,
+    "text": "Nobody can deny that progress is everywhere.",
+    "t_aprox": 168.14,
+    "expected": "unverifiable",
+    "ref": "n/a (vague, unfalsifiable)"
+  },
+  {
+    "id": "T13-en",
+    "claim": "T13",
+    "lang": "en",
+    "slide": 11,
+    "text": "All of this happens on a planet 40,075 kilometers around at the equator.",
+    "t_aprox": 182.26,
+    "expected": "true",
+    "ref": "NASA: equatorial circumference ~40,075 km."
+  },
+  {
+    "id": "F12-en",
+    "claim": "F12",
+    "lang": "en",
+    "slide": 11,
+    "text": "Look at Japan: its economy has grown every single year this decade.",
+    "t_aprox": 182.26,
+    "expected": "false",
+    "ref": "WB JPN GDP fell 2021 ($5.23T) -> 2024 ($4.19T). Chart cherry-picks Q2-Q4 2020 and frames it as 'every year this decade'."
+  },
+  {
+    "id": "U8-en",
+    "claim": "U8",
+    "lang": "en",
+    "slide": 11,
+    "text": "In ten years, all these figures will look tiny.",
+    "t_aprox": 182.26,
+    "expected": "unverifiable",
+    "ref": "n/a (future prediction)"
+  },
+  {
+    "id": "F15-en",
+    "claim": "F15",
+    "lang": "en",
+    "slide": 12,
+    "text": "Next year we meet in Sydney, the capital of Australia.",
+    "t_aprox": 196.84,
+    "expected": "false",
+    "ref": "The capital of Australia is Canberra, not Sydney (neighboring-entity confusion)."
+  },
+  {
+    "id": "U2-en",
+    "claim": "U2",
+    "lang": "en",
+    "slide": 12,
+    "text": "By 2030, this summit will have changed the world.",
+    "t_aprox": 196.84,
+    "expected": "unverifiable",
+    "ref": "n/a (future prediction)"
+  },
+  {
+    "id": "U10-en",
+    "claim": "U10",
+    "lang": "en",
+    "slide": 12,
+    "text": "The data speaks for itself. Thank you, and good night.",
+    "t_aprox": 196.84,
+    "expected": "unverifiable",
+    "ref": "n/a (vague platitude)"
+  },
+  {
+    "id": "U1-es",
+    "claim": "U1",
+    "lang": "es",
+    "slide": 1,
+    "text": "Bienvenidos a la mejor cumbre del planeta.",
+    "t_aprox": 0.0,
+    "expected": "unverifiable",
+    "ref": "n/a (opinion)"
+  },
+  {
+    "id": "U9-es",
+    "claim": "U9",
+    "lang": "es",
+    "slide": 1,
+    "text": "Esta charla cambiará su forma de ver el mundo.",
+    "t_aprox": 0.0,
+    "expected": "unverifiable",
+    "ref": "n/a (prediction about the talk itself)"
+  },
+  {
+    "id": "T1-es",
+    "claim": "T1",
+    "lang": "es",
+    "slide": 1,
+    "text": "Somos 8140 millones de personas en un solo planeta, según los datos de población de 2024 del Banco Mundial.",
+    "t_aprox": 0.0,
+    "expected": "true",
+    "ref": "WB SP.POP.TOTL WLD 2024 = 8,140,897,523"
+  },
+  {
+    "id": "T2-es",
+    "claim": "T2",
+    "lang": "es",
+    "slide": 2,
+    "text": "China tiene 1410 millones de habitantes, según el Banco Mundial en 2024.",
+    "t_aprox": 18.01,
+    "expected": "true",
+    "ref": "WB SP.POP.TOTL CHN 2024 = 1,408,975,000"
+  },
+  {
+    "id": "T9-es",
+    "claim": "T9",
+    "lang": "es",
+    "slide": 2,
+    "text": "Brasil tiene 212 millones de habitantes, también en 2024.",
+    "t_aprox": 18.01,
+    "expected": "true",
+    "ref": "WB SP.POP.TOTL BRA 2024 = 211,998,573"
+  },
+  {
+    "id": "F13-es",
+    "claim": "F13",
+    "lang": "es",
+    "slide": 2,
+    "text": "Eso significa que Brasil gana 212 millones de personas nuevas cada año.",
+    "t_aprox": 18.01,
+    "expected": "false",
+    "ref": "WB BRA pop is a LEVEL (212M total); yearly change is a rate (~2M/yr), not 212M/yr. Level-vs-rate confusion."
+  },
+  {
+    "id": "U3-es",
+    "claim": "U3",
+    "lang": "es",
+    "slide": 2,
+    "text": "Nuestro planeta nunca estuvo tan conectado.",
+    "t_aprox": 18.01,
+    "expected": "unverifiable",
+    "ref": "n/a (vague, no measurable content)"
+  },
+  {
+    "id": "T3-es",
+    "claim": "T3",
+    "lang": "es",
+    "slide": 3,
+    "text": "Estados Unidos produjo 29,3 billones de dólares de PIB en 2024.",
+    "t_aprox": 42.4,
+    "expected": "true",
+    "ref": "WB NY.GDP.MKTP.CD USA 2024 = 29,298,013,000,000"
+  },
+  {
+    "id": "T4-es",
+    "claim": "T4",
+    "lang": "es",
+    "slide": 3,
+    "text": "Su población llegó a 340 millones de personas ese mismo año.",
+    "t_aprox": 42.4,
+    "expected": "true",
+    "ref": "WB SP.POP.TOTL USA 2024 = 340,003,797"
+  },
+  {
+    "id": "F1-es",
+    "claim": "F1",
+    "lang": "es",
+    "slide": 3,
+    "text": "Estados Unidos superó por primera vez los 20 billones de dólares de PIB en 2012, años antes que los demás.",
+    "t_aprox": 42.4,
+    "expected": "false",
+    "ref": "WB USA GDP: 2017 = $19.61T, 2018 = $20.66T. First passed $20T in 2018, not 2012 (swapped year)."
+  },
+  {
+    "id": "T5-es",
+    "claim": "T5",
+    "lang": "es",
+    "slide": 4,
+    "text": "El PIB de Alemania fue de 4,69 billones de dólares en 2024.",
+    "t_aprox": 65.67,
+    "expected": "true",
+    "ref": "WB NY.GDP.MKTP.CD DEU 2024 = 4,685,592,577,805"
+  },
+  {
+    "id": "T6-es",
+    "claim": "T6",
+    "lang": "es",
+    "slide": 4,
+    "text": "Francia tenía 68,6 millones de habitantes en 2024.",
+    "t_aprox": 65.67,
+    "expected": "true",
+    "ref": "WB SP.POP.TOTL FRA 2024 = 68,551,653"
+  },
+  {
+    "id": "F2-es",
+    "claim": "F2",
+    "lang": "es",
+    "slide": 4,
+    "text": "Y el PIB de Francia también fue de 4,69 billones de dólares, igualando exactamente a su vecino.",
+    "t_aprox": 65.67,
+    "expected": "false",
+    "ref": "WB NY.GDP.MKTP.CD FRA 2024 = $3.16T. $4.69T is GERMANY's GDP (neighboring-entity swap)."
+  },
+  {
+    "id": "U4-es",
+    "claim": "U4",
+    "lang": "es",
+    "slide": 5,
+    "text": "Muchos expertos coinciden en que esta década pertenece a Asia.",
+    "t_aprox": 86.96,
+    "expected": "unverifiable",
+    "ref": "n/a (vague attribution, 'many experts')"
+  },
+  {
+    "id": "T7-es",
+    "claim": "T7",
+    "lang": "es",
+    "slide": 5,
+    "text": "El PIB de Japón alcanzó los 4,19 billones de dólares en 2024.",
+    "t_aprox": 86.96,
+    "expected": "true",
+    "ref": "WB NY.GDP.MKTP.CD JPN 2024 = 4,190,008,188,359"
+  },
+  {
+    "id": "F3-es",
+    "claim": "F3",
+    "lang": "es",
+    "slide": 5,
+    "text": "Mientras tanto, la población de China cayó a solo 141 millones de personas.",
+    "t_aprox": 86.96,
+    "expected": "false",
+    "ref": "WB CHN pop 2024 = 1,408,975,000 (1.41 BILLION). 141M is off by x10."
+  },
+  {
+    "id": "F4-es",
+    "claim": "F4",
+    "lang": "es",
+    "slide": 5,
+    "text": "Y la economía de Japón se disparó hasta los 41,9 billones de dólares.",
+    "t_aprox": 86.96,
+    "expected": "false",
+    "ref": "WB JPN GDP 2024 = $4.19T. 41.9T is off by x10 (larger than the whole US economy)."
+  },
+  {
+    "id": "T10-es",
+    "claim": "T10",
+    "lang": "es",
+    "slide": 6,
+    "text": "En 2023, el PIB de Estados Unidos fue de 27,8 billones de dólares.",
+    "t_aprox": 111.15,
+    "expected": "true",
+    "ref": "WB NY.GDP.MKTP.CD USA 2023 = 27,811,517,000,000"
+  },
+  {
+    "id": "F5-es",
+    "claim": "F5",
+    "lang": "es",
+    "slide": 6,
+    "text": "Un año después se había duplicado, como muestra claramente este gráfico.",
+    "t_aprox": 111.15,
+    "expected": "false",
+    "ref": "WB USA GDP 27.81T (2023) -> 29.30T (2024): +5.4%, not x2. Chart uses a truncated Y axis (27-30)."
+  },
+  {
+    "id": "U5-es",
+    "claim": "U5",
+    "lang": "es",
+    "slide": 6,
+    "text": "Este es el gráfico más importante que verán hoy.",
+    "t_aprox": 111.15,
+    "expected": "unverifiable",
+    "ref": "n/a (opinion)"
+  },
+  {
+    "id": "T16-es",
+    "claim": "T16",
+    "lang": "es",
+    "slide": 7,
+    "text": "La humanidad superó los 8000 millones de personas en noviembre de 2022, según las Naciones Unidas.",
+    "t_aprox": 129.13,
+    "expected": "true",
+    "ref": "UN: world passed 8 billion on 15 Nov 2022."
+  },
+  {
+    "id": "F14-es",
+    "claim": "F14",
+    "lang": "es",
+    "slide": 7,
+    "text": "En realidad, el mundo superó los 8000 millones en 2020.",
+    "t_aprox": 129.13,
+    "expected": "false",
+    "ref": "UN Day of 8 Billion was 15 Nov 2022, not 2020 (swapped year; contradicts T16 in this same talk)."
+  },
+  {
+    "id": "F6-es",
+    "claim": "F6",
+    "lang": "es",
+    "slide": 7,
+    "text": "Solo el año pasado, la población mundial creció casi un 40 por ciento.",
+    "t_aprox": 129.13,
+    "expected": "false",
+    "ref": "WB WLD pop 2023 = 8,062,923,417; 2024 = 8,140,897,523: +0.97%, not 40%. The slide chart shows 0.97%, contradicting the narration."
+  },
+  {
+    "id": "U6-es",
+    "claim": "U6",
+    "lang": "es",
+    "slide": 7,
+    "text": "Nuestros hijos nos agradecerán estas cifras.",
+    "t_aprox": 129.13,
+    "expected": "unverifiable",
+    "ref": "n/a (future + vague)"
+  },
+  {
+    "id": "T11-es",
+    "claim": "T11",
+    "lang": "es",
+    "slide": 8,
+    "text": "La luz viaja a exactamente 299792458 metros por segundo.",
+    "t_aprox": 154.71,
+    "expected": "true",
+    "ref": "SI defining constant (BIPM): c = 299,792,458 m/s, exact."
+  },
+  {
+    "id": "T12-es",
+    "claim": "T12",
+    "lang": "es",
+    "slide": 8,
+    "text": "El agua hierve a 100 grados Celsius al nivel del mar.",
+    "t_aprox": 154.71,
+    "expected": "true",
+    "ref": "Standard physics: 100 C at 1 atm (sea level)."
+  },
+  {
+    "id": "F7-es",
+    "claim": "F7",
+    "lang": "es",
+    "slide": 8,
+    "text": "O en unidades más amables, la luz se mueve a 29979 kilómetros por segundo.",
+    "t_aprox": 154.71,
+    "expected": "false",
+    "ref": "c = 299,792 km/s. 29,979 km/s is off by x10."
+  },
+  {
+    "id": "F8-es",
+    "claim": "F8",
+    "lang": "es",
+    "slide": 8,
+    "text": "Y en una tetera potente, el agua puede hervir a 1000 grados.",
+    "t_aprox": 154.71,
+    "expected": "false",
+    "ref": "Water boils at 100 C at 1 atm. 1,000 C is off by x10."
+  },
+  {
+    "id": "T14-es",
+    "claim": "T14",
+    "lang": "es",
+    "slide": 9,
+    "text": "El monte Everest se eleva 8849 metros sobre el nivel del mar.",
+    "t_aprox": 182.83,
+    "expected": "true",
+    "ref": "8,848.86 m (China-Nepal joint survey, 2020)."
+  },
+  {
+    "id": "T15-es",
+    "claim": "T15",
+    "lang": "es",
+    "slide": 9,
+    "text": "El Sáhara, el desierto cálido más grande, abarca 9,2 millones de kilómetros cuadrados.",
+    "t_aprox": 182.83,
+    "expected": "true",
+    "ref": "Largest hot desert, ~9.2M sq km (Britannica)."
+  },
+  {
+    "id": "F9-es",
+    "claim": "F9",
+    "lang": "es",
+    "slide": 9,
+    "text": "El Everest, por cierto, se encuentra totalmente dentro de las fronteras de Nepal.",
+    "t_aprox": 182.83,
+    "expected": "false",
+    "ref": "Everest summit sits on the Nepal-CHINA border, not entirely within Nepal (neighboring-entity error)."
+  },
+  {
+    "id": "F10-es",
+    "claim": "F10",
+    "lang": "es",
+    "slide": 9,
+    "text": "Y el Sáhara cubre unos modestos 920000 kilómetros cuadrados.",
+    "t_aprox": 182.83,
+    "expected": "false",
+    "ref": "~9.2M sq km. 920,000 is off by x10."
+  },
+  {
+    "id": "T8-es",
+    "claim": "T8",
+    "lang": "es",
+    "slide": 10,
+    "text": "El PIB de India alcanzó los 3,76 billones de dólares en 2024.",
+    "t_aprox": 208.75,
+    "expected": "true",
+    "ref": "WB NY.GDP.MKTP.CD IND 2024 = 3,760,813,470,501"
+  },
+  {
+    "id": "F11-es",
+    "claim": "F11",
+    "lang": "es",
+    "slide": 10,
+    "text": "Como demuestra este gráfico, la economía de India ya es más grande que la de Estados Unidos.",
+    "t_aprox": 208.75,
+    "expected": "false",
+    "ref": "WB 2024: IND $3.76T vs USA $29.30T. India is ~8x SMALLER. Chart uses a broken scale that flips the visual ranking."
+  },
+  {
+    "id": "U7-es",
+    "claim": "U7",
+    "lang": "es",
+    "slide": 10,
+    "text": "Nadie puede negar que el progreso está en todas partes.",
+    "t_aprox": 208.75,
+    "expected": "unverifiable",
+    "ref": "n/a (vague, unfalsifiable)"
+  },
+  {
+    "id": "T13-es",
+    "claim": "T13",
+    "lang": "es",
+    "slide": 11,
+    "text": "Todo esto ocurre en un planeta de 40075 kilómetros de circunferencia en el ecuador.",
+    "t_aprox": 227.45,
+    "expected": "true",
+    "ref": "NASA: equatorial circumference ~40,075 km."
+  },
+  {
+    "id": "F12-es",
+    "claim": "F12",
+    "lang": "es",
+    "slide": 11,
+    "text": "Miren Japón: su economía creció todos y cada uno de los años de esta década.",
+    "t_aprox": 227.45,
+    "expected": "false",
+    "ref": "WB JPN GDP fell 2021 ($5.23T) -> 2024 ($4.19T). Chart cherry-picks Q2-Q4 2020 and frames it as 'every year this decade'."
+  },
+  {
+    "id": "U8-es",
+    "claim": "U8",
+    "lang": "es",
+    "slide": 11,
+    "text": "Dentro de diez años, todas estas cifras parecerán minúsculas.",
+    "t_aprox": 227.45,
+    "expected": "unverifiable",
+    "ref": "n/a (future prediction)"
+  },
+  {
+    "id": "F15-es",
+    "claim": "F15",
+    "lang": "es",
+    "slide": 12,
+    "text": "El año próximo nos vemos en Sídney, la capital de Australia.",
+    "t_aprox": 247.96,
+    "expected": "false",
+    "ref": "The capital of Australia is Canberra, not Sydney (neighboring-entity confusion)."
+  },
+  {
+    "id": "U2-es",
+    "claim": "U2",
+    "lang": "es",
+    "slide": 12,
+    "text": "Para 2030, esta cumbre habrá cambiado el mundo.",
+    "t_aprox": 247.96,
+    "expected": "unverifiable",
+    "ref": "n/a (future prediction)"
+  },
+  {
+    "id": "U10-es",
+    "claim": "U10",
+    "lang": "es",
+    "slide": 12,
+    "text": "Los datos hablan por sí solos. Gracias y buenas noches.",
+    "t_aprox": 247.96,
+    "expected": "unverifiable",
+    "ref": "n/a (vague platitude)"
+  }
+]

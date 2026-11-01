@@ -1,0 +1,237 @@
+{"dir": "net", "dt": 0.506, "kind": "connected"}
+{"dir": "c2s", "dt": 0.506, "kind": "handshake", "msg": {"mode": "DIARIZATION", "authorization": {"accessToken": "***REDACTED***"}, "audioEncoding": "PCM_24KHZ", "model": "muse-voice-transcribe-1.0", "partialMode": "CUMULATIVE", "emitAudioProgress": false}}
+{"dir": "s2c", "dt": 1.41, "msg": "{\"sessionId\":\"voyager/duplex/3F40C3524CBE47BB8FC98AC4F09DEBBB\"}"}
+{"dir": "c2s", "dt": 1.41, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 1.491, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 1.572, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 1.652, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 1.732, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 1.811, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 1.891, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 1.972, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 2.052, "kind": "bin", "n": 3840}
+{"dir": "s2c", "dt": 2.109, "msg": {"type": "speechStart", "audioProcessedMs": 60, "turnId": 0}}
+{"dir": "c2s", "dt": 2.131, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 2.211, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 2.291, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 2.372, "kind": "bin", "n": 3840}
+{"dir": "s2c", "dt": 2.432, "msg": {"type": "transcript", "transcript": " Hello", "final": false, "audioProcessedMs": 880}}
+{"dir": "c2s", "dt": 2.452, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 2.531, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 2.611, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 2.692, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 2.772, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 2.853, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 2.932, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 3.014, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 3.091, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 3.171, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 3.256, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 3.331, "kind": "bin", "n": 3840}
+{"dir": "s2c", "dt": 3.406, "msg": {"type": "transcript", "transcript": " Hello welcome to", "final": false, "audioProcessedMs": 1840}}
+{"dir": "c2s", "dt": 3.411, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 3.492, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 3.572, "kind": "bin", "n": 3840}
+{"dir": "s2c", "dt": 3.632, "msg": {"type": "transcript", "transcript": " Hello welcome to the", "final": false, "audioProcessedMs": 2080}}
+{"dir": "c2s", "dt": 3.652, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 3.732, "kind": "bin", "n": 3840}
+{"dir": "s2c", "dt": 3.796, "msg": {"type": "transcript", "transcript": " Hello welcome to the briefing.", "final": false, "audioProcessedMs": 2240}}
+{"dir": "c2s", "dt": 3.811, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 3.891, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 3.971, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 4.051, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 4.132, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 4.211, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 4.291, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 4.371, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 4.452, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 4.532, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 4.612, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 4.691, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 4.772, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 4.852, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 4.932, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 5.012, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 5.092, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 5.172, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 5.251, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 5.331, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 5.414, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 5.491, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 5.572, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 5.652, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 5.731, "kind": "bin", "n": 3840}
+{"dir": "s2c", "dt": 5.775, "msg": {"type": "transcript", "transcript": " Hello welcome to the briefing. ", "final": false, "audioProcessedMs": 4160}}
+{"dir": "s2c", "dt": 5.775, "msg": {"type": "speaker", "label": "A", "audioProcessedMs": 4160}}
+{"dir": "s2c", "dt": 5.775, "msg": {"type": "speechEnd", "audioProcessedMs": 3660, "turnId": 0}}
+{"dir": "s2c", "dt": 5.775, "msg": {"type": "speechComplete", "audioProcessedMs": 3660, "turnId": 0, "transcript": " Hello welcome to the briefing. "}}
+{"dir": "c2s", "dt": 5.813, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 5.891, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 5.972, "kind": "bin", "n": 3840}
+{"dir": "s2c", "dt": 5.977, "msg": {"type": "speechStart", "audioProcessedMs": 3900, "turnId": 1}}
+{"dir": "c2s", "dt": 6.052, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 6.131, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 6.211, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 6.292, "kind": "bin", "n": 3840}
+{"dir": "s2c", "dt": 6.295, "msg": {"type": "transcript", "transcript": " Gracias.", "final": false, "audioProcessedMs": 4720}}
+{"dir": "c2s", "dt": 6.372, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 6.451, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 6.531, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 6.612, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 6.692, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 6.771, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 6.855, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 6.932, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 7.012, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 7.091, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 7.171, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 7.253, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 7.331, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 7.411, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 7.492, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 7.572, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 7.652, "kind": "bin", "n": 3840}
+{"dir": "s2c", "dt": 7.705, "msg": {"type": "transcript", "transcript": " Gracias. El", "final": false, "audioProcessedMs": 6160}}
+{"dir": "c2s", "dt": 7.731, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 7.812, "kind": "bin", "n": 3840}
+{"dir": "s2c", "dt": 7.877, "msg": {"type": "transcript", "transcript": " Gracias. El producto", "final": false, "audioProcessedMs": 6320}}
+{"dir": "c2s", "dt": 7.891, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 7.971, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 8.052, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 8.132, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 8.212, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 8.292, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 8.372, "kind": "bin", "n": 3840}
+{"dir": "s2c", "dt": 8.428, "msg": {"type": "transcript", "transcript": " Gracias. El producto interno", "final": false, "audioProcessedMs": 6880}}
+{"dir": "c2s", "dt": 8.452, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 8.531, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 8.612, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 8.692, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 8.772, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 8.852, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 8.932, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 9.012, "kind": "bin", "n": 3840}
+{"dir": "s2c", "dt": 9.016, "msg": {"type": "transcript", "transcript": " Gracias. El producto interno bruto creci\u00f3", "final": false, "audioProcessedMs": 7440}}
+{"dir": "c2s", "dt": 9.091, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 9.171, "kind": "bin", "n": 3840}
+{"dir": "s2c", "dt": 9.233, "msg": {"type": "transcript", "transcript": " Gracias. El producto interno bruto creci\u00f3 un", "final": false, "audioProcessedMs": 7680}}
+{"dir": "c2s", "dt": 9.251, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 9.331, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 9.411, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 9.492, "kind": "bin", "n": 3840}
+{"dir": "s2c", "dt": 9.549, "msg": {"type": "transcript", "transcript": " Gracias. El producto interno bruto creci\u00f3 un dos", "final": false, "audioProcessedMs": 8000}}
+{"dir": "c2s", "dt": 9.571, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 9.652, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 9.732, "kind": "bin", "n": 3840}
+{"dir": "s2c", "dt": 9.797, "msg": {"type": "transcript", "transcript": " Gracias. El producto interno bruto creci\u00f3 un dos coma", "final": false, "audioProcessedMs": 8240}}
+{"dir": "c2s", "dt": 9.812, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 9.891, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 9.971, "kind": "bin", "n": 3840}
+{"dir": "s2c", "dt": 10.031, "msg": {"type": "transcript", "transcript": " Gracias. El producto interno bruto creci\u00f3 un dos coma cuatro", "final": false, "audioProcessedMs": 8480}}
+{"dir": "c2s", "dt": 10.051, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 10.131, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 10.212, "kind": "bin", "n": 3840}
+{"dir": "s2c", "dt": 10.27, "msg": {"type": "transcript", "transcript": " Gracias. El producto interno bruto creci\u00f3 un dos coma cuatro por", "final": false, "audioProcessedMs": 8720}}
+{"dir": "c2s", "dt": 10.291, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 10.371, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 10.452, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 10.532, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 10.618, "kind": "bin", "n": 3840}
+{"dir": "s2c", "dt": 10.683, "msg": {"type": "transcript", "transcript": " Gracias. El producto interno bruto creci\u00f3 un dos coma cuatro por ciento.", "final": false, "audioProcessedMs": 9120}}
+{"dir": "c2s", "dt": 10.691, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 10.771, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 10.851, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 10.932, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 11.011, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 11.092, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 11.171, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 11.252, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 11.332, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 11.412, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 11.492, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 11.572, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 11.651, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 11.731, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 11.811, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 11.891, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 11.971, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 12.051, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 12.131, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 12.211, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 12.292, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 12.375, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 12.452, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 12.532, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 12.612, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 12.691, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 12.771, "kind": "bin", "n": 3840}
+{"dir": "s2c", "dt": 12.796, "msg": {"type": "transcript", "transcript": " Gracias. El producto interno bruto creci\u00f3 un dos coma cuatro por ciento. ", "final": false, "audioProcessedMs": 11200}}
+{"dir": "s2c", "dt": 12.796, "msg": {"type": "speaker", "label": "B", "audioProcessedMs": 11200}}
+{"dir": "s2c", "dt": 12.796, "msg": {"type": "speechEnd", "audioProcessedMs": 10700, "turnId": 1}}
+{"dir": "s2c", "dt": 12.796, "msg": {"type": "speechComplete", "audioProcessedMs": 10700, "turnId": 1, "transcript": " Gracias. El producto interno bruto creci\u00f3 un dos coma cuatro por ciento. "}}
+{"dir": "c2s", "dt": 12.854, "kind": "bin", "n": 3840}
+{"dir": "s2c", "dt": 12.929, "msg": {"type": "speechStart", "audioProcessedMs": 10860, "turnId": 2}}
+{"dir": "c2s", "dt": 12.938, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 13.012, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 13.092, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 13.172, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 13.252, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 13.332, "kind": "bin", "n": 3840}
+{"dir": "s2c", "dt": 13.409, "msg": {"type": "transcript", "transcript": " Thanks.", "final": false, "audioProcessedMs": 11840}}
+{"dir": "c2s", "dt": 13.411, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 13.492, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 13.572, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 13.652, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 13.731, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 13.811, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 13.892, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 13.972, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 14.051, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 14.131, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 14.212, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 14.294, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 14.371, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 14.451, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 14.532, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 14.612, "kind": "bin", "n": 3840}
+{"dir": "s2c", "dt": 14.673, "msg": {"type": "transcript", "transcript": " Thanks. Inflation", "final": false, "audioProcessedMs": 13120}}
+{"dir": "c2s", "dt": 14.691, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 14.772, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 14.855, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 14.931, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 15.012, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 15.092, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 15.171, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 15.252, "kind": "bin", "n": 3840}
+{"dir": "s2c", "dt": 15.318, "msg": {"type": "transcript", "transcript": " Thanks. Inflation fell below", "final": false, "audioProcessedMs": 13760}}
+{"dir": "c2s", "dt": 15.332, "kind": "bin", "n": 3840}
+{"dir": "s2c", "dt": 15.393, "msg": {"type": "transcript", "transcript": " Thanks. Inflation fell below three", "final": false, "audioProcessedMs": 13840}}
+{"dir": "c2s", "dt": 15.412, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 15.492, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 15.572, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 15.652, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 15.732, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 15.811, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 15.892, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 15.972, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 16.052, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 16.132, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 16.211, "kind": "bin", "n": 3840}
+{"dir": "s2c", "dt": 16.272, "msg": {"type": "transcript", "transcript": " Thanks. Inflation fell below three percent", "final": false, "audioProcessedMs": 14720}}
+{"dir": "c2s", "dt": 16.291, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 16.371, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 16.451, "kind": "bin", "n": 3840}
+{"dir": "s2c", "dt": 16.507, "msg": {"type": "transcript", "transcript": " Thanks. Inflation fell below three percent in", "final": false, "audioProcessedMs": 14960}}
+{"dir": "c2s", "dt": 16.535, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 16.611, "kind": "bin", "n": 3840}
+{"dir": "s2c", "dt": 16.687, "msg": {"type": "transcript", "transcript": " Thanks. Inflation fell below three percent in June.", "final": false, "audioProcessedMs": 15120}}
+{"dir": "c2s", "dt": 16.691, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 16.771, "kind": "bin", "n": 3840}
+{"dir": "c2s", "dt": 16.854, "kind": "bin", "n": 768}
+{"dir": "c2s", "dt": 16.867, "kind": "endStream"}
+{"dir": "s2c", "dt": 17.14, "msg": {"type": "transcript", "transcript": " Thanks. Inflation fell below three percent in June. ", "final": false, "audioProcessedMs": 15520}}
+{"dir": "s2c", "dt": 17.14, "msg": {"type": "speaker", "label": "A", "audioProcessedMs": 15520}}
+{"dir": "s2c", "dt": 17.14, "msg": {"type": "speechEnd", "audioProcessedMs": 15020, "turnId": 2}}
+{"dir": "s2c", "dt": 17.14, "msg": {"type": "speechComplete", "audioProcessedMs": 15020, "turnId": 2, "transcript": " Thanks. Inflation fell below three percent in June. "}}
+{"dir": "s2c", "dt": 17.165, "msg": {"type": "transcript", "transcript": "", "final": true, "audioProcessedMs": 15520}}
+{"dir": "net", "dt": 17.166, "kind": "closed", "code": 1000, "reason": "No more transcript segments"}

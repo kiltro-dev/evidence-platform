@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Atlas Live — newsroom</title>
+<link rel="icon" href="data:,">
+<style>
+  :root { --bg:#0f1420; --panel:#1a2233; --line:#2c3852; --txt:#e8ecf4; --mut:#9aa6bf;
+         --acc:#6cb2ff; --ok:#4cc38a; --bad:#e5636f; --warn:#e5a763; --na:#8a93a8; }
+  * { box-sizing:border-box; } body { margin:0; background:var(--bg); color:var(--txt);
+    font:16px/1.55 -apple-system,"Segoe UI",Roboto,sans-serif; }
+  :focus-visible { outline:2px solid var(--acc); outline-offset:2px; border-radius:4px; }
+  p, li, .claimtext, .card { overflow-wrap:anywhere; }
+  header { padding:18px 20px 6px; max-width:1200px; margin:auto;
+    display:flex; gap:12px; align-items:baseline; flex-wrap:wrap; }
+  header h1 { margin:0; font-size:22px; } header h1 span { color:var(--acc); }
+  header p { color:var(--mut); margin:0; font-size:14px; flex:1 1 220px; }
+  .lang { display:flex; gap:6px; }
+  .lang button { background:#0d1220; color:var(--mut); border:1px solid var(--line);
+    border-radius:16px; padding:4px 14px; font-size:13px; font-weight:700; cursor:pointer; }
+  .lang button.on { color:var(--acc); border-color:var(--acc); }
+  #conn { font-size:13px; font-weight:700; padding:2px 12px; border-radius:14px;
+    border:1px solid var(--line); color:var(--mut); }
+  #conn.live { color:var(--ok); border-color:var(--ok); }
+  #conn.down { color:var(--bad); border-color:var(--bad); }
+  main { max-width:1200px; margin:auto; padding:12px 20px 60px;
+    display:grid; grid-template-columns:1.2fr 1fr; gap:16px; align-items:start; }
+  @media(max-width:860px){ main{grid-template-columns:1fr;} }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:12px;
+    padding:14px 16px; margin:0 0 14px; min-width:0; }
+  .card h2 { margin:0 0 10px; font-size:16px; }
+  video { width:100%; border-radius:8px; background:#000; aspect-ratio:16/9; display:block; }
+  .vidnote { color:var(--mut); font-size:13px; margin:8px 0 0; }
+  #subs { min-height:64px; }
+  #subs .line { padding:6px 10px; border-left:3px solid var(--acc); background:#0d1220;
+    border-radius:0 8px 8px 0; margin:8px 0; font-size:15px; }
+  #subs .line .spk { color:var(--acc); font-weight:700; font-size:13px; display:block; }
+  #subs .empty { color:var(--mut); font-size:14px; }
+  .claim { border-left:3px solid var(--acc); }
+  .claim .claimtext { font-size:15px; margin:0 0 4px; }
+  .claim .resolved { font-size:13px; color:var(--mut); margin:0 0 6px; }
+  .claim .meta { font-size:12px; color:var(--mut); }
+  .badge { display:inline-block; font-size:12px; font-weight:800; padding:2px 12px;
+    border-radius:14px; margin-right:8px; vertical-align:middle; }
+  .st-escuchada { color:var(--acc); border:1px solid var(--acc); }
+  .st-investigando { color:var(--warn); border:1px solid var(--warn); }
+  .st-veredicto { color:var(--ok); border:1px solid var(--ok); }
+  #claims .empty { color:var(--mut); font-size:14px; }
+  .row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:10px; }
+  button.act { background:var(--acc); color:#0b1020; border:0; border-radius:8px;
+    padding:8px 18px; font-size:14px; font-weight:700; cursor:pointer; min-height:36px; }
+  button.ghost { background:#0d1220; color:var(--acc); border:1px solid var(--line);
+    border-radius:8px; padding:8px 16px; font-size:14px; font-weight:600; cursor:pointer;
+    min-height:36px; }
+  #status { font-size:13px; color:var(--mut); }
+  footer { max-width:1200px; margin:auto; padding:0 20px 30px; color:var(--mut); font-size:13px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Atlas <span>Live</span></h1>
+  <p data-es="Sala de redacción en vivo: afirmaciones verificables mientras se hablan."
+     data-en="Live newsroom: checkable claims as they are spoken.">Sala de redacción en vivo: afirmaciones verificables mientras se hablan.</p>
+  <span id="conn" role="status">…</span>
+  <div class="lang" role="group" aria-label="Language / Idioma">
+    <button id="langEs" class="on" type="button">ES</button>
+    <button id="langEn" type="button">EN</button>
+  </div>
+</header>
+<main>
+  <div>
+    <section class="card" aria-labelledby="videoH">
+      <h2 id="videoH" data-es="Señal en vivo" data-en="Live feed">Señal en vivo</h2>
+      <!-- M1c plugs the E2E player here (src set by the M1a stream). -->
+      <video id="player" controls playsinline preload="none"
+        aria-label="Live video"></video>
+      <p class="vidnote" data-es="M1b: el reproductor E2E se conecta en M1c."
+         data-en="M1b: the E2E player connects in M1c.">M1b: el reproductor E2E se conecta en M1c.</p>
+    </section>
+    <section class="card" aria-labelledby="subH">
+      <h2 id="subH" data-es="Subtítulos en vivo" data-en="Live subtitles">Subtítulos en vivo</h2>
+      <div id="subs"><p class="empty" data-es="Esperando transcripción…" data-en="Waiting for transcript…">Esperando transcripción…</p></div>
+    </section>
+    <section class="card" aria-labelledby="demoH">
+      <h2 id="demoH" data-es="Demo (transcripción grabada)" data-en="Demo (recorded transcript)">Demo (transcripción grabada)</h2>
+      <div class="row">
+        <button id="demoRun" class="act" type="button" data-es="Emitir demo" data-en="Play demo">Emitir demo</button>
+        <button id="demoClear" class="ghost" type="button" data-es="Limpiar" data-en="Clear">Limpiar</button>
+        <span id="status" role="status"></span>
+      </div>
+    </section>
+  </div>
+  <div>
+    <section class="card" aria-labelledby="claimsH">
+      <h2 id="claimsH" data-es="Afirmaciones" data-en="Claims">Afirmaciones</h2>
+      <div id="claims"><p class="empty" data-es="Sin afirmaciones todavía." data-en="No claims yet.">Sin afirmaciones todavía.</p></div>
+    </section>
+  </div>
+</main>
+<footer>
+  Atlas Live M1b · transcript.final → claim.detected → claim.state ·
+  <span id="lat"></span>
+</footer>
+<script>
+(function(){
+  "use strict";
+  var lang = "es";
+  var STR = {
+    es: { live:"EN VIVO", down:"DESCONECTADO", conn:"conectando…",
+      heard:"escuchada", inv:"investigando", verd:"veredicto",
+      res:"resuelta:", demoOf:"demo", turnOf:"turno" },
+    en: { live:"LIVE", down:"OFFLINE", conn:"connecting…",
+      heard:"heard", inv:"investigating", verd:"verdict",
+      res:"resolved:", demoOf:"demo", turnOf:"turn" }
+  };
+  var subsEl = document.getElementById("subs");
+  var claimsEl = document.getElementById("claims");
+  var connEl = document.getElementById("conn");
+  var statusEl = document.getElementById("status");
+  var latEl = document.getElementById("lat");
+  var cards = {};
+
+  function setLang(l){
+    lang = l;
+    document.documentElement.lang = l;
+    document.querySelectorAll("[data-es]").forEach(function(el){
+      el.textContent = el.dataset[l === "es" ? "es" : "en"];
+    });
+    document.getElementById("langEs").classList.toggle("on", l === "es");
+    document.getElementById("langEn").classList.toggle("on", l === "en");
+    Object.keys(cards).forEach(paintBadge);
+  }
+  document.getElementById("langEs").onclick = function(){ setLang("es"); };
+  document.getElementById("langEn").onclick = function(){ setLang("en"); };
+
+  function stateLabel(s){
+    if (s === "investigando") return STR[lang].inv;
+    if (s === "veredicto") return STR[lang].verd;
+    return STR[lang].heard;
+  }
+  function clearEmpty(el){ var e = el.querySelector(".empty"); if (e) e.remove(); }
+
+  function addSub(ev){
+    clearEmpty(subsEl);
+    var d = document.createElement("div");
+    d.className = "line";
+    var spk = document.createElement("span");
+    spk.className = "spk";
+    spk.textContent = (ev.speaker || "?") + " · " + fmtT(ev.t_start) + "–" + fmtT(ev.t_end);
+    var tx = document.createElement("span");
+    tx.textContent = ev.text || "";
+    d.appendChild(spk); d.appendChild(tx);
+    subsEl.appendChild(d);
+    while (subsEl.children.length > 6) subsEl.removeChild(subsEl.firstChild);
+  }
+  function fmtT(t){ return (typeof t === "number") ? t.toFixed(1) + "s" : "?"; }
+
+  function addClaim(ev){
+    clearEmpty(claimsEl);
+    var d = document.createElement("div");
+    d.className = "card claim";
+    var badge = document.createElement("span");
+    badge.className = "badge st-escuchada";
+    badge.textContent = stateLabel("escuchada");
+    var txt = document.createElement("p");
+    txt.className = "claimtext";
+    txt.textContent = ev.text || "";
+    d.appendChild(badge); d.appendChild(txt);
+    if (ev.resolved){
+      var r = document.createElement("p");
+      r.className = "resolved";
+      r.textContent = STR[lang].res + " " + ev.resolved;
+      d.appendChild(r);
+    }
+    var m = document.createElement("div");
+    m.className = "meta";
+    m.textContent = ev.claim_id + " · " + fmtT(ev.t_start) + "–" + fmtT(ev.t_end);
+    d.appendChild(m);
+    claimsEl.prepend(d);
+    cards[ev.claim_id] = { el: d, badge: badge, state: "escuchada" };
+  }
+  function paintBadge(id){
+    var c = cards[id]; if (!c) return;
+    c.badge.className = "badge st-" + c.state;
+    c.badge.textContent = stateLabel(c.state);
+  }
+  function setState(ev){
+    var c = cards[ev.claim_id]; if (!c) return;
+    c.state = ev.state || "escuchada";
+    paintBadge(ev.claim_id);
+  }
+
+  var wsProto = location.protocol === "https:" ? "wss:" : "ws:";
+  function connect(){
+    connEl.textContent = STR[lang].conn;
+    connEl.className = "";
+    var ws = new WebSocket(wsProto + "//" + location.host + "/ws");
+    ws.onopen = function(){ connEl.textContent = STR[lang].live; connEl.className = "live"; };
+    ws.onclose = function(){
+      connEl.textContent = STR[lang].down; connEl.className = "down";
+      setTimeout(connect, 2000);
+    };
+    ws.onmessage = function(msg){
+      var ev; try { ev = JSON.parse(msg.data); } catch(e){ return; }
+      if (ev.type === "transcript.final") addSub(ev);
+      else if (ev.type === "claim.detected") addClaim(ev);
+      else if (ev.type === "claim.state") setState(ev);
+    };
+  }
+  connect();
+
+  var DEMO = [
+    {turn: 1, speaker: "Anfitriona", text: "Buenas noches, bienvenidos al debate económico.", t_start: 0.0, t_end: 3.2},
+    {turn: 2, speaker: "Ministra", text: "España cerró el año con un crecimiento histórico.", t_start: 3.2, t_end: 7.1},
+    {turn: 3, speaker: "Ministra", text: "Su PIB creció un 5,2 por ciento en 2023.", t_start: 7.1, t_end: 11.0},
+    {turn: 4, speaker: "Ministra", text: "El desempleo bajó al 11,8 por ciento el mismo año.", t_start: 11.0, t_end: 15.4}
+  ];
+  document.getElementById("demoRun").onclick = function(){
+    statusEl.textContent = "…";
+    fetch("/run", {method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({transcript: DEMO})})
+      .then(function(r){ return r.json(); })
+      .then(function(j){
+        statusEl.textContent = (j.claims || 0) + " claims / " + (j.turns || 0) + " turns";
+        var l = (j.latency_ms || {});
+        latEl.textContent = "p50 " + Math.round(l.p50_ms || 0) + "ms · p95 " + Math.round(l.p95_ms || 0) + "ms";
+      })
+      .catch(function(){ statusEl.textContent = "error"; });
+  };
+  document.getElementById("demoClear").onclick = function(){
+    subsEl.innerHTML = ""; claimsEl.innerHTML = ""; cards = {}; latEl.textContent = "";
+  };
+})();
+</script>
+</body>
+</html>
