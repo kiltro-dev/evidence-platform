@@ -12,6 +12,7 @@ package carries only the path + sha256, never the snapshot bytes.
 from __future__ import annotations
 
 import re
+import urllib.parse
 from dataclasses import dataclass
 from typing import Any, Literal
 
@@ -19,6 +20,51 @@ SourceType = Literal["primary", "secondary"]
 Extractor = Literal["model", "code"]
 
 _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
+
+# Shared numbers[].unit vocabulary (M2c alignment, single source of truth).
+# Canonical units are the normalized targets of src/atlas/core/units.py
+# (normalize_unit); None means "no unambiguous unit marker". The M2b
+# researcher emits a subset (USD/percent/None today); the M2a verifier
+# re-extracts numbers from the quote and never trusts numbers[] blindly,
+# so the vocab keeps both sides forward-compatible without changing
+# verdicts. Anything outside the vocab is rejected at construction.
+UNIT_VOCAB = frozenset({
+    "USD", "EUR", "GBP", "JPY",
+    "percent", "pp", "count",
+    "m/s", "km/s",
+    "celsius", "fahrenheit", "kelvin",
+    "years",
+})
+
+# Hosts whose snapshots count as "primary" sources (M2c alignment,
+# single source of truth shared by swarm + verifier sides). Official
+# statistics APIs; everything else (incl. Wikipedia) is secondary.
+PRIMARY_HOSTS = (
+    "api.worldbank.org",
+    "data.worldbank.org",
+    "worldbank.org",
+    "fred.stlouisfed.org",
+    "ourworldindata.org",
+    "query.wikidata.org",
+    "wikidata.org",
+)
+
+
+def source_type_for_url(url: str) -> SourceType:
+    """Canonical primary/secondary criterion shared by M2a and M2b.
+
+    Primary = snapshot host is an official-statistics host (PRIMARY_HOSTS,
+    exact or subdomain). Secondary = everything else. Pure function of
+    the URL: producer (swarm) and consumer (store/verifier audit) agree
+    by construction.
+    """
+    try:
+        host = (urllib.parse.urlsplit(url).hostname or "").lower()
+    except ValueError:
+        return "secondary"
+    if any(host == h or host.endswith("." + h) for h in PRIMARY_HOSTS):
+        return "primary"
+    return "secondary"
 
 
 @dataclass(frozen=True)
@@ -28,6 +74,15 @@ class NumberMention:
     value: float
     unit: str | None = None
     scale_raw: str = ""
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.value, (int, float)):
+            raise ValueError("NumberMention.value must be a number")
+        if self.unit is not None and self.unit not in UNIT_VOCAB:
+            raise ValueError(
+                f"NumberMention.unit must be one of {sorted(UNIT_VOCAB)} or None")
+        if not isinstance(self.scale_raw, str):
+            raise ValueError("NumberMention.scale_raw must be a string")
 
 
 @dataclass(frozen=True)
@@ -115,11 +170,35 @@ class EvidencePackage:
         )
 
 
-def sha256_of_text(text: str) -> str:
-    """Hex digest of snapshot text (utf-8 bytes)."""
+def sha256_of_bytes(raw: bytes) -> str:
+    """Hex digest of the RAW snapshot bytes (M2c canonical sha256).
+
+    The snapshot hash is always over bytes as captured, never over
+    re-encoded text: identical bytes -> identical sha on every side
+    (fetch, store, verifier), including legacy non-UTF-8 charsets.
+    """
     import hashlib
 
-    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+    return hashlib.sha256(bytes(raw)).hexdigest()
 
 
-__all__ = ["EvidencePackage", "Extractor", "NumberMention", "SourceType", "sha256_of_text"]
+def sha256_of_text(text: str) -> str:
+    """Hex digest of snapshot text (utf-8 bytes).
+
+    Convenience for in-memory text fixtures; equals sha256_of_bytes
+    whenever the text is the UTF-8 decoding of the snapshot bytes.
+    """
+    return sha256_of_bytes(text.encode("utf-8"))
+
+
+__all__ = [
+    "EvidencePackage",
+    "Extractor",
+    "NumberMention",
+    "PRIMARY_HOSTS",
+    "UNIT_VOCAB",
+    "SourceType",
+    "sha256_of_bytes",
+    "sha256_of_text",
+    "source_type_for_url",
+]

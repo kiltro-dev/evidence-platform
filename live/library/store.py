@@ -19,7 +19,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from live.evidence.package import EvidencePackage, sha256_of_text
+from live.evidence.package import (
+    EvidencePackage,
+    sha256_of_bytes,
+    sha256_of_text,
+)
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS snapshots (
@@ -93,13 +97,25 @@ class EvidenceStore:
     def upsert_snapshot(self, url: str, text: str, source_type: str = "secondary",
                         captured_at: str | None = None) -> SnapshotRecord:
         """Store a snapshot once (dedupe by sha256); return its record."""
+        return self.upsert_snapshot_bytes(
+            url, text.encode("utf-8"), source_type, captured_at)
+
+    def upsert_snapshot_bytes(self, url: str, raw: bytes,
+                              source_type: str = "secondary",
+                              captured_at: str | None = None) -> SnapshotRecord:
+        """Store RAW snapshot bytes once (dedupe by sha256 of the bytes).
+
+        M2c canonical path: the digest is over bytes as captured, so it
+        matches the fetch-side sha even for legacy non-UTF-8 charsets.
+        Text fixtures keep working via upsert_snapshot (utf-8 encode).
+        """
         if not url or not url.strip():
             raise ValueError("url must be non-empty")
-        if not text or not text.strip():
-            raise ValueError("text must be non-empty")
+        if not raw or not bytes(raw).strip():
+            raise ValueError("snapshot bytes must be non-empty")
         if source_type not in ("primary", "secondary"):
             raise ValueError("source_type must be 'primary' or 'secondary'")
-        digest = sha256_of_text(text)
+        digest = sha256_of_bytes(bytes(raw))
         row = self._conn.execute(
             "SELECT sha256, url, source_type, captured_at, path FROM snapshots WHERE sha256 = ?",
             (digest,),
@@ -109,7 +125,8 @@ class EvidenceStore:
                                   row["captured_at"], row["path"])
         captured_at = captured_at or _utcnow_iso()
         path = str(self.snapshot_dir / f"{digest}.txt")
-        Path(path).write_text(text, encoding="utf-8")
+        Path(path).write_bytes(bytes(raw))
+        text = bytes(raw).decode("utf-8", "replace")  # FTS index text
         self._conn.execute(
             "INSERT INTO snapshots (sha256, url, source_type, captured_at, path)"
             " VALUES (?, ?, ?, ?, ?)",
@@ -122,6 +139,16 @@ class EvidenceStore:
         self._conn.commit()
         return SnapshotRecord(digest, url, source_type, captured_at, path)
 
+    def get_snapshot_bytes(self, sha256: str) -> bytes | None:
+        """Raw snapshot bytes by sha (None when unknown/missing)."""
+        row = self._conn.execute(
+            "SELECT path FROM snapshots WHERE sha256 = ?", (sha256,)
+        ).fetchone()
+        if row is None:
+            return None
+        p = Path(row["path"])
+        return p.read_bytes() if p.exists() else None
+
     def get_snapshot_text(self, sha256: str) -> str | None:
         row = self._conn.execute(
             "SELECT path FROM snapshots WHERE sha256 = ?", (sha256,)
@@ -129,7 +156,12 @@ class EvidenceStore:
         if row is None:
             return None
         p = Path(row["path"])
-        return p.read_text(encoding="utf-8") if p.exists() else None
+        if not p.exists():
+            return None
+        try:
+            return p.read_text(encoding="utf-8")
+        except UnicodeDecodeError:  # legacy-charset bytes: never crash
+            return p.read_bytes().decode("utf-8", "replace")
 
     def search(self, query: str, limit: int = 5) -> list[SnapshotRecord]:
         """Rank snapshots by BM25 (best first)."""

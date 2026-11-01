@@ -27,7 +27,11 @@ import re
 from dataclasses import dataclass, field
 from typing import Any, Callable, Literal
 
-from live.evidence.package import EvidencePackage, sha256_of_text
+from live.evidence.package import (
+    EvidencePackage,
+    sha256_of_bytes,
+    sha256_of_text,
+)
 
 # Atlas core (deterministic). ``src.`` prefix when the repo root is on
 # sys.path (live convention, see live/run_live.py); plain ``atlas``
@@ -91,7 +95,28 @@ class Verdict:
         }
 
 
-SnapshotLoader = Callable[[EvidencePackage], str | None]
+SnapshotLoader = Callable[[EvidencePackage], str | bytes | None]
+
+
+def _snapshot_candidates(snapshot: str | bytes) -> list[str]:
+    """Decoded texts to search the quote in (M2c bytes-aware loading).
+
+    str snapshots pass through unchanged (all pre-M2c callers). bytes
+    are the RAW captured bytes: UTF-8 decoding first, latin-1 as the
+    legacy-charset fallback (a latin-1 quote such as "café" survives
+    only in the second candidate).
+    """
+    if isinstance(snapshot, str):
+        return [snapshot]
+    raw = bytes(snapshot)
+    out = [raw.decode("utf-8", "replace")]
+    try:
+        latin = raw.decode("latin-1")
+    except Exception:
+        latin = ""
+    if latin and latin != out[0]:
+        out.append(latin)
+    return out
 
 
 def _check_package(pkg: EvidencePackage, claim: ClaimInput,
@@ -109,16 +134,26 @@ def _check_package(pkg: EvidencePackage, claim: ClaimInput,
         return None, "snapshot_unreadable", {}
     if not snapshot:
         return None, "snapshot_missing", {}
-    if sha256_of_text(snapshot) != pkg.sha256:
-        return None, "snapshot_hash_mismatch", {}
+    if isinstance(snapshot, (bytes, bytearray)):
+        # M2c canonical: hash over RAW bytes (matches fetch-side sha on
+        # every charset); quote search over decoded candidates.
+        if sha256_of_bytes(bytes(snapshot)) != pkg.sha256:
+            return None, "snapshot_hash_mismatch", {}
+        candidates = _snapshot_candidates(snapshot)
+    else:
+        if sha256_of_text(snapshot) != pkg.sha256:
+            return None, "snapshot_hash_mismatch", {}
+        candidates = [snapshot]
     # 1) quote must appear literally (whitespace-normalized).
-    norm_snap, norm_quote = normalize_ws(snapshot), normalize_ws(pkg.quote)
-    if not norm_quote or norm_quote not in norm_snap:
+    norm_quote = normalize_ws(pkg.quote)
+    if not norm_quote or not any(
+            norm_quote in normalize_ws(text) for text in candidates):
         return None, "quote_not_found", {}
+    snapshot_text = candidates[0]
     detail: dict[str, Any] = {}
     start, end = pkg.offsets
-    if 0 <= start < end <= len(snapshot):
-        if normalize_ws(snapshot[start:end]) != norm_quote:
+    if 0 <= start < end <= len(snapshot_text):
+        if normalize_ws(snapshot_text[start:end]) != norm_quote:
             detail["offsets_inconsistent"] = True
     # 2) re-extract numbers from the quote (never trust numbers[] blindly).
     cands = [q for q in parse_quantities(pkg.quote, label="quote")

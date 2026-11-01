@@ -69,7 +69,9 @@ _SCRIPT_STYLE_RE = re.compile(
     r"<(script|style)\b.*?</\1\s*>", re.IGNORECASE | re.DOTALL)
 _WS_RE = re.compile(r"\s+")
 
-# Hosts whose snapshots count as M2a "primary" sources.
+# Fallback mirror of live.evidence.package.PRIMARY_HOSTS (M2c: the package
+# module is the single source of truth; source_type_for_url() below
+# delegates to it whenever M2a is importable).
 _PRIMARY_HOSTS = (
     "api.worldbank.org",
     "data.worldbank.org",
@@ -321,6 +323,10 @@ def numbers_from_quote(quote: str) -> list[dict]:
     ``value`` is the full float (scale words applied), ``unit`` is set
     only for unambiguous markers ($/USD/percent), ``scale_raw`` keeps
     the raw scale word ("" when the digits stand alone).
+
+    M2c: emitted units are guarded to the shared UNIT_VOCAB subset
+    (USD/percent/None); anything outside degrades to None rather than
+    shipping a unit M2a would reject.
     """
     out: list[dict] = []
     for match in _NUMBER_RE.finditer(quote or ""):
@@ -343,6 +349,8 @@ def numbers_from_quote(quote: str) -> list[dict]:
             r"\bpercent\b", quote, re.IGNORECASE
         ):
             unit = "percent"
+        if unit not in ("USD", "percent", None):  # M2c: shared-vocab guard
+            unit = None
         out.append({"value": value, "unit": unit, "scale_raw": scale_raw})
     # de-dup, keep order, cap at a sane bound
     seen: set[str] = set()
@@ -351,7 +359,20 @@ def numbers_from_quote(quote: str) -> list[dict]:
 
 
 def source_type_for_url(url: str) -> str:
-    """M2a source_type: official statistics hosts are primary."""
+    """M2a source_type: official statistics hosts are primary.
+
+    M2c: delegates to the canonical live.evidence.package criterion so
+    producer and consumer agree by construction; the local table below
+    is only a standalone fallback (same values).
+    """
+    shared = _try_import("live.evidence.package", "source_type_for_url")
+    if callable(shared):
+        try:
+            typed = shared(url)
+            if typed in ("primary", "secondary"):
+                return typed
+        except Exception:
+            pass
     try:
         host = (urllib.parse.urlsplit(url).hostname or "").lower()
     except ValueError:
