@@ -1,10 +1,20 @@
-# Evidence Atlas — ShipCheck sidecar
+# Evidence Atlas — the truth layer for the agent era
 
 Paste AI-generated text, get a verdict per claim: Evidence Atlas splits
 it into atomic claims, structures each one, retrieves real evidence,
 runs deterministic checks, tries to disprove its own draft against the
 live web, and shows exactly what is evidence, what is interpretation,
 and what remains uncertain.
+
+V3: a Muse agent that uses Atlas as a tool **ships fewer bad figures**
+(8 → 2 contradicted in a live re-run, [$0.04](docs/AGENT_LOOP.md)) —
+PDFs, chart images and video frames enter with page/region/timestamp
+provenance ([docs/INGEST.md](docs/INGEST.md)), sources cover 6/12 → 12/12
+probe claims ([docs/CONNECTORS.md](docs/CONNECTORS.md)), and the open
+HALLUBENCH-NUM ablation measures Muse-judge vs Muse+Atlas honestly
+(20/24 vs 21/24, overlapping Wilson intervals —
+[docs/HALLUBENCH.md](docs/HALLUBENCH.md)). Audio input is NOT supported
+(the API silently drops it — verified, not assumed).
 
 Built for the **Meta Global AI Developer Hackathon 2026** (Indie track).
 See [docs/HACKATHON.md](docs/HACKATHON.md) for the verified rules and deadlines.
@@ -82,7 +92,14 @@ government.` → not assessable (opinion).
 
 ![Demo batch: roll-up 1 supported / 1 partial / 1 contradicted with a precision-capped receipt](docs/demo-batch.png)
 
+Judge mode replays real recorded runs instantly at $0 (green banner);
+flip to Live to analyze your own text:
+
+![Judge mode: cached batch replay with $0 instant receipts](docs/judge-batch.png)
+
 Full script: [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md).
+
+> Demo notice: pasted text is sent to Meta's Model API (Standard no-training tier); don't paste sensitive data.
 
 ## Stack
 
@@ -153,9 +170,9 @@ UI at `/`. Full reference: [docs/API.md](docs/API.md).
 ## Tests & evaluation
 
 ```bash
-.venv/bin/python -m pytest tests/unit tests/e2e -q        # offline gate (640 tests)
+.venv/bin/python -m pytest tests/unit tests/e2e -q        # offline gate (755 tests)
 .venv/bin/python -m pytest tests/integration -q -m live   # live sources (needs network)
-cd tests/e2e-browser && npm ci && npm run install-browser-shell && npm test  # 5 browser specs, degraded
+cd tests/e2e-browser && npm ci && npm run install-browser-shell && npm test  # 6 browser specs, degraded
 PYTHONPATH=src .venv/bin/python scripts/run_eval.py --mode degraded  # 11 scripted cases, offline
 PYTHONPATH=src .venv/bin/python scripts/run_eval.py --mode full      # all 43 cases, needs network + key
 PYTHONPATH=src .venv/bin/python scripts/run_eval.py --paraphrase     # 36-input stability probe, offline
@@ -164,14 +181,14 @@ bash scripts/smoke.sh --port 8765                           # offline smoke (32 
 bash scripts/smoke.sh --port 8765 --live --eval              # + live API + full eval
 ```
 
-- `tests/unit tests/e2e` is the offline gate: **640 tests, all green**,
+- `tests/unit tests/e2e` is the offline gate: **755 tests, all green**,
   no network, no key (pytest 9). No `PYTHONPATH` needed: the test
   modules self-insert `src/` on `sys.path`. Direct scripts
   (`scripts/run_eval.py`, `repro_findings.py`, `uvicorn`) DO need
   `PYTHONPATH=src`.
-- `tests/e2e-browser` is the browser gate: 5 Playwright specs drive the
+- `tests/e2e-browser` is the browser gate: 6 Playwright specs drive the
   real UI in degraded mode (a11y contract, abort paths, journeys,
-  render fidelity, UI units) — see
+  render fidelity, UI units, judge mode) — see
   [tests/e2e-browser/README.md](tests/e2e-browser/README.md).
 - `-m live` selects the `live` pytest marker (registered in
   `pyproject.toml`): tests that hit real public APIs.
@@ -179,7 +196,7 @@ bash scripts/smoke.sh --port 8765 --live --eval              # + live API + full
   cases and skips the 32 `live` ones; `--mode full` runs everything but
   needs network and takes many minutes (live source latency plus up to
   5 model calls per case, incl. the token-hungry web pass).
-- Current results: **640/640 offline, 43/43 full-mode eval with real
+- Current results: **755/755 offline, 43/43 full-mode eval with real
   muse-spark-1.3, 11/11 degraded eval, 36/36 paraphrase agreement** —
   see [docs/EVAL_REPORT.md](docs/EVAL_REPORT.md) for the pinned run.
   What these numbers do and do not prove is stated there honestly:

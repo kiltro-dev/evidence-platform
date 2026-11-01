@@ -225,3 +225,20 @@ Persistent record for the autonomous build. Latest entry last.
   batch-UI + store + client re-audited clean, README cites 43/43.
 - Verified: 640/640 offline, repro 55/0, full 43/43, smoke live
   49/0, degraded 11/11, paraphrase 36/36, abstention 17/20.
+
+## 2026-11-01 — V3 OPERACIÓN PRIMER LUGAR (olas 1+2, 7 builders)
+
+- Spike (6 sondas, ~$0.95): tools/structured/caching/paralelo/
+  grounding/long-ctx(219k)/Standard-stay GO; audio NO-GO, video solo
+  frames. Plan ajustado en consecuencia.
+- A agent loop (18t): 4→0 y 8→2 contradicted (2 runs live, ~$0.07).
+  B ingest pdf/img/frames (24t, $0.02). C swarm+long-doc (23t, $0.19).
+  D FRED/OWID/Wikidata (23t, cobertura 6/12→12/12, $0). E hallubench
+  24 casos + ablación 20/24 vs 21/24 Wilson solapados ($1.80). F MCP
+  3 tools + transcript ($0). G judge $0 + SSE-UI + disclosure ($0.78).
+- Juez halló bug real vía E-hb_f06: modelo renormalizaba "3,071%"→
+  3.071. Fix generalizado (renormalization reset) + tests + live 5/5
+  abstención determinista. Run-1 preservado, run-2 documentado.
+- H: README V3 + judge-batch.png + DEMO_SCRIPT extensión (4 beats).
+- Verified: 755/755 offline, repro 55/0, browser 6/6, full10 re-run
+  post-fix (below). Spend V3 ≈ $3.85 acumulado (saldo ~$111).

@@ -147,12 +147,14 @@ legitimately flip it back to `supported`.
 
 ## Test suites (pytest)
 
-- `tests/unit` + `tests/e2e` — 640 tests, offline: units, comparison,
+- `tests/unit` + `tests/e2e` — 755 tests, offline: units, comparison,
   stance rules (incl. 47-cell `decide_stance` truth-table sweep),
   verification edge cases, i18n, API errors, store, provider/fallback
   behavior, falsification (main + web, mocked), abstract stance, span
   recovery, usage attribution, claim splitting + batch roll-up,
   partial-coverage caveats, scripted LLM + stub connectors (model/code
-  actor split, conclusion traceability). The offline gate.
+  actor split, conclusion traceability), V3 agent loop, multimodal
+  ingest (pdf/image/frames), swarm roles, extra connectors, MCP tools,
+  hallubench dataset. The offline gate.
 - `tests/integration -m live` — tests against real APIs (not in the
   offline gate; fail on network/source breakage, honestly labeled).

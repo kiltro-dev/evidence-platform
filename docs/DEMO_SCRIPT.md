@@ -105,7 +105,7 @@ with links, caveats, versions."
 
 "Real sources with links you can open. Deterministic checks the model
 can't skip. A system that hunts counter-evidence against itself — then
-shows its work. 640 offline tests, 43 pinned eval cases plus
+shows its work. 755 offline tests, 43 pinned eval cases plus
 paraphrase, abstention, and decision-table probes. Evidence Atlas:
 verify before it ships."
 
@@ -120,3 +120,24 @@ verify before it ships."
 - Record the golden path on video regardless: the submission IS video.
 - Kill-switch honesty: `ATLAS_WEB_FALSIFY=0` disables the live-web pass
   (audit says `web=disabled`); the batch still verifies everything else.
+
+## V3 extension (agent loop, breadth, ablation — all runnable)
+
+After the core 3 minutes, if time allows (each beat verified live
+2026-11-01; costs at Standard $1.25/$4.25 per 1M):
+
+1. **Agent self-correction (A):** `PYTHONPATH=src .venv/bin/python
+   eval/agent_demo.py` — a Muse agent drafts 9 figures, calls Atlas as
+   a tool, rewrites. Measured: 8 → 2 contradicted figures, ~$0.04.
+   (First run: 4 → 0. Drafts vary; the direction holds.)
+2. **Source breadth (D):** `PYTHONPATH=src .venv/bin/python
+   eval/coverage_probe.py` — 12 probe claims: 6/12 with World Bank
+   alone → **12/12** with FRED + Our World in Data + Wikidata, $0.00.
+3. **Ablation replay (E, $0):** `PYTHONPATH=src:eval/hallubench
+   .venv/bin/python eval/hallubench/run_ablation.py --fixtures` —
+   HALLUBENCH-NUM recorded run: Muse-judge 20/24 vs Muse+Atlas 21/24
+   (Wilson intervals overlap — honest null on accuracy, different
+   error profiles; retrieval fixes all 4 stale-memory misses).
+4. **Judge mode (G):** in the UI, keep the Judge/Live toggle on Judge
+   and click any example — real recorded runs replay instantly at $0
+   (green "Cached demo run" banner). Flip to Live for your own text.

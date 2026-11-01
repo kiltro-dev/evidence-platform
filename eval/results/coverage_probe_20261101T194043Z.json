@@ -1,0 +1,186 @@
+{
+  "ts": "2026-11-01T19:40:43.400846+00:00",
+  "claims": 12,
+  "before": {
+    "covered": 6,
+    "requests": 8,
+    "rows": [
+      {
+        "id": "wb_gdp_usa",
+        "n_evidence": 1,
+        "n_accepted": 1,
+        "covered": true,
+        "errors": []
+      },
+      {
+        "id": "wb_unemp_deu",
+        "n_evidence": 1,
+        "n_accepted": 1,
+        "covered": true,
+        "errors": []
+      },
+      {
+        "id": "wb_pop_jpn",
+        "n_evidence": 1,
+        "n_accepted": 1,
+        "covered": true,
+        "errors": []
+      },
+      {
+        "id": "wb_infl_bra",
+        "n_evidence": 1,
+        "n_accepted": 1,
+        "covered": true,
+        "errors": []
+      },
+      {
+        "id": "wb_le_fra",
+        "n_evidence": 1,
+        "n_accepted": 1,
+        "covered": true,
+        "errors": []
+      },
+      {
+        "id": "wb_gdpgrowth_chn",
+        "n_evidence": 1,
+        "n_accepted": 1,
+        "covered": true,
+        "errors": []
+      },
+      {
+        "id": "fred_unrate_monthly",
+        "n_evidence": 1,
+        "n_accepted": 0,
+        "covered": false,
+        "errors": []
+      },
+      {
+        "id": "fred_fedfunds",
+        "n_evidence": 0,
+        "n_accepted": 0,
+        "covered": false,
+        "errors": []
+      },
+      {
+        "id": "fred_payems",
+        "n_evidence": 0,
+        "n_accepted": 0,
+        "covered": false,
+        "errors": []
+      },
+      {
+        "id": "owid_co2_world",
+        "n_evidence": 0,
+        "n_accepted": 0,
+        "covered": false,
+        "errors": []
+      },
+      {
+        "id": "wd_capital_aus",
+        "n_evidence": 0,
+        "n_accepted": 0,
+        "covered": false,
+        "errors": []
+      },
+      {
+        "id": "wd_area_bra",
+        "n_evidence": 0,
+        "n_accepted": 0,
+        "covered": false,
+        "errors": []
+      }
+    ]
+  },
+  "after": {
+    "covered": 12,
+    "requests": 21,
+    "rows": [
+      {
+        "id": "wb_gdp_usa",
+        "n_evidence": 1,
+        "n_accepted": 1,
+        "covered": true,
+        "errors": []
+      },
+      {
+        "id": "wb_unemp_deu",
+        "n_evidence": 1,
+        "n_accepted": 1,
+        "covered": true,
+        "errors": []
+      },
+      {
+        "id": "wb_pop_jpn",
+        "n_evidence": 2,
+        "n_accepted": 1,
+        "covered": true,
+        "errors": []
+      },
+      {
+        "id": "wb_infl_bra",
+        "n_evidence": 1,
+        "n_accepted": 1,
+        "covered": true,
+        "errors": []
+      },
+      {
+        "id": "wb_le_fra",
+        "n_evidence": 2,
+        "n_accepted": 1,
+        "covered": true,
+        "errors": []
+      },
+      {
+        "id": "wb_gdpgrowth_chn",
+        "n_evidence": 1,
+        "n_accepted": 1,
+        "covered": true,
+        "errors": []
+      },
+      {
+        "id": "fred_unrate_monthly",
+        "n_evidence": 2,
+        "n_accepted": 1,
+        "covered": true,
+        "errors": []
+      },
+      {
+        "id": "fred_fedfunds",
+        "n_evidence": 1,
+        "n_accepted": 1,
+        "covered": true,
+        "errors": []
+      },
+      {
+        "id": "fred_payems",
+        "n_evidence": 1,
+        "n_accepted": 1,
+        "covered": true,
+        "errors": []
+      },
+      {
+        "id": "owid_co2_world",
+        "n_evidence": 1,
+        "n_accepted": 1,
+        "covered": true,
+        "errors": []
+      },
+      {
+        "id": "wd_capital_aus",
+        "n_evidence": 2,
+        "n_accepted": 2,
+        "covered": true,
+        "errors": []
+      },
+      {
+        "id": "wd_area_bra",
+        "n_evidence": 1,
+        "n_accepted": 1,
+        "covered": true,
+        "errors": []
+      }
+    ]
+  },
+  "usd_cost": 0.0,
+  "elapsed_s": 13.9
+}

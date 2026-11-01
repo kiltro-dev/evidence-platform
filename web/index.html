@@ -186,6 +186,14 @@
   .batcherr { border-left-color:var(--bad); }
   .b-err { background:#3a1420; color:var(--bad); }
   .errcount { color:var(--warn); font-weight:700; }
+  /* --- Judge mode (G-frontend): disclosure, cached banner, SSE progress --- */
+  #demoNotice { font-size:13px; }
+  .cachedbar { border:1px solid var(--ok); background:#0e1f17; border-radius:8px;
+    padding:8px 14px; margin:0 0 12px; font-size:14px; }
+  #batchClaims { list-style:none; padding:0; margin:8px 0; display:flex; gap:8px;
+    flex-wrap:wrap; }
+  #batchClaims li { border:1px solid var(--line); border-radius:16px; padding:2px 12px;
+    font-size:13px; background:#0d1220; }
 </style>
 </head>
 <body>
@@ -195,6 +203,7 @@
   <p>Traceable claim analysis: structuring, real sources, deterministic checks.
   Every conclusion links to its evidence. An analysis aid, not an arbiter of truth.</p>
   <div id="modeBanner" class="banner" role="status">Checking service status…</div>
+  <div id="demoNotice" class="banner warn">Demo notice: pasted text is sent to Meta's Model API (Standard no-training tier); don't paste sensitive data.</div>
   <details id="apiKeyBox" class="small mut" style="margin-top:8px">
     <summary>Server access (only if this server requires an API key)</summary>
     <p style="margin:6px 0">
@@ -217,6 +226,11 @@
 <main id="main" tabindex="-1" style="outline:none">
   <section class="card" aria-labelledby="inputH">
     <h2 id="inputH">Check a claim</h2>
+    <div class="modetoggle" role="radiogroup" aria-label="Demo mode">
+      <label><input type="radio" name="demomode" value="judge" checked> Judge (cached, $0)</label>
+      <label><input type="radio" name="demomode" value="live"> Live (real analysis)</label>
+    </div>
+    <p id="demoModeHint" class="mut small" style="margin:0 0 10px"></p>
     <div class="modetoggle" role="radiogroup" aria-label="Check mode">
       <label><input type="radio" name="mode" value="single" checked> Single claim</label>
       <label><input type="radio" name="mode" value="batch"> Check AI output</label>
@@ -318,6 +332,3537 @@
   Deterministic checks always run in code and cannot be skipped by the model.
   <span id="footReport"></span>
 </footer>
+<!-- Judge-mode caches: REAL live runs, byte-identical to
+     eval/results/judge_cache/*.json (injected at build; see docs/JUDGE_MODE.md).
+     #judge-sN wrap /api/analyze reports, #judge-bN wrap /api/check bodies. -->
+<script type="application/json" id="judge-s0">
+{
+ "judge_cache_version": 1,
+ "source_text": "The GDP of the United States was $27.36 trillion in 2023.",
+ "endpoint": "/api/analyze",
+ "request": {
+  "limit": 5,
+  "domain": "auto",
+  "persist": false
+ },
+ "generated_at": "2026-11-01T19:29:44Z",
+ "model": "muse-spark-1.3",
+ "report": {
+  "report_id": "rep_b5fefd3f04ae",
+  "claim": {
+   "claim_id": "clm_d14475489014",
+   "raw_text": "The GDP of the United States was $27.36 trillion in 2023.",
+   "domain": "economy",
+   "claim_type": "quantitative",
+   "subject": "United States GDP in 2023",
+   "indicator": "GDP",
+   "entities": [
+    "United States"
+   ],
+   "quantities": [
+    {
+     "label": "GDP",
+     "raw_text": "$27.36 trillion",
+     "value": 27360000000000.0,
+     "unit": "USD",
+     "normalized_value": 27360000000000.0,
+     "normalized_unit": "USD"
+    }
+   ],
+   "time_refs": [
+    {
+     "raw": "2023",
+     "year": 2023,
+     "start_year": null,
+     "end_year": null,
+     "period_type": "year"
+    }
+   ],
+   "geo_refs": [
+    {
+     "raw": "United States",
+     "name": "United States",
+     "iso3": "USA"
+    }
+   ],
+   "conditions": [],
+   "context_notes": "",
+   "extraction_actor": "model",
+   "extraction_model": "meta-model-api"
+  },
+  "evidences": [
+   {
+    "evidence_id": "ev_14adaab92f92",
+    "claim_id": "clm_d14475489014",
+    "connector": "worldbank",
+    "source_name": "World Bank Open Data",
+    "source_url": "https://data.worldbank.org/indicator/NY.GDP.MKTP.CD?locations=USA",
+    "source_kind": "secondary",
+    "evidence_kind": "direct",
+    "locator": "NY.GDP.MKTP.CD USA 2023",
+    "excerpt": "GDP (current US$) for United States in 2023: 27811517000000",
+    "payload": {
+     "indicator": "NY.GDP.MKTP.CD",
+     "label": "GDP (current US$)",
+     "unit": "USD",
+     "iso3": "USA",
+     "year": "2023",
+     "value": 27811517000000,
+     "query": "NY.GDP.MKTP.CD USA 2023:2023",
+     "source_vintage": "2026-10-08",
+     "obs_status": "",
+     "source_decimal": 0
+    },
+    "retrieved_at": "2026-11-01T19:29:53.664217Z"
+   }
+  ],
+  "comparisons": [
+   {
+    "comparison_id": "cmp_b4f39ccb1966",
+    "claim_id": "clm_d14475489014",
+    "evidence_id": "ev_14adaab92f92",
+    "actor": "code",
+    "model": null,
+    "metric": "time_compatibility",
+    "claim_value": "2023",
+    "evidence_value": "2023",
+    "unit": null,
+    "abs_diff": null,
+    "rel_diff_pct": null,
+    "tolerance_rule": "calendar-year overlap required",
+    "within_tolerance": true,
+    "verdict": "consistent",
+    "notes": "Claim and evidence refer to overlapping periods."
+   },
+   {
+    "comparison_id": "cmp_d2316e6e41fe",
+    "claim_id": "clm_d14475489014",
+    "evidence_id": "ev_14adaab92f92",
+    "actor": "code",
+    "model": null,
+    "metric": "GDP (current US$)",
+    "claim_value": "$27.36 trillion [USD]",
+    "evidence_value": "GDP (current US$) for United States in 2023: 27811517000000",
+    "unit": "USD",
+    "abs_diff": 451517000000.0,
+    "rel_diff_pct": 1.6234892904259772,
+    "tolerance_rule": "|claim-evidence|/|evidence| <= 0.02 (relative)",
+    "within_tolerance": true,
+    "verdict": "consistent",
+    "notes": "Values agree within tolerance. Claimed-precision check: the claim as written implies resolution ~1e+10 [USD], but the measured gap is 4.51517e+11; the agreement is coarser than the claimed precision. Materiality note: the absolute gap of 4.51517e+11 [USD] exceeds the 1e+11 disclosure threshold even though the values agree in relative terms. Price-basis check: evidence is in current prices but the claim names no price basis (current/constant/real/nominal/PPP); the comparison assumes current prices."
+   },
+   {
+    "comparison_id": "cmp_33b9c7f844ec",
+    "claim_id": "clm_d14475489014",
+    "evidence_id": null,
+    "actor": "model",
+    "model": "meta-model-api",
+    "metric": "falsification_review",
+    "claim_value": "cmp_b4f39ccb1966",
+    "evidence_value": "",
+    "unit": null,
+    "abs_diff": null,
+    "rel_diff_pct": null,
+    "tolerance_rule": "",
+    "within_tolerance": null,
+    "verdict": "inconclusive",
+    "notes": "[non_verifying_overclaim/fatal/high] Claim is pinned to 2023 annual GDP, but notes justify time_compatibility as only 'overlapping periods'. Overlap does not establish same-year match, so verdict 'consistent' overstates what was verified."
+   },
+   {
+    "comparison_id": "cmp_40bbcc13d40f",
+    "claim_id": "clm_d14475489014",
+    "evidence_id": null,
+    "actor": "model",
+    "model": "meta-model-api",
+    "metric": "falsification_review",
+    "claim_value": "cmp_d2316e6e41fe",
+    "evidence_value": "",
+    "unit": null,
+    "abs_diff": null,
+    "rel_diff_pct": null,
+    "tolerance_rule": "",
+    "within_tolerance": null,
+    "verdict": "inconclusive",
+    "notes": "[non_verifying_overclaim/fatal/high] Notes admit the claim names no price basis while evidence is in current prices and the comparison assumes current prices. Verdict 'consistent' therefore rests on an unchecked assumption that is itself listed as a major uncertainty."
+   },
+   {
+    "comparison_id": "cmp_4e4cfde070bf",
+    "claim_id": "clm_d14475489014",
+    "evidence_id": null,
+    "actor": "model",
+    "model": "meta-responses-web-search",
+    "metric": "web_counter_evidence",
+    "claim_value": "https://bea.gov/news/2024/gross-domestic-product-fourth-quarter-and-year-2023-second-estimate",
+    "evidence_value": "- `Current-dollar GDP increased 6.3 percent, or $1.61 trillion, in 2023 to a level of $27.36 trillion`",
+    "unit": null,
+    "abs_diff": null,
+    "rel_diff_pct": null,
+    "tolerance_rule": "",
+    "within_tolerance": null,
+    "verdict": "inconclusive",
+    "notes": "[bea.gov] - `Current-dollar GDP increased 6.3 percent, or $1.61 trillion, in 2023 to a level of $27.36 trillion` \u2014 https://bea.gov/news/2024/gross-domestic-product-fourth-quarter-and-year-2023-second-estimate (model-reported quote; page not fetched by code)"
+   },
+   {
+    "comparison_id": "cmp_38e6184b3ded",
+    "claim_id": "clm_d14475489014",
+    "evidence_id": null,
+    "actor": "model",
+    "model": "meta-responses-web-search",
+    "metric": "web_counter_evidence",
+    "claim_value": "https://whatisgdp.com/us-gdp-data",
+    "evidence_value": "- `US nominal GDP was $27,825.9 billion in 2023 and $30,861.3 billion in 2025, from BEA NIPA Table 1.1.5 after the 2026 annual update.`",
+    "unit": null,
+    "abs_diff": null,
+    "rel_diff_pct": null,
+    "tolerance_rule": "",
+    "within_tolerance": null,
+    "verdict": "inconclusive",
+    "notes": "[whatisgdp.com] - `US nominal GDP was $27,825.9 billion in 2023 and $30,861.3 billion in 2025, from BEA NIPA Table 1.1.5 after the 2026 annual update.` \u2014 https://whatisgdp.com/us-gdp-data (model-reported quote; page not fetched by code)"
+   }
+  ],
+  "uncertainties": [
+   {
+    "code": "claimed_precision_exceeded",
+    "description": "Claim quantity $27.36 trillion implies resolution ~1e+10 [USD] but differs from evidence by 4.51517e+11; stance capped at partially_supported.",
+    "severity": "major",
+    "related_ids": [
+     "cmp_d2316e6e41fe"
+    ]
+   },
+   {
+    "code": "material_absolute_gap",
+    "description": "Absolute gap 4.51517e+11 [USD] on GDP (current US$) exceeds the 1e+11 materiality threshold; reported for disclosure, verdict unchanged.",
+    "severity": "minor",
+    "related_ids": [
+     "cmp_d2316e6e41fe"
+    ]
+   },
+   {
+    "code": "indicator_definition_assumed",
+    "description": "World Bank indicator 'GDP (current US$)' was matched by keyword; its definition is assumed to match the claim's intent without checking methodology notes.",
+    "severity": "minor",
+    "related_ids": [
+     "cmp_d2316e6e41fe"
+    ]
+   },
+   {
+    "code": "price_basis_unchecked",
+    "description": "Evidence 'GDP (current US$)' is in current prices but the claim states no price basis; compared as current prices (unchecked assumption).",
+    "severity": "major",
+    "related_ids": [
+     "cmp_d2316e6e41fe"
+    ]
+   },
+   {
+    "code": "source_revision_risk",
+    "description": "World Bank historical values are revised over time; today's match may not hold against past or future vintages.",
+    "severity": "minor",
+    "related_ids": [
+     "cmp_d2316e6e41fe"
+    ]
+   },
+   {
+    "code": "falsification_flag",
+    "description": "Self-review fatal flag on [cmp_b4f39ccb1966] (non_verifying_overclaim): Claim is pinned to 2023 annual GDP, but notes justify time_compatibility as only 'overlapping periods'. Overlap does not establish same-year match, so verdict 'consistent' overstates what was verified.",
+    "severity": "major",
+    "related_ids": [
+     "cmp_b4f39ccb1966"
+    ]
+   },
+   {
+    "code": "falsification_flag",
+    "description": "Self-review fatal flag on [cmp_d2316e6e41fe] (non_verifying_overclaim): Notes admit the claim names no price basis while evidence is in current prices and the comparison assumes current prices. Verdict 'consistent' therefore rests on an unchecked assumption that is itself listed as a major uncertainty.",
+    "severity": "major",
+    "related_ids": [
+     "cmp_d2316e6e41fe"
+    ]
+   },
+   {
+    "code": "web_counter_evidence",
+    "description": "Live-web counter-evidence (bea.gov): - `Current-dollar GDP increased 6.3 percent, or $1.61 trillion, in 2023 to a level of $27.36 trillion` [https://bea.gov/news/2024/gross-domestic-product-fourth-quarter-and-year-2023-second-estimate] (model-reported quote; page not fetched by code)",
+    "severity": "minor",
+    "related_ids": []
+   },
+   {
+    "code": "web_counter_evidence",
+    "description": "Live-web counter-evidence (whatisgdp.com): - `US nominal GDP was $27,825.9 billion in 2023 and $30,861.3 billion in 2025, from BEA NIPA Table 1.1.5 after the 2026 annual update.` [https://whatisgdp.com/us-gdp-data] (model-reported quote; page not fetched by code)",
+    "severity": "minor",
+    "related_ids": []
+   },
+   {
+    "code": "web_considered_not_cited",
+    "description": "Considered but not cited (datacatalogfiles.worldbank.org): Gross domestic product 2023 [https://datacatalogfiles.worldbank.org/ddh-published/0038130/8/DR0046441/GDP.pdf] \u2014 retrieved by the model, listed by code; not evidence.",
+    "severity": "minor",
+    "related_ids": []
+   },
+   {
+    "code": "web_considered_not_cited",
+    "description": "Considered but not cited (datacatalogfiles.worldbank.org): Gross domestic product 2023 [https://datacatalogfiles.worldbank.org/ddh-published/0038130/9/DR0046441/GDP.pdf] \u2014 retrieved by the model, listed by code; not evidence.",
+    "severity": "minor",
+    "related_ids": []
+   },
+   {
+    "code": "web_considered_not_cited",
+    "description": "Considered but not cited (webgate.ec.europa.eu): United States [https://webgate.ec.europa.eu/isdb_results/factsheets/country/overview_usa_en.pdf?utm_] \u2014 retrieved by the model, listed by code; not evidence.",
+    "severity": "minor",
+    "related_ids": []
+   },
+   {
+    "code": "web_considered_not_cited",
+    "description": "Considered but not cited (webgate.ec.europa.eu): USA [https://webgate.ec.europa.eu/isdb_results/factsheets/country/overview_usa_en.pdf] \u2014 retrieved by the model, listed by code; not evidence.",
+    "severity": "minor",
+    "related_ids": []
+   },
+   {
+    "code": "web_considered_not_cited",
+    "description": "Considered but not cited (data.worldbank.org): GDP (current US$) - United States | Data [https://data.worldbank.org/indicator/NY.GDP.MKTP.CD?end=2021&locations=US&most_recent_value_desc=true&start=1960&view=chart] \u2014 retrieved by the model, listed by code; not evidence.",
+    "severity": "minor",
+    "related_ids": []
+   }
+  ],
+  "limitations": [
+   "Evidence Atlas is an analysis aid, not an arbiter of truth.",
+   "Retrieved sources may disagree for legitimate methodological reasons.",
+   "A measured discrepancy is not proof of falsehood.",
+   "Results depend on the sources reachable at analysis time."
+  ],
+  "conclusion": {
+   "stance": "partially_supported",
+   "summary": "The claim is rated \"partially_supported\" with GDP (current US$) consistent at 1.62% delta [cmp_d2316e6e41fe] and time_compatibility consistent [cmp_b4f39ccb1966]. Falsification reviews are inconclusive [cmp_33b9c7f844ec] [cmp_40bbcc13d40f] and web counter evidence is inconclusive [cmp_4e4cfde070bf] [cmp_38e6184b3ded]. Evidence is missing where pages were not fetched by code, so same-year and price-basis checks remain unverified.",
+   "support_comparison_ids": [
+    "cmp_b4f39ccb1966",
+    "cmp_d2316e6e41fe"
+   ],
+   "contradict_comparison_ids": [],
+   "caveats": [
+    "Claim quantity $27.36 trillion implies resolution ~1e+10 [USD] but differs from evidence by 4.51517e+11; stance capped at partially_supported.",
+    "Evidence 'GDP (current US$)' is in current prices but the claim states no price basis; compared as current prices (unchecked assumption).",
+    "Self-review fatal flag on [cmp_b4f39ccb1966] (non_verifying_overclaim): Claim is pinned to 2023 annual GDP, but notes justify time_compatibility as only 'overlapping periods'. Overlap does not establish same-year match, so verdict 'consistent' overstates what was verified.",
+    "Self-review fatal flag on [cmp_d2316e6e41fe] (non_verifying_overclaim): Notes admit the claim names no price basis while evidence is in current prices and the comparison assumes current prices. Verdict 'consistent' therefore rests on an unchecked assumption that is itself listed as a major uncertainty.",
+    "claimed precision exceeded",
+    "material absolute gap disclosed",
+    "price basis assumed",
+    "overlap not same-year match"
+   ],
+   "actor": "model",
+   "model": "meta-model-api"
+  },
+  "audit": [
+   {
+    "step": "extract",
+    "actor": "model:meta-model-api",
+    "started_at": "2026-11-01T19:29:44.424884Z",
+    "ended_at": "2026-11-01T19:29:53.537898Z",
+    "detail": "domain=economy type=quantitative quantities=1 times=1 geo=1",
+    "duration_ms": 9113.00038000627
+   },
+   {
+    "step": "route",
+    "actor": "code",
+    "started_at": "2026-11-01T19:29:53.537911Z",
+    "ended_at": "2026-11-01T19:29:53.537924Z",
+    "detail": "connectors=['worldbank']",
+    "duration_ms": 0.00790499325376004
+   },
+   {
+    "step": "retrieve",
+    "actor": "code",
+    "started_at": "2026-11-01T19:29:53.538346Z",
+    "ended_at": "2026-11-01T19:29:53.664454Z",
+    "detail": "worldbank: status=ok count=1 query='NY.GDP.MKTP.CD USA 2023:2023'",
+    "duration_ms": 126.09725700167473
+   },
+   {
+    "step": "verify",
+    "actor": "code",
+    "started_at": "2026-11-01T19:29:53.664456Z",
+    "ended_at": "2026-11-01T19:29:53.664972Z",
+    "detail": "2 comparison(s), 5 uncertaintie(s)",
+    "duration_ms": 0.5113369988976046
+   },
+   {
+    "step": "falsify",
+    "actor": "model:meta-model-api",
+    "started_at": "2026-11-01T19:29:53.664974Z",
+    "ended_at": "2026-11-01T19:30:13.874807Z",
+    "detail": "attacks=2 fatal_high=2 advisory_only web_citations=2 cited=2/considered=41",
+    "duration_ms": 20209.829258994432
+   },
+   {
+    "step": "synthesize",
+    "actor": "model:meta-model-api",
+    "started_at": "2026-11-01T19:30:13.874810Z",
+    "ended_at": "2026-11-01T19:30:19.755987Z",
+    "detail": "stance=partially_supported",
+    "duration_ms": 5881.172113004141
+   }
+  ],
+  "created_at": "2026-11-01T19:29:53.537872Z",
+  "meta": {
+   "app_version": "0.4.0",
+   "model": "muse-spark-1.3",
+   "temperature": 0,
+   "max_tokens": 4000,
+   "tolerance": 0.02,
+   "default": 5,
+   "prompt_version": "4",
+   "input_sha256": "5a884a62c08fc5a2ba816cd52cd7565c9c09a1c56652c5fc01620f802ae2adb9",
+   "usage_extract": {
+    "prompt_tokens": 988,
+    "completion_tokens": 2436,
+    "reasoning_tokens": 2276,
+    "total_tokens": 3424,
+    "cached_tokens": 881
+   },
+   "usage_science": null,
+   "usage_falsify": {
+    "prompt_tokens": 111535,
+    "completion_tokens": 3855,
+    "reasoning_tokens": 2637,
+    "total_tokens": 115390,
+    "cached_tokens": 88456
+   },
+   "usage_summary": {
+    "prompt_tokens": 1042,
+    "completion_tokens": 1461,
+    "reasoning_tokens": 1288,
+    "total_tokens": 2503,
+    "cached_tokens": 113
+   }
+  },
+  "elapsed_ms": 35331.162025991944
+ }
+}
+</script>
+<script type="application/json" id="judge-s1">
+{
+ "judge_cache_version": 1,
+ "source_text": "The population of Japan was 500 million in 2020.",
+ "endpoint": "/api/analyze",
+ "request": {
+  "limit": 5,
+  "domain": "auto",
+  "persist": false
+ },
+ "generated_at": "2026-11-01T19:30:19Z",
+ "model": "muse-spark-1.3",
+ "report": {
+  "report_id": "rep_f59aad7dc57a",
+  "claim": {
+   "claim_id": "clm_c5670cf515bb",
+   "raw_text": "The population of Japan was 500 million in 2020.",
+   "domain": "economy",
+   "claim_type": "quantitative",
+   "subject": "population of Japan in 2020",
+   "indicator": "population",
+   "entities": [
+    "Japan"
+   ],
+   "quantities": [
+    {
+     "label": "population",
+     "raw_text": "500 million",
+     "value": 500000000.0,
+     "unit": "count",
+     "normalized_value": 500000000.0,
+     "normalized_unit": "count"
+    }
+   ],
+   "time_refs": [
+    {
+     "raw": "2020",
+     "year": 2020,
+     "start_year": null,
+     "end_year": null,
+     "period_type": "year"
+    }
+   ],
+   "geo_refs": [
+    {
+     "raw": "Japan",
+     "name": "Japan",
+     "iso3": "JPN"
+    }
+   ],
+   "conditions": [],
+   "context_notes": "Claim asserts Japan's total population in 2020.",
+   "extraction_actor": "model",
+   "extraction_model": "meta-model-api"
+  },
+  "evidences": [
+   {
+    "evidence_id": "ev_e1b2799abf4d",
+    "claim_id": "clm_c5670cf515bb",
+    "connector": "worldbank",
+    "source_name": "World Bank Open Data",
+    "source_url": "https://data.worldbank.org/indicator/SP.POP.TOTL?locations=JPN",
+    "source_kind": "secondary",
+    "evidence_kind": "direct",
+    "locator": "SP.POP.TOTL JPN 2020",
+    "excerpt": "Population, total for Japan in 2020: 126261000",
+    "payload": {
+     "indicator": "SP.POP.TOTL",
+     "label": "Population, total",
+     "unit": "count",
+     "iso3": "JPN",
+     "year": "2020",
+     "value": 126261000,
+     "query": "SP.POP.TOTL JPN 2020:2020",
+     "source_vintage": "2026-10-08",
+     "obs_status": "",
+     "source_decimal": 0
+    },
+    "retrieved_at": "2026-11-01T19:30:25.417943Z"
+   }
+  ],
+  "comparisons": [
+   {
+    "comparison_id": "cmp_ffcb6f13b2df",
+    "claim_id": "clm_c5670cf515bb",
+    "evidence_id": "ev_e1b2799abf4d",
+    "actor": "code",
+    "model": null,
+    "metric": "time_compatibility",
+    "claim_value": "2020",
+    "evidence_value": "2020",
+    "unit": null,
+    "abs_diff": null,
+    "rel_diff_pct": null,
+    "tolerance_rule": "calendar-year overlap required",
+    "within_tolerance": true,
+    "verdict": "consistent",
+    "notes": "Claim and evidence refer to overlapping periods."
+   },
+   {
+    "comparison_id": "cmp_f0a01e428a2d",
+    "claim_id": "clm_c5670cf515bb",
+    "evidence_id": "ev_e1b2799abf4d",
+    "actor": "code",
+    "model": null,
+    "metric": "Population, total",
+    "claim_value": "500 million [count]",
+    "evidence_value": "Population, total for Japan in 2020: 126261000",
+    "unit": "count",
+    "abs_diff": 373739000.0,
+    "rel_diff_pct": 296.00510054569503,
+    "tolerance_rule": "|claim-evidence|/|evidence| <= 0.02 (relative)",
+    "within_tolerance": false,
+    "verdict": "contradicts",
+    "notes": "Measured difference exceeds tolerance; check methodology, period and definitions before drawing conclusions."
+   },
+   {
+    "comparison_id": "cmp_56b95c14ff1e",
+    "claim_id": "clm_c5670cf515bb",
+    "evidence_id": null,
+    "actor": "model",
+    "model": "meta-model-api",
+    "metric": "falsification_review",
+    "claim_value": "cmp_f0a01e428a2d",
+    "evidence_value": "",
+    "unit": null,
+    "abs_diff": null,
+    "rel_diff_pct": null,
+    "tolerance_rule": "",
+    "within_tolerance": null,
+    "verdict": "inconclusive",
+    "notes": "[non_verifying_overclaim/fatal/high] Verdict is 'contradicts' while its own notes state to 'check methodology, period and definitions before drawing conclusions' and uncertainties flag indicator definition assumed without checking methodology notes; a firm contradiction is asserted while required checks are explicitly still pending."
+   },
+   {
+    "comparison_id": "cmp_1c09a73e60ef",
+    "claim_id": "clm_c5670cf515bb",
+    "evidence_id": null,
+    "actor": "model",
+    "model": "meta-model-api",
+    "metric": "falsification_review",
+    "claim_value": "cmp_ffcb6f13b2df",
+    "evidence_value": "",
+    "unit": null,
+    "abs_diff": null,
+    "rel_diff_pct": null,
+    "tolerance_rule": "",
+    "within_tolerance": null,
+    "verdict": "inconclusive",
+    "notes": "[non_verifying_overclaim/serious/med] Verdict 'consistent' for time_compatibility is based only on 'overlapping periods'; for a claim specific to 2020, mere overlap does not establish exact-year alignment, so consistency is overstated."
+   },
+   {
+    "comparison_id": "cmp_dce2fe3f29d9",
+    "claim_id": "clm_c5670cf515bb",
+    "evidence_id": null,
+    "actor": "model",
+    "model": "meta-responses-web-search",
+    "metric": "web_counter_evidence",
+    "claim_value": "https://www.stat.go.jp/english/data/kokusei/2020/summary/pdf/01.pdf",
+    "evidence_value": "- Official 2020 Census: \u201cThe population of Japan as of October 1, 2020, was 126,146 thousand.\u201d",
+    "unit": null,
+    "abs_diff": null,
+    "rel_diff_pct": null,
+    "tolerance_rule": "",
+    "within_tolerance": null,
+    "verdict": "inconclusive",
+    "notes": "[www.stat.go.jp] - Official 2020 Census: \u201cThe population of Japan as of October 1, 2020, was 126,146 thousand.\u201d \u2014 https://www.stat.go.jp/english/data/kokusei/2020/summary/pdf/01.pdf (model-reported quote; page not fetched by code)"
+   },
+   {
+    "comparison_id": "cmp_6a835916e3ab",
+    "claim_id": "clm_c5670cf515bb",
+    "evidence_id": null,
+    "actor": "model",
+    "model": "meta-responses-web-search",
+    "metric": "web_counter_evidence",
+    "claim_value": "https://www.stat.go.jp/english/data/kokusei/2020/summary/pdf/01.pdf",
+    "evidence_value": ", detailed as 126,146,099 total",
+    "unit": null,
+    "abs_diff": null,
+    "rel_diff_pct": null,
+    "tolerance_rule": "",
+    "within_tolerance": null,
+    "verdict": "inconclusive",
+    "notes": "[www.stat.go.jp] , detailed as 126,146,099 total \u2014 https://www.stat.go.jp/english/data/kokusei/2020/summary/pdf/01.pdf (model-reported quote; page not fetched by code)"
+   }
+  ],
+  "uncertainties": [
+   {
+    "code": "indicator_definition_assumed",
+    "description": "World Bank indicator 'Population, total' was matched by keyword; its definition is assumed to match the claim's intent without checking methodology notes.",
+    "severity": "minor",
+    "related_ids": [
+     "cmp_f0a01e428a2d"
+    ]
+   },
+   {
+    "code": "source_revision_risk",
+    "description": "World Bank historical values are revised over time; today's match may not hold against past or future vintages.",
+    "severity": "minor",
+    "related_ids": [
+     "cmp_f0a01e428a2d"
+    ]
+   },
+   {
+    "code": "falsification_flag",
+    "description": "Self-review fatal flag on [cmp_f0a01e428a2d] (non_verifying_overclaim): Verdict is 'contradicts' while its own notes state to 'check methodology, period and definitions before drawing conclusions' and uncertainties flag indicator definition assumed without checking methodology notes; a firm contradiction is asserted while required checks are explicitly still pending.",
+    "severity": "major",
+    "related_ids": [
+     "cmp_f0a01e428a2d"
+    ]
+   },
+   {
+    "code": "falsification_flag",
+    "description": "Self-review serious flag on [cmp_ffcb6f13b2df] (non_verifying_overclaim): Verdict 'consistent' for time_compatibility is based only on 'overlapping periods'; for a claim specific to 2020, mere overlap does not establish exact-year alignment, so consistency is overstated.",
+    "severity": "minor",
+    "related_ids": [
+     "cmp_ffcb6f13b2df"
+    ]
+   },
+   {
+    "code": "web_counter_evidence",
+    "description": "Live-web counter-evidence (www.stat.go.jp): - Official 2020 Census: \u201cThe population of Japan as of October 1, 2020, was 126,146 thousand.\u201d [https://www.stat.go.jp/english/data/kokusei/2020/summary/pdf/01.pdf] (model-reported quote; page not fetched by code)",
+    "severity": "minor",
+    "related_ids": []
+   },
+   {
+    "code": "web_counter_evidence",
+    "description": "Live-web counter-evidence (www.stat.go.jp): , detailed as 126,146,099 total [https://www.stat.go.jp/english/data/kokusei/2020/summary/pdf/01.pdf] (model-reported quote; page not fetched by code)",
+    "severity": "minor",
+    "related_ids": []
+   },
+   {
+    "code": "web_considered_not_cited",
+    "description": "Considered but not cited (data.worldbank.org): Data for World, Cuba, Japan, Bermuda, Sudan, Palau | Data [https://data.worldbank.org/?locations=1W-CU-JP-BM-SD-PW] \u2014 retrieved by the model, listed by code; not evidence.",
+    "severity": "minor",
+    "related_ids": []
+   },
+   {
+    "code": "web_considered_not_cited",
+    "description": "Considered but not cited (data.worldbank.org): Data for World, Cuba, Japan, Bermuda, Seychelles, Maldives | Data [https://data.worldbank.org/?locations=1W-CU-JP-BM-SC-MV] \u2014 retrieved by the model, listed by code; not evidence.",
+    "severity": "minor",
+    "related_ids": []
+   },
+   {
+    "code": "web_considered_not_cited",
+    "description": "Considered but not cited (data.worldbank.org): Data for World, Cuba, Japan, Bermuda, Seychelles, San Marino | Data [https://data.worldbank.org/?locations=1W-CU-JP-BM-SC-SM] \u2014 retrieved by the model, listed by code; not evidence.",
+    "severity": "minor",
+    "related_ids": []
+   },
+   {
+    "code": "web_considered_not_cited",
+    "description": "Considered but not cited (www.populationpyramid.net): Japan Population Pyramid 2020 [https://www.populationpyramid.net/japan/2020/] \u2014 retrieved by the model, listed by code; not evidence.",
+    "severity": "minor",
+    "related_ids": []
+   },
+   {
+    "code": "web_considered_not_cited",
+    "description": "Considered but not cited (en.m.wikipedia.org): Japan - Wikipedia [https://en.m.wikipedia.org/wiki/Nihon#Notes] \u2014 retrieved by the model, listed by code; not evidence.",
+    "severity": "minor",
+    "related_ids": []
+   }
+  ],
+  "limitations": [
+   "Evidence Atlas is an analysis aid, not an arbiter of truth.",
+   "Retrieved sources may disagree for legitimate methodological reasons.",
+   "A measured discrepancy is not proof of falsehood.",
+   "Results depend on the sources reachable at analysis time."
+  ],
+  "conclusion": {
+   "stance": "contradicted",
+   "summary": "The overall stance is \"contradicted\", with [cmp_f0a01e428a2d] recorded as contradicts with a measured difference of 296.01%. Time compatibility is consistent for overlapping periods [cmp_ffcb6f13b2df], while falsification reviews for both comparisons are inconclusive [cmp_56b95c14ff1e] [cmp_1c09a73e60ef]. Web counter evidence is inconclusive [cmp_dce2fe3f29d9] [cmp_6a835916e3ab] and direct evidence is missing because pages were not fetched by code.",
+   "support_comparison_ids": [
+    "cmp_ffcb6f13b2df"
+   ],
+   "contradict_comparison_ids": [
+    "cmp_f0a01e428a2d"
+   ],
+   "caveats": [
+    "Self-review fatal flag on [cmp_f0a01e428a2d] (non_verifying_overclaim): Verdict is 'contradicts' while its own notes state to 'check methodology, period and definitions before drawing conclusions' and uncertainties flag indicator definition assumed without checking methodology notes; a firm contradiction is asserted while required checks are explicitly still pending.",
+    "indicator definition assumed without checking methodology",
+    "historical values subject to revision",
+    "contradiction asserted while checks still pending",
+    "overlap does not establish exact-year alignment"
+   ],
+   "actor": "model",
+   "model": "meta-model-api"
+  },
+  "audit": [
+   {
+    "step": "extract",
+    "actor": "model:meta-model-api",
+    "started_at": "2026-11-01T19:30:19.759427Z",
+    "ended_at": "2026-11-01T19:30:25.267491Z",
+    "detail": "domain=economy type=quantitative quantities=1 times=1 geo=1",
+    "duration_ms": 5508.0518210015725
+   },
+   {
+    "step": "route",
+    "actor": "code",
+    "started_at": "2026-11-01T19:30:25.267494Z",
+    "ended_at": "2026-11-01T19:30:25.267505Z",
+    "detail": "connectors=['worldbank']",
+    "duration_ms": 0.0069029920268803835
+   },
+   {
+    "step": "retrieve",
+    "actor": "code",
+    "started_at": "2026-11-01T19:30:25.267977Z",
+    "ended_at": "2026-11-01T19:30:25.418210Z",
+    "detail": "worldbank: status=ok count=1 query='SP.POP.TOTL JPN 2020:2020'",
+    "duration_ms": 150.22062299249228
+   },
+   {
+    "step": "verify",
+    "actor": "code",
+    "started_at": "2026-11-01T19:30:25.418214Z",
+    "ended_at": "2026-11-01T19:30:25.418564Z",
+    "detail": "2 comparison(s), 2 uncertaintie(s)",
+    "duration_ms": 0.3441359876887873
+   },
+   {
+    "step": "falsify",
+    "actor": "model:meta-model-api",
+    "started_at": "2026-11-01T19:30:25.418567Z",
+    "ended_at": "2026-11-01T19:30:43.218417Z",
+    "detail": "attacks=2 fatal_high=1 advisory_only web_citations=2 cited=2/considered=31",
+    "duration_ms": 17799.846249996335
+   },
+   {
+    "step": "synthesize",
+    "actor": "model:meta-model-api",
+    "started_at": "2026-11-01T19:30:43.218419Z",
+    "ended_at": "2026-11-01T19:30:49.368612Z",
+    "detail": "stance=contradicted",
+    "duration_ms": 6150.18593800778
+   }
+  ],
+  "created_at": "2026-11-01T19:30:25.267478Z",
+  "meta": {
+   "app_version": "0.4.0",
+   "model": "muse-spark-1.3",
+   "temperature": 0,
+   "max_tokens": 4000,
+   "tolerance": 0.02,
+   "default": 5,
+   "prompt_version": "4",
+   "input_sha256": "1bb5148c6d8d03733c4b670ce6be34ae8e1b22601c5c14d86b6b788579627b2f",
+   "usage_extract": {
+    "prompt_tokens": 984,
+    "completion_tokens": 1627,
+    "reasoning_tokens": 1462,
+    "total_tokens": 2611,
+    "cached_tokens": 881
+   },
+   "usage_science": null,
+   "usage_falsify": {
+    "prompt_tokens": 21984,
+    "completion_tokens": 2974,
+    "reasoning_tokens": 2157,
+    "total_tokens": 24958,
+    "cached_tokens": 9781
+   },
+   "usage_summary": {
+    "prompt_tokens": 995,
+    "completion_tokens": 1592,
+    "reasoning_tokens": 1409,
+    "total_tokens": 2587,
+    "cached_tokens": 113
+   }
+  },
+  "elapsed_ms": 29609.20506399998
+ }
+}
+</script>
+<script type="application/json" id="judge-s2">
+{
+ "judge_cache_version": 1,
+ "source_text": "A recent study suggests green tea may improve memory.",
+ "endpoint": "/api/analyze",
+ "request": {
+  "limit": 5,
+  "domain": "auto",
+  "persist": false
+ },
+ "generated_at": "2026-11-01T19:30:49Z",
+ "model": "muse-spark-1.3",
+ "report": {
+  "report_id": "rep_86deeaf730fe",
+  "claim": {
+   "claim_id": "clm_ccdd6f87afda",
+   "raw_text": "A recent study suggests green tea may improve memory.",
+   "domain": "science",
+   "claim_type": "other",
+   "subject": "green tea memory improvement study",
+   "indicator": null,
+   "entities": [],
+   "quantities": [],
+   "time_refs": [
+    {
+     "raw": "recent",
+     "year": null,
+     "start_year": null,
+     "end_year": null,
+     "period_type": "vague"
+    }
+   ],
+   "geo_refs": [],
+   "conditions": [
+    "suggested by recent study",
+    "effect described as may improve"
+   ],
+   "context_notes": "Claim is hedged with 'suggests' and 'may'; no specific study, effect size, population, or methodology provided.",
+   "extraction_actor": "model",
+   "extraction_model": "meta-model-api"
+  },
+  "evidences": [
+   {
+    "evidence_id": "ev_88587538ca33",
+    "claim_id": "clm_ccdd6f87afda",
+    "connector": "openalex",
+    "source_name": "OpenAlex",
+    "source_url": "https://doi.org/10.1007/s00213-014-3526-1",
+    "source_kind": "secondary",
+    "evidence_kind": "contextual",
+    "locator": "https://openalex.org/W1971352988 (2014)",
+    "excerpt": "\"Green tea extract enhances parieto-frontal connectivity during working memory processing\" (2014) \u2014 Andr\u00e9 Schmidt, Felix Hammann, Bettina Karin W\u00f6lnerhanssen \u2014 Psychopharmacology [cited by 57]",
+    "payload": {
+     "openalex_id": "https://openalex.org/W1971352988",
+     "title": "Green tea extract enhances parieto-frontal connectivity during working memory processing",
+     "year": 2014,
+     "doi": "https://doi.org/10.1007/s00213-014-3526-1",
+     "cited_by_count": 57,
+     "authors": [
+      "Andr\u00e9 Schmidt",
+      "Felix Hammann",
+      "Bettina Karin W\u00f6lnerhanssen"
+     ],
+     "venue": "Psychopharmacology",
+     "type": "article",
+     "abstract": "RATIONALE: It has been proposed that green tea extract may have a beneficial impact on cognitive functioning, suggesting promising clinical implications. However, the neural mechanisms underlying this putative cognitive enhancing effect of green tea extract still remain unknown. OBJECTIVES: This study investigates whether the intake of green tea extract modulates effective brain connectivity during working memory processing and whether connectivity parameters are related to task performance. MATERIAL AND METHODS: Using a double-blind, counterbalanced, within-subject design, 12 healthy volunteers received a milk whey-based soft drink containing 27.5 g of green tea extract or a milk whey-based soft drink without green tea as control substance while undergoing functional magnetic resonance imaging. Working memory effect on effective connectivity between frontal and parietal brain regions was evaluated using dynamic causal modeling. RESULTS: Green tea extract increased the working memory induced modulation of connectivity from the right superior parietal lobule to the middle frontal gyrus. Notably, the magnitude of green tea induced increase in parieto-frontal connectivity positively correlated with improvement in task performance. CONCLUSIONS: Our findings provide first evidence for the putative beneficial effect of green tea on cognitive functioning, in particular, on working memory processing at the neural system level by suggesting changes in short-term plasticity of parieto-frontal brain connections. Modeling effective connectivity among frontal and parietal brain regions during working memory processing might help to assess the efficacy of green tea for the treatment of cognitive impairments in psychiatric disorders such as dementia.",
+     "query": "green tea memory improvement study"
+    },
+    "retrieved_at": "2026-11-01T19:30:58.990636Z"
+   },
+   {
+    "evidence_id": "ev_20ed16fbc8f2",
+    "claim_id": "clm_ccdd6f87afda",
+    "connector": "openalex",
+    "source_name": "OpenAlex",
+    "source_url": "https://doi.org/10.1186/1749-8546-5-13",
+    "source_kind": "secondary",
+    "evidence_kind": "contextual",
+    "locator": "https://openalex.org/W2114057457 (2010)",
+    "excerpt": "\"Beneficial effects of green tea: A literature review\" (2010) \u2014 Mandumpal Chacko Sabu, Priya T Thambi, Ramadasan Kuttan \u2014 Chinese Medicine [cited by 992]",
+    "payload": {
+     "openalex_id": "https://openalex.org/W2114057457",
+     "title": "Beneficial effects of green tea: A literature review",
+     "year": 2010,
+     "doi": "https://doi.org/10.1186/1749-8546-5-13",
+     "cited_by_count": 992,
+     "authors": [
+      "Mandumpal Chacko Sabu",
+      "Priya T Thambi",
+      "Ramadasan Kuttan"
+     ],
+     "venue": "Chinese Medicine",
+     "type": "article",
+     "abstract": "The health benefits of green tea for a wide variety of ailments, including different types of cancer, heart disease, and liver disease, were reported. Many of these beneficial effects of green tea are related to its catechin, particularly (-)-epigallocatechin-3-gallate, content. There is evidence from in vitro and animal studies on the underlying mechanisms of green tea catechins and their biological actions. There are also human studies on using green tea catechins to treat metabolic syndrome, such as obesity, type II diabetes, and cardiovascular risk factors.Long-term consumption of tea catechins could be beneficial against high-fat diet-induced obesity and type II diabetes and could reduce the risk of coronary disease. Further research that conforms to international standards should be performed to monitor the pharmacological and clinical effects of green tea and to elucidate its mechanisms of action.",
+     "query": "green tea memory improvement study"
+    },
+    "retrieved_at": "2026-11-01T19:30:58.990695Z"
+   },
+   {
+    "evidence_id": "ev_c229da919fc4",
+    "claim_id": "clm_ccdd6f87afda",
+    "connector": "openalex",
+    "source_name": "OpenAlex",
+    "source_url": "https://doi.org/10.1016/j.neuint.2014.08.008",
+    "source_kind": "secondary",
+    "evidence_kind": "contextual",
+    "locator": "https://openalex.org/W2038711586 (2014)",
+    "excerpt": "\"Effects of green tea and physical exercise on memory impairments associated with aging\" (2014) \u2014 Ma\u00edra Frigo Fl\u00f4res, Alexandre Martins, Helen L. Schimidt \u2014 Neurochemistry International [cited by 41]",
+    "payload": {
+     "openalex_id": "https://openalex.org/W2038711586",
+     "title": "Effects of green tea and physical exercise on memory impairments associated with aging",
+     "year": 2014,
+     "doi": "https://doi.org/10.1016/j.neuint.2014.08.008",
+     "cited_by_count": 41,
+     "authors": [
+      "Ma\u00edra Frigo Fl\u00f4res",
+      "Alexandre Martins",
+      "Helen L. Schimidt"
+     ],
+     "venue": "Neurochemistry International",
+     "type": "article",
+     "abstract": null,
+     "query": "green tea memory improvement study"
+    },
+    "retrieved_at": "2026-11-01T19:30:58.990707Z"
+   },
+   {
+    "evidence_id": "ev_910e6ef98d95",
+    "claim_id": "clm_ccdd6f87afda",
+    "connector": "openalex",
+    "source_name": "OpenAlex",
+    "source_url": "https://doi.org/10.3390/nu14142949",
+    "source_kind": "secondary",
+    "evidence_kind": "contextual",
+    "locator": "https://openalex.org/W4286214917 (2022)",
+    "excerpt": "\"Improvement of Depressed Mood with Green Tea Intake\" (2022) \u2014 Keiko Unno, Daisuke Furushima, Yuya Tanaka \u2014 Nutrients [cited by 17]",
+    "payload": {
+     "openalex_id": "https://openalex.org/W4286214917",
+     "title": "Improvement of Depressed Mood with Green Tea Intake",
+     "year": 2022,
+     "doi": "https://doi.org/10.3390/nu14142949",
+     "cited_by_count": 17,
+     "authors": [
+      "Keiko Unno",
+      "Daisuke Furushima",
+      "Yuya Tanaka"
+     ],
+     "venue": "Nutrients",
+     "type": "article",
+     "abstract": "Being in a prolonged depressed state increases the risk of developing depression. To investigate whether green tea intake is effective in improving depression-like moods, we used an experimental animal model of depression with lipopolysaccharide (LPS) and clarified the effects of green tea on the biological stress response and inflammation in the brain. Regarding the stress reduction effect of green tea, we found that the sum of caffeine (C) and epigallocatechin gallate (E) relative to the sum of theanine (T) and arginine (A), the major components of green tea, or the CE/TA ratio, is important. The results showed that depression-like behavior, adrenal hypertrophy as a typical stress response, and brain inflammation were suppressed in mice fed green tea components with CE/TA ratios of 2 to 8. In addition, the expression of Npas4, which is reduced in anxiety and depression, was maintained at the same level as controls in mice that consumed green tea with a CE/TA ratio of 4. In clinical human trials, the consumption of green tea with CE/TA ratios of 3.9 and 4.7 reduced susceptibility to subjective depression. These results suggest that the daily consumption of green tea with a CE/TA ratio of 4\u20135 is beneficial to improving depressed mood.",
+     "query": "green tea memory improvement study"
+    },
+    "retrieved_at": "2026-11-01T19:30:58.990770Z"
+   },
+   {
+    "evidence_id": "ev_836a14c25d1e",
+    "claim_id": "clm_ccdd6f87afda",
+    "connector": "openalex",
+    "source_name": "OpenAlex",
+    "source_url": "https://doi.org/10.1089/jmf.2009.1374",
+    "source_kind": "secondary",
+    "evidence_kind": "contextual",
+    "locator": "https://openalex.org/W1971654647 (2011)",
+    "excerpt": "\"A Combination of Green Tea Extract and l -Theanine Improves Memory and Attention in Subjects with Mild Cognitive Impairment: A Double-Blind Placebo-Controlled Study\" (2011) \u2014 Sang-Ki Park, In Chul Jung, Won Kyung Lee \u2014 Journal of Medicinal Food [cited by 105]",
+    "payload": {
+     "openalex_id": "https://openalex.org/W1971654647",
+     "title": "A Combination of Green Tea Extract and l -Theanine Improves Memory and Attention in Subjects with Mild Cognitive Impairment: A Double-Blind Placebo-Controlled Study",
+     "year": 2011,
+     "doi": "https://doi.org/10.1089/jmf.2009.1374",
+     "cited_by_count": 105,
+     "authors": [
+      "Sang-Ki Park",
+      "In Chul Jung",
+      "Won Kyung Lee"
+     ],
+     "venue": "Journal of Medicinal Food",
+     "type": "article",
+     "abstract": "A combination of green tea extract and l-theanine (LGNC-07) has been reported to have beneficial effects on cognition in animal studies. In this randomized, double-blind, placebo-controlled study, the effect of LGNC-07 on memory and attention in subjects with mild cognitive impairment (MCI) was investigated. Ninety-one MCI subjects whose Mini Mental State Examination-K (MMSE-K) scores were between 21 and 26 and who were in either stage 2 or 3 on the Global Deterioration Scale were enrolled in this study. The treatment group (13 men, 32 women; 57.58 \u00b1 9.45 years) took 1,680 mg of LGNC-07, and the placebo group (12 men, 34 women; 56.28 \u00b1 9.92 years) received an equivalent amount of maltodextrin and lactose for 16 weeks. Neuropsychological tests (Rey-Kim memory test and Stroop color-word test) and electroencephalography were conducted to evaluate the effect of LGNC-07 on memory and attention. Further analyses were stratified by baseline severity to evaluate treatment response on the degree of impairment (MMSE-K 21-23 and 24-26). LGNC-07 led to improvements in memory by marginally increasing delayed recognition in the Rey-Kim memory test (P = .0572). Stratified analyses showed that LGNC-07 improved memory and selective attention by significantly increasing the Rey-Kim memory quotient and word reading in the subjects with MMSE-K scores of 21-23 (LGNC-07, n = 11; placebo, n = 9). Electroencephalograms were recorded in 24 randomly selected subjects hourly for 3 hours in eye-open, eye-closed, and reading states after a single dose of LGNC-07 (LGNC-07, n = 12; placebo, n = 12). Brain theta waves, an indicator of cognitive alertness, were increased significantly in the temporal, frontal, parietal, and occipital areas after 3 hours in the eye-open and reading states. Therefore, this study suggests that LGNC-07 has potential as an intervention for cognitive improvement.",
+     "query": "green tea memory improvement study"
+    },
+    "retrieved_at": "2026-11-01T19:30:58.990856Z"
+   }
+  ],
+  "comparisons": [
+   {
+    "comparison_id": "cmp_c438f9d4d15b",
+    "claim_id": "clm_ccdd6f87afda",
+    "evidence_id": "ev_88587538ca33",
+    "actor": "model",
+    "model": "meta-model-api",
+    "metric": "abstract_stance",
+    "claim_value": "A recent study suggests green tea may improve memory.",
+    "evidence_value": "Green tea extract enhances parieto-frontal connectivity during working memory processing",
+    "unit": null,
+    "abs_diff": null,
+    "rel_diff_pct": null,
+    "tolerance_rule": "model abstract-stance judgment; contextual only, never verifying",
+    "within_tolerance": null,
+    "verdict": "consistent",
+    "notes": "Abstract supports the claim. The title reports enhanced parieto-frontal connectivity during working memory processing and the rationale notes a proposed beneficial impact on cognitive functioning."
+   },
+   {
+    "comparison_id": "cmp_46c6bd6c02ae",
+    "claim_id": "clm_ccdd6f87afda",
+    "evidence_id": null,
+    "actor": "model",
+    "model": "meta-model-api",
+    "metric": "falsification_review",
+    "claim_value": "cmp_c438f9d4d15b",
+    "evidence_value": "",
+    "unit": null,
+    "abs_diff": null,
+    "rel_diff_pct": null,
+    "tolerance_rule": "",
+    "within_tolerance": null,
+    "verdict": "inconclusive",
+    "notes": "[non_verifying_overclaim/serious/high] Notes cite only enhanced parieto-frontal connectivity during working memory processing and a proposed beneficial impact on cognitive functioning, which does not verify actual memory improvement; labeling this as supports overstates what the cited title/rationale establish."
+   },
+   {
+    "comparison_id": "cmp_13ae9e404452",
+    "claim_id": "clm_ccdd6f87afda",
+    "evidence_id": null,
+    "actor": "model",
+    "model": "meta-model-api",
+    "metric": "falsification_review",
+    "claim_value": "cmp_c438f9d4d15b",
+    "evidence_value": "",
+    "unit": null,
+    "abs_diff": null,
+    "rel_diff_pct": null,
+    "tolerance_rule": "",
+    "within_tolerance": null,
+    "verdict": "inconclusive",
+    "notes": "[missing_uncertainty/serious/high] Verdict asserts abstract support without acknowledging the major metadata_only limitation that verifying the claim requires reading full texts which this MVP does not do."
+   },
+   {
+    "comparison_id": "cmp_4d290300e30a",
+    "claim_id": "clm_ccdd6f87afda",
+    "evidence_id": null,
+    "actor": "model",
+    "model": "meta-responses-web-search",
+    "metric": "web_counter_evidence",
+    "claim_value": "https://pmc.ncbi.nlm.nih.gov:443/articles/PMC4159594/",
+    "evidence_value": "> \u201cIt has been proposed that green tea extract may have a beneficial impact on cognitive functioning\u2026 However, the neural mechanisms underlying this putative cognitive enhancing effect\u2026 still remain unknown.\u201d",
+    "unit": null,
+    "abs_diff": null,
+    "rel_diff_pct": null,
+    "tolerance_rule": "",
+    "within_tolerance": null,
+    "verdict": "inconclusive",
+    "notes": "[pmc.ncbi.nlm.nih.gov] > \u201cIt has been proposed that green tea extract may have a beneficial impact on cognitive functioning\u2026 However, the neural mechanisms underlying this putative cognitive enhancing effect\u2026 still remain unknown.\u201d \u2014 https://pmc.ncbi.nlm.nih.gov:443/articles/PMC4159594/ (model-reported quote; page not fetched by code)"
+   },
+   {
+    "comparison_id": "cmp_9aa83e5ca084",
+    "claim_id": "clm_ccdd6f87afda",
+    "evidence_id": null,
+    "actor": "model",
+    "model": "meta-responses-web-search",
+    "metric": "web_counter_evidence",
+    "claim_value": "https://pmc.ncbi.nlm.nih.gov:443/articles/PMC4159594/",
+    "evidence_value": "> \u201cOur findings provide first evidence for the putative beneficial effect\u2026 in particular, on working memory processing at the neural system level\u201d",
+    "unit": null,
+    "abs_diff": null,
+    "rel_diff_pct": null,
+    "tolerance_rule": "",
+    "within_tolerance": null,
+    "verdict": "inconclusive",
+    "notes": "[pmc.ncbi.nlm.nih.gov] > \u201cOur findings provide first evidence for the putative beneficial effect\u2026 in particular, on working memory processing at the neural system level\u201d \u2014 https://pmc.ncbi.nlm.nih.gov:443/articles/PMC4159594/ (model-reported quote; page not fetched by code)"
+   },
+   {
+    "comparison_id": "cmp_ecdf1bc535b2",
+    "claim_id": "clm_ccdd6f87afda",
+    "evidence_id": null,
+    "actor": "model",
+    "model": "meta-responses-web-search",
+    "metric": "web_counter_evidence",
+    "claim_value": "https://pmc.ncbi.nlm.nih.gov:443/articles/PMC4159594/",
+    "evidence_value": "> \u201c12 healthy volunteers received a milk whey-based soft drink containing 27.5 g of green tea extract or a milk whey-based soft drink without green tea\u201d",
+    "unit": null,
+    "abs_diff": null,
+    "rel_diff_pct": null,
+    "tolerance_rule": "",
+    "within_tolerance": null,
+    "verdict": "inconclusive",
+    "notes": "[pmc.ncbi.nlm.nih.gov] > \u201c12 healthy volunteers received a milk whey-based soft drink containing 27.5 g of green tea extract or a milk whey-based soft drink without green tea\u201d \u2014 https://pmc.ncbi.nlm.nih.gov:443/articles/PMC4159594/ (model-reported quote; page not fetched by code)"
+   },
+   {
+    "comparison_id": "cmp_7eff2b6213b6",
+    "claim_id": "clm_ccdd6f87afda",
+    "evidence_id": null,
+    "actor": "model",
+    "model": "meta-responses-web-search",
+    "metric": "web_counter_evidence",
+    "claim_value": "https://pmc.ncbi.nlm.nih.gov:443/articles/PMC4159594/",
+    "evidence_value": "> \u201cIn total, 12 healthy right-handed male completed the study (mean age 24.1 years\u2026)\u201d",
+    "unit": null,
+    "abs_diff": null,
+    "rel_diff_pct": null,
+    "tolerance_rule": "",
+    "within_tolerance": null,
+    "verdict": "inconclusive",
+    "notes": "[pmc.ncbi.nlm.nih.gov] > \u201cIn total, 12 healthy right-handed male completed the study (mean age 24.1 years\u2026)\u201d \u2014 https://pmc.ncbi.nlm.nih.gov:443/articles/PMC4159594/ (model-reported quote; page not fetched by code)"
+   },
+   {
+    "comparison_id": "cmp_d56570b0f5b3",
+    "claim_id": "clm_ccdd6f87afda",
+    "evidence_id": null,
+    "actor": "model",
+    "model": "meta-responses-web-search",
+    "metric": "web_counter_evidence",
+    "claim_value": "https://www.alzdiscovery.org/cognitive-vitality/ratings/green-tea",
+    "evidence_value": "> \u201cIn one trial in 99 older adults with subjective cognitive decline or mild cognitive impairment, matcha green tea (2 grams) taken daily for 12 months improved social acuity score compared to placebo, but not global cognition or other cognitive functions including attention, cognitive flexibility, and executive attention\u201d",
+    "unit": null,
+    "abs_diff": null,
+    "rel_diff_pct": null,
+    "tolerance_rule": "",
+    "within_tolerance": null,
+    "verdict": "inconclusive",
+    "notes": "[www.alzdiscovery.org] > \u201cIn one trial in 99 older adults with subjective cognitive decline or mild cognitive impairment, matcha green tea (2 grams) taken daily for 12 months improved social acuity score compared to placebo, but not global cognition or other cognitive functions including attention, cognitive flexibility, and executive attention\u201d \u2014 https://www.alzdiscovery.org/cognitive-vitality/ratings/green-tea (model-reported quote; page not fetched by code)"
+   }
+  ],
+  "uncertainties": [
+   {
+    "code": "metadata_only",
+    "description": "Evidence consists of bibliographic metadata (titles, years, venues). Verifying the claim requires reading full texts, which this MVP does not do.",
+    "severity": "major",
+    "related_ids": [
+     "ev_88587538ca33",
+     "ev_20ed16fbc8f2",
+     "ev_c229da919fc4",
+     "ev_910e6ef98d95",
+     "ev_836a14c25d1e"
+    ]
+   },
+   {
+    "code": "abstract_off_topic",
+    "description": "Abstract for https://openalex.org/W2114057457 (2010) is off-topic for this claim; no stance was assessed. Model note: The review discusses cancer, heart disease, liver disease, and metabolic syndrome without mentioning memory or cognition.",
+    "severity": "minor",
+    "related_ids": [
+     "ev_20ed16fbc8f2"
+    ]
+   },
+   {
+    "code": "abstract_off_topic",
+    "description": "Abstract for https://openalex.org/W4286214917 (2022) is off-topic for this claim; no stance was assessed. Model note: The study investigates green tea intake for improving depression-like moods and stress response, not memory.",
+    "severity": "minor",
+    "related_ids": [
+     "ev_910e6ef98d95"
+    ]
+   },
+   {
+    "code": "falsification_flag",
+    "description": "Self-review serious flag on [cmp_c438f9d4d15b] (non_verifying_overclaim): Notes cite only enhanced parieto-frontal connectivity during working memory processing and a proposed beneficial impact on cognitive functioning, which does not verify actual memory improvement; labeling this as supports overstates what the cited title/rationale establish.",
+    "severity": "minor",
+    "related_ids": [
+     "cmp_c438f9d4d15b"
+    ]
+   },
+   {
+    "code": "falsification_flag",
+    "description": "Self-review serious flag on [cmp_c438f9d4d15b] (missing_uncertainty): Verdict asserts abstract support without acknowledging the major metadata_only limitation that verifying the claim requires reading full texts which this MVP does not do.",
+    "severity": "minor",
+    "related_ids": [
+     "cmp_c438f9d4d15b"
+    ]
+   },
+   {
+    "code": "web_counter_evidence",
+    "description": "Live-web counter-evidence (pmc.ncbi.nlm.nih.gov): > \u201cIt has been proposed that green tea extract may have a beneficial impact on cognitive functioning\u2026 However, the neural mechanisms underlying this putative cognitive enhancing effect\u2026 still remain unknown.\u201d [https://pmc.ncbi.nlm.nih.gov:443/articles/PMC4159594/] (model-reported quote; page not fetched by code)",
+    "severity": "minor",
+    "related_ids": []
+   },
+   {
+    "code": "web_counter_evidence",
+    "description": "Live-web counter-evidence (pmc.ncbi.nlm.nih.gov): > \u201cOur findings provide first evidence for the putative beneficial effect\u2026 in particular, on working memory processing at the neural system level\u201d [https://pmc.ncbi.nlm.nih.gov:443/articles/PMC4159594/] (model-reported quote; page not fetched by code)",
+    "severity": "minor",
+    "related_ids": []
+   },
+   {
+    "code": "web_counter_evidence",
+    "description": "Live-web counter-evidence (pmc.ncbi.nlm.nih.gov): > \u201c12 healthy volunteers received a milk whey-based soft drink containing 27.5 g of green tea extract or a milk whey-based soft drink without green tea\u201d [https://pmc.ncbi.nlm.nih.gov:443/articles/PMC4159594/] (model-reported quote; page not fetched by code)",
+    "severity": "minor",
+    "related_ids": []
+   },
+   {
+    "code": "web_counter_evidence",
+    "description": "Live-web counter-evidence (pmc.ncbi.nlm.nih.gov): > \u201cIn total, 12 healthy right-handed male completed the study (mean age 24.1 years\u2026)\u201d [https://pmc.ncbi.nlm.nih.gov:443/articles/PMC4159594/] (model-reported quote; page not fetched by code)",
+    "severity": "minor",
+    "related_ids": []
+   },
+   {
+    "code": "web_counter_evidence",
+    "description": "Live-web counter-evidence (www.alzdiscovery.org): > \u201cIn one trial in 99 older adults with subjective cognitive decline or mild cognitive impairment, matcha green tea (2 grams) taken daily for 12 months improved social acuity score compared to placebo, but not global cognition or other cognitive functions including attention, cognitive flexibility,  [https://www.alzdiscovery.org/cognitive-vitality/ratings/green-tea] (model-reported quote; page not fetched by code)",
+    "severity": "minor",
+    "related_ids": []
+   },
+   {
+    "code": "web_considered_not_cited",
+    "description": "Considered but not cited (link.springer.com): Green tea extract enhances parieto-frontal connectivity during working memory processing | Psychopharmacology | Springer Nature Link [https://link.springer.com/article/10.1007/s00213-014-3526-1] \u2014 retrieved by the model, listed by code; not evidence.",
+    "severity": "minor",
+    "related_ids": []
+   },
+   {
+    "code": "web_considered_not_cited",
+    "description": "Considered but not cited (www.nutritional-psychology.org): Green Tea Extract and Memory: Effects on Brain Function [https://www.nutritional-psychology.org/research-summaries/green-tea-extract-enhances-parieto-frontal-connectivity-during-working-memory-processing/] \u2014 retrieved by the model, listed by code; not evidence.",
+    "severity": "minor",
+    "related_ids": []
+   },
+   {
+    "code": "web_considered_not_cited",
+    "description": "Considered but not cited (d.docksci.com): Green tea extract enhances parieto-frontal connectivity during working memory processing. - PDF Download Free [https://d.docksci.com/green-tea-extract-enhances-parieto-frontal-connectivity-during-working-memory-pr_5af427abd64ab2c66e6a5b59.html] \u2014 retrieved by the model, listed by code; not evidence.",
+    "severity": "minor",
+    "related_ids": []
+   },
+   {
+    "code": "web_considered_not_cited",
+    "description": "Considered but not cited (edoc.unibas.ch): Green tea extract enhances parieto-frontal connectivity during working memory processing  - edoc [https://edoc.unibas.ch/63089/] \u2014 retrieved by the model, listed by code; not evidence.",
+    "severity": "minor",
+    "related_ids": []
+   },
+   {
+    "code": "web_considered_not_cited",
+    "description": "Considered but not cited (openurl.ebsco.com): Green tea extract enhances parieto-frontal connectivity during working memory processing. [https://openurl.ebsco.com/contentitem/doi%3A10.1007%2Fs00213-014-3526-1?sid=ebsco%3Aocu_results%3Asitemap&id=ebsco%3Adoi%3A10.1007%2Fs00213-014-3526-1&bquery=IS+00333158+AND+DT+2014+AND+VI+231+AND+IP+] \u2014 retrieved by the model, listed by code; not evidence.",
+    "severity": "minor",
+    "related_ids": []
+   }
+  ],
+  "limitations": [
+   "Evidence Atlas is an analysis aid, not an arbiter of truth.",
+   "Retrieved sources may disagree for legitimate methodological reasons.",
+   "A measured discrepancy is not proof of falsehood.",
+   "Results depend on the sources reachable at analysis time."
+  ],
+  "conclusion": {
+   "stance": "partially_supported",
+   "summary": "The claim stance is \"partially_supported\" with abstract_stance consistent [cmp_c438f9d4d15b] noting enhanced parieto-frontal connectivity and proposed beneficial impact. Falsification reviews are inconclusive [cmp_46c6bd6c02ae] [cmp_13ae9e404452] noting connectivity does not verify memory improvement and full-text reading is missing. Web counter-evidence is inconclusive [cmp_4d290300e30a] [cmp_9aa83e5ca084] [cmp_ecdf1bc535b2] [cmp_7eff2b6213b6], with model-reported quotes not fetched by code, so verification evidence is missing.",
+   "support_comparison_ids": [
+    "cmp_c438f9d4d15b"
+   ],
+   "contradict_comparison_ids": [],
+   "caveats": [
+    "Evidence consists of bibliographic metadata (titles, years, venues). Verifying the claim requires reading full texts, which this MVP does not do.",
+    "connectivity does not verify improvement",
+    "full texts not read",
+    "web quotes not fetched by code"
+   ],
+   "actor": "model",
+   "model": "meta-model-api"
+  },
+  "audit": [
+   {
+    "step": "extract",
+    "actor": "model:meta-model-api",
+    "started_at": "2026-11-01T19:30:49.371916Z",
+    "ended_at": "2026-11-01T19:30:57.152589Z",
+    "detail": "domain=science type=other quantities=0 times=1 geo=0",
+    "duration_ms": 7780.660788004752
+   },
+   {
+    "step": "route",
+    "actor": "code",
+    "started_at": "2026-11-01T19:30:57.152591Z",
+    "ended_at": "2026-11-01T19:30:57.152602Z",
+    "detail": "connectors=['openalex']",
+    "duration_ms": 0.005880996468476951
+   },
+   {
+    "step": "retrieve",
+    "actor": "code",
+    "started_at": "2026-11-01T19:30:57.153007Z",
+    "ended_at": "2026-11-01T19:30:58.991138Z",
+    "detail": "openalex: status=ok count=5 query='green tea memory improvement study'",
+    "duration_ms": 1838.1177119881613
+   },
+   {
+    "step": "verify",
+    "actor": "code",
+    "started_at": "2026-11-01T19:30:58.991148Z",
+    "ended_at": "2026-11-01T19:31:02.727812Z",
+    "detail": "1 comparison(s), 3 uncertaintie(s)",
+    "duration_ms": 3736.657383997226
+   },
+   {
+    "step": "falsify",
+    "actor": "model:meta-model-api",
+    "started_at": "2026-11-01T19:31:02.727819Z",
+    "ended_at": "2026-11-01T19:31:20.374105Z",
+    "detail": "attacks=2 fatal_high=0 advisory_only web_citations=5 cited=5/considered=33",
+    "duration_ms": 17646.27975100302
+   },
+   {
+    "step": "synthesize",
+    "actor": "model:meta-model-api",
+    "started_at": "2026-11-01T19:31:20.374108Z",
+    "ended_at": "2026-11-01T19:31:24.129781Z",
+    "detail": "stance=partially_supported",
+    "duration_ms": 3755.666987010045
+   }
+  ],
+  "created_at": "2026-11-01T19:30:57.152575Z",
+  "meta": {
+   "app_version": "0.4.0",
+   "model": "muse-spark-1.3",
+   "temperature": 0,
+   "max_tokens": 4000,
+   "tolerance": 0.02,
+   "default": 5,
+   "prompt_version": "4",
+   "input_sha256": "b9ec144450bed9514431f2afae7f8be956c76425498d3d74652ef515620620b0",
+   "usage_extract": {
+    "prompt_tokens": 981,
+    "completion_tokens": 1751,
+    "reasoning_tokens": 1613,
+    "total_tokens": 2732,
+    "cached_tokens": 881
+   },
+   "usage_science": {
+    "prompt_tokens": 691,
+    "completion_tokens": 941,
+    "reasoning_tokens": 763,
+    "total_tokens": 1632,
+    "cached_tokens": 113
+   },
+   "usage_falsify": {
+    "prompt_tokens": 24971,
+    "completion_tokens": 3239,
+    "reasoning_tokens": 2096,
+    "total_tokens": 28210,
+    "cached_tokens": 9796
+   },
+   "usage_summary": {
+    "prompt_tokens": 1018,
+    "completion_tokens": 1122,
+    "reasoning_tokens": 934,
+    "total_tokens": 2140,
+    "cached_tokens": 113
+   }
+  },
+  "elapsed_ms": 34757.89074601198
+ }
+}
+</script>
+<script type="application/json" id="judge-s3">
+{
+ "judge_cache_version": 1,
+ "source_text": "Unemployment in Germany was 3.1% in 2023.",
+ "endpoint": "/api/analyze",
+ "request": {
+  "limit": 5,
+  "domain": "auto",
+  "persist": false
+ },
+ "generated_at": "2026-11-01T19:31:24Z",
+ "model": "muse-spark-1.3",
+ "report": {
+  "report_id": "rep_1f2a36d4bc4b",
+  "claim": {
+   "claim_id": "clm_af99232f6bc2",
+   "raw_text": "Unemployment in Germany was 3.1% in 2023.",
+   "domain": "economy",
+   "claim_type": "quantitative",
+   "subject": "Germany unemployment rate 2023",
+   "indicator": "unemployment rate",
+   "entities": [
+    "Germany"
+   ],
+   "quantities": [
+    {
+     "label": "unemployment",
+     "raw_text": "3.1%",
+     "value": 3.1,
+     "unit": "percent",
+     "normalized_value": 3.1,
+     "normalized_unit": "percent"
+    }
+   ],
+   "time_refs": [
+    {
+     "raw": "2023",
+     "year": 2023,
+     "start_year": null,
+     "end_year": null,
+     "period_type": "year"
+    }
+   ],
+   "geo_refs": [
+    {
+     "raw": "Germany",
+     "name": "Germany",
+     "iso3": "DEU"
+    }
+   ],
+   "conditions": [],
+   "context_notes": "Claim states the unemployment rate for Germany in calendar year 2023.",
+   "extraction_actor": "model",
+   "extraction_model": "meta-model-api"
+  },
+  "evidences": [
+   {
+    "evidence_id": "ev_93ff2d73d049",
+    "claim_id": "clm_af99232f6bc2",
+    "connector": "worldbank",
+    "source_name": "World Bank Open Data",
+    "source_url": "https://data.worldbank.org/indicator/SL.UEM.TOTL.ZS?locations=DEU",
+    "source_kind": "secondary",
+    "evidence_kind": "direct",
+    "locator": "SL.UEM.TOTL.ZS DEU 2023",
+    "excerpt": "Unemployment, total (% of labor force) for Germany in 2023: 3.071",
+    "payload": {
+     "indicator": "SL.UEM.TOTL.ZS",
+     "label": "Unemployment, total (% of labor force)",
+     "unit": "percent",
+     "iso3": "DEU",
+     "year": "2023",
+     "value": 3.071,
+     "query": "SL.UEM.TOTL.ZS DEU 2023:2023",
+     "source_vintage": "2026-10-08",
+     "obs_status": "",
+     "source_decimal": 1
+    },
+    "retrieved_at": "2026-11-01T19:31:29.521074Z"
+   }
+  ],
+  "comparisons": [
+   {
+    "comparison_id": "cmp_fedd7e00ccef",
+    "claim_id": "clm_af99232f6bc2",
+    "evidence_id": "ev_93ff2d73d049",
+    "actor": "code",
+    "model": null,
+    "metric": "time_compatibility",
+    "claim_value": "2023",
+    "evidence_value": "2023",
+    "unit": null,
+    "abs_diff": null,
+    "rel_diff_pct": null,
+    "tolerance_rule": "calendar-year overlap required",
+    "within_tolerance": true,
+    "verdict": "consistent",
+    "notes": "Claim and evidence refer to overlapping periods."
+   },
+   {
+    "comparison_id": "cmp_db34522d078c",
+    "claim_id": "clm_af99232f6bc2",
+    "evidence_id": "ev_93ff2d73d049",
+    "actor": "code",
+    "model": null,
+    "metric": "Unemployment, total (% of labor force)",
+    "claim_value": "3.1% [percent]",
+    "evidence_value": "Unemployment, total (% of labor force) for Germany in 2023: 3.071",
+    "unit": "percent",
+    "abs_diff": 0.028999999999999915,
+    "rel_diff_pct": 0.9443178117876885,
+    "tolerance_rule": "|claim-evidence|/|evidence| <= 0.02 (relative)",
+    "within_tolerance": true,
+    "verdict": "consistent",
+    "notes": "Values agree within tolerance."
+   },
+   {
+    "comparison_id": "cmp_a4d4bb8af9ef",
+    "claim_id": "clm_af99232f6bc2",
+    "evidence_id": null,
+    "actor": "model",
+    "model": "meta-model-api",
+    "metric": "falsification_review",
+    "claim_value": "cmp_fedd7e00ccef",
+    "evidence_value": "",
+    "unit": null,
+    "abs_diff": null,
+    "rel_diff_pct": null,
+    "tolerance_rule": "",
+    "within_tolerance": null,
+    "verdict": "inconclusive",
+    "notes": "[wrong_period/fatal/high] Notes claim only 'overlapping periods' for a claim requiring the specific year 2023; overlap does not establish exact year match, so a 'consistent' time_compatibility verdict is unjustified on the stated reasoning alone."
+   },
+   {
+    "comparison_id": "cmp_a27fb8d7e08a",
+    "claim_id": "clm_af99232f6bc2",
+    "evidence_id": null,
+    "actor": "model",
+    "model": "meta-model-api",
+    "metric": "falsification_review",
+    "claim_value": "cmp_db34522d078c",
+    "evidence_value": "",
+    "unit": null,
+    "abs_diff": null,
+    "rel_diff_pct": null,
+    "tolerance_rule": "",
+    "within_tolerance": null,
+    "verdict": "inconclusive",
+    "notes": "[non_verifying_overclaim/fatal/high] Notes assert 'Values agree within tolerance' without stating evidence value, compared values, or tolerance, making the 'consistent' verdict unverifiable from the comparison itself."
+   },
+   {
+    "comparison_id": "cmp_3f14c206236b",
+    "claim_id": "clm_af99232f6bc2",
+    "evidence_id": null,
+    "actor": "model",
+    "model": "meta-model-api",
+    "metric": "falsification_review",
+    "claim_value": "cmp_db34522d078c",
+    "evidence_value": "",
+    "unit": null,
+    "abs_diff": null,
+    "rel_diff_pct": null,
+    "tolerance_rule": "",
+    "within_tolerance": null,
+    "verdict": "inconclusive",
+    "notes": "[missing_uncertainty/serious/high] Comparison asserts consistency for 'Unemployment, total (% of labor force)' while documented uncertainties state the indicator was matched by keyword without checking methodology notes and is subject to revision risk; definitional and vintage uncertainty is not accounted for in the verdict."
+   }
+  ],
+  "uncertainties": [
+   {
+    "code": "indicator_definition_assumed",
+    "description": "World Bank indicator 'Unemployment, total (% of labor force)' was matched by keyword; its definition is assumed to match the claim's intent without checking methodology notes.",
+    "severity": "minor",
+    "related_ids": [
+     "cmp_db34522d078c"
+    ]
+   },
+   {
+    "code": "source_revision_risk",
+    "description": "World Bank historical values are revised over time; today's match may not hold against past or future vintages.",
+    "severity": "minor",
+    "related_ids": [
+     "cmp_db34522d078c"
+    ]
+   },
+   {
+    "code": "falsification_flag",
+    "description": "Self-review fatal flag on [cmp_fedd7e00ccef] (wrong_period): Notes claim only 'overlapping periods' for a claim requiring the specific year 2023; overlap does not establish exact year match, so a 'consistent' time_compatibility verdict is unjustified on the stated reasoning alone.",
+    "severity": "major",
+    "related_ids": [
+     "cmp_fedd7e00ccef"
+    ]
+   },
+   {
+    "code": "falsification_flag",
+    "description": "Self-review fatal flag on [cmp_db34522d078c] (non_verifying_overclaim): Notes assert 'Values agree within tolerance' without stating evidence value, compared values, or tolerance, making the 'consistent' verdict unverifiable from the comparison itself.",
+    "severity": "major",
+    "related_ids": [
+     "cmp_db34522d078c"
+    ]
+   },
+   {
+    "code": "falsification_flag",
+    "description": "Self-review serious flag on [cmp_db34522d078c] (missing_uncertainty): Comparison asserts consistency for 'Unemployment, total (% of labor force)' while documented uncertainties state the indicator was matched by keyword without checking methodology notes and is subject to revision risk; definitional and vintage uncertainty is not accounted for in the verdict.",
+    "severity": "minor",
+    "related_ids": [
+     "cmp_db34522d078c"
+    ]
+   },
+   {
+    "code": "web_considered_not_cited",
+    "description": "Considered but not cited (statistik.arbeitsagentur.de): The German Labour Market in 2023 [https://statistik.arbeitsagentur.de/DE/Statischer-Content/Service/English-Site/Generische-Publikationen/German-labour-market-2023.pdf?__blob=publicationFile&v=3] \u2014 retrieved by the model, listed by code; not evidence.",
+    "severity": "minor",
+    "related_ids": []
+   },
+   {
+    "code": "web_considered_not_cited",
+    "description": "Considered but not cited (www.ceicdata.com): Germany DE: Unemployment Rate | Economic Indicators | CEIC [https://www.ceicdata.com/en/germany/labour-force-employment-and-unemployment-annual/de-unemployment-rate] \u2014 retrieved by the model, listed by code; not evidence.",
+    "severity": "minor",
+    "related_ids": []
+   },
+   {
+    "code": "web_considered_not_cited",
+    "description": "Considered but not cited (theglobaleconomy.com): Germany Unemployment rate - data, chart | TheGlobalEconomy.com [https://theglobaleconomy.com/Germany/Unemployment_rate/] \u2014 retrieved by the model, listed by code; not evidence.",
+    "severity": "minor",
+    "related_ids": []
+   },
+   {
+    "code": "web_considered_not_cited",
+    "description": "Considered but not cited (mail.theglobaleconomy.com): Germany Unemployment rate forecast - data, chart | TheGlobalEconomy.com [https://mail.theglobaleconomy.com/Germany/unemployment_outlook/] \u2014 retrieved by the model, listed by code; not evidence.",
+    "severity": "minor",
+    "related_ids": []
+   },
+   {
+    "code": "web_considered_not_cited",
+    "description": "Considered but not cited (www.studycountry.com): What percent of men work in Germany? [https://www.studycountry.com/wiki/what-percent-of-men-work-in-germany] \u2014 retrieved by the model, listed by code; not evidence.",
+    "severity": "minor",
+    "related_ids": []
+   }
+  ],
+  "limitations": [
+   "Evidence Atlas is an analysis aid, not an arbiter of truth.",
+   "Retrieved sources may disagree for legitimate methodological reasons.",
+   "A measured discrepancy is not proof of falsehood.",
+   "Results depend on the sources reachable at analysis time."
+  ],
+  "conclusion": {
+   "stance": "supported",
+   "summary": "Stance: supported (2 consistent, 0 contradicting, 0 not comparable out of 5 checks). [cmp_fedd7e00ccef] time_compatibility: Claim and evidence refer to overlapping periods. [cmp_db34522d078c] Unemployment, total (% of labor force): Values agree within tolerance.",
+   "support_comparison_ids": [
+    "cmp_fedd7e00ccef",
+    "cmp_db34522d078c"
+   ],
+   "contradict_comparison_ids": [],
+   "caveats": [
+    "World Bank indicator 'Unemployment, total (% of labor force)' was matched by keyword; its definition is assumed to match the claim's intent without checking methodology notes.",
+    "World Bank historical values are revised over time; today's match may not hold against past or future vintages.",
+    "Self-review fatal flag on [cmp_fedd7e00ccef] (wrong_period): Notes claim only 'overlapping periods' for a claim requiring the specific year 2023; overlap does not establish exact year match, so a 'consistent' time_compatibility verdict is unjustified on the stated reasoning alone.",
+    "Self-review fatal flag on [cmp_db34522d078c] (non_verifying_overclaim): Notes assert 'Values agree within tolerance' without stating evidence value, compared values, or tolerance, making the 'consistent' verdict unverifiable from the comparison itself.",
+    "Self-review serious flag on [cmp_db34522d078c] (missing_uncertainty): Comparison asserts consistency for 'Unemployment, total (% of labor force)' while documented uncertainties state the indicator was matched by keyword without checking methodology notes and is subject to revision risk; definitional and vintage uncertainty is not accounted for in the verdict.",
+    "Considered but not cited (statistik.arbeitsagentur.de): The German Labour Market in 2023 [https://statistik.arbeitsagentur.de/DE/Statischer-Content/Service/English-Site/Generische-Publikationen/German-labour-market-2023.pdf?__blob=publicationFile&v=3] \u2014 retrieved by the model, listed by code; not evidence.",
+    "Considered but not cited (www.ceicdata.com): Germany DE: Unemployment Rate | Economic Indicators | CEIC [https://www.ceicdata.com/en/germany/labour-force-employment-and-unemployment-annual/de-unemployment-rate] \u2014 retrieved by the model, listed by code; not evidence.",
+    "Considered but not cited (theglobaleconomy.com): Germany Unemployment rate - data, chart | TheGlobalEconomy.com [https://theglobaleconomy.com/Germany/Unemployment_rate/] \u2014 retrieved by the model, listed by code; not evidence.",
+    "Considered but not cited (mail.theglobaleconomy.com): Germany Unemployment rate forecast - data, chart | TheGlobalEconomy.com [https://mail.theglobaleconomy.com/Germany/unemployment_outlook/] \u2014 retrieved by the model, listed by code; not evidence.",
+    "Considered but not cited (www.studycountry.com): What percent of men work in Germany? [https://www.studycountry.com/wiki/what-percent-of-men-work-in-germany] \u2014 retrieved by the model, listed by code; not evidence."
+   ],
+   "actor": "code",
+   "model": null
+  },
+  "audit": [
+   {
+    "step": "extract",
+    "actor": "model:meta-model-api",
+    "started_at": "2026-11-01T19:31:24.134318Z",
+    "ended_at": "2026-11-01T19:31:29.370426Z",
+    "detail": "domain=economy type=quantitative quantities=1 times=1 geo=1",
+    "duration_ms": 5236.094145991956
+   },
+   {
+    "step": "route",
+    "actor": "code",
+    "started_at": "2026-11-01T19:31:29.370429Z",
+    "ended_at": "2026-11-01T19:31:29.370440Z",
+    "detail": "connectors=['worldbank']",
+    "duration_ms": 0.00674299371894449
+   },
+   {
+    "step": "retrieve",
+    "actor": "code",
+    "started_at": "2026-11-01T19:31:29.370799Z",
+    "ended_at": "2026-11-01T19:31:29.521301Z",
+    "detail": "worldbank: status=ok count=1 query='SL.UEM.TOTL.ZS DEU 2023:2023'",
+    "duration_ms": 150.49146900128108
+   },
+   {
+    "step": "verify",
+    "actor": "code",
+    "started_at": "2026-11-01T19:31:29.521304Z",
+    "ended_at": "2026-11-01T19:31:29.521996Z",
+    "detail": "2 comparison(s), 2 uncertaintie(s)",
+    "duration_ms": 0.6898310093674809
+   },
+   {
+    "step": "falsify",
+    "actor": "model:meta-model-api",
+    "started_at": "2026-11-01T19:31:29.521999Z",
+    "ended_at": "2026-11-01T19:31:48.371859Z",
+    "detail": "attacks=3 fatal_high=2 advisory_only web_citations=0(none validated) cited=0/considered=37",
+    "duration_ms": 18849.856947999797
+   },
+   {
+    "step": "synthesize",
+    "actor": "code:deterministic-rules",
+    "started_at": "2026-11-01T19:31:48.371861Z",
+    "ended_at": "2026-11-01T19:31:53.379510Z",
+    "detail": "stance=supported",
+    "duration_ms": 5007.644387995242
+   }
+  ],
+  "created_at": "2026-11-01T19:31:29.370413Z",
+  "meta": {
+   "app_version": "0.4.0",
+   "model": "muse-spark-1.3",
+   "temperature": 0,
+   "max_tokens": 4000,
+   "tolerance": 0.02,
+   "default": 5,
+   "prompt_version": "4",
+   "input_sha256": "3e2c90577893f6b1228a84837ea5fbbe2c651e8832b50ab7a94d2c181fe42a6a",
+   "usage_extract": {
+    "prompt_tokens": 985,
+    "completion_tokens": 1434,
+    "reasoning_tokens": 1265,
+    "total_tokens": 2419,
+    "cached_tokens": 881
+   },
+   "usage_science": null,
+   "usage_falsify": {
+    "prompt_tokens": 23857,
+    "completion_tokens": 3010,
+    "reasoning_tokens": 2094,
+    "total_tokens": 26867,
+    "cached_tokens": 15925
+   },
+   "usage_summary": {
+    "prompt_tokens": 935,
+    "completion_tokens": 1235,
+    "reasoning_tokens": 1034,
+    "total_tokens": 2170,
+    "cached_tokens": 241
+   }
+  },
+  "elapsed_ms": 29245.209477987373
+ }
+}
+</script>
+<script type="application/json" id="judge-b0">
+{
+ "judge_cache_version": 1,
+ "source_text": "The GDP of the United States was $27.36 trillion in 2023. The population of Japan was 125 million in 2023.",
+ "endpoint": "/api/check",
+ "request": {
+  "limit": 5,
+  "domain": "auto",
+  "persist": false
+ },
+ "generated_at": "2026-11-01T19:31:53Z",
+ "body": {
+  "claim_count": 2,
+  "reports": [
+   {
+    "report_id": "rep_d297f2b98775",
+    "claim": {
+     "claim_id": "clm_e6f2b07693db",
+     "raw_text": "The GDP of the United States was $27.36 trillion in 2023.",
+     "domain": "economy",
+     "claim_type": "quantitative",
+     "subject": "United States GDP 2023",
+     "indicator": "GDP",
+     "entities": [
+      "United States"
+     ],
+     "quantities": [
+      {
+       "label": "GDP",
+       "raw_text": "$27.36 trillion",
+       "value": 27360000000000.0,
+       "unit": "USD",
+       "normalized_value": 27360000000000.0,
+       "normalized_unit": "USD"
+      }
+     ],
+     "time_refs": [
+      {
+       "raw": "2023",
+       "year": 2023,
+       "start_year": null,
+       "end_year": null,
+       "period_type": "year"
+      }
+     ],
+     "geo_refs": [
+      {
+       "raw": "United States",
+       "name": "United States",
+       "iso3": "USA"
+      }
+     ],
+     "conditions": [],
+     "context_notes": "",
+     "extraction_actor": "model",
+     "extraction_model": "meta-model-api"
+    },
+    "evidences": [
+     {
+      "evidence_id": "ev_bf1d01039896",
+      "claim_id": "clm_e6f2b07693db",
+      "connector": "worldbank",
+      "source_name": "World Bank Open Data",
+      "source_url": "https://data.worldbank.org/indicator/NY.GDP.MKTP.CD?locations=USA",
+      "source_kind": "secondary",
+      "evidence_kind": "direct",
+      "locator": "NY.GDP.MKTP.CD USA 2023",
+      "excerpt": "GDP (current US$) for United States in 2023: 27811517000000",
+      "payload": {
+       "indicator": "NY.GDP.MKTP.CD",
+       "label": "GDP (current US$)",
+       "unit": "USD",
+       "iso3": "USA",
+       "year": "2023",
+       "value": 27811517000000,
+       "query": "NY.GDP.MKTP.CD USA 2023:2023",
+       "source_vintage": "2026-10-08",
+       "obs_status": "",
+       "source_decimal": 0
+      },
+      "retrieved_at": "2026-11-01T19:32:01.107971Z"
+     }
+    ],
+    "comparisons": [
+     {
+      "comparison_id": "cmp_7290feb7447e",
+      "claim_id": "clm_e6f2b07693db",
+      "evidence_id": "ev_bf1d01039896",
+      "actor": "code",
+      "model": null,
+      "metric": "time_compatibility",
+      "claim_value": "2023",
+      "evidence_value": "2023",
+      "unit": null,
+      "abs_diff": null,
+      "rel_diff_pct": null,
+      "tolerance_rule": "calendar-year overlap required",
+      "within_tolerance": true,
+      "verdict": "consistent",
+      "notes": "Claim and evidence refer to overlapping periods."
+     },
+     {
+      "comparison_id": "cmp_ea5bf81efa68",
+      "claim_id": "clm_e6f2b07693db",
+      "evidence_id": "ev_bf1d01039896",
+      "actor": "code",
+      "model": null,
+      "metric": "GDP (current US$)",
+      "claim_value": "$27.36 trillion [USD]",
+      "evidence_value": "GDP (current US$) for United States in 2023: 27811517000000",
+      "unit": "USD",
+      "abs_diff": 451517000000.0,
+      "rel_diff_pct": 1.6234892904259772,
+      "tolerance_rule": "|claim-evidence|/|evidence| <= 0.02 (relative)",
+      "within_tolerance": true,
+      "verdict": "consistent",
+      "notes": "Values agree within tolerance. Claimed-precision check: the claim as written implies resolution ~1e+10 [USD], but the measured gap is 4.51517e+11; the agreement is coarser than the claimed precision. Materiality note: the absolute gap of 4.51517e+11 [USD] exceeds the 1e+11 disclosure threshold even though the values agree in relative terms. Price-basis check: evidence is in current prices but the claim names no price basis (current/constant/real/nominal/PPP); the comparison assumes current prices."
+     },
+     {
+      "comparison_id": "cmp_5686de149418",
+      "claim_id": "clm_e6f2b07693db",
+      "evidence_id": null,
+      "actor": "model",
+      "model": "meta-model-api",
+      "metric": "falsification_review",
+      "claim_value": "cmp_ea5bf81efa68",
+      "evidence_value": "",
+      "unit": null,
+      "abs_diff": null,
+      "rel_diff_pct": null,
+      "tolerance_rule": "",
+      "within_tolerance": null,
+      "verdict": "inconclusive",
+      "notes": "[non_verifying_overclaim/fatal/high] Comparison returns consistent while its own notes admit the price basis is assumed (claim states no basis, evidence assumed as current prices) and the gap exceeds claimed precision and materiality threshold, so the notes do not support a verifying consistent verdict."
+     },
+     {
+      "comparison_id": "cmp_fd331d94d86b",
+      "claim_id": "clm_e6f2b07693db",
+      "evidence_id": null,
+      "actor": "model",
+      "model": "meta-model-api",
+      "metric": "falsification_review",
+      "claim_value": "cmp_7290feb7447e",
+      "evidence_value": "",
+      "unit": null,
+      "abs_diff": null,
+      "rel_diff_pct": null,
+      "tolerance_rule": "",
+      "within_tolerance": null,
+      "verdict": "inconclusive",
+      "notes": "[non_verifying_overclaim/serious/med] Notes assert only overlapping periods for a single-year 2023 claim, which does not establish same-period compatibility, so consistent overstates what is shown."
+     },
+     {
+      "comparison_id": "cmp_c2db4d477c8e",
+      "claim_id": "clm_e6f2b07693db",
+      "evidence_id": null,
+      "actor": "model",
+      "model": "meta-responses-web-search",
+      "metric": "web_counter_evidence",
+      "claim_value": "https://bea.gov/news/2024/gross-domestic-product-fourth-quarter-and-year-2023-second-estimate",
+      "evidence_value": "- **Counter-evidence against draft `partially_supported` (supporting exact match at original vintage):** BEA second estimate for 2023 reports \u201c**Current-dollar GDP** increased 6.3 percent, or $1.61 trillion, in 2023 to a level of **$27.36 trillion**\u201d",
+      "unit": null,
+      "abs_diff": null,
+      "rel_diff_pct": null,
+      "tolerance_rule": "",
+      "within_tolerance": null,
+      "verdict": "inconclusive",
+      "notes": "[bea.gov] - **Counter-evidence against draft `partially_supported` (supporting exact match at original vintage):** BEA second estimate for 2023 reports \u201c**Current-dollar GDP** increased 6.3 percent, or $1.61 trillion, in 2023 to a level of **$27.36 trillion**\u201d \u2014 https://bea.gov/news/2024/gross-domestic-product-fourth-quarter-and-year-2023-second-estimate (model-reported quote; page not fetched by code)"
+     },
+     {
+      "comparison_id": "cmp_b45f5ee97677",
+      "claim_id": "clm_e6f2b07693db",
+      "evidence_id": null,
+      "actor": "model",
+      "model": "meta-responses-web-search",
+      "metric": "web_counter_evidence",
+      "claim_value": "https://datacatalogfiles.worldbank.org/ddh-published/0038130/8/DR0046441/GDP.pdf",
+      "evidence_value": "World Bank `Gross domestic product 2023` table (1 July 2024 database) lists \u201cUnited States 27,360,935\u201d millions of US dollars",
+      "unit": null,
+      "abs_diff": null,
+      "rel_diff_pct": null,
+      "tolerance_rule": "",
+      "within_tolerance": null,
+      "verdict": "inconclusive",
+      "notes": "[datacatalogfiles.worldbank.org] World Bank `Gross domestic product 2023` table (1 July 2024 database) lists \u201cUnited States 27,360,935\u201d millions of US dollars \u2014 https://datacatalogfiles.worldbank.org/ddh-published/0038130/8/DR0046441/GDP.pdf (model-reported quote; page not fetched by code)"
+     },
+     {
+      "comparison_id": "cmp_4c5716102173",
+      "claim_id": "clm_e6f2b07693db",
+      "evidence_id": null,
+      "actor": "model",
+      "model": "meta-responses-web-search",
+      "metric": "web_counter_evidence",
+      "claim_value": "https://whatisgdp.com/us-gdp-data",
+      "evidence_value": "- **Counter-evidence from revised BEA vintage:** Latest BEA NIPA Table 1.1.5 vintage reports **US nominal GDP was $27,825.9 billion in 2023**",
+      "unit": null,
+      "abs_diff": null,
+      "rel_diff_pct": null,
+      "tolerance_rule": "",
+      "within_tolerance": null,
+      "verdict": "inconclusive",
+      "notes": "[whatisgdp.com] - **Counter-evidence from revised BEA vintage:** Latest BEA NIPA Table 1.1.5 vintage reports **US nominal GDP was $27,825.9 billion in 2023** \u2014 https://whatisgdp.com/us-gdp-data (model-reported quote; page not fetched by code)"
+     },
+     {
+      "comparison_id": "cmp_774b0fe02c0b",
+      "claim_id": "clm_e6f2b07693db",
+      "evidence_id": null,
+      "actor": "model",
+      "model": "meta-responses-web-search",
+      "metric": "web_counter_evidence",
+      "claim_value": "https://whatisgdp.com/us-gdp-data",
+      "evidence_value": ", stated as `$27,825.9bn` equal to `$27.83 trillion`",
+      "unit": null,
+      "abs_diff": null,
+      "rel_diff_pct": null,
+      "tolerance_rule": "",
+      "within_tolerance": null,
+      "verdict": "inconclusive",
+      "notes": "[whatisgdp.com] , stated as `$27,825.9bn` equal to `$27.83 trillion` \u2014 https://whatisgdp.com/us-gdp-data (model-reported quote; page not fetched by code)"
+     },
+     {
+      "comparison_id": "cmp_cc5c9621b3dd",
+      "claim_id": "clm_e6f2b07693db",
+      "evidence_id": null,
+      "actor": "model",
+      "model": "meta-responses-web-search",
+      "metric": "web_counter_evidence",
+      "claim_value": "https://whatisgdp.com/us-gdp-data",
+      "evidence_value": "- **Revision explains gap:** The 2023 figure \u201cwas first published on 25 January 2024 and has been revised by every annual update since\u201d",
+      "unit": null,
+      "abs_diff": null,
+      "rel_diff_pct": null,
+      "tolerance_rule": "",
+      "within_tolerance": null,
+      "verdict": "inconclusive",
+      "notes": "[whatisgdp.com] - **Revision explains gap:** The 2023 figure \u201cwas first published on 25 January 2024 and has been revised by every annual update since\u201d \u2014 https://whatisgdp.com/us-gdp-data (model-reported quote; page not fetched by code)"
+     }
+    ],
+    "uncertainties": [
+     {
+      "code": "claimed_precision_exceeded",
+      "description": "Claim quantity $27.36 trillion implies resolution ~1e+10 [USD] but differs from evidence by 4.51517e+11; stance capped at partially_supported.",
+      "severity": "major",
+      "related_ids": [
+       "cmp_ea5bf81efa68"
+      ]
+     },
+     {
+      "code": "material_absolute_gap",
+      "description": "Absolute gap 4.51517e+11 [USD] on GDP (current US$) exceeds the 1e+11 materiality threshold; reported for disclosure, verdict unchanged.",
+      "severity": "minor",
+      "related_ids": [
+       "cmp_ea5bf81efa68"
+      ]
+     },
+     {
+      "code": "indicator_definition_assumed",
+      "description": "World Bank indicator 'GDP (current US$)' was matched by keyword; its definition is assumed to match the claim's intent without checking methodology notes.",
+      "severity": "minor",
+      "related_ids": [
+       "cmp_ea5bf81efa68"
+      ]
+     },
+     {
+      "code": "price_basis_unchecked",
+      "description": "Evidence 'GDP (current US$)' is in current prices but the claim states no price basis; compared as current prices (unchecked assumption).",
+      "severity": "major",
+      "related_ids": [
+       "cmp_ea5bf81efa68"
+      ]
+     },
+     {
+      "code": "source_revision_risk",
+      "description": "World Bank historical values are revised over time; today's match may not hold against past or future vintages.",
+      "severity": "minor",
+      "related_ids": [
+       "cmp_ea5bf81efa68"
+      ]
+     },
+     {
+      "code": "falsification_flag",
+      "description": "Self-review fatal flag on [cmp_ea5bf81efa68] (non_verifying_overclaim): Comparison returns consistent while its own notes admit the price basis is assumed (claim states no basis, evidence assumed as current prices) and the gap exceeds claimed precision and materiality threshold, so the notes do not support a verifying consistent verdict.",
+      "severity": "major",
+      "related_ids": [
+       "cmp_ea5bf81efa68"
+      ]
+     },
+     {
+      "code": "falsification_flag",
+      "description": "Self-review serious flag on [cmp_7290feb7447e] (non_verifying_overclaim): Notes assert only overlapping periods for a single-year 2023 claim, which does not establish same-period compatibility, so consistent overstates what is shown.",
+      "severity": "minor",
+      "related_ids": [
+       "cmp_7290feb7447e"
+      ]
+     },
+     {
+      "code": "web_counter_evidence",
+      "description": "Live-web counter-evidence (bea.gov): - **Counter-evidence against draft `partially_supported` (supporting exact match at original vintage):** BEA second estimate for 2023 reports \u201c**Current-dollar GDP** increased 6.3 percent, or $1.61 trillion, in 2023 to a level of **$27.36 trillion**\u201d [https://bea.gov/news/2024/gross-domestic-product-fourth-quarter-and-year-2023-second-estimate] (model-reported quote; page not fetched by code)",
+      "severity": "minor",
+      "related_ids": []
+     },
+     {
+      "code": "web_counter_evidence",
+      "description": "Live-web counter-evidence (datacatalogfiles.worldbank.org): World Bank `Gross domestic product 2023` table (1 July 2024 database) lists \u201cUnited States 27,360,935\u201d millions of US dollars [https://datacatalogfiles.worldbank.org/ddh-published/0038130/8/DR0046441/GDP.pdf] (model-reported quote; page not fetched by code)",
+      "severity": "minor",
+      "related_ids": []
+     },
+     {
+      "code": "web_counter_evidence",
+      "description": "Live-web counter-evidence (whatisgdp.com): - **Counter-evidence from revised BEA vintage:** Latest BEA NIPA Table 1.1.5 vintage reports **US nominal GDP was $27,825.9 billion in 2023** [https://whatisgdp.com/us-gdp-data] (model-reported quote; page not fetched by code)",
+      "severity": "minor",
+      "related_ids": []
+     },
+     {
+      "code": "web_counter_evidence",
+      "description": "Live-web counter-evidence (whatisgdp.com): , stated as `$27,825.9bn` equal to `$27.83 trillion` [https://whatisgdp.com/us-gdp-data] (model-reported quote; page not fetched by code)",
+      "severity": "minor",
+      "related_ids": []
+     },
+     {
+      "code": "web_counter_evidence",
+      "description": "Live-web counter-evidence (whatisgdp.com): - **Revision explains gap:** The 2023 figure \u201cwas first published on 25 January 2024 and has been revised by every annual update since\u201d [https://whatisgdp.com/us-gdp-data] (model-reported quote; page not fetched by code)",
+      "severity": "minor",
+      "related_ids": []
+     },
+     {
+      "code": "web_considered_not_cited",
+      "description": "Considered but not cited (bea.gov): Gross Domestic Product (Third Estimate), Corporate Profits (Revised Estimate), Second Quarter 2023 and Comprehensive Update | U.S. Bureau of Economic Analysis (BEA) [https://bea.gov/news/2023/gross-domestic-product-third-estimate-corporate-profits-revised-estimate-second-quarter] \u2014 retrieved by the model, listed by code; not evidence.",
+      "severity": "minor",
+      "related_ids": []
+     },
+     {
+      "code": "web_considered_not_cited",
+      "description": "Considered but not cited (webgate.ec.europa.eu): United States [https://webgate.ec.europa.eu/isdb_results/factsheets/country/overview_usa_en.pdf?utm_] \u2014 retrieved by the model, listed by code; not evidence.",
+      "severity": "minor",
+      "related_ids": []
+     },
+     {
+      "code": "web_considered_not_cited",
+      "description": "Considered but not cited (webgate.ec.europa.eu): USA [https://webgate.ec.europa.eu/isdb_results/factsheets/country/overview_usa_en.pdf] \u2014 retrieved by the model, listed by code; not evidence.",
+      "severity": "minor",
+      "related_ids": []
+     },
+     {
+      "code": "web_considered_not_cited",
+      "description": "Considered but not cited (www.elibrary.imf.org): United States: 2023 Article IV Consultation-Press Release; Staff Report; and Statement by the Executive Director for the United States; IMF Country Report No. 23/208; May 26, 2023 [https://www.elibrary.imf.org/downloadpdf/journals/002/2023/208/002.2023.issue-208-en.pdf] \u2014 retrieved by the model, listed by code; not evidence.",
+      "severity": "minor",
+      "related_ids": []
+     },
+     {
+      "code": "web_considered_not_cited",
+      "description": "Considered but not cited (www.elibrary.imf.org): United States: 2023 Article IV Consultation-Press Release; Staff Report; and Statement by the Executive Director for the United States [https://www.elibrary.imf.org/view/journals/002/2023/208/article-A001-en.xml?rskey=ehh9jd&result=48] \u2014 retrieved by the model, listed by code; not evidence.",
+      "severity": "minor",
+      "related_ids": []
+     }
+    ],
+    "limitations": [
+     "Evidence Atlas is an analysis aid, not an arbiter of truth.",
+     "Retrieved sources may disagree for legitimate methodological reasons.",
+     "A measured discrepancy is not proof of falsehood.",
+     "Results depend on the sources reachable at analysis time."
+    ],
+    "conclusion": {
+     "stance": "partially_supported",
+     "summary": "The stance is \"partially_supported\" with [cmp_ea5bf81efa68] consistent at 1.62% delta and [cmp_7290feb7447e] consistent. [cmp_ea5bf81efa68] notes a gap of 4.51517e+11 [USD] coarser than ~1e+10 resolution and above 1e+11 threshold with current prices assumed, which [cmp_5686de149418] flags as not supporting consistent, while [cmp_fd331d94d86b] flags overlapping periods as overstating same-year compatibility. [cmp_c2db4d477c8e], [cmp_b45f5ee97677] and [cmp_4c5716102173] are inconclusive with pages not fetched by code, so evidence is missing for those quotes.",
+     "support_comparison_ids": [
+      "cmp_7290feb7447e",
+      "cmp_ea5bf81efa68"
+     ],
+     "contradict_comparison_ids": [],
+     "caveats": [
+      "Claim quantity $27.36 trillion implies resolution ~1e+10 [USD] but differs from evidence by 4.51517e+11; stance capped at partially_supported.",
+      "Evidence 'GDP (current US$)' is in current prices but the claim states no price basis; compared as current prices (unchecked assumption).",
+      "Self-review fatal flag on [cmp_ea5bf81efa68] (non_verifying_overclaim): Comparison returns consistent while its own notes admit the price basis is assumed (claim states no basis, evidence assumed as current prices) and the gap exceeds claimed precision and materiality threshold, so the notes do not support a verifying consistent verdict.",
+      "price basis assumed as current prices",
+      "gap exceeds claimed precision",
+      "gap exceeds materiality threshold",
+      "web pages not fetched by code"
+     ],
+     "actor": "model",
+     "model": "meta-model-api"
+    },
+    "audit": [
+     {
+      "step": "extract",
+      "actor": "model:meta-model-api",
+      "started_at": "2026-11-01T19:31:55.210892Z",
+      "ended_at": "2026-11-01T19:32:00.958753Z",
+      "detail": "domain=economy type=quantitative quantities=1 times=1 geo=1",
+      "duration_ms": 5747.84647100023
+     },
+     {
+      "step": "route",
+      "actor": "code",
+      "started_at": "2026-11-01T19:32:00.958755Z",
+      "ended_at": "2026-11-01T19:32:00.958766Z",
+      "detail": "connectors=['worldbank']",
+      "duration_ms": 0.006451999070122838
+     },
+     {
+      "step": "retrieve",
+      "actor": "code",
+      "started_at": "2026-11-01T19:32:00.959180Z",
+      "ended_at": "2026-11-01T19:32:01.108191Z",
+      "detail": "worldbank: status=ok count=1 query='NY.GDP.MKTP.CD USA 2023:2023'",
+      "duration_ms": 149.00063099048566
+     },
+     {
+      "step": "verify",
+      "actor": "code",
+      "started_at": "2026-11-01T19:32:01.108193Z",
+      "ended_at": "2026-11-01T19:32:01.108582Z",
+      "detail": "2 comparison(s), 5 uncertaintie(s)",
+      "duration_ms": 0.38586500158999115
+     },
+     {
+      "step": "falsify",
+      "actor": "model:meta-model-api",
+      "started_at": "2026-11-01T19:32:01.108584Z",
+      "ended_at": "2026-11-01T19:32:19.666096Z",
+      "detail": "attacks=2 fatal_high=1 advisory_only web_citations=5 cited=5/considered=26",
+      "duration_ms": 18557.509339996614
+     },
+     {
+      "step": "synthesize",
+      "actor": "model:meta-model-api",
+      "started_at": "2026-11-01T19:32:19.666098Z",
+      "ended_at": "2026-11-01T19:32:24.994078Z",
+      "detail": "stance=partially_supported",
+      "duration_ms": 5327.975084001082
+     }
+    ],
+    "created_at": "2026-11-01T19:32:00.958742Z",
+    "meta": {
+     "app_version": "0.4.0",
+     "model": "muse-spark-1.3",
+     "temperature": 0,
+     "max_tokens": 4000,
+     "tolerance": 0.02,
+     "default": 5,
+     "prompt_version": "4",
+     "input_sha256": "5a884a62c08fc5a2ba816cd52cd7565c9c09a1c56652c5fc01620f802ae2adb9",
+     "usage_extract": {
+      "prompt_tokens": 988,
+      "completion_tokens": 1507,
+      "reasoning_tokens": 1348,
+      "total_tokens": 2495,
+      "cached_tokens": 881
+     },
+     "usage_science": null,
+     "usage_falsify": {
+      "prompt_tokens": 48897,
+      "completion_tokens": 3835,
+      "reasoning_tokens": 2650,
+      "total_tokens": 52732,
+      "cached_tokens": 28085
+     },
+     "usage_summary": {
+      "prompt_tokens": 1046,
+      "completion_tokens": 1633,
+      "reasoning_tokens": 1409,
+      "total_tokens": 2679,
+      "cached_tokens": 241
+     }
+    },
+    "elapsed_ms": 29783.20500899281,
+    "split_context": {
+     "country": "united states",
+     "country_iso3": "USA",
+     "country_source": "own",
+     "years": [
+      2023
+     ],
+     "years_source": "own"
+    }
+   },
+   {
+    "report_id": "rep_053d2b28e659",
+    "claim": {
+     "claim_id": "clm_4ce1a9de76fc",
+     "raw_text": "The population of Japan was 125 million in 2023.",
+     "domain": "economy",
+     "claim_type": "quantitative",
+     "subject": "population of Japan",
+     "indicator": "population",
+     "entities": [
+      "Japan"
+     ],
+     "quantities": [
+      {
+       "label": "population",
+       "raw_text": "125 million",
+       "value": 125000000.0,
+       "unit": "count",
+       "normalized_value": 125000000.0,
+       "normalized_unit": "count"
+      }
+     ],
+     "time_refs": [
+      {
+       "raw": "2023",
+       "year": 2023,
+       "start_year": null,
+       "end_year": null,
+       "period_type": "year"
+      }
+     ],
+     "geo_refs": [
+      {
+       "raw": "Japan",
+       "name": "Japan",
+       "iso3": "JPN"
+      }
+     ],
+     "conditions": [],
+     "context_notes": "",
+     "extraction_actor": "model",
+     "extraction_model": "meta-model-api"
+    },
+    "evidences": [
+     {
+      "evidence_id": "ev_bd352516d61b",
+      "claim_id": "clm_4ce1a9de76fc",
+      "connector": "worldbank",
+      "source_name": "World Bank Open Data",
+      "source_url": "https://data.worldbank.org/indicator/SP.POP.TOTL?locations=JPN",
+      "source_kind": "secondary",
+      "evidence_kind": "direct",
+      "locator": "SP.POP.TOTL JPN 2023",
+      "excerpt": "Population, total for Japan in 2023: 124516650",
+      "payload": {
+       "indicator": "SP.POP.TOTL",
+       "label": "Population, total",
+       "unit": "count",
+       "iso3": "JPN",
+       "year": "2023",
+       "value": 124516650,
+       "query": "SP.POP.TOTL JPN 2023:2023",
+       "source_vintage": "2026-10-08",
+       "obs_status": "",
+       "source_decimal": 0
+      },
+      "retrieved_at": "2026-11-01T19:32:02.585138Z"
+     }
+    ],
+    "comparisons": [
+     {
+      "comparison_id": "cmp_6c7f1720ac81",
+      "claim_id": "clm_4ce1a9de76fc",
+      "evidence_id": "ev_bd352516d61b",
+      "actor": "code",
+      "model": null,
+      "metric": "time_compatibility",
+      "claim_value": "2023",
+      "evidence_value": "2023",
+      "unit": null,
+      "abs_diff": null,
+      "rel_diff_pct": null,
+      "tolerance_rule": "calendar-year overlap required",
+      "within_tolerance": true,
+      "verdict": "consistent",
+      "notes": "Claim and evidence refer to overlapping periods."
+     },
+     {
+      "comparison_id": "cmp_6bfaaa23c927",
+      "claim_id": "clm_4ce1a9de76fc",
+      "evidence_id": "ev_bd352516d61b",
+      "actor": "code",
+      "model": null,
+      "metric": "Population, total",
+      "claim_value": "125 million [count]",
+      "evidence_value": "Population, total for Japan in 2023: 124516650",
+      "unit": "count",
+      "abs_diff": 483350.0,
+      "rel_diff_pct": 0.3881810183618014,
+      "tolerance_rule": "|claim-evidence|/|evidence| <= 0.02 (relative)",
+      "within_tolerance": true,
+      "verdict": "consistent",
+      "notes": "Values agree within tolerance."
+     },
+     {
+      "comparison_id": "cmp_d3dba10f8fa5",
+      "claim_id": "clm_4ce1a9de76fc",
+      "evidence_id": null,
+      "actor": "model",
+      "model": "meta-model-api",
+      "metric": "falsification_review",
+      "claim_value": "cmp_6c7f1720ac81",
+      "evidence_value": "",
+      "unit": null,
+      "abs_diff": null,
+      "rel_diff_pct": null,
+      "tolerance_rule": "",
+      "within_tolerance": null,
+      "verdict": "inconclusive",
+      "notes": "[wrong_period/fatal/med] Claim requires the specific year 2023, but notes only assert 'overlapping periods'. Overlap does not establish same-year alignment, so a verdict of consistent cannot be trusted on this basis."
+     },
+     {
+      "comparison_id": "cmp_8b42abd0359b",
+      "claim_id": "clm_4ce1a9de76fc",
+      "evidence_id": null,
+      "actor": "model",
+      "model": "meta-model-api",
+      "metric": "falsification_review",
+      "claim_value": "cmp_6bfaaa23c927",
+      "evidence_value": "",
+      "unit": null,
+      "abs_diff": null,
+      "rel_diff_pct": null,
+      "tolerance_rule": "",
+      "within_tolerance": null,
+      "verdict": "inconclusive",
+      "notes": "[non_verifying_overclaim/fatal/high] Notes assert 'Values agree within tolerance' without stating the compared values or the tolerance threshold, so the consistent verdict is asserted without a verifiable basis."
+     },
+     {
+      "comparison_id": "cmp_f2d9e57772b6",
+      "claim_id": "clm_4ce1a9de76fc",
+      "evidence_id": null,
+      "actor": "model",
+      "model": "meta-model-api",
+      "metric": "falsification_review",
+      "claim_value": "cmp_6bfaaa23c927",
+      "evidence_value": "",
+      "unit": null,
+      "abs_diff": null,
+      "rel_diff_pct": null,
+      "tolerance_rule": "",
+      "within_tolerance": null,
+      "verdict": "inconclusive",
+      "notes": "[missing_uncertainty/serious/med] Verdict of consistent does not account for the listed uncertainties that indicator definition was assumed and that historical values are subject to revision, presenting agreement as definitive despite acknowledged uncertainty."
+     },
+     {
+      "comparison_id": "cmp_7e0dbbfde4fc",
+      "claim_id": "clm_4ce1a9de76fc",
+      "evidence_id": null,
+      "actor": "model",
+      "model": "meta-responses-web-search",
+      "metric": "web_counter_evidence",
+      "claim_value": "https://data.worldbank.org/?locations=1W-CU-JP-BM-SD-PW",
+      "evidence_value": "> \u201cMost recent value (2023) \u2026 Japan 124,516,650\u201d",
+      "unit": null,
+      "abs_diff": null,
+      "rel_diff_pct": null,
+      "tolerance_rule": "",
+      "within_tolerance": null,
+      "verdict": "inconclusive",
+      "notes": "[data.worldbank.org] > \u201cMost recent value (2023) \u2026 Japan 124,516,650\u201d \u2014 https://data.worldbank.org/?locations=1W-CU-JP-BM-SD-PW (model-reported quote; page not fetched by code)"
+     },
+     {
+      "comparison_id": "cmp_2c27794466bf",
+      "claim_id": "clm_4ce1a9de76fc",
+      "evidence_id": null,
+      "actor": "model",
+      "model": "meta-responses-web-search",
+      "metric": "web_counter_evidence",
+      "claim_value": "https://population.un.org/wpp/assets/Files/WPP2024_Release-Note.pdf.",
+      "evidence_value": "> \u201cJapan The population of Japan in 2023 is 124.4 million\u201d",
+      "unit": null,
+      "abs_diff": null,
+      "rel_diff_pct": null,
+      "tolerance_rule": "",
+      "within_tolerance": null,
+      "verdict": "inconclusive",
+      "notes": "[population.un.org] > \u201cJapan The population of Japan in 2023 is 124.4 million\u201d \u2014 https://population.un.org/wpp/assets/Files/WPP2024_Release-Note.pdf. (model-reported quote; page not fetched by code)"
+     }
+    ],
+    "uncertainties": [
+     {
+      "code": "indicator_definition_assumed",
+      "description": "World Bank indicator 'Population, total' was matched by keyword; its definition is assumed to match the claim's intent without checking methodology notes.",
+      "severity": "minor",
+      "related_ids": [
+       "cmp_6bfaaa23c927"
+      ]
+     },
+     {
+      "code": "source_revision_risk",
+      "description": "World Bank historical values are revised over time; today's match may not hold against past or future vintages.",
+      "severity": "minor",
+      "related_ids": [
+       "cmp_6bfaaa23c927"
+      ]
+     },
+     {
+      "code": "falsification_flag",
+      "description": "Self-review fatal flag on [cmp_6c7f1720ac81] (wrong_period): Claim requires the specific year 2023, but notes only assert 'overlapping periods'. Overlap does not establish same-year alignment, so a verdict of consistent cannot be trusted on this basis.",
+      "severity": "major",
+      "related_ids": [
+       "cmp_6c7f1720ac81"
+      ]
+     },
+     {
+      "code": "falsification_flag",
+      "description": "Self-review fatal flag on [cmp_6bfaaa23c927] (non_verifying_overclaim): Notes assert 'Values agree within tolerance' without stating the compared values or the tolerance threshold, so the consistent verdict is asserted without a verifiable basis.",
+      "severity": "major",
+      "related_ids": [
+       "cmp_6bfaaa23c927"
+      ]
+     },
+     {
+      "code": "falsification_flag",
+      "description": "Self-review serious flag on [cmp_6bfaaa23c927] (missing_uncertainty): Verdict of consistent does not account for the listed uncertainties that indicator definition was assumed and that historical values are subject to revision, presenting agreement as definitive despite acknowledged uncertainty.",
+      "severity": "minor",
+      "related_ids": [
+       "cmp_6bfaaa23c927"
+      ]
+     },
+     {
+      "code": "web_counter_evidence",
+      "description": "Live-web counter-evidence (data.worldbank.org): > \u201cMost recent value (2023) \u2026 Japan 124,516,650\u201d [https://data.worldbank.org/?locations=1W-CU-JP-BM-SD-PW] (model-reported quote; page not fetched by code)",
+      "severity": "minor",
+      "related_ids": []
+     },
+     {
+      "code": "web_counter_evidence",
+      "description": "Live-web counter-evidence (population.un.org): > \u201cJapan The population of Japan in 2023 is 124.4 million\u201d [https://population.un.org/wpp/assets/Files/WPP2024_Release-Note.pdf.] (model-reported quote; page not fetched by code)",
+      "severity": "minor",
+      "related_ids": []
+     },
+     {
+      "code": "web_considered_not_cited",
+      "description": "Considered but not cited (documents.worldbank.org): World Bank Document [https://documents.worldbank.org/curated/en/099716012202441471/pdf/IDU-796b44ac-12a2-41bc-8add-518f3162a576.pdf] \u2014 retrieved by the model, listed by code; not evidence.",
+      "severity": "minor",
+      "related_ids": []
+     },
+     {
+      "code": "web_considered_not_cited",
+      "description": "Considered but not cited (data.worldbank.org): Data for World, Cuba, Japan, Bermuda, Seychelles, San Marino | Data [https://data.worldbank.org/?locations=1W-CU-JP-BM-SC-SM] \u2014 retrieved by the model, listed by code; not evidence.",
+      "severity": "minor",
+      "related_ids": []
+     },
+     {
+      "code": "web_considered_not_cited",
+      "description": "Considered but not cited (data.worldbank.org): Data for World, Cuba, Japan, Bermuda, Seychelles, Maldives | Data [https://data.worldbank.org/?locations=1W-CU-JP-BM-SC-MV] \u2014 retrieved by the model, listed by code; not evidence.",
+      "severity": "minor",
+      "related_ids": []
+     },
+     {
+      "code": "web_considered_not_cited",
+      "description": "Considered but not cited (webgate.ec.europa.eu): Japan [https://webgate.ec.europa.eu/isdb_results/factsheets/country/overview_japan_en.pdf] \u2014 retrieved by the model, listed by code; not evidence.",
+      "severity": "minor",
+      "related_ids": []
+     },
+     {
+      "code": "web_considered_not_cited",
+      "description": "Considered but not cited (alfred.stlouisfed.org): Population, Total for Japan | ALFRED | St. Louis Fed [https://alfred.stlouisfed.org/series?seid=POPTOTJPA647NWDB] \u2014 retrieved by the model, listed by code; not evidence.",
+      "severity": "minor",
+      "related_ids": []
+     }
+    ],
+    "limitations": [
+     "Evidence Atlas is an analysis aid, not an arbiter of truth.",
+     "Retrieved sources may disagree for legitimate methodological reasons.",
+     "A measured discrepancy is not proof of falsehood.",
+     "Results depend on the sources reachable at analysis time."
+    ],
+    "conclusion": {
+     "stance": "supported",
+     "summary": "Stance: supported (2 consistent, 0 contradicting, 0 not comparable out of 7 checks). [cmp_6c7f1720ac81] time_compatibility: Claim and evidence refer to overlapping periods. [cmp_6bfaaa23c927] Population, total: Values agree within tolerance.",
+     "support_comparison_ids": [
+      "cmp_6c7f1720ac81",
+      "cmp_6bfaaa23c927"
+     ],
+     "contradict_comparison_ids": [],
+     "caveats": [
+      "World Bank indicator 'Population, total' was matched by keyword; its definition is assumed to match the claim's intent without checking methodology notes.",
+      "World Bank historical values are revised over time; today's match may not hold against past or future vintages.",
+      "Self-review fatal flag on [cmp_6c7f1720ac81] (wrong_period): Claim requires the specific year 2023, but notes only assert 'overlapping periods'. Overlap does not establish same-year alignment, so a verdict of consistent cannot be trusted on this basis.",
+      "Self-review fatal flag on [cmp_6bfaaa23c927] (non_verifying_overclaim): Notes assert 'Values agree within tolerance' without stating the compared values or the tolerance threshold, so the consistent verdict is asserted without a verifiable basis.",
+      "Self-review serious flag on [cmp_6bfaaa23c927] (missing_uncertainty): Verdict of consistent does not account for the listed uncertainties that indicator definition was assumed and that historical values are subject to revision, presenting agreement as definitive despite acknowledged uncertainty.",
+      "Live-web counter-evidence (data.worldbank.org): > \u201cMost recent value (2023) \u2026 Japan 124,516,650\u201d [https://data.worldbank.org/?locations=1W-CU-JP-BM-SD-PW] (model-reported quote; page not fetched by code)",
+      "Live-web counter-evidence (population.un.org): > \u201cJapan The population of Japan in 2023 is 124.4 million\u201d [https://population.un.org/wpp/assets/Files/WPP2024_Release-Note.pdf.] (model-reported quote; page not fetched by code)",
+      "Considered but not cited (documents.worldbank.org): World Bank Document [https://documents.worldbank.org/curated/en/099716012202441471/pdf/IDU-796b44ac-12a2-41bc-8add-518f3162a576.pdf] \u2014 retrieved by the model, listed by code; not evidence.",
+      "Considered but not cited (data.worldbank.org): Data for World, Cuba, Japan, Bermuda, Seychelles, San Marino | Data [https://data.worldbank.org/?locations=1W-CU-JP-BM-SC-SM] \u2014 retrieved by the model, listed by code; not evidence.",
+      "Considered but not cited (data.worldbank.org): Data for World, Cuba, Japan, Bermuda, Seychelles, Maldives | Data [https://data.worldbank.org/?locations=1W-CU-JP-BM-SC-MV] \u2014 retrieved by the model, listed by code; not evidence.",
+      "Considered but not cited (webgate.ec.europa.eu): Japan [https://webgate.ec.europa.eu/isdb_results/factsheets/country/overview_japan_en.pdf] \u2014 retrieved by the model, listed by code; not evidence.",
+      "Considered but not cited (alfred.stlouisfed.org): Population, Total for Japan | ALFRED | St. Louis Fed [https://alfred.stlouisfed.org/series?seid=POPTOTJPA647NWDB] \u2014 retrieved by the model, listed by code; not evidence."
+     ],
+     "actor": "code",
+     "model": null
+    },
+    "audit": [
+     {
+      "step": "extract",
+      "actor": "model:meta-model-api",
+      "started_at": "2026-11-01T19:31:55.211310Z",
+      "ended_at": "2026-11-01T19:32:02.453065Z",
+      "detail": "domain=economy type=quantitative quantities=1 times=1 geo=1",
+      "duration_ms": 7241.742528000032
+     },
+     {
+      "step": "route",
+      "actor": "code",
+      "started_at": "2026-11-01T19:32:02.453067Z",
+      "ended_at": "2026-11-01T19:32:02.453078Z",
+      "detail": "connectors=['worldbank']",
+      "duration_ms": 0.005890993634238839
+     },
+     {
+      "step": "retrieve",
+      "actor": "code",
+      "started_at": "2026-11-01T19:32:02.453522Z",
+      "ended_at": "2026-11-01T19:32:02.585443Z",
+      "detail": "worldbank: status=ok count=1 query='SP.POP.TOTL JPN 2023:2023'",
+      "duration_ms": 131.90694100921974
+     },
+     {
+      "step": "verify",
+      "actor": "code",
+      "started_at": "2026-11-01T19:32:02.585447Z",
+      "ended_at": "2026-11-01T19:32:02.585852Z",
+      "detail": "2 comparison(s), 2 uncertaintie(s)",
+      "duration_ms": 0.3990139957750216
+     },
+     {
+      "step": "falsify",
+      "actor": "model:meta-model-api",
+      "started_at": "2026-11-01T19:32:02.585855Z",
+      "ended_at": "2026-11-01T19:32:22.414524Z",
+      "detail": "attacks=3 fatal_high=1 advisory_only web_citations=2 cited=2/considered=33",
+      "duration_ms": 19828.66435300093
+     },
+     {
+      "step": "synthesize",
+      "actor": "code:deterministic-rules",
+      "started_at": "2026-11-01T19:32:22.414529Z",
+      "ended_at": "2026-11-01T19:32:27.507043Z",
+      "detail": "stance=supported",
+      "duration_ms": 5092.508652989636
+     }
+    ],
+    "created_at": "2026-11-01T19:32:02.453054Z",
+    "meta": {
+     "app_version": "0.4.0",
+     "model": "muse-spark-1.3",
+     "temperature": 0,
+     "max_tokens": 4000,
+     "tolerance": 0.02,
+     "default": 5,
+     "prompt_version": "4",
+     "input_sha256": "1c25a078bb31cdaa8a6c40aaa0622e2776127b1221dd15d06a4987381d190e92",
+     "usage_extract": {
+      "prompt_tokens": 984,
+      "completion_tokens": 1639,
+      "reasoning_tokens": 1489,
+      "total_tokens": 2623,
+      "cached_tokens": 881
+     },
+     "usage_science": null,
+     "usage_falsify": {
+      "prompt_tokens": 77366,
+      "completion_tokens": 2743,
+      "reasoning_tokens": 1575,
+      "total_tokens": 80109,
+      "cached_tokens": 56968
+     },
+     "usage_summary": {
+      "prompt_tokens": 1017,
+      "completion_tokens": 1333,
+      "reasoning_tokens": 1152,
+      "total_tokens": 2350,
+      "cached_tokens": 113
+     }
+    },
+    "elapsed_ms": 32295.748390999506,
+    "split_context": {
+     "country": "japan",
+     "country_iso3": "JPN",
+     "country_source": "own",
+     "years": [
+      2023
+     ],
+     "years_source": "own"
+    }
+   }
+  ],
+  "rollup": {
+   "supported": 1,
+   "partially_supported": 1,
+   "contradicted": 0,
+   "unverifiable": 0,
+   "not_assessable": 0
+  },
+  "errors": 0,
+  "elapsed_ms": 34123.867211994366,
+  "meta": {
+   "app_version": "0.4.0",
+   "prompt_version": "4",
+   "deadline_s": null,
+   "deadline_exceeded": false,
+   "splitter_actor": "model",
+   "splitter_model": "meta-model-api",
+   "splitter_notes": [],
+   "usage_split": {
+    "prompt_tokens": 236,
+    "completion_tokens": 365,
+    "reasoning_tokens": 313,
+    "total_tokens": 601,
+    "cached_tokens": 0
+   },
+   "input_sha256": "c073dcdb66039a0bcc7dfdb8bd75b8a5a31a3344f43929be0a114ab7127d8c56"
+  }
+ }
+}
+</script>
+<script type="application/json" id="judge-b1">
+{
+ "judge_cache_version": 1,
+ "source_text": "Unemployment in Germany was 3.1% in 2023. A recent study suggests green tea may improve memory.",
+ "endpoint": "/api/check",
+ "request": {
+  "limit": 5,
+  "domain": "auto",
+  "persist": false
+ },
+ "generated_at": "2026-11-01T19:32:27Z",
+ "body": {
+  "claim_count": 2,
+  "reports": [
+   {
+    "report_id": "rep_6bbfd005a0cd",
+    "claim": {
+     "claim_id": "clm_97450a332eaf",
+     "raw_text": "Unemployment in Germany was 3.1% in 2023.",
+     "domain": "economy",
+     "claim_type": "quantitative",
+     "subject": "Unemployment in Germany 2023",
+     "indicator": "unemployment rate",
+     "entities": [
+      "Germany"
+     ],
+     "quantities": [
+      {
+       "label": "unemployment",
+       "raw_text": "3.1%",
+       "value": 3.1,
+       "unit": "percent",
+       "normalized_value": 3.1,
+       "normalized_unit": "percent"
+      }
+     ],
+     "time_refs": [
+      {
+       "raw": "2023",
+       "year": 2023,
+       "start_year": null,
+       "end_year": null,
+       "period_type": "year"
+      }
+     ],
+     "geo_refs": [
+      {
+       "raw": "Germany",
+       "name": "Germany",
+       "iso3": "DEU"
+      }
+     ],
+     "conditions": [],
+     "context_notes": "Claim states the unemployment rate for Germany in 2023 was 3.1%.",
+     "extraction_actor": "model",
+     "extraction_model": "meta-model-api"
+    },
+    "evidences": [
+     {
+      "evidence_id": "ev_32bf9775ea4d",
+      "claim_id": "clm_97450a332eaf",
+      "connector": "worldbank",
+      "source_name": "World Bank Open Data",
+      "source_url": "https://data.worldbank.org/indicator/SL.UEM.TOTL.ZS?locations=DEU",
+      "source_kind": "secondary",
+      "evidence_kind": "direct",
+      "locator": "SL.UEM.TOTL.ZS DEU 2023",
+      "excerpt": "Unemployment, total (% of labor force) for Germany in 2023: 3.071",
+      "payload": {
+       "indicator": "SL.UEM.TOTL.ZS",
+       "label": "Unemployment, total (% of labor force)",
+       "unit": "percent",
+       "iso3": "DEU",
+       "year": "2023",
+       "value": 3.071,
+       "query": "SL.UEM.TOTL.ZS DEU 2023:2023",
+       "source_vintage": "2026-10-08",
+       "obs_status": "",
+       "source_decimal": 1
+      },
+      "retrieved_at": "2026-11-01T19:32:34.501274Z"
+     }
+    ],
+    "comparisons": [
+     {
+      "comparison_id": "cmp_60b18c3fb016",
+      "claim_id": "clm_97450a332eaf",
+      "evidence_id": "ev_32bf9775ea4d",
+      "actor": "code",
+      "model": null,
+      "metric": "time_compatibility",
+      "claim_value": "2023",
+      "evidence_value": "2023",
+      "unit": null,
+      "abs_diff": null,
+      "rel_diff_pct": null,
+      "tolerance_rule": "calendar-year overlap required",
+      "within_tolerance": true,
+      "verdict": "consistent",
+      "notes": "Claim and evidence refer to overlapping periods."
+     },
+     {
+      "comparison_id": "cmp_154a1049cbdb",
+      "claim_id": "clm_97450a332eaf",
+      "evidence_id": "ev_32bf9775ea4d",
+      "actor": "code",
+      "model": null,
+      "metric": "Unemployment, total (% of labor force)",
+      "claim_value": "3.1% [percent]",
+      "evidence_value": "Unemployment, total (% of labor force) for Germany in 2023: 3.071",
+      "unit": "percent",
+      "abs_diff": 0.028999999999999915,
+      "rel_diff_pct": 0.9443178117876885,
+      "tolerance_rule": "|claim-evidence|/|evidence| <= 0.02 (relative)",
+      "within_tolerance": true,
+      "verdict": "consistent",
+      "notes": "Values agree within tolerance."
+     },
+     {
+      "comparison_id": "cmp_db43ff2d27cb",
+      "claim_id": "clm_97450a332eaf",
+      "evidence_id": null,
+      "actor": "model",
+      "model": "meta-model-api",
+      "metric": "falsification_review",
+      "claim_value": "cmp_60b18c3fb016",
+      "evidence_value": "",
+      "unit": null,
+      "abs_diff": null,
+      "rel_diff_pct": null,
+      "tolerance_rule": "",
+      "within_tolerance": null,
+      "verdict": "inconclusive",
+      "notes": "[non_verifying_overclaim/fatal/high] Notes claim only 'overlapping periods' rather than showing evidence refers to 2023 specifically; overlap does not establish the single-year match required, so 'consistent' is unsubstantiated."
+     },
+     {
+      "comparison_id": "cmp_ca0bfd53914b",
+      "claim_id": "clm_97450a332eaf",
+      "evidence_id": null,
+      "actor": "model",
+      "model": "meta-model-api",
+      "metric": "falsification_review",
+      "claim_value": "cmp_154a1049cbdb",
+      "evidence_value": "",
+      "unit": null,
+      "abs_diff": null,
+      "rel_diff_pct": null,
+      "tolerance_rule": "",
+      "within_tolerance": null,
+      "verdict": "inconclusive",
+      "notes": "[non_verifying_overclaim/fatal/high] Notes assert 'Values agree within tolerance' without providing evidence value, tolerance, or citation to check against 3.1%; the 'consistent' verdict cannot be verified from the information given."
+     },
+     {
+      "comparison_id": "cmp_13d50f5efa78",
+      "claim_id": "clm_97450a332eaf",
+      "evidence_id": null,
+      "actor": "model",
+      "model": "meta-responses-web-search",
+      "metric": "web_counter_evidence",
+      "claim_value": "https://www.destatis.de/EN/Press/2024/01/PE24_001_13321.html?nn=263424",
+      "evidence_value": "- **Counter-finding 2 \u2013 ILO annual-average 2.8%, not 3.1%:** Destatis (Federal Statistical Office) correction press release 2 Jan 2024: \u201cnumber of unemployed people (according to the internationally comparable ILO definition) in Germany fell slightly by 9,000 (-0.7%) to 1.3 million on an annual average in 2023\u201d and \u201cThe unemployment rate, which represents unemployed persons as a percentage of the labour force, fell from 2.9% in the previous year to 2.8% in 2023.\u201d",
+      "unit": null,
+      "abs_diff": null,
+      "rel_diff_pct": null,
+      "tolerance_rule": "",
+      "within_tolerance": null,
+      "verdict": "inconclusive",
+      "notes": "[www.destatis.de] - **Counter-finding 2 \u2013 ILO annual-average 2.8%, not 3.1%:** Destatis (Federal Statistical Office) correction press release 2 Jan 2024: \u201cnumber of unemployed people (according to the internationally comparable ILO definition) in Germany fell slightly by 9,000 (-0.7%) to 1.3 million on an annual average in 2023\u201d and \u201cThe unemployment rate, which represents unemployed persons as a percentage of the  \u2014 https://www.destatis.de/EN/Press/2024/01/PE24_001_13321.html?nn=263424 (model-reported quote; page not fetched by code)"
+     },
+     {
+      "comparison_id": "cmp_497c6bcc4f6b",
+      "claim_id": "clm_97450a332eaf",
+      "evidence_id": null,
+      "actor": "model",
+      "model": "meta-responses-web-search",
+      "metric": "web_counter_evidence",
+      "claim_value": "https://www.destatis.de/EN/Press/2024/01/PE24_001_13321.html?nn=263424",
+      "evidence_value": "Destatis notes ILO figures \u201cdiffer from registered unemployment as determined and published by the Federal Employment Agency\u201d",
+      "unit": null,
+      "abs_diff": null,
+      "rel_diff_pct": null,
+      "tolerance_rule": "",
+      "within_tolerance": null,
+      "verdict": "inconclusive",
+      "notes": "[www.destatis.de] Destatis notes ILO figures \u201cdiffer from registered unemployment as determined and published by the Federal Employment Agency\u201d \u2014 https://www.destatis.de/EN/Press/2024/01/PE24_001_13321.html?nn=263424 (model-reported quote; page not fetched by code)"
+     }
+    ],
+    "uncertainties": [
+     {
+      "code": "indicator_definition_assumed",
+      "description": "World Bank indicator 'Unemployment, total (% of labor force)' was matched by keyword; its definition is assumed to match the claim's intent without checking methodology notes.",
+      "severity": "minor",
+      "related_ids": [
+       "cmp_154a1049cbdb"
+      ]
+     },
+     {
+      "code": "source_revision_risk",
+      "description": "World Bank historical values are revised over time; today's match may not hold against past or future vintages.",
+      "severity": "minor",
+      "related_ids": [
+       "cmp_154a1049cbdb"
+      ]
+     },
+     {
+      "code": "falsification_flag",
+      "description": "Self-review fatal flag on [cmp_60b18c3fb016] (non_verifying_overclaim): Notes claim only 'overlapping periods' rather than showing evidence refers to 2023 specifically; overlap does not establish the single-year match required, so 'consistent' is unsubstantiated.",
+      "severity": "major",
+      "related_ids": [
+       "cmp_60b18c3fb016"
+      ]
+     },
+     {
+      "code": "falsification_flag",
+      "description": "Self-review fatal flag on [cmp_154a1049cbdb] (non_verifying_overclaim): Notes assert 'Values agree within tolerance' without providing evidence value, tolerance, or citation to check against 3.1%; the 'consistent' verdict cannot be verified from the information given.",
+      "severity": "major",
+      "related_ids": [
+       "cmp_154a1049cbdb"
+      ]
+     },
+     {
+      "code": "web_counter_evidence",
+      "description": "Live-web counter-evidence (www.destatis.de): - **Counter-finding 2 \u2013 ILO annual-average 2.8%, not 3.1%:** Destatis (Federal Statistical Office) correction press release 2 Jan 2024: \u201cnumber of unemployed people (according to the internationally comparable ILO definition) in Germany fell slightly by 9,000 (-0.7%) to 1.3 million on an annual aver [https://www.destatis.de/EN/Press/2024/01/PE24_001_13321.html?nn=263424] (model-reported quote; page not fetched by code)",
+      "severity": "minor",
+      "related_ids": []
+     },
+     {
+      "code": "web_counter_evidence",
+      "description": "Live-web counter-evidence (www.destatis.de): Destatis notes ILO figures \u201cdiffer from registered unemployment as determined and published by the Federal Employment Agency\u201d [https://www.destatis.de/EN/Press/2024/01/PE24_001_13321.html?nn=263424] (model-reported quote; page not fetched by code)",
+      "severity": "minor",
+      "related_ids": []
+     },
+     {
+      "code": "web_considered_not_cited",
+      "description": "Considered but not cited (www.destatis.de): Slight increase in employment in December 2023 [https://www.destatis.de/EN/Press/2024/01/PE24_040_132.html] \u2014 retrieved by the model, listed by code; not evidence.",
+      "severity": "minor",
+      "related_ids": []
+     },
+     {
+      "code": "web_considered_not_cited",
+      "description": "Considered but not cited (www.destatis.de): Employment up slightly in October 2023 [https://www.destatis.de/EN/Press/2023/11/PE23_459_132.html] \u2014 retrieved by the model, listed by code; not evidence.",
+      "severity": "minor",
+      "related_ids": []
+     },
+     {
+      "code": "web_considered_not_cited",
+      "description": "Considered but not cited (www.destatis.de): Number of persons in employment continued to increase in April 2024 [https://www.destatis.de/EN/Press/2024/06/PE24_217_132.html] \u2014 retrieved by the model, listed by code; not evidence.",
+      "severity": "minor",
+      "related_ids": []
+     },
+     {
+      "code": "web_considered_not_cited",
+      "description": "Considered but not cited (www.destatis.de): Employment in November 2024 slightly up on the previous month [https://www.destatis.de/EN/Press/2025/01/PE25_002_132.html] \u2014 retrieved by the model, listed by code; not evidence.",
+      "severity": "minor",
+      "related_ids": []
+     },
+     {
+      "code": "web_considered_not_cited",
+      "description": "Considered but not cited (statistik.arbeitsagentur.de): The German Labour Market in 2023 [https://statistik.arbeitsagentur.de/DE/Statischer-Content/Service/English-Site/Generische-Publikationen/German-labour-market-2023.pdf?__blob=publicationFile&v=3] \u2014 retrieved by the model, listed by code; not evidence.",
+      "severity": "minor",
+      "related_ids": []
+     }
+    ],
+    "limitations": [
+     "Evidence Atlas is an analysis aid, not an arbiter of truth.",
+     "Retrieved sources may disagree for legitimate methodological reasons.",
+     "A measured discrepancy is not proof of falsehood.",
+     "Results depend on the sources reachable at analysis time."
+    ],
+    "conclusion": {
+     "stance": "supported",
+     "summary": "Stance: supported (2 consistent, 0 contradicting, 0 not comparable out of 6 checks). [cmp_60b18c3fb016] time_compatibility: Claim and evidence refer to overlapping periods. [cmp_154a1049cbdb] Unemployment, total (% of labor force): Values agree within tolerance.",
+     "support_comparison_ids": [
+      "cmp_60b18c3fb016",
+      "cmp_154a1049cbdb"
+     ],
+     "contradict_comparison_ids": [],
+     "caveats": [
+      "World Bank indicator 'Unemployment, total (% of labor force)' was matched by keyword; its definition is assumed to match the claim's intent without checking methodology notes.",
+      "World Bank historical values are revised over time; today's match may not hold against past or future vintages.",
+      "Self-review fatal flag on [cmp_60b18c3fb016] (non_verifying_overclaim): Notes claim only 'overlapping periods' rather than showing evidence refers to 2023 specifically; overlap does not establish the single-year match required, so 'consistent' is unsubstantiated.",
+      "Self-review fatal flag on [cmp_154a1049cbdb] (non_verifying_overclaim): Notes assert 'Values agree within tolerance' without providing evidence value, tolerance, or citation to check against 3.1%; the 'consistent' verdict cannot be verified from the information given.",
+      "Live-web counter-evidence (www.destatis.de): - **Counter-finding 2 \u2013 ILO annual-average 2.8%, not 3.1%:** Destatis (Federal Statistical Office) correction press release 2 Jan 2024: \u201cnumber of unemployed people (according to the internationally comparable ILO definition) in Germany fell slightly by 9,000 (-0.7%) to 1.3 million on an annual aver [https://www.destatis.de/EN/Press/2024/01/PE24_001_13321.html?nn=263424] (model-reported quote; page not fetched by code)",
+      "Live-web counter-evidence (www.destatis.de): Destatis notes ILO figures \u201cdiffer from registered unemployment as determined and published by the Federal Employment Agency\u201d [https://www.destatis.de/EN/Press/2024/01/PE24_001_13321.html?nn=263424] (model-reported quote; page not fetched by code)",
+      "Considered but not cited (www.destatis.de): Slight increase in employment in December 2023 [https://www.destatis.de/EN/Press/2024/01/PE24_040_132.html] \u2014 retrieved by the model, listed by code; not evidence.",
+      "Considered but not cited (www.destatis.de): Employment up slightly in October 2023 [https://www.destatis.de/EN/Press/2023/11/PE23_459_132.html] \u2014 retrieved by the model, listed by code; not evidence.",
+      "Considered but not cited (www.destatis.de): Number of persons in employment continued to increase in April 2024 [https://www.destatis.de/EN/Press/2024/06/PE24_217_132.html] \u2014 retrieved by the model, listed by code; not evidence.",
+      "Considered but not cited (www.destatis.de): Employment in November 2024 slightly up on the previous month [https://www.destatis.de/EN/Press/2025/01/PE25_002_132.html] \u2014 retrieved by the model, listed by code; not evidence.",
+      "Considered but not cited (statistik.arbeitsagentur.de): The German Labour Market in 2023 [https://statistik.arbeitsagentur.de/DE/Statischer-Content/Service/English-Site/Generische-Publikationen/German-labour-market-2023.pdf?__blob=publicationFile&v=3] \u2014 retrieved by the model, listed by code; not evidence."
+     ],
+     "actor": "code",
+     "model": null
+    },
+    "audit": [
+     {
+      "step": "extract",
+      "actor": "model:meta-model-api",
+      "started_at": "2026-11-01T19:32:29.618042Z",
+      "ended_at": "2026-11-01T19:32:34.365892Z",
+      "detail": "domain=economy type=quantitative quantities=1 times=1 geo=1",
+      "duration_ms": 4747.835825997754
+     },
+     {
+      "step": "route",
+      "actor": "code",
+      "started_at": "2026-11-01T19:32:34.365894Z",
+      "ended_at": "2026-11-01T19:32:34.365904Z",
+      "detail": "connectors=['worldbank']",
+      "duration_ms": 0.005198991857469082
+     },
+     {
+      "step": "retrieve",
+      "actor": "code",
+      "started_at": "2026-11-01T19:32:34.366571Z",
+      "ended_at": "2026-11-01T19:32:34.501758Z",
+      "detail": "worldbank: status=ok count=1 query='SL.UEM.TOTL.ZS DEU 2023:2023'",
+      "duration_ms": 135.17128198873252
+     },
+     {
+      "step": "verify",
+      "actor": "code",
+      "started_at": "2026-11-01T19:32:34.501761Z",
+      "ended_at": "2026-11-01T19:32:34.502172Z",
+      "detail": "2 comparison(s), 2 uncertaintie(s)",
+      "duration_ms": 0.40559101034887135
+     },
+     {
+      "step": "falsify",
+      "actor": "model:meta-model-api",
+      "started_at": "2026-11-01T19:32:34.502175Z",
+      "ended_at": "2026-11-01T19:32:55.992395Z",
+      "detail": "attacks=2 fatal_high=2 advisory_only web_citations=2 cited=2/considered=26",
+      "duration_ms": 21490.214397999807
+     },
+     {
+      "step": "synthesize",
+      "actor": "code:deterministic-rules",
+      "started_at": "2026-11-01T19:32:55.992398Z",
+      "ended_at": "2026-11-01T19:33:01.658580Z",
+      "detail": "stance=supported",
+      "duration_ms": 5666.176717000781
+     }
+    ],
+    "created_at": "2026-11-01T19:32:34.365881Z",
+    "meta": {
+     "app_version": "0.4.0",
+     "model": "muse-spark-1.3",
+     "temperature": 0,
+     "max_tokens": 4000,
+     "tolerance": 0.02,
+     "default": 5,
+     "prompt_version": "4",
+     "input_sha256": "3e2c90577893f6b1228a84837ea5fbbe2c651e8832b50ab7a94d2c181fe42a6a",
+     "usage_extract": {
+      "prompt_tokens": 985,
+      "completion_tokens": 1496,
+      "reasoning_tokens": 1322,
+      "total_tokens": 2481,
+      "cached_tokens": 881
+     },
+     "usage_science": null,
+     "usage_falsify": {
+      "prompt_tokens": 19764,
+      "completion_tokens": 2952,
+      "reasoning_tokens": 1789,
+      "total_tokens": 22716,
+      "cached_tokens": 11573
+     },
+     "usage_summary": {
+      "prompt_tokens": 1017,
+      "completion_tokens": 1642,
+      "reasoning_tokens": 1458,
+      "total_tokens": 2659,
+      "cached_tokens": 241
+     }
+    },
+    "elapsed_ms": 32040.560572000686,
+    "split_context": {
+     "country": "germany",
+     "country_iso3": "DEU",
+     "country_source": "own",
+     "years": [
+      2023
+     ],
+     "years_source": "own"
+    }
+   },
+   {
+    "report_id": "rep_bc216b586285",
+    "claim": {
+     "claim_id": "clm_638c3792aa7d",
+     "raw_text": "A recent study suggests green tea may improve memory.",
+     "domain": "science",
+     "claim_type": "other",
+     "subject": "green tea memory improvement study",
+     "indicator": null,
+     "entities": [],
+     "quantities": [],
+     "time_refs": [
+      {
+       "raw": "recent",
+       "year": null,
+       "start_year": null,
+       "end_year": null,
+       "period_type": "vague"
+      }
+     ],
+     "geo_refs": [],
+     "conditions": [],
+     "context_notes": "Hedged claim attributed to an unspecified recent study with no effect size, population, or specific study cited; 'may' and 'suggests' indicate uncertainty.",
+     "extraction_actor": "model",
+     "extraction_model": "meta-model-api"
+    },
+    "evidences": [
+     {
+      "evidence_id": "ev_dbdcec7228ed",
+      "claim_id": "clm_638c3792aa7d",
+      "connector": "openalex",
+      "source_name": "OpenAlex",
+      "source_url": "https://doi.org/10.1007/s00213-014-3526-1",
+      "source_kind": "secondary",
+      "evidence_kind": "contextual",
+      "locator": "https://openalex.org/W1971352988 (2014)",
+      "excerpt": "\"Green tea extract enhances parieto-frontal connectivity during working memory processing\" (2014) \u2014 Andr\u00e9 Schmidt, Felix Hammann, Bettina Karin W\u00f6lnerhanssen \u2014 Psychopharmacology [cited by 57]",
+      "payload": {
+       "openalex_id": "https://openalex.org/W1971352988",
+       "title": "Green tea extract enhances parieto-frontal connectivity during working memory processing",
+       "year": 2014,
+       "doi": "https://doi.org/10.1007/s00213-014-3526-1",
+       "cited_by_count": 57,
+       "authors": [
+        "Andr\u00e9 Schmidt",
+        "Felix Hammann",
+        "Bettina Karin W\u00f6lnerhanssen"
+       ],
+       "venue": "Psychopharmacology",
+       "type": "article",
+       "abstract": "RATIONALE: It has been proposed that green tea extract may have a beneficial impact on cognitive functioning, suggesting promising clinical implications. However, the neural mechanisms underlying this putative cognitive enhancing effect of green tea extract still remain unknown. OBJECTIVES: This study investigates whether the intake of green tea extract modulates effective brain connectivity during working memory processing and whether connectivity parameters are related to task performance. MATERIAL AND METHODS: Using a double-blind, counterbalanced, within-subject design, 12 healthy volunteers received a milk whey-based soft drink containing 27.5 g of green tea extract or a milk whey-based soft drink without green tea as control substance while undergoing functional magnetic resonance imaging. Working memory effect on effective connectivity between frontal and parietal brain regions was evaluated using dynamic causal modeling. RESULTS: Green tea extract increased the working memory induced modulation of connectivity from the right superior parietal lobule to the middle frontal gyrus. Notably, the magnitude of green tea induced increase in parieto-frontal connectivity positively correlated with improvement in task performance. CONCLUSIONS: Our findings provide first evidence for the putative beneficial effect of green tea on cognitive functioning, in particular, on working memory processing at the neural system level by suggesting changes in short-term plasticity of parieto-frontal brain connections. Modeling effective connectivity among frontal and parietal brain regions during working memory processing might help to assess the efficacy of green tea for the treatment of cognitive impairments in psychiatric disorders such as dementia.",
+       "query": "green tea memory improvement study"
+      },
+      "retrieved_at": "2026-11-01T19:32:40.675368Z"
+     },
+     {
+      "evidence_id": "ev_b8a0c6ee2730",
+      "claim_id": "clm_638c3792aa7d",
+      "connector": "openalex",
+      "source_name": "OpenAlex",
+      "source_url": "https://doi.org/10.1186/1749-8546-5-13",
+      "source_kind": "secondary",
+      "evidence_kind": "contextual",
+      "locator": "https://openalex.org/W2114057457 (2010)",
+      "excerpt": "\"Beneficial effects of green tea: A literature review\" (2010) \u2014 Mandumpal Chacko Sabu, Priya T Thambi, Ramadasan Kuttan \u2014 Chinese Medicine [cited by 992]",
+      "payload": {
+       "openalex_id": "https://openalex.org/W2114057457",
+       "title": "Beneficial effects of green tea: A literature review",
+       "year": 2010,
+       "doi": "https://doi.org/10.1186/1749-8546-5-13",
+       "cited_by_count": 992,
+       "authors": [
+        "Mandumpal Chacko Sabu",
+        "Priya T Thambi",
+        "Ramadasan Kuttan"
+       ],
+       "venue": "Chinese Medicine",
+       "type": "article",
+       "abstract": "The health benefits of green tea for a wide variety of ailments, including different types of cancer, heart disease, and liver disease, were reported. Many of these beneficial effects of green tea are related to its catechin, particularly (-)-epigallocatechin-3-gallate, content. There is evidence from in vitro and animal studies on the underlying mechanisms of green tea catechins and their biological actions. There are also human studies on using green tea catechins to treat metabolic syndrome, such as obesity, type II diabetes, and cardiovascular risk factors.Long-term consumption of tea catechins could be beneficial against high-fat diet-induced obesity and type II diabetes and could reduce the risk of coronary disease. Further research that conforms to international standards should be performed to monitor the pharmacological and clinical effects of green tea and to elucidate its mechanisms of action.",
+       "query": "green tea memory improvement study"
+      },
+      "retrieved_at": "2026-11-01T19:32:40.675422Z"
+     },
+     {
+      "evidence_id": "ev_b6ad89b1994e",
+      "claim_id": "clm_638c3792aa7d",
+      "connector": "openalex",
+      "source_name": "OpenAlex",
+      "source_url": "https://doi.org/10.1016/j.neuint.2014.08.008",
+      "source_kind": "secondary",
+      "evidence_kind": "contextual",
+      "locator": "https://openalex.org/W2038711586 (2014)",
+      "excerpt": "\"Effects of green tea and physical exercise on memory impairments associated with aging\" (2014) \u2014 Ma\u00edra Frigo Fl\u00f4res, Alexandre Martins, Helen L. Schimidt \u2014 Neurochemistry International [cited by 41]",
+      "payload": {
+       "openalex_id": "https://openalex.org/W2038711586",
+       "title": "Effects of green tea and physical exercise on memory impairments associated with aging",
+       "year": 2014,
+       "doi": "https://doi.org/10.1016/j.neuint.2014.08.008",
+       "cited_by_count": 41,
+       "authors": [
+        "Ma\u00edra Frigo Fl\u00f4res",
+        "Alexandre Martins",
+        "Helen L. Schimidt"
+       ],
+       "venue": "Neurochemistry International",
+       "type": "article",
+       "abstract": null,
+       "query": "green tea memory improvement study"
+      },
+      "retrieved_at": "2026-11-01T19:32:40.675433Z"
+     },
+     {
+      "evidence_id": "ev_615a7566750c",
+      "claim_id": "clm_638c3792aa7d",
+      "connector": "openalex",
+      "source_name": "OpenAlex",
+      "source_url": "https://doi.org/10.3390/nu14142949",
+      "source_kind": "secondary",
+      "evidence_kind": "contextual",
+      "locator": "https://openalex.org/W4286214917 (2022)",
+      "excerpt": "\"Improvement of Depressed Mood with Green Tea Intake\" (2022) \u2014 Keiko Unno, Daisuke Furushima, Yuya Tanaka \u2014 Nutrients [cited by 17]",
+      "payload": {
+       "openalex_id": "https://openalex.org/W4286214917",
+       "title": "Improvement of Depressed Mood with Green Tea Intake",
+       "year": 2022,
+       "doi": "https://doi.org/10.3390/nu14142949",
+       "cited_by_count": 17,
+       "authors": [
+        "Keiko Unno",
+        "Daisuke Furushima",
+        "Yuya Tanaka"
+       ],
+       "venue": "Nutrients",
+       "type": "article",
+       "abstract": "Being in a prolonged depressed state increases the risk of developing depression. To investigate whether green tea intake is effective in improving depression-like moods, we used an experimental animal model of depression with lipopolysaccharide (LPS) and clarified the effects of green tea on the biological stress response and inflammation in the brain. Regarding the stress reduction effect of green tea, we found that the sum of caffeine (C) and epigallocatechin gallate (E) relative to the sum of theanine (T) and arginine (A), the major components of green tea, or the CE/TA ratio, is important. The results showed that depression-like behavior, adrenal hypertrophy as a typical stress response, and brain inflammation were suppressed in mice fed green tea components with CE/TA ratios of 2 to 8. In addition, the expression of Npas4, which is reduced in anxiety and depression, was maintained at the same level as controls in mice that consumed green tea with a CE/TA ratio of 4. In clinical human trials, the consumption of green tea with CE/TA ratios of 3.9 and 4.7 reduced susceptibility to subjective depression. These results suggest that the daily consumption of green tea with a CE/TA ratio of 4\u20135 is beneficial to improving depressed mood.",
+       "query": "green tea memory improvement study"
+      },
+      "retrieved_at": "2026-11-01T19:32:40.675494Z"
+     },
+     {
+      "evidence_id": "ev_ee47df0760b1",
+      "claim_id": "clm_638c3792aa7d",
+      "connector": "openalex",
+      "source_name": "OpenAlex",
+      "source_url": "https://doi.org/10.1089/jmf.2009.1374",
+      "source_kind": "secondary",
+      "evidence_kind": "contextual",
+      "locator": "https://openalex.org/W1971654647 (2011)",
+      "excerpt": "\"A Combination of Green Tea Extract and l -Theanine Improves Memory and Attention in Subjects with Mild Cognitive Impairment: A Double-Blind Placebo-Controlled Study\" (2011) \u2014 Sang-Ki Park, In Chul Jung, Won Kyung Lee \u2014 Journal of Medicinal Food [cited by 105]",
+      "payload": {
+       "openalex_id": "https://openalex.org/W1971654647",
+       "title": "A Combination of Green Tea Extract and l -Theanine Improves Memory and Attention in Subjects with Mild Cognitive Impairment: A Double-Blind Placebo-Controlled Study",
+       "year": 2011,
+       "doi": "https://doi.org/10.1089/jmf.2009.1374",
+       "cited_by_count": 105,
+       "authors": [
+        "Sang-Ki Park",
+        "In Chul Jung",
+        "Won Kyung Lee"
+       ],
+       "venue": "Journal of Medicinal Food",
+       "type": "article",
+       "abstract": "A combination of green tea extract and l-theanine (LGNC-07) has been reported to have beneficial effects on cognition in animal studies. In this randomized, double-blind, placebo-controlled study, the effect of LGNC-07 on memory and attention in subjects with mild cognitive impairment (MCI) was investigated. Ninety-one MCI subjects whose Mini Mental State Examination-K (MMSE-K) scores were between 21 and 26 and who were in either stage 2 or 3 on the Global Deterioration Scale were enrolled in this study. The treatment group (13 men, 32 women; 57.58 \u00b1 9.45 years) took 1,680 mg of LGNC-07, and the placebo group (12 men, 34 women; 56.28 \u00b1 9.92 years) received an equivalent amount of maltodextrin and lactose for 16 weeks. Neuropsychological tests (Rey-Kim memory test and Stroop color-word test) and electroencephalography were conducted to evaluate the effect of LGNC-07 on memory and attention. Further analyses were stratified by baseline severity to evaluate treatment response on the degree of impairment (MMSE-K 21-23 and 24-26). LGNC-07 led to improvements in memory by marginally increasing delayed recognition in the Rey-Kim memory test (P = .0572). Stratified analyses showed that LGNC-07 improved memory and selective attention by significantly increasing the Rey-Kim memory quotient and word reading in the subjects with MMSE-K scores of 21-23 (LGNC-07, n = 11; placebo, n = 9). Electroencephalograms were recorded in 24 randomly selected subjects hourly for 3 hours in eye-open, eye-closed, and reading states after a single dose of LGNC-07 (LGNC-07, n = 12; placebo, n = 12). Brain theta waves, an indicator of cognitive alertness, were increased significantly in the temporal, frontal, parietal, and occipital areas after 3 hours in the eye-open and reading states. Therefore, this study suggests that LGNC-07 has potential as an intervention for cognitive improvement.",
+       "query": "green tea memory improvement study"
+      },
+      "retrieved_at": "2026-11-01T19:32:40.675581Z"
+     }
+    ],
+    "comparisons": [
+     {
+      "comparison_id": "cmp_83b35b0d46aa",
+      "claim_id": "clm_638c3792aa7d",
+      "evidence_id": "ev_dbdcec7228ed",
+      "actor": "model",
+      "model": "meta-model-api",
+      "metric": "abstract_stance",
+      "claim_value": "A recent study suggests green tea may improve memory.",
+      "evidence_value": "Green tea extract enhances parieto-frontal connectivity during working memory processing",
+      "unit": null,
+      "abs_diff": null,
+      "rel_diff_pct": null,
+      "tolerance_rule": "model abstract-stance judgment; contextual only, never verifying",
+      "within_tolerance": null,
+      "verdict": "consistent",
+      "notes": "Abstract supports the claim. The title states green tea extract enhances connectivity during working memory processing and the rationale proposes a beneficial impact on cognitive functioning."
+     },
+     {
+      "comparison_id": "cmp_57f4bdcc6dfb",
+      "claim_id": "clm_638c3792aa7d",
+      "evidence_id": null,
+      "actor": "model",
+      "model": "meta-model-api",
+      "metric": "falsification_review",
+      "claim_value": "cmp_83b35b0d46aa",
+      "evidence_value": "",
+      "unit": null,
+      "abs_diff": null,
+      "rel_diff_pct": null,
+      "tolerance_rule": "",
+      "within_tolerance": null,
+      "verdict": "inconclusive",
+      "notes": "[non_verifying_overclaim/fatal/high] Notes cite 'enhances connectivity during working memory processing' and a rationale proposing beneficial impact as supporting 'may improve memory.' A connectivity finding plus a proposed benefit does not verify actual memory improvement, so 'consistent' overclaims what the cited material shows."
+     },
+     {
+      "comparison_id": "cmp_69dc24dbaa9c",
+      "claim_id": "clm_638c3792aa7d",
+      "evidence_id": null,
+      "actor": "model",
+      "model": "meta-model-api",
+      "metric": "falsification_review",
+      "claim_value": "cmp_83b35b0d46aa",
+      "evidence_value": "",
+      "unit": null,
+      "abs_diff": null,
+      "rel_diff_pct": null,
+      "tolerance_rule": "",
+      "within_tolerance": null,
+      "verdict": "inconclusive",
+      "notes": "[wrong_period/serious/high] Claim requires a 'recent study' but the comparison notes provide no date, year, or other temporal information to establish recency. The 'consistent' verdict therefore cannot verify the recency component of the claim."
+     },
+     {
+      "comparison_id": "cmp_936a4be329c6",
+      "claim_id": "clm_638c3792aa7d",
+      "evidence_id": null,
+      "actor": "model",
+      "model": "meta-responses-web-search",
+      "metric": "web_counter_evidence",
+      "claim_value": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4159594/",
+      "evidence_value": "- \u201cUsing a double-blind, counterbalanced, within-subject design, 12 healthy volunteers received\u2026\u201d",
+      "unit": null,
+      "abs_diff": null,
+      "rel_diff_pct": null,
+      "tolerance_rule": "",
+      "within_tolerance": null,
+      "verdict": "inconclusive",
+      "notes": "[pmc.ncbi.nlm.nih.gov] - \u201cUsing a double-blind, counterbalanced, within-subject design, 12 healthy volunteers received\u2026\u201d \u2014 https://pmc.ncbi.nlm.nih.gov/articles/PMC4159594/ (model-reported quote; page not fetched by code)"
+     },
+     {
+      "comparison_id": "cmp_de314c11af5c",
+      "claim_id": "clm_638c3792aa7d",
+      "evidence_id": null,
+      "actor": "model",
+      "model": "meta-responses-web-search",
+      "metric": "web_counter_evidence",
+      "claim_value": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4159594/",
+      "evidence_value": "- Participants: \u201cIn total, 12 healthy right-handed male completed the study\u201d",
+      "unit": null,
+      "abs_diff": null,
+      "rel_diff_pct": null,
+      "tolerance_rule": "",
+      "within_tolerance": null,
+      "verdict": "inconclusive",
+      "notes": "[pmc.ncbi.nlm.nih.gov] - Participants: \u201cIn total, 12 healthy right-handed male completed the study\u201d \u2014 https://pmc.ncbi.nlm.nih.gov/articles/PMC4159594/ (model-reported quote; page not fetched by code)"
+     },
+     {
+      "comparison_id": "cmp_0e4045deed79",
+      "claim_id": "clm_638c3792aa7d",
+      "evidence_id": null,
+      "actor": "model",
+      "model": "meta-responses-web-search",
+      "metric": "web_counter_evidence",
+      "claim_value": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4159594/",
+      "evidence_value": "- \u201cThere was a strong trend toward a significantly improved task performance\u2026 [mean (SD): 3.23 (0.42)] compared with the control drink [mean (SD): 2.84 (0.45); t(11) = 2.041; p = 0.066]\u201d",
+      "unit": null,
+      "abs_diff": null,
+      "rel_diff_pct": null,
+      "tolerance_rule": "",
+      "within_tolerance": null,
+      "verdict": "inconclusive",
+      "notes": "[pmc.ncbi.nlm.nih.gov] - \u201cThere was a strong trend toward a significantly improved task performance\u2026 [mean (SD): 3.23 (0.42)] compared with the control drink [mean (SD): 2.84 (0.45); t(11) = 2.041; p = 0.066]\u201d \u2014 https://pmc.ncbi.nlm.nih.gov/articles/PMC4159594/ (model-reported quote; page not fetched by code)"
+     },
+     {
+      "comparison_id": "cmp_9049854a9f5f",
+      "claim_id": "clm_638c3792aa7d",
+      "evidence_id": null,
+      "actor": "model",
+      "model": "meta-responses-web-search",
+      "metric": "web_counter_evidence",
+      "claim_value": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4159594/",
+      "evidence_value": "However, we found a strong trend toward improved performance, suggesting that our study sample was too small to achieve differences on behavioural parameters.\u201d",
+      "unit": null,
+      "abs_diff": null,
+      "rel_diff_pct": null,
+      "tolerance_rule": "",
+      "within_tolerance": null,
+      "verdict": "inconclusive",
+      "notes": "[pmc.ncbi.nlm.nih.gov] However, we found a strong trend toward improved performance, suggesting that our study sample was too small to achieve differences on behavioural parameters.\u201d \u2014 https://pmc.ncbi.nlm.nih.gov/articles/PMC4159594/ (model-reported quote; page not fetched by code)"
+     },
+     {
+      "comparison_id": "cmp_a8b5a2c56065",
+      "claim_id": "clm_638c3792aa7d",
+      "evidence_id": null,
+      "actor": "model",
+      "model": "meta-responses-web-search",
+      "metric": "web_counter_evidence",
+      "claim_value": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4159594/",
+      "evidence_value": "- \u201cA significantly increased WM-induced modulation\u2026 [t(10) = 2.53; p = 0.030; not corrected for multiple comparisons]\u201d",
+      "unit": null,
+      "abs_diff": null,
+      "rel_diff_pct": null,
+      "tolerance_rule": "",
+      "within_tolerance": null,
+      "verdict": "inconclusive",
+      "notes": "[pmc.ncbi.nlm.nih.gov] - \u201cA significantly increased WM-induced modulation\u2026 [t(10) = 2.53; p = 0.030; not corrected for multiple comparisons]\u201d \u2014 https://pmc.ncbi.nlm.nih.gov/articles/PMC4159594/ (model-reported quote; page not fetched by code)"
+     }
+    ],
+    "uncertainties": [
+     {
+      "code": "metadata_only",
+      "description": "Evidence consists of bibliographic metadata (titles, years, venues). Verifying the claim requires reading full texts, which this MVP does not do.",
+      "severity": "major",
+      "related_ids": [
+       "ev_dbdcec7228ed",
+       "ev_b8a0c6ee2730",
+       "ev_b6ad89b1994e",
+       "ev_615a7566750c",
+       "ev_ee47df0760b1"
+      ]
+     },
+     {
+      "code": "abstract_off_topic",
+      "description": "Abstract for https://openalex.org/W2114057457 (2010) is off-topic for this claim; no stance was assessed. Model note: The abstract discusses cancer, heart disease, liver disease, and metabolic syndrome with no mention of memory or cognition.",
+      "severity": "minor",
+      "related_ids": [
+       "ev_b8a0c6ee2730"
+      ]
+     },
+     {
+      "code": "abstract_off_topic",
+      "description": "Abstract for https://openalex.org/W4286214917 (2022) is off-topic for this claim; no stance was assessed. Model note: The abstract focuses on improving depression-like moods and stress response with no mention of memory.",
+      "severity": "minor",
+      "related_ids": [
+       "ev_615a7566750c"
+      ]
+     },
+     {
+      "code": "falsification_flag",
+      "description": "Self-review fatal flag on [cmp_83b35b0d46aa] (non_verifying_overclaim): Notes cite 'enhances connectivity during working memory processing' and a rationale proposing beneficial impact as supporting 'may improve memory.' A connectivity finding plus a proposed benefit does not verify actual memory improvement, so 'consistent' overclaims what the cited material shows.",
+      "severity": "major",
+      "related_ids": [
+       "cmp_83b35b0d46aa"
+      ]
+     },
+     {
+      "code": "falsification_flag",
+      "description": "Self-review serious flag on [cmp_83b35b0d46aa] (wrong_period): Claim requires a 'recent study' but the comparison notes provide no date, year, or other temporal information to establish recency. The 'consistent' verdict therefore cannot verify the recency component of the claim.",
+      "severity": "minor",
+      "related_ids": [
+       "cmp_83b35b0d46aa"
+      ]
+     },
+     {
+      "code": "web_counter_evidence",
+      "description": "Live-web counter-evidence (pmc.ncbi.nlm.nih.gov): - \u201cUsing a double-blind, counterbalanced, within-subject design, 12 healthy volunteers received\u2026\u201d [https://pmc.ncbi.nlm.nih.gov/articles/PMC4159594/] (model-reported quote; page not fetched by code)",
+      "severity": "minor",
+      "related_ids": []
+     },
+     {
+      "code": "web_counter_evidence",
+      "description": "Live-web counter-evidence (pmc.ncbi.nlm.nih.gov): - Participants: \u201cIn total, 12 healthy right-handed male completed the study\u201d [https://pmc.ncbi.nlm.nih.gov/articles/PMC4159594/] (model-reported quote; page not fetched by code)",
+      "severity": "minor",
+      "related_ids": []
+     },
+     {
+      "code": "web_counter_evidence",
+      "description": "Live-web counter-evidence (pmc.ncbi.nlm.nih.gov): - \u201cThere was a strong trend toward a significantly improved task performance\u2026 [mean (SD): 3.23 (0.42)] compared with the control drink [mean (SD): 2.84 (0.45); t(11) = 2.041; p = 0.066]\u201d [https://pmc.ncbi.nlm.nih.gov/articles/PMC4159594/] (model-reported quote; page not fetched by code)",
+      "severity": "minor",
+      "related_ids": []
+     },
+     {
+      "code": "web_counter_evidence",
+      "description": "Live-web counter-evidence (pmc.ncbi.nlm.nih.gov): However, we found a strong trend toward improved performance, suggesting that our study sample was too small to achieve differences on behavioural parameters.\u201d [https://pmc.ncbi.nlm.nih.gov/articles/PMC4159594/] (model-reported quote; page not fetched by code)",
+      "severity": "minor",
+      "related_ids": []
+     },
+     {
+      "code": "web_counter_evidence",
+      "description": "Live-web counter-evidence (pmc.ncbi.nlm.nih.gov): - \u201cA significantly increased WM-induced modulation\u2026 [t(10) = 2.53; p = 0.030; not corrected for multiple comparisons]\u201d [https://pmc.ncbi.nlm.nih.gov/articles/PMC4159594/] (model-reported quote; page not fetched by code)",
+      "severity": "minor",
+      "related_ids": []
+     },
+     {
+      "code": "web_considered_not_cited",
+      "description": "Considered but not cited (link.springer.com): Green tea extract enhances parieto-frontal connectivity during working memory processing | Psychopharmacology | Springer Nature Link [https://link.springer.com/article/10.1007/s00213-014-3526-1] \u2014 retrieved by the model, listed by code; not evidence.",
+      "severity": "minor",
+      "related_ids": []
+     },
+     {
+      "code": "web_considered_not_cited",
+      "description": "Considered but not cited (www.nutritional-psychology.org): Green Tea Extract and Memory: Effects on Brain Function [https://www.nutritional-psychology.org/research-summaries/green-tea-extract-enhances-parieto-frontal-connectivity-during-working-memory-processing/] \u2014 retrieved by the model, listed by code; not evidence.",
+      "severity": "minor",
+      "related_ids": []
+     },
+     {
+      "code": "web_considered_not_cited",
+      "description": "Considered but not cited (d.docksci.com): Green tea extract enhances parieto-frontal connectivity during working memory processing. - PDF Download Free [https://d.docksci.com/green-tea-extract-enhances-parieto-frontal-connectivity-during-working-memory-pr_5af427abd64ab2c66e6a5b59.html] \u2014 retrieved by the model, listed by code; not evidence.",
+      "severity": "minor",
+      "related_ids": []
+     },
+     {
+      "code": "web_considered_not_cited",
+      "description": "Considered but not cited (fomatmedical.com): Green Tea Boosts Your Brain | FOMAT [https://fomatmedical.com/blogs-updates/green-tea-boosts-brain/] \u2014 retrieved by the model, listed by code; not evidence.",
+      "severity": "minor",
+      "related_ids": []
+     },
+     {
+      "code": "web_considered_not_cited",
+      "description": "Considered but not cited (www.alzdiscovery.org): Green Tea & Your Brain | Cognitive Vitality | Alzheimer's Drug Discovery Foundation [https://www.alzdiscovery.org/cognitive-vitality/ratings/green-tea] \u2014 retrieved by the model, listed by code; not evidence.",
+      "severity": "minor",
+      "related_ids": []
+     }
+    ],
+    "limitations": [
+     "Evidence Atlas is an analysis aid, not an arbiter of truth.",
+     "Retrieved sources may disagree for legitimate methodological reasons.",
+     "A measured discrepancy is not proof of falsehood.",
+     "Results depend on the sources reachable at analysis time."
+    ],
+    "conclusion": {
+     "stance": "partially_supported",
+     "summary": "The claim stance is \"partially_supported\" with [cmp_83b35b0d46aa] noted as consistent for connectivity during working memory processing. However [cmp_57f4bdcc6dfb] and [cmp_69dc24dbaa9c] are inconclusive because connectivity plus proposed benefit does not verify memory improvement and no date establishes recency. Further [cmp_936a4be329c6], [cmp_de314c11af5c], [cmp_0e4045deed79], [cmp_9049854a9f5f], [cmp_a8b5a2c56065] are inconclusive and evidence is missing for any measured delta percent.",
+     "support_comparison_ids": [
+      "cmp_83b35b0d46aa"
+     ],
+     "contradict_comparison_ids": [],
+     "caveats": [
+      "Evidence consists of bibliographic metadata (titles, years, venues). Verifying the claim requires reading full texts, which this MVP does not do.",
+      "Self-review fatal flag on [cmp_83b35b0d46aa] (non_verifying_overclaim): Notes cite 'enhances connectivity during working memory processing' and a rationale proposing beneficial impact as supporting 'may improve memory.' A connectivity finding plus a proposed benefit does not verify actual memory improvement, so 'consistent' overclaims what the cited material shows.",
+      "recency not established",
+      "connectivity does not verify memory improvement",
+      "all rel_diff_pct missing",
+      "web counter-evidence inconclusive"
+     ],
+     "actor": "model",
+     "model": "meta-model-api"
+    },
+    "audit": [
+     {
+      "step": "extract",
+      "actor": "model:meta-model-api",
+      "started_at": "2026-11-01T19:32:29.618470Z",
+      "ended_at": "2026-11-01T19:32:38.774839Z",
+      "detail": "domain=science type=other quantities=0 times=1 geo=0",
+      "duration_ms": 9156.355872008135
+     },
+     {
+      "step": "route",
+      "actor": "code",
+      "started_at": "2026-11-01T19:32:38.774842Z",
+      "ended_at": "2026-11-01T19:32:38.774856Z",
+      "detail": "connectors=['openalex']",
+      "duration_ms": 0.007353999535553157
+     },
+     {
+      "step": "retrieve",
+      "actor": "code",
+      "started_at": "2026-11-01T19:32:38.775396Z",
+      "ended_at": "2026-11-01T19:32:40.675923Z",
+      "detail": "openalex: status=ok count=5 query='green tea memory improvement study'",
+      "duration_ms": 1900.5154559999937
+     },
+     {
+      "step": "verify",
+      "actor": "code",
+      "started_at": "2026-11-01T19:32:40.675926Z",
+      "ended_at": "2026-11-01T19:32:45.326569Z",
+      "detail": "1 comparison(s), 3 uncertaintie(s)",
+      "duration_ms": 4650.635583006078
+     },
+     {
+      "step": "falsify",
+      "actor": "model:meta-model-api",
+      "started_at": "2026-11-01T19:32:45.326579Z",
+      "ended_at": "2026-11-01T19:33:04.832867Z",
+      "detail": "attacks=2 fatal_high=1 advisory_only web_citations=5 cited=5/considered=50",
+      "duration_ms": 19506.279287001234
+     },
+     {
+      "step": "synthesize",
+      "actor": "model:meta-model-api",
+      "started_at": "2026-11-01T19:33:04.832869Z",
+      "ended_at": "2026-11-01T19:33:10.029501Z",
+      "detail": "stance=partially_supported",
+      "duration_ms": 5196.627489000093
+     }
+    ],
+    "created_at": "2026-11-01T19:32:38.774825Z",
+    "meta": {
+     "app_version": "0.4.0",
+     "model": "muse-spark-1.3",
+     "temperature": 0,
+     "max_tokens": 4000,
+     "tolerance": 0.02,
+     "default": 5,
+     "prompt_version": "4",
+     "input_sha256": "b9ec144450bed9514431f2afae7f8be956c76425498d3d74652ef515620620b0",
+     "usage_extract": {
+      "prompt_tokens": 981,
+      "completion_tokens": 2009,
+      "reasoning_tokens": 1877,
+      "total_tokens": 2990,
+      "cached_tokens": 881
+     },
+     "usage_science": {
+      "prompt_tokens": 690,
+      "completion_tokens": 1044,
+      "reasoning_tokens": 868,
+      "total_tokens": 1734,
+      "cached_tokens": 241
+     },
+     "usage_falsify": {
+      "prompt_tokens": 93703,
+      "completion_tokens": 3426,
+      "reasoning_tokens": 1858,
+      "total_tokens": 97129,
+      "cached_tokens": 69640
+     },
+     "usage_summary": {
+      "prompt_tokens": 1035,
+      "completion_tokens": 1203,
+      "reasoning_tokens": 1008,
+      "total_tokens": 2238,
+      "cached_tokens": 241
+     }
+    },
+    "elapsed_ms": 40411.04805699433,
+    "split_context": {
+     "country": "germany",
+     "country_iso3": "DEU",
+     "country_source": "inherited",
+     "years": [
+      2023
+     ],
+     "years_source": "inherited"
+    }
+   }
+  ],
+  "rollup": {
+   "supported": 1,
+   "partially_supported": 1,
+   "contradicted": 0,
+   "unverifiable": 0,
+   "not_assessable": 0
+  },
+  "errors": 0,
+  "elapsed_ms": 42518.53585799108,
+  "meta": {
+   "app_version": "0.4.0",
+   "prompt_version": "4",
+   "deadline_s": null,
+   "deadline_exceeded": false,
+   "splitter_actor": "model",
+   "splitter_model": "meta-model-api",
+   "splitter_notes": [],
+   "usage_split": {
+    "prompt_tokens": 230,
+    "completion_tokens": 482,
+    "reasoning_tokens": 435,
+    "total_tokens": 712,
+    "cached_tokens": 113
+   },
+   "input_sha256": "f942bf1b3e9e504dbc3aa6efe1d392db7ebbeda549291678f17a0402459dcc63"
+  }
+ }
+}
+</script>
 <script>
 "use strict";
 const $ = id => document.getElementById(id);
@@ -545,8 +4090,20 @@ $("run").addEventListener("click", submitClaim);
 $("retryTop").addEventListener("click", () => {
   if (lastRun) doAnalyze(lastRun.text, lastRun.domain);
 });
+/* Judge-mode example order: #singlePanel buttons map to #judge-s0..3,
+   #batchPanel buttons to #judge-b0..1 (embedded real runs, see playJudge*). */
+const singleExBtns = [...document.querySelectorAll("#singlePanel .examples button")];
 document.querySelectorAll(".examples button").forEach(btn =>
   btn.addEventListener("click", () => {
+    if (demoMode() === "judge") {
+      const idx = singleExBtns.indexOf(btn);
+      if (idx < 0) return; /* batch button: its own handler replays below. */
+      $("claim").value = btn.dataset.ex || "";
+      updateCounter();
+      showFormErr("");
+      playJudgeSingle(btn, idx);
+      return;
+    }
     $("claim").value = btn.dataset.ex || "";
     updateCounter();
     showFormErr("");
@@ -619,6 +4176,12 @@ function errorCard(title, detail, code, retryable, opts) {
   opts = opts || {};
   if (code === "unauthorized" && detail.indexOf("Server access") === -1) {
     detail += " Open “Server access” under the header and enter this server's API key, then retry.";
+  }
+  /* Live-kind failures (never validation/cancel): point at the $0 cached
+     alternative. Additive only — existing card titles stay intact. */
+  if (retryable && (code === "network" || code === "timeout" ||
+      code === "analysis_failed" || code === "stream_error")) {
+    detail += " Tip: the Judge examples above replay cached demo runs instantly at no cost.";
   }
   const codeBit = code ? ' <span class="mut small">(code: ' + esc(human(code)) + ")</span>" : "";
   const refBit = opts.ref ? ' <span class="mut small">(ref: <code>' + esc(opts.ref) + "</code>)</span>" : "";
@@ -1287,8 +4850,16 @@ $("batchRun").addEventListener("click", submitBatch);
 $("batchRetry").addEventListener("click", () => {
   if (lastBatch) doCheck(lastBatch.text, lastBatch.domain);
 });
+const batchExBtns = [...document.querySelectorAll("[data-bex]")];
 document.querySelectorAll("[data-bex]").forEach(btn =>
   btn.addEventListener("click", () => {
+    if (demoMode() === "judge") {
+      $("batchText").value = btn.dataset.bex || "";
+      updateBatchCounter();
+      showBatchErr("");
+      playJudgeBatch(btn, batchExBtns.indexOf(btn));
+      return;
+    }
     $("batchText").value = btn.dataset.bex || "";
     updateBatchCounter();
     showBatchErr("");
@@ -1307,17 +4878,113 @@ function submitBatch() {
   doCheck(text, $("batchDomain").value);
 }
 function showBatchSkeleton() {
-  /* Honest indeterminate progress: /api/check is ONE call, so "claim N of M"
-     is unknowable until it returns — elapsed timer only, plus cancel. */
+  /* SSE progress: /api/check/stream reports started → claim events → done,
+     so per-claim progress IS shown live (still a single role=status). */
   $("out").innerHTML =
     '<div class="card" role="status" aria-label="Batch check in progress">' +
     '<h2>Checking… <span id="batchElapsed" class="mut small">0.0s</span></h2>' +
+    '<p id="batchProgress" class="mut">Connecting…</p>' +
+    '<ul id="batchClaims" aria-label="Per-claim progress"></ul>' +
     '<div class="skelbar" style="width:92%"></div><div class="skelbar" style="width:78%"></div>' +
     '<div class="skelbar" style="width:64%"></div>' +
-    '<p class="mut small">One request splits and checks every claim — per-claim progress ' +
-    "is not available until it returns. Automatically stops after 5 minutes. " +
+    '<p class="mut small">Live per-claim progress over SSE — automatically stops ' +
+    "after 5 minutes. " +
     '<button id="batchCancel" class="ghost small">Cancel</button></p></div>';
   $("batchCancel").addEventListener("click", () => { if (aborter) aborter.abort("cancelled"); });
+}
+function setBatchProgress(text) {
+  const p = $("batchProgress");
+  if (p) p.textContent = text;
+}
+/* One chip per finished sub-claim (stance words via stanceInfo: humanized,
+   never snake_case in the UI). Progress line counts done/total. */
+function addBatchClaimItem(entry) {
+  const ul = $("batchClaims");
+  if (!ul) return;
+  const n = isNum(entry.index) ? entry.index + 1 : "?";
+  const li = document.createElement("li");
+  li.textContent = entry.error
+    ? "Claim " + n + ": not checked"
+    : "Claim " + n + ": " + stanceInfo(entry.stance).short;
+  ul.appendChild(li);
+  const done = isNum(entry.done) ? entry.done : ul.children.length;
+  const total = isNum(entry.total) ? entry.total : "?";
+  setBatchProgress("Checked " + done + " of " + total + "…");
+}
+/* Read one POST /api/check/stream body as SSE (fetch + ReadableStream,
+   "data:" lines). Resolves with the final `done` result dict. Throws an
+   Error with .via === "fallback" to request the POST fallback (transport
+   failure, non-SSE body, stream cut without done), an Error with
+   .via === "card" for a streamed pipeline error, or rethrows the abort
+   reason string (cancel/timeout/supersede) for doCheck's typed cards. */
+async function readCheckStream(res, mine) {
+  const fail = () => {
+    throw Object.assign(new Error("stream failed"), {via: "fallback"});
+  };
+  if (!res.body || typeof res.body.getReader !== "function") fail();
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buf = "";
+  const onAbort = () => { try { reader.cancel(); } catch {} };
+  if (mine.signal.aborted) throw mine.signal.reason;
+  mine.signal.addEventListener("abort", onAbort, {once: true});
+  try {
+    const handle = ev => {
+      if (!ev || typeof ev !== "object") return null;
+      if (ev.type === "started") {
+        const n = isNum(ev.claim_count) ? ev.claim_count : "?";
+        setBatchProgress("Checking 0 of " + n + "…");
+        return null;
+      }
+      if (ev.type === "claim") {
+        addBatchClaimItem(ev);
+        return null;
+      }
+      if (ev.type === "done") {
+        if (ev.result && Array.isArray(ev.result.reports)) return ev.result;
+        fail();
+      }
+      if (ev.type === "error") {
+        throw Object.assign(
+          new Error(safeMsg(ev.message) || "Analysis failed."),
+          {via: "card"});
+      }
+      return null;
+    };
+    const pump = chunk => {
+      buf += chunk;
+      buf = buf.replace(/\r\n/g, "\n");
+      let result = null, idx;
+      while ((idx = buf.indexOf("\n\n")) >= 0) {
+        const block = buf.slice(0, idx);
+        buf = buf.slice(idx + 2);
+        for (const line of block.split("\n")) {
+          const t = line.trim();
+          if (t.indexOf("data:") !== 0) continue; /* ignore comments/blank */
+          const payload = t.slice(5).trim();
+          if (!payload) continue;
+          let ev = null;
+          try { ev = JSON.parse(payload); } catch { ev = null; }
+          const r = handle(ev);
+          if (r) result = r;
+        }
+      }
+      return result;
+    };
+    for (;;) {
+      const {done, value} = await reader.read();
+      if (done) break;
+      const r = pump(decoder.decode(value, {stream: true}));
+      if (r) { try { await reader.cancel(); } catch {} return r; }
+    }
+    const tail = pump(decoder.decode());
+    if (tail) return tail;
+    /* Server closed the stream without done/error: fall back to POST. */
+    fail();
+  } finally {
+    try { mine.signal.removeEventListener("abort", onAbort); } catch {}
+    try { reader.releaseLock(); } catch {}
+  }
 }
 function startBatchElapsed() {
   const t0 = performance.now();
@@ -1338,6 +5005,18 @@ async function doCheck(text, domain) {
     updateBatchCounter();
     doCheck(lastBatch.text, lastBatch.domain);
   };
+  /* Shared !ok mapping for stream 4xx AND fallback POST: identical cards. */
+  const httpErrorCard = async res => {
+    const e = await parseErrBody(res);
+    const detail = e.message || ("The server answered with status " + e.status + ".");
+    if (e.status === 400 || e.status === 404 || e.status === 422) {
+      errorCard("Please check your text", detail, e.code, false,
+        {retryTopId: "batchRetry", onRetry: retryLast, ref: e.requestId});
+    } else {
+      errorCard("Service issue — please retry", detail, e.code, true,
+        {retryTopId: "batchRetry", onRetry: retryLast, ref: e.requestId});
+    }
+  };
   aborter = new AbortController();
   const mine = aborter;
   showBatchSkeleton();
@@ -1345,28 +5024,65 @@ async function doCheck(text, domain) {
   $("batchRun").disabled = true;
   $("batchBusy").textContent = "Checking…";
   const timer = setTimeout(() => { try { mine.abort("timeout"); } catch {} }, BATCH_TIMEOUT_MS);
+  const payload = {text, limit: 5, domain, persist: true};
   try {
-    const res = await AF("/api/check", {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({text, limit: 5, domain, persist: true}),
-      signal: mine.signal
-    });
+    /* Primary: SSE stream with per-claim progress. */
+    let body = null;
+    try {
+      const res = await AF("/api/check/stream", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(payload),
+        signal: mine.signal
+      });
+      if (!res.ok) {
+        if (res.status >= 400 && res.status < 500) {
+          /* Deterministic client error (validation/auth/quota): a POST
+             retry would answer the same — card it, no fallback. */
+          clearTimeout(timer);
+          stopElapsed();
+          await httpErrorCard(res);
+          return;
+        }
+        throw Object.assign(new Error("stream http " + res.status),
+          {via: "fallback"});
+      }
+      const ctype = (res.headers.get("content-type") || "").toLowerCase();
+      if (ctype.indexOf("text/event-stream") === -1) {
+        throw Object.assign(new Error("not an event stream"),
+          {via: "fallback"});
+      }
+      body = await readCheckStream(res, mine);
+    } catch (e) {
+      if (mine.signal.aborted) throw e; /* cancel/timeout/supersede */
+      if (e && e.via === "card") {
+        clearTimeout(timer);
+        stopElapsed();
+        errorCard("Service issue — please retry", safeMsg(e.message),
+          "analysis_failed", true,
+          {retryTopId: "batchRetry", onRetry: retryLast});
+        return;
+      }
+      if (!(e && e.via === "fallback")) throw e;
+      /* Fallback: one plain POST /api/check (older server, proxy, cut
+         stream). The progress line says so honestly. */
+      setBatchProgress("Live stream unavailable — retrying as one standard request…");
+      const res = await AF("/api/check", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(payload),
+        signal: mine.signal
+      });
+      clearTimeout(timer);
+      stopElapsed();
+      if (!res.ok) {
+        await httpErrorCard(res);
+        return;
+      }
+      body = await res.json();
+    }
     clearTimeout(timer);
     stopElapsed();
-    if (!res.ok) {
-      const e = await parseErrBody(res);
-      const detail = e.message || ("The server answered with status " + e.status + ".");
-      if (e.status === 400 || e.status === 404 || e.status === 422) {
-        errorCard("Please check your text", detail, e.code, false,
-          {retryTopId: "batchRetry", onRetry: retryLast, ref: e.requestId});
-      } else {
-        errorCard("Service issue — please retry", detail, e.code, true,
-          {retryTopId: "batchRetry", onRetry: retryLast, ref: e.requestId});
-      }
-      return;
-    }
-    const body = await res.json();
     $("batchRetry").hidden = true;
     renderBatch(body);
   } catch (e) {
@@ -1545,6 +5261,88 @@ function renderBatch(body) {
   loadRecent();
 }
 
+/* ---------- Judge mode: one-click examples replay REAL cached runs ($0) ----------
+   Embedded #judge-s0..3 (single /api/analyze reports) and #judge-b0..1 (batch
+   /api/check bodies) are byte-identical to eval/results/judge_cache/*.json
+   (live muse-spark-1.3 runs; see docs/JUDGE_MODE.md). Replay is fully local:
+   no fetch, no model cost, works even with the service down. Direct Run
+   buttons ALWAYS analyze live. A cache miss or shape mismatch falls back to
+   the live submit path — never a dead click. */
+const DEMO_MODE_KEY = "atlas_demo_mode";
+function demoMode() {
+  const el = document.querySelector('input[name="demomode"]:checked');
+  return el ? el.value : "judge";
+}
+function judgeWrap(elId) {
+  try {
+    const el = document.getElementById(elId);
+    if (!el) return null;
+    const w = JSON.parse(el.textContent);
+    return (w && typeof w === "object") ? w : null;
+  } catch {
+    return null;
+  }
+}
+function cachedBannerHTML(wrap) {
+  const when = wrap.generated_at ? fmtDate(wrap.generated_at) : "";
+  return '<div class="cachedbar" role="status">Cached demo run — replayed ' +
+    "instantly at $0" + (when ? " (recorded " + esc(when) + ")" : "") +
+    ". Switch to Live above to analyze your own text.</div>";
+}
+function playJudgeSingle(btn, idx) {
+  const w = judgeWrap("judge-s" + idx);
+  const rep = w && w.report;
+  if (!w || w.source_text !== (btn.dataset.ex || "") ||
+      !rep || !rep.conclusion || !Array.isArray(rep.evidences)) {
+    submitClaim(); /* miss/mismatch: live path, never a dead click */
+    return;
+  }
+  if (aborter) { try { aborter.abort("superseded"); } catch {} aborter = null; }
+  reqSeq++;
+  $("retryTop").hidden = true;
+  render(rep);
+  /* Cached reports were generated with persist:false: no deep-link (the id
+     is not re-fetchable) and no history touch — banner only. */
+  $("out").insertAdjacentHTML("afterbegin", cachedBannerHTML(w));
+  $("busy").textContent = "";
+}
+function playJudgeBatch(btn, idx) {
+  const w = judgeWrap("judge-b" + idx);
+  const body = w && w.body;
+  if (!w || w.source_text !== (btn.dataset.bex || "") ||
+      !body || !Array.isArray(body.reports)) {
+    submitBatch(); /* miss/mismatch: live path, never a dead click */
+    return;
+  }
+  if (aborter) { try { aborter.abort("superseded"); } catch {} aborter = null; }
+  reqSeq++;
+  $("batchRetry").hidden = true;
+  renderBatch(body);
+  $("out").insertAdjacentHTML("afterbegin", cachedBannerHTML(w));
+  $("batchBusy").textContent = "";
+}
+function updateDemoHint() {
+  const h = $("demoModeHint");
+  if (!h) return;
+  h.textContent = demoMode() === "judge"
+    ? "Judge mode: one-click examples replay real cached runs instantly ($0). Your own Run always analyzes live."
+    : "Live mode: examples run real analyses (model cost, seconds to minutes). Batch shows live per-claim progress.";
+}
+function initDemoMode() {
+  let saved = "";
+  try { saved = localStorage.getItem(DEMO_MODE_KEY) || ""; } catch {}
+  if (saved === "judge" || saved === "live") {
+    const r = document.querySelector('input[name="demomode"][value="' + saved + '"]');
+    if (r) r.checked = true;
+  }
+  document.querySelectorAll('input[name="demomode"]').forEach(r =>
+    r.addEventListener("change", () => {
+      try { localStorage.setItem(DEMO_MODE_KEY, demoMode()); } catch {}
+      updateDemoHint();
+    }));
+  updateDemoHint();
+}
+
 /* ---------- history: recent strip, deep link, delete ---------- */
 async function loadRecent() {
   const box = $("recent");
@@ -1639,6 +5437,7 @@ async function loadReport(id) {
 
 /* ---------- init ---------- */
 initApiKeyBox();
+initDemoMode();
 updateCounter();
 updateBatchCounter();
 refreshStatus();

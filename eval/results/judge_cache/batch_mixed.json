@@ -1,0 +1,951 @@
+{
+ "judge_cache_version": 1,
+ "source_text": "Unemployment in Germany was 3.1% in 2023. A recent study suggests green tea may improve memory.",
+ "endpoint": "/api/check",
+ "request": {
+  "limit": 5,
+  "domain": "auto",
+  "persist": false
+ },
+ "generated_at": "2026-11-01T19:32:27Z",
+ "body": {
+  "claim_count": 2,
+  "reports": [
+   {
+    "report_id": "rep_6bbfd005a0cd",
+    "claim": {
+     "claim_id": "clm_97450a332eaf",
+     "raw_text": "Unemployment in Germany was 3.1% in 2023.",
+     "domain": "economy",
+     "claim_type": "quantitative",
+     "subject": "Unemployment in Germany 2023",
+     "indicator": "unemployment rate",
+     "entities": [
+      "Germany"
+     ],
+     "quantities": [
+      {
+       "label": "unemployment",
+       "raw_text": "3.1%",
+       "value": 3.1,
+       "unit": "percent",
+       "normalized_value": 3.1,
+       "normalized_unit": "percent"
+      }
+     ],
+     "time_refs": [
+      {
+       "raw": "2023",
+       "year": 2023,
+       "start_year": null,
+       "end_year": null,
+       "period_type": "year"
+      }
+     ],
+     "geo_refs": [
+      {
+       "raw": "Germany",
+       "name": "Germany",
+       "iso3": "DEU"
+      }
+     ],
+     "conditions": [],
+     "context_notes": "Claim states the unemployment rate for Germany in 2023 was 3.1%.",
+     "extraction_actor": "model",
+     "extraction_model": "meta-model-api"
+    },
+    "evidences": [
+     {
+      "evidence_id": "ev_32bf9775ea4d",
+      "claim_id": "clm_97450a332eaf",
+      "connector": "worldbank",
+      "source_name": "World Bank Open Data",
+      "source_url": "https://data.worldbank.org/indicator/SL.UEM.TOTL.ZS?locations=DEU",
+      "source_kind": "secondary",
+      "evidence_kind": "direct",
+      "locator": "SL.UEM.TOTL.ZS DEU 2023",
+      "excerpt": "Unemployment, total (% of labor force) for Germany in 2023: 3.071",
+      "payload": {
+       "indicator": "SL.UEM.TOTL.ZS",
+       "label": "Unemployment, total (% of labor force)",
+       "unit": "percent",
+       "iso3": "DEU",
+       "year": "2023",
+       "value": 3.071,
+       "query": "SL.UEM.TOTL.ZS DEU 2023:2023",
+       "source_vintage": "2026-10-08",
+       "obs_status": "",
+       "source_decimal": 1
+      },
+      "retrieved_at": "2026-11-01T19:32:34.501274Z"
+     }
+    ],
+    "comparisons": [
+     {
+      "comparison_id": "cmp_60b18c3fb016",
+      "claim_id": "clm_97450a332eaf",
+      "evidence_id": "ev_32bf9775ea4d",
+      "actor": "code",
+      "model": null,
+      "metric": "time_compatibility",
+      "claim_value": "2023",
+      "evidence_value": "2023",
+      "unit": null,
+      "abs_diff": null,
+      "rel_diff_pct": null,
+      "tolerance_rule": "calendar-year overlap required",
+      "within_tolerance": true,
+      "verdict": "consistent",
+      "notes": "Claim and evidence refer to overlapping periods."
+     },
+     {
+      "comparison_id": "cmp_154a1049cbdb",
+      "claim_id": "clm_97450a332eaf",
+      "evidence_id": "ev_32bf9775ea4d",
+      "actor": "code",
+      "model": null,
+      "metric": "Unemployment, total (% of labor force)",
+      "claim_value": "3.1% [percent]",
+      "evidence_value": "Unemployment, total (% of labor force) for Germany in 2023: 3.071",
+      "unit": "percent",
+      "abs_diff": 0.028999999999999915,
+      "rel_diff_pct": 0.9443178117876885,
+      "tolerance_rule": "|claim-evidence|/|evidence| <= 0.02 (relative)",
+      "within_tolerance": true,
+      "verdict": "consistent",
+      "notes": "Values agree within tolerance."
+     },
+     {
+      "comparison_id": "cmp_db43ff2d27cb",
+      "claim_id": "clm_97450a332eaf",
+      "evidence_id": null,
+      "actor": "model",
+      "model": "meta-model-api",
+      "metric": "falsification_review",
+      "claim_value": "cmp_60b18c3fb016",
+      "evidence_value": "",
+      "unit": null,
+      "abs_diff": null,
+      "rel_diff_pct": null,
+      "tolerance_rule": "",
+      "within_tolerance": null,
+      "verdict": "inconclusive",
+      "notes": "[non_verifying_overclaim/fatal/high] Notes claim only 'overlapping periods' rather than showing evidence refers to 2023 specifically; overlap does not establish the single-year match required, so 'consistent' is unsubstantiated."
+     },
+     {
+      "comparison_id": "cmp_ca0bfd53914b",
+      "claim_id": "clm_97450a332eaf",
+      "evidence_id": null,
+      "actor": "model",
+      "model": "meta-model-api",
+      "metric": "falsification_review",
+      "claim_value": "cmp_154a1049cbdb",
+      "evidence_value": "",
+      "unit": null,
+      "abs_diff": null,
+      "rel_diff_pct": null,
+      "tolerance_rule": "",
+      "within_tolerance": null,
+      "verdict": "inconclusive",
+      "notes": "[non_verifying_overclaim/fatal/high] Notes assert 'Values agree within tolerance' without providing evidence value, tolerance, or citation to check against 3.1%; the 'consistent' verdict cannot be verified from the information given."
+     },
+     {
+      "comparison_id": "cmp_13d50f5efa78",
+      "claim_id": "clm_97450a332eaf",
+      "evidence_id": null,
+      "actor": "model",
+      "model": "meta-responses-web-search",
+      "metric": "web_counter_evidence",
+      "claim_value": "https://www.destatis.de/EN/Press/2024/01/PE24_001_13321.html?nn=263424",
+      "evidence_value": "- **Counter-finding 2 \u2013 ILO annual-average 2.8%, not 3.1%:** Destatis (Federal Statistical Office) correction press release 2 Jan 2024: \u201cnumber of unemployed people (according to the internationally comparable ILO definition) in Germany fell slightly by 9,000 (-0.7%) to 1.3 million on an annual average in 2023\u201d and \u201cThe unemployment rate, which represents unemployed persons as a percentage of the labour force, fell from 2.9% in the previous year to 2.8% in 2023.\u201d",
+      "unit": null,
+      "abs_diff": null,
+      "rel_diff_pct": null,
+      "tolerance_rule": "",
+      "within_tolerance": null,
+      "verdict": "inconclusive",
+      "notes": "[www.destatis.de] - **Counter-finding 2 \u2013 ILO annual-average 2.8%, not 3.1%:** Destatis (Federal Statistical Office) correction press release 2 Jan 2024: \u201cnumber of unemployed people (according to the internationally comparable ILO definition) in Germany fell slightly by 9,000 (-0.7%) to 1.3 million on an annual average in 2023\u201d and \u201cThe unemployment rate, which represents unemployed persons as a percentage of the  \u2014 https://www.destatis.de/EN/Press/2024/01/PE24_001_13321.html?nn=263424 (model-reported quote; page not fetched by code)"
+     },
+     {
+      "comparison_id": "cmp_497c6bcc4f6b",
+      "claim_id": "clm_97450a332eaf",
+      "evidence_id": null,
+      "actor": "model",
+      "model": "meta-responses-web-search",
+      "metric": "web_counter_evidence",
+      "claim_value": "https://www.destatis.de/EN/Press/2024/01/PE24_001_13321.html?nn=263424",
+      "evidence_value": "Destatis notes ILO figures \u201cdiffer from registered unemployment as determined and published by the Federal Employment Agency\u201d",
+      "unit": null,
+      "abs_diff": null,
+      "rel_diff_pct": null,
+      "tolerance_rule": "",
+      "within_tolerance": null,
+      "verdict": "inconclusive",
+      "notes": "[www.destatis.de] Destatis notes ILO figures \u201cdiffer from registered unemployment as determined and published by the Federal Employment Agency\u201d \u2014 https://www.destatis.de/EN/Press/2024/01/PE24_001_13321.html?nn=263424 (model-reported quote; page not fetched by code)"
+     }
+    ],
+    "uncertainties": [
+     {
+      "code": "indicator_definition_assumed",
+      "description": "World Bank indicator 'Unemployment, total (% of labor force)' was matched by keyword; its definition is assumed to match the claim's intent without checking methodology notes.",
+      "severity": "minor",
+      "related_ids": [
+       "cmp_154a1049cbdb"
+      ]
+     },
+     {
+      "code": "source_revision_risk",
+      "description": "World Bank historical values are revised over time; today's match may not hold against past or future vintages.",
+      "severity": "minor",
+      "related_ids": [
+       "cmp_154a1049cbdb"
+      ]
+     },
+     {
+      "code": "falsification_flag",
+      "description": "Self-review fatal flag on [cmp_60b18c3fb016] (non_verifying_overclaim): Notes claim only 'overlapping periods' rather than showing evidence refers to 2023 specifically; overlap does not establish the single-year match required, so 'consistent' is unsubstantiated.",
+      "severity": "major",
+      "related_ids": [
+       "cmp_60b18c3fb016"
+      ]
+     },
+     {
+      "code": "falsification_flag",
+      "description": "Self-review fatal flag on [cmp_154a1049cbdb] (non_verifying_overclaim): Notes assert 'Values agree within tolerance' without providing evidence value, tolerance, or citation to check against 3.1%; the 'consistent' verdict cannot be verified from the information given.",
+      "severity": "major",
+      "related_ids": [
+       "cmp_154a1049cbdb"
+      ]
+     },
+     {
+      "code": "web_counter_evidence",
+      "description": "Live-web counter-evidence (www.destatis.de): - **Counter-finding 2 \u2013 ILO annual-average 2.8%, not 3.1%:** Destatis (Federal Statistical Office) correction press release 2 Jan 2024: \u201cnumber of unemployed people (according to the internationally comparable ILO definition) in Germany fell slightly by 9,000 (-0.7%) to 1.3 million on an annual aver [https://www.destatis.de/EN/Press/2024/01/PE24_001_13321.html?nn=263424] (model-reported quote; page not fetched by code)",
+      "severity": "minor",
+      "related_ids": []
+     },
+     {
+      "code": "web_counter_evidence",
+      "description": "Live-web counter-evidence (www.destatis.de): Destatis notes ILO figures \u201cdiffer from registered unemployment as determined and published by the Federal Employment Agency\u201d [https://www.destatis.de/EN/Press/2024/01/PE24_001_13321.html?nn=263424] (model-reported quote; page not fetched by code)",
+      "severity": "minor",
+      "related_ids": []
+     },
+     {
+      "code": "web_considered_not_cited",
+      "description": "Considered but not cited (www.destatis.de): Slight increase in employment in December 2023 [https://www.destatis.de/EN/Press/2024/01/PE24_040_132.html] \u2014 retrieved by the model, listed by code; not evidence.",
+      "severity": "minor",
+      "related_ids": []
+     },
+     {
+      "code": "web_considered_not_cited",
+      "description": "Considered but not cited (www.destatis.de): Employment up slightly in October 2023 [https://www.destatis.de/EN/Press/2023/11/PE23_459_132.html] \u2014 retrieved by the model, listed by code; not evidence.",
+      "severity": "minor",
+      "related_ids": []
+     },
+     {
+      "code": "web_considered_not_cited",
+      "description": "Considered but not cited (www.destatis.de): Number of persons in employment continued to increase in April 2024 [https://www.destatis.de/EN/Press/2024/06/PE24_217_132.html] \u2014 retrieved by the model, listed by code; not evidence.",
+      "severity": "minor",
+      "related_ids": []
+     },
+     {
+      "code": "web_considered_not_cited",
+      "description": "Considered but not cited (www.destatis.de): Employment in November 2024 slightly up on the previous month [https://www.destatis.de/EN/Press/2025/01/PE25_002_132.html] \u2014 retrieved by the model, listed by code; not evidence.",
+      "severity": "minor",
+      "related_ids": []
+     },
+     {
+      "code": "web_considered_not_cited",
+      "description": "Considered but not cited (statistik.arbeitsagentur.de): The German Labour Market in 2023 [https://statistik.arbeitsagentur.de/DE/Statischer-Content/Service/English-Site/Generische-Publikationen/German-labour-market-2023.pdf?__blob=publicationFile&v=3] \u2014 retrieved by the model, listed by code; not evidence.",
+      "severity": "minor",
+      "related_ids": []
+     }
+    ],
+    "limitations": [
+     "Evidence Atlas is an analysis aid, not an arbiter of truth.",
+     "Retrieved sources may disagree for legitimate methodological reasons.",
+     "A measured discrepancy is not proof of falsehood.",
+     "Results depend on the sources reachable at analysis time."
+    ],
+    "conclusion": {
+     "stance": "supported",
+     "summary": "Stance: supported (2 consistent, 0 contradicting, 0 not comparable out of 6 checks). [cmp_60b18c3fb016] time_compatibility: Claim and evidence refer to overlapping periods. [cmp_154a1049cbdb] Unemployment, total (% of labor force): Values agree within tolerance.",
+     "support_comparison_ids": [
+      "cmp_60b18c3fb016",
+      "cmp_154a1049cbdb"
+     ],
+     "contradict_comparison_ids": [],
+     "caveats": [
+      "World Bank indicator 'Unemployment, total (% of labor force)' was matched by keyword; its definition is assumed to match the claim's intent without checking methodology notes.",
+      "World Bank historical values are revised over time; today's match may not hold against past or future vintages.",
+      "Self-review fatal flag on [cmp_60b18c3fb016] (non_verifying_overclaim): Notes claim only 'overlapping periods' rather than showing evidence refers to 2023 specifically; overlap does not establish the single-year match required, so 'consistent' is unsubstantiated.",
+      "Self-review fatal flag on [cmp_154a1049cbdb] (non_verifying_overclaim): Notes assert 'Values agree within tolerance' without providing evidence value, tolerance, or citation to check against 3.1%; the 'consistent' verdict cannot be verified from the information given.",
+      "Live-web counter-evidence (www.destatis.de): - **Counter-finding 2 \u2013 ILO annual-average 2.8%, not 3.1%:** Destatis (Federal Statistical Office) correction press release 2 Jan 2024: \u201cnumber of unemployed people (according to the internationally comparable ILO definition) in Germany fell slightly by 9,000 (-0.7%) to 1.3 million on an annual aver [https://www.destatis.de/EN/Press/2024/01/PE24_001_13321.html?nn=263424] (model-reported quote; page not fetched by code)",
+      "Live-web counter-evidence (www.destatis.de): Destatis notes ILO figures \u201cdiffer from registered unemployment as determined and published by the Federal Employment Agency\u201d [https://www.destatis.de/EN/Press/2024/01/PE24_001_13321.html?nn=263424] (model-reported quote; page not fetched by code)",
+      "Considered but not cited (www.destatis.de): Slight increase in employment in December 2023 [https://www.destatis.de/EN/Press/2024/01/PE24_040_132.html] \u2014 retrieved by the model, listed by code; not evidence.",
+      "Considered but not cited (www.destatis.de): Employment up slightly in October 2023 [https://www.destatis.de/EN/Press/2023/11/PE23_459_132.html] \u2014 retrieved by the model, listed by code; not evidence.",
+      "Considered but not cited (www.destatis.de): Number of persons in employment continued to increase in April 2024 [https://www.destatis.de/EN/Press/2024/06/PE24_217_132.html] \u2014 retrieved by the model, listed by code; not evidence.",
+      "Considered but not cited (www.destatis.de): Employment in November 2024 slightly up on the previous month [https://www.destatis.de/EN/Press/2025/01/PE25_002_132.html] \u2014 retrieved by the model, listed by code; not evidence.",
+      "Considered but not cited (statistik.arbeitsagentur.de): The German Labour Market in 2023 [https://statistik.arbeitsagentur.de/DE/Statischer-Content/Service/English-Site/Generische-Publikationen/German-labour-market-2023.pdf?__blob=publicationFile&v=3] \u2014 retrieved by the model, listed by code; not evidence."
+     ],
+     "actor": "code",
+     "model": null
+    },
+    "audit": [
+     {
+      "step": "extract",
+      "actor": "model:meta-model-api",
+      "started_at": "2026-11-01T19:32:29.618042Z",
+      "ended_at": "2026-11-01T19:32:34.365892Z",
+      "detail": "domain=economy type=quantitative quantities=1 times=1 geo=1",
+      "duration_ms": 4747.835825997754
+     },
+     {
+      "step": "route",
+      "actor": "code",
+      "started_at": "2026-11-01T19:32:34.365894Z",
+      "ended_at": "2026-11-01T19:32:34.365904Z",
+      "detail": "connectors=['worldbank']",
+      "duration_ms": 0.005198991857469082
+     },
+     {
+      "step": "retrieve",
+      "actor": "code",
+      "started_at": "2026-11-01T19:32:34.366571Z",
+      "ended_at": "2026-11-01T19:32:34.501758Z",
+      "detail": "worldbank: status=ok count=1 query='SL.UEM.TOTL.ZS DEU 2023:2023'",
+      "duration_ms": 135.17128198873252
+     },
+     {
+      "step": "verify",
+      "actor": "code",
+      "started_at": "2026-11-01T19:32:34.501761Z",
+      "ended_at": "2026-11-01T19:32:34.502172Z",
+      "detail": "2 comparison(s), 2 uncertaintie(s)",
+      "duration_ms": 0.40559101034887135
+     },
+     {
+      "step": "falsify",
+      "actor": "model:meta-model-api",
+      "started_at": "2026-11-01T19:32:34.502175Z",
+      "ended_at": "2026-11-01T19:32:55.992395Z",
+      "detail": "attacks=2 fatal_high=2 advisory_only web_citations=2 cited=2/considered=26",
+      "duration_ms": 21490.214397999807
+     },
+     {
+      "step": "synthesize",
+      "actor": "code:deterministic-rules",
+      "started_at": "2026-11-01T19:32:55.992398Z",
+      "ended_at": "2026-11-01T19:33:01.658580Z",
+      "detail": "stance=supported",
+      "duration_ms": 5666.176717000781
+     }
+    ],
+    "created_at": "2026-11-01T19:32:34.365881Z",
+    "meta": {
+     "app_version": "0.4.0",
+     "model": "muse-spark-1.3",
+     "temperature": 0,
+     "max_tokens": 4000,
+     "tolerance": 0.02,
+     "default": 5,
+     "prompt_version": "4",
+     "input_sha256": "3e2c90577893f6b1228a84837ea5fbbe2c651e8832b50ab7a94d2c181fe42a6a",
+     "usage_extract": {
+      "prompt_tokens": 985,
+      "completion_tokens": 1496,
+      "reasoning_tokens": 1322,
+      "total_tokens": 2481,
+      "cached_tokens": 881
+     },
+     "usage_science": null,
+     "usage_falsify": {
+      "prompt_tokens": 19764,
+      "completion_tokens": 2952,
+      "reasoning_tokens": 1789,
+      "total_tokens": 22716,
+      "cached_tokens": 11573
+     },
+     "usage_summary": {
+      "prompt_tokens": 1017,
+      "completion_tokens": 1642,
+      "reasoning_tokens": 1458,
+      "total_tokens": 2659,
+      "cached_tokens": 241
+     }
+    },
+    "elapsed_ms": 32040.560572000686,
+    "split_context": {
+     "country": "germany",
+     "country_iso3": "DEU",
+     "country_source": "own",
+     "years": [
+      2023
+     ],
+     "years_source": "own"
+    }
+   },
+   {
+    "report_id": "rep_bc216b586285",
+    "claim": {
+     "claim_id": "clm_638c3792aa7d",
+     "raw_text": "A recent study suggests green tea may improve memory.",
+     "domain": "science",
+     "claim_type": "other",
+     "subject": "green tea memory improvement study",
+     "indicator": null,
+     "entities": [],
+     "quantities": [],
+     "time_refs": [
+      {
+       "raw": "recent",
+       "year": null,
+       "start_year": null,
+       "end_year": null,
+       "period_type": "vague"
+      }
+     ],
+     "geo_refs": [],
+     "conditions": [],
+     "context_notes": "Hedged claim attributed to an unspecified recent study with no effect size, population, or specific study cited; 'may' and 'suggests' indicate uncertainty.",
+     "extraction_actor": "model",
+     "extraction_model": "meta-model-api"
+    },
+    "evidences": [
+     {
+      "evidence_id": "ev_dbdcec7228ed",
+      "claim_id": "clm_638c3792aa7d",
+      "connector": "openalex",
+      "source_name": "OpenAlex",
+      "source_url": "https://doi.org/10.1007/s00213-014-3526-1",
+      "source_kind": "secondary",
+      "evidence_kind": "contextual",
+      "locator": "https://openalex.org/W1971352988 (2014)",
+      "excerpt": "\"Green tea extract enhances parieto-frontal connectivity during working memory processing\" (2014) \u2014 Andr\u00e9 Schmidt, Felix Hammann, Bettina Karin W\u00f6lnerhanssen \u2014 Psychopharmacology [cited by 57]",
+      "payload": {
+       "openalex_id": "https://openalex.org/W1971352988",
+       "title": "Green tea extract enhances parieto-frontal connectivity during working memory processing",
+       "year": 2014,
+       "doi": "https://doi.org/10.1007/s00213-014-3526-1",
+       "cited_by_count": 57,
+       "authors": [
+        "Andr\u00e9 Schmidt",
+        "Felix Hammann",
+        "Bettina Karin W\u00f6lnerhanssen"
+       ],
+       "venue": "Psychopharmacology",
+       "type": "article",
+       "abstract": "RATIONALE: It has been proposed that green tea extract may have a beneficial impact on cognitive functioning, suggesting promising clinical implications. However, the neural mechanisms underlying this putative cognitive enhancing effect of green tea extract still remain unknown. OBJECTIVES: This study investigates whether the intake of green tea extract modulates effective brain connectivity during working memory processing and whether connectivity parameters are related to task performance. MATERIAL AND METHODS: Using a double-blind, counterbalanced, within-subject design, 12 healthy volunteers received a milk whey-based soft drink containing 27.5 g of green tea extract or a milk whey-based soft drink without green tea as control substance while undergoing functional magnetic resonance imaging. Working memory effect on effective connectivity between frontal and parietal brain regions was evaluated using dynamic causal modeling. RESULTS: Green tea extract increased the working memory induced modulation of connectivity from the right superior parietal lobule to the middle frontal gyrus. Notably, the magnitude of green tea induced increase in parieto-frontal connectivity positively correlated with improvement in task performance. CONCLUSIONS: Our findings provide first evidence for the putative beneficial effect of green tea on cognitive functioning, in particular, on working memory processing at the neural system level by suggesting changes in short-term plasticity of parieto-frontal brain connections. Modeling effective connectivity among frontal and parietal brain regions during working memory processing might help to assess the efficacy of green tea for the treatment of cognitive impairments in psychiatric disorders such as dementia.",
+       "query": "green tea memory improvement study"
+      },
+      "retrieved_at": "2026-11-01T19:32:40.675368Z"
+     },
+     {
+      "evidence_id": "ev_b8a0c6ee2730",
+      "claim_id": "clm_638c3792aa7d",
+      "connector": "openalex",
+      "source_name": "OpenAlex",
+      "source_url": "https://doi.org/10.1186/1749-8546-5-13",
+      "source_kind": "secondary",
+      "evidence_kind": "contextual",
+      "locator": "https://openalex.org/W2114057457 (2010)",
+      "excerpt": "\"Beneficial effects of green tea: A literature review\" (2010) \u2014 Mandumpal Chacko Sabu, Priya T Thambi, Ramadasan Kuttan \u2014 Chinese Medicine [cited by 992]",
+      "payload": {
+       "openalex_id": "https://openalex.org/W2114057457",
+       "title": "Beneficial effects of green tea: A literature review",
+       "year": 2010,
+       "doi": "https://doi.org/10.1186/1749-8546-5-13",
+       "cited_by_count": 992,
+       "authors": [
+        "Mandumpal Chacko Sabu",
+        "Priya T Thambi",
+        "Ramadasan Kuttan"
+       ],
+       "venue": "Chinese Medicine",
+       "type": "article",
+       "abstract": "The health benefits of green tea for a wide variety of ailments, including different types of cancer, heart disease, and liver disease, were reported. Many of these beneficial effects of green tea are related to its catechin, particularly (-)-epigallocatechin-3-gallate, content. There is evidence from in vitro and animal studies on the underlying mechanisms of green tea catechins and their biological actions. There are also human studies on using green tea catechins to treat metabolic syndrome, such as obesity, type II diabetes, and cardiovascular risk factors.Long-term consumption of tea catechins could be beneficial against high-fat diet-induced obesity and type II diabetes and could reduce the risk of coronary disease. Further research that conforms to international standards should be performed to monitor the pharmacological and clinical effects of green tea and to elucidate its mechanisms of action.",
+       "query": "green tea memory improvement study"
+      },
+      "retrieved_at": "2026-11-01T19:32:40.675422Z"
+     },
+     {
+      "evidence_id": "ev_b6ad89b1994e",
+      "claim_id": "clm_638c3792aa7d",
+      "connector": "openalex",
+      "source_name": "OpenAlex",
+      "source_url": "https://doi.org/10.1016/j.neuint.2014.08.008",
+      "source_kind": "secondary",
+      "evidence_kind": "contextual",
+      "locator": "https://openalex.org/W2038711586 (2014)",
+      "excerpt": "\"Effects of green tea and physical exercise on memory impairments associated with aging\" (2014) \u2014 Ma\u00edra Frigo Fl\u00f4res, Alexandre Martins, Helen L. Schimidt \u2014 Neurochemistry International [cited by 41]",
+      "payload": {
+       "openalex_id": "https://openalex.org/W2038711586",
+       "title": "Effects of green tea and physical exercise on memory impairments associated with aging",
+       "year": 2014,
+       "doi": "https://doi.org/10.1016/j.neuint.2014.08.008",
+       "cited_by_count": 41,
+       "authors": [
+        "Ma\u00edra Frigo Fl\u00f4res",
+        "Alexandre Martins",
+        "Helen L. Schimidt"
+       ],
+       "venue": "Neurochemistry International",
+       "type": "article",
+       "abstract": null,
+       "query": "green tea memory improvement study"
+      },
+      "retrieved_at": "2026-11-01T19:32:40.675433Z"
+     },
+     {
+      "evidence_id": "ev_615a7566750c",
+      "claim_id": "clm_638c3792aa7d",
+      "connector": "openalex",
+      "source_name": "OpenAlex",
+      "source_url": "https://doi.org/10.3390/nu14142949",
+      "source_kind": "secondary",
+      "evidence_kind": "contextual",
+      "locator": "https://openalex.org/W4286214917 (2022)",
+      "excerpt": "\"Improvement of Depressed Mood with Green Tea Intake\" (2022) \u2014 Keiko Unno, Daisuke Furushima, Yuya Tanaka \u2014 Nutrients [cited by 17]",
+      "payload": {
+       "openalex_id": "https://openalex.org/W4286214917",
+       "title": "Improvement of Depressed Mood with Green Tea Intake",
+       "year": 2022,
+       "doi": "https://doi.org/10.3390/nu14142949",
+       "cited_by_count": 17,
+       "authors": [
+        "Keiko Unno",
+        "Daisuke Furushima",
+        "Yuya Tanaka"
+       ],
+       "venue": "Nutrients",
+       "type": "article",
+       "abstract": "Being in a prolonged depressed state increases the risk of developing depression. To investigate whether green tea intake is effective in improving depression-like moods, we used an experimental animal model of depression with lipopolysaccharide (LPS) and clarified the effects of green tea on the biological stress response and inflammation in the brain. Regarding the stress reduction effect of green tea, we found that the sum of caffeine (C) and epigallocatechin gallate (E) relative to the sum of theanine (T) and arginine (A), the major components of green tea, or the CE/TA ratio, is important. The results showed that depression-like behavior, adrenal hypertrophy as a typical stress response, and brain inflammation were suppressed in mice fed green tea components with CE/TA ratios of 2 to 8. In addition, the expression of Npas4, which is reduced in anxiety and depression, was maintained at the same level as controls in mice that consumed green tea with a CE/TA ratio of 4. In clinical human trials, the consumption of green tea with CE/TA ratios of 3.9 and 4.7 reduced susceptibility to subjective depression. These results suggest that the daily consumption of green tea with a CE/TA ratio of 4\u20135 is beneficial to improving depressed mood.",
+       "query": "green tea memory improvement study"
+      },
+      "retrieved_at": "2026-11-01T19:32:40.675494Z"
+     },
+     {
+      "evidence_id": "ev_ee47df0760b1",
+      "claim_id": "clm_638c3792aa7d",
+      "connector": "openalex",
+      "source_name": "OpenAlex",
+      "source_url": "https://doi.org/10.1089/jmf.2009.1374",
+      "source_kind": "secondary",
+      "evidence_kind": "contextual",
+      "locator": "https://openalex.org/W1971654647 (2011)",
+      "excerpt": "\"A Combination of Green Tea Extract and l -Theanine Improves Memory and Attention in Subjects with Mild Cognitive Impairment: A Double-Blind Placebo-Controlled Study\" (2011) \u2014 Sang-Ki Park, In Chul Jung, Won Kyung Lee \u2014 Journal of Medicinal Food [cited by 105]",
+      "payload": {
+       "openalex_id": "https://openalex.org/W1971654647",
+       "title": "A Combination of Green Tea Extract and l -Theanine Improves Memory and Attention in Subjects with Mild Cognitive Impairment: A Double-Blind Placebo-Controlled Study",
+       "year": 2011,
+       "doi": "https://doi.org/10.1089/jmf.2009.1374",
+       "cited_by_count": 105,
+       "authors": [
+        "Sang-Ki Park",
+        "In Chul Jung",
+        "Won Kyung Lee"
+       ],
+       "venue": "Journal of Medicinal Food",
+       "type": "article",
+       "abstract": "A combination of green tea extract and l-theanine (LGNC-07) has been reported to have beneficial effects on cognition in animal studies. In this randomized, double-blind, placebo-controlled study, the effect of LGNC-07 on memory and attention in subjects with mild cognitive impairment (MCI) was investigated. Ninety-one MCI subjects whose Mini Mental State Examination-K (MMSE-K) scores were between 21 and 26 and who were in either stage 2 or 3 on the Global Deterioration Scale were enrolled in this study. The treatment group (13 men, 32 women; 57.58 \u00b1 9.45 years) took 1,680 mg of LGNC-07, and the placebo group (12 men, 34 women; 56.28 \u00b1 9.92 years) received an equivalent amount of maltodextrin and lactose for 16 weeks. Neuropsychological tests (Rey-Kim memory test and Stroop color-word test) and electroencephalography were conducted to evaluate the effect of LGNC-07 on memory and attention. Further analyses were stratified by baseline severity to evaluate treatment response on the degree of impairment (MMSE-K 21-23 and 24-26). LGNC-07 led to improvements in memory by marginally increasing delayed recognition in the Rey-Kim memory test (P = .0572). Stratified analyses showed that LGNC-07 improved memory and selective attention by significantly increasing the Rey-Kim memory quotient and word reading in the subjects with MMSE-K scores of 21-23 (LGNC-07, n = 11; placebo, n = 9). Electroencephalograms were recorded in 24 randomly selected subjects hourly for 3 hours in eye-open, eye-closed, and reading states after a single dose of LGNC-07 (LGNC-07, n = 12; placebo, n = 12). Brain theta waves, an indicator of cognitive alertness, were increased significantly in the temporal, frontal, parietal, and occipital areas after 3 hours in the eye-open and reading states. Therefore, this study suggests that LGNC-07 has potential as an intervention for cognitive improvement.",
+       "query": "green tea memory improvement study"
+      },
+      "retrieved_at": "2026-11-01T19:32:40.675581Z"
+     }
+    ],
+    "comparisons": [
+     {
+      "comparison_id": "cmp_83b35b0d46aa",
+      "claim_id": "clm_638c3792aa7d",
+      "evidence_id": "ev_dbdcec7228ed",
+      "actor": "model",
+      "model": "meta-model-api",
+      "metric": "abstract_stance",
+      "claim_value": "A recent study suggests green tea may improve memory.",
+      "evidence_value": "Green tea extract enhances parieto-frontal connectivity during working memory processing",
+      "unit": null,
+      "abs_diff": null,
+      "rel_diff_pct": null,
+      "tolerance_rule": "model abstract-stance judgment; contextual only, never verifying",
+      "within_tolerance": null,
+      "verdict": "consistent",
+      "notes": "Abstract supports the claim. The title states green tea extract enhances connectivity during working memory processing and the rationale proposes a beneficial impact on cognitive functioning."
+     },
+     {
+      "comparison_id": "cmp_57f4bdcc6dfb",
+      "claim_id": "clm_638c3792aa7d",
+      "evidence_id": null,
+      "actor": "model",
+      "model": "meta-model-api",
+      "metric": "falsification_review",
+      "claim_value": "cmp_83b35b0d46aa",
+      "evidence_value": "",
+      "unit": null,
+      "abs_diff": null,
+      "rel_diff_pct": null,
+      "tolerance_rule": "",
+      "within_tolerance": null,
+      "verdict": "inconclusive",
+      "notes": "[non_verifying_overclaim/fatal/high] Notes cite 'enhances connectivity during working memory processing' and a rationale proposing beneficial impact as supporting 'may improve memory.' A connectivity finding plus a proposed benefit does not verify actual memory improvement, so 'consistent' overclaims what the cited material shows."
+     },
+     {
+      "comparison_id": "cmp_69dc24dbaa9c",
+      "claim_id": "clm_638c3792aa7d",
+      "evidence_id": null,
+      "actor": "model",
+      "model": "meta-model-api",
+      "metric": "falsification_review",
+      "claim_value": "cmp_83b35b0d46aa",
+      "evidence_value": "",
+      "unit": null,
+      "abs_diff": null,
+      "rel_diff_pct": null,
+      "tolerance_rule": "",
+      "within_tolerance": null,
+      "verdict": "inconclusive",
+      "notes": "[wrong_period/serious/high] Claim requires a 'recent study' but the comparison notes provide no date, year, or other temporal information to establish recency. The 'consistent' verdict therefore cannot verify the recency component of the claim."
+     },
+     {
+      "comparison_id": "cmp_936a4be329c6",
+      "claim_id": "clm_638c3792aa7d",
+      "evidence_id": null,
+      "actor": "model",
+      "model": "meta-responses-web-search",
+      "metric": "web_counter_evidence",
+      "claim_value": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4159594/",
+      "evidence_value": "- \u201cUsing a double-blind, counterbalanced, within-subject design, 12 healthy volunteers received\u2026\u201d",
+      "unit": null,
+      "abs_diff": null,
+      "rel_diff_pct": null,
+      "tolerance_rule": "",
+      "within_tolerance": null,
+      "verdict": "inconclusive",
+      "notes": "[pmc.ncbi.nlm.nih.gov] - \u201cUsing a double-blind, counterbalanced, within-subject design, 12 healthy volunteers received\u2026\u201d \u2014 https://pmc.ncbi.nlm.nih.gov/articles/PMC4159594/ (model-reported quote; page not fetched by code)"
+     },
+     {
+      "comparison_id": "cmp_de314c11af5c",
+      "claim_id": "clm_638c3792aa7d",
+      "evidence_id": null,
+      "actor": "model",
+      "model": "meta-responses-web-search",
+      "metric": "web_counter_evidence",
+      "claim_value": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4159594/",
+      "evidence_value": "- Participants: \u201cIn total, 12 healthy right-handed male completed the study\u201d",
+      "unit": null,
+      "abs_diff": null,
+      "rel_diff_pct": null,
+      "tolerance_rule": "",
+      "within_tolerance": null,
+      "verdict": "inconclusive",
+      "notes": "[pmc.ncbi.nlm.nih.gov] - Participants: \u201cIn total, 12 healthy right-handed male completed the study\u201d \u2014 https://pmc.ncbi.nlm.nih.gov/articles/PMC4159594/ (model-reported quote; page not fetched by code)"
+     },
+     {
+      "comparison_id": "cmp_0e4045deed79",
+      "claim_id": "clm_638c3792aa7d",
+      "evidence_id": null,
+      "actor": "model",
+      "model": "meta-responses-web-search",
+      "metric": "web_counter_evidence",
+      "claim_value": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4159594/",
+      "evidence_value": "- \u201cThere was a strong trend toward a significantly improved task performance\u2026 [mean (SD): 3.23 (0.42)] compared with the control drink [mean (SD): 2.84 (0.45); t(11) = 2.041; p = 0.066]\u201d",
+      "unit": null,
+      "abs_diff": null,
+      "rel_diff_pct": null,
+      "tolerance_rule": "",
+      "within_tolerance": null,
+      "verdict": "inconclusive",
+      "notes": "[pmc.ncbi.nlm.nih.gov] - \u201cThere was a strong trend toward a significantly improved task performance\u2026 [mean (SD): 3.23 (0.42)] compared with the control drink [mean (SD): 2.84 (0.45); t(11) = 2.041; p = 0.066]\u201d \u2014 https://pmc.ncbi.nlm.nih.gov/articles/PMC4159594/ (model-reported quote; page not fetched by code)"
+     },
+     {
+      "comparison_id": "cmp_9049854a9f5f",
+      "claim_id": "clm_638c3792aa7d",
+      "evidence_id": null,
+      "actor": "model",
+      "model": "meta-responses-web-search",
+      "metric": "web_counter_evidence",
+      "claim_value": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4159594/",
+      "evidence_value": "However, we found a strong trend toward improved performance, suggesting that our study sample was too small to achieve differences on behavioural parameters.\u201d",
+      "unit": null,
+      "abs_diff": null,
+      "rel_diff_pct": null,
+      "tolerance_rule": "",
+      "within_tolerance": null,
+      "verdict": "inconclusive",
+      "notes": "[pmc.ncbi.nlm.nih.gov] However, we found a strong trend toward improved performance, suggesting that our study sample was too small to achieve differences on behavioural parameters.\u201d \u2014 https://pmc.ncbi.nlm.nih.gov/articles/PMC4159594/ (model-reported quote; page not fetched by code)"
+     },
+     {
+      "comparison_id": "cmp_a8b5a2c56065",
+      "claim_id": "clm_638c3792aa7d",
+      "evidence_id": null,
+      "actor": "model",
+      "model": "meta-responses-web-search",
+      "metric": "web_counter_evidence",
+      "claim_value": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4159594/",
+      "evidence_value": "- \u201cA significantly increased WM-induced modulation\u2026 [t(10) = 2.53; p = 0.030; not corrected for multiple comparisons]\u201d",
+      "unit": null,
+      "abs_diff": null,
+      "rel_diff_pct": null,
+      "tolerance_rule": "",
+      "within_tolerance": null,
+      "verdict": "inconclusive",
+      "notes": "[pmc.ncbi.nlm.nih.gov] - \u201cA significantly increased WM-induced modulation\u2026 [t(10) = 2.53; p = 0.030; not corrected for multiple comparisons]\u201d \u2014 https://pmc.ncbi.nlm.nih.gov/articles/PMC4159594/ (model-reported quote; page not fetched by code)"
+     }
+    ],
+    "uncertainties": [
+     {
+      "code": "metadata_only",
+      "description": "Evidence consists of bibliographic metadata (titles, years, venues). Verifying the claim requires reading full texts, which this MVP does not do.",
+      "severity": "major",
+      "related_ids": [
+       "ev_dbdcec7228ed",
+       "ev_b8a0c6ee2730",
+       "ev_b6ad89b1994e",
+       "ev_615a7566750c",
+       "ev_ee47df0760b1"
+      ]
+     },
+     {
+      "code": "abstract_off_topic",
+      "description": "Abstract for https://openalex.org/W2114057457 (2010) is off-topic for this claim; no stance was assessed. Model note: The abstract discusses cancer, heart disease, liver disease, and metabolic syndrome with no mention of memory or cognition.",
+      "severity": "minor",
+      "related_ids": [
+       "ev_b8a0c6ee2730"
+      ]
+     },
+     {
+      "code": "abstract_off_topic",
+      "description": "Abstract for https://openalex.org/W4286214917 (2022) is off-topic for this claim; no stance was assessed. Model note: The abstract focuses on improving depression-like moods and stress response with no mention of memory.",
+      "severity": "minor",
+      "related_ids": [
+       "ev_615a7566750c"
+      ]
+     },
+     {
+      "code": "falsification_flag",
+      "description": "Self-review fatal flag on [cmp_83b35b0d46aa] (non_verifying_overclaim): Notes cite 'enhances connectivity during working memory processing' and a rationale proposing beneficial impact as supporting 'may improve memory.' A connectivity finding plus a proposed benefit does not verify actual memory improvement, so 'consistent' overclaims what the cited material shows.",
+      "severity": "major",
+      "related_ids": [
+       "cmp_83b35b0d46aa"
+      ]
+     },
+     {
+      "code": "falsification_flag",
+      "description": "Self-review serious flag on [cmp_83b35b0d46aa] (wrong_period): Claim requires a 'recent study' but the comparison notes provide no date, year, or other temporal information to establish recency. The 'consistent' verdict therefore cannot verify the recency component of the claim.",
+      "severity": "minor",
+      "related_ids": [
+       "cmp_83b35b0d46aa"
+      ]
+     },
+     {
+      "code": "web_counter_evidence",
+      "description": "Live-web counter-evidence (pmc.ncbi.nlm.nih.gov): - \u201cUsing a double-blind, counterbalanced, within-subject design, 12 healthy volunteers received\u2026\u201d [https://pmc.ncbi.nlm.nih.gov/articles/PMC4159594/] (model-reported quote; page not fetched by code)",
+      "severity": "minor",
+      "related_ids": []
+     },
+     {
+      "code": "web_counter_evidence",
+      "description": "Live-web counter-evidence (pmc.ncbi.nlm.nih.gov): - Participants: \u201cIn total, 12 healthy right-handed male completed the study\u201d [https://pmc.ncbi.nlm.nih.gov/articles/PMC4159594/] (model-reported quote; page not fetched by code)",
+      "severity": "minor",
+      "related_ids": []
+     },
+     {
+      "code": "web_counter_evidence",
+      "description": "Live-web counter-evidence (pmc.ncbi.nlm.nih.gov): - \u201cThere was a strong trend toward a significantly improved task performance\u2026 [mean (SD): 3.23 (0.42)] compared with the control drink [mean (SD): 2.84 (0.45); t(11) = 2.041; p = 0.066]\u201d [https://pmc.ncbi.nlm.nih.gov/articles/PMC4159594/] (model-reported quote; page not fetched by code)",
+      "severity": "minor",
+      "related_ids": []
+     },
+     {
+      "code": "web_counter_evidence",
+      "description": "Live-web counter-evidence (pmc.ncbi.nlm.nih.gov): However, we found a strong trend toward improved performance, suggesting that our study sample was too small to achieve differences on behavioural parameters.\u201d [https://pmc.ncbi.nlm.nih.gov/articles/PMC4159594/] (model-reported quote; page not fetched by code)",
+      "severity": "minor",
+      "related_ids": []
+     },
+     {
+      "code": "web_counter_evidence",
+      "description": "Live-web counter-evidence (pmc.ncbi.nlm.nih.gov): - \u201cA significantly increased WM-induced modulation\u2026 [t(10) = 2.53; p = 0.030; not corrected for multiple comparisons]\u201d [https://pmc.ncbi.nlm.nih.gov/articles/PMC4159594/] (model-reported quote; page not fetched by code)",
+      "severity": "minor",
+      "related_ids": []
+     },
+     {
+      "code": "web_considered_not_cited",
+      "description": "Considered but not cited (link.springer.com): Green tea extract enhances parieto-frontal connectivity during working memory processing | Psychopharmacology | Springer Nature Link [https://link.springer.com/article/10.1007/s00213-014-3526-1] \u2014 retrieved by the model, listed by code; not evidence.",
+      "severity": "minor",
+      "related_ids": []
+     },
+     {
+      "code": "web_considered_not_cited",
+      "description": "Considered but not cited (www.nutritional-psychology.org): Green Tea Extract and Memory: Effects on Brain Function [https://www.nutritional-psychology.org/research-summaries/green-tea-extract-enhances-parieto-frontal-connectivity-during-working-memory-processing/] \u2014 retrieved by the model, listed by code; not evidence.",
+      "severity": "minor",
+      "related_ids": []
+     },
+     {
+      "code": "web_considered_not_cited",
+      "description": "Considered but not cited (d.docksci.com): Green tea extract enhances parieto-frontal connectivity during working memory processing. - PDF Download Free [https://d.docksci.com/green-tea-extract-enhances-parieto-frontal-connectivity-during-working-memory-pr_5af427abd64ab2c66e6a5b59.html] \u2014 retrieved by the model, listed by code; not evidence.",
+      "severity": "minor",
+      "related_ids": []
+     },
+     {
+      "code": "web_considered_not_cited",
+      "description": "Considered but not cited (fomatmedical.com): Green Tea Boosts Your Brain | FOMAT [https://fomatmedical.com/blogs-updates/green-tea-boosts-brain/] \u2014 retrieved by the model, listed by code; not evidence.",
+      "severity": "minor",
+      "related_ids": []
+     },
+     {
+      "code": "web_considered_not_cited",
+      "description": "Considered but not cited (www.alzdiscovery.org): Green Tea & Your Brain | Cognitive Vitality | Alzheimer's Drug Discovery Foundation [https://www.alzdiscovery.org/cognitive-vitality/ratings/green-tea] \u2014 retrieved by the model, listed by code; not evidence.",
+      "severity": "minor",
+      "related_ids": []
+     }
+    ],
+    "limitations": [
+     "Evidence Atlas is an analysis aid, not an arbiter of truth.",
+     "Retrieved sources may disagree for legitimate methodological reasons.",
+     "A measured discrepancy is not proof of falsehood.",
+     "Results depend on the sources reachable at analysis time."
+    ],
+    "conclusion": {
+     "stance": "partially_supported",
+     "summary": "The claim stance is \"partially_supported\" with [cmp_83b35b0d46aa] noted as consistent for connectivity during working memory processing. However [cmp_57f4bdcc6dfb] and [cmp_69dc24dbaa9c] are inconclusive because connectivity plus proposed benefit does not verify memory improvement and no date establishes recency. Further [cmp_936a4be329c6], [cmp_de314c11af5c], [cmp_0e4045deed79], [cmp_9049854a9f5f], [cmp_a8b5a2c56065] are inconclusive and evidence is missing for any measured delta percent.",
+     "support_comparison_ids": [
+      "cmp_83b35b0d46aa"
+     ],
+     "contradict_comparison_ids": [],
+     "caveats": [
+      "Evidence consists of bibliographic metadata (titles, years, venues). Verifying the claim requires reading full texts, which this MVP does not do.",
+      "Self-review fatal flag on [cmp_83b35b0d46aa] (non_verifying_overclaim): Notes cite 'enhances connectivity during working memory processing' and a rationale proposing beneficial impact as supporting 'may improve memory.' A connectivity finding plus a proposed benefit does not verify actual memory improvement, so 'consistent' overclaims what the cited material shows.",
+      "recency not established",
+      "connectivity does not verify memory improvement",
+      "all rel_diff_pct missing",
+      "web counter-evidence inconclusive"
+     ],
+     "actor": "model",
+     "model": "meta-model-api"
+    },
+    "audit": [
+     {
+      "step": "extract",
+      "actor": "model:meta-model-api",
+      "started_at": "2026-11-01T19:32:29.618470Z",
+      "ended_at": "2026-11-01T19:32:38.774839Z",
+      "detail": "domain=science type=other quantities=0 times=1 geo=0",
+      "duration_ms": 9156.355872008135
+     },
+     {
+      "step": "route",
+      "actor": "code",
+      "started_at": "2026-11-01T19:32:38.774842Z",
+      "ended_at": "2026-11-01T19:32:38.774856Z",
+      "detail": "connectors=['openalex']",
+      "duration_ms": 0.007353999535553157
+     },
+     {
+      "step": "retrieve",
+      "actor": "code",
+      "started_at": "2026-11-01T19:32:38.775396Z",
+      "ended_at": "2026-11-01T19:32:40.675923Z",
+      "detail": "openalex: status=ok count=5 query='green tea memory improvement study'",
+      "duration_ms": 1900.5154559999937
+     },
+     {
+      "step": "verify",
+      "actor": "code",
+      "started_at": "2026-11-01T19:32:40.675926Z",
+      "ended_at": "2026-11-01T19:32:45.326569Z",
+      "detail": "1 comparison(s), 3 uncertaintie(s)",
+      "duration_ms": 4650.635583006078
+     },
+     {
+      "step": "falsify",
+      "actor": "model:meta-model-api",
+      "started_at": "2026-11-01T19:32:45.326579Z",
+      "ended_at": "2026-11-01T19:33:04.832867Z",
+      "detail": "attacks=2 fatal_high=1 advisory_only web_citations=5 cited=5/considered=50",
+      "duration_ms": 19506.279287001234
+     },
+     {
+      "step": "synthesize",
+      "actor": "model:meta-model-api",
+      "started_at": "2026-11-01T19:33:04.832869Z",
+      "ended_at": "2026-11-01T19:33:10.029501Z",
+      "detail": "stance=partially_supported",
+      "duration_ms": 5196.627489000093
+     }
+    ],
+    "created_at": "2026-11-01T19:32:38.774825Z",
+    "meta": {
+     "app_version": "0.4.0",
+     "model": "muse-spark-1.3",
+     "temperature": 0,
+     "max_tokens": 4000,
+     "tolerance": 0.02,
+     "default": 5,
+     "prompt_version": "4",
+     "input_sha256": "b9ec144450bed9514431f2afae7f8be956c76425498d3d74652ef515620620b0",
+     "usage_extract": {
+      "prompt_tokens": 981,
+      "completion_tokens": 2009,
+      "reasoning_tokens": 1877,
+      "total_tokens": 2990,
+      "cached_tokens": 881
+     },
+     "usage_science": {
+      "prompt_tokens": 690,
+      "completion_tokens": 1044,
+      "reasoning_tokens": 868,
+      "total_tokens": 1734,
+      "cached_tokens": 241
+     },
+     "usage_falsify": {
+      "prompt_tokens": 93703,
+      "completion_tokens": 3426,
+      "reasoning_tokens": 1858,
+      "total_tokens": 97129,
+      "cached_tokens": 69640
+     },
+     "usage_summary": {
+      "prompt_tokens": 1035,
+      "completion_tokens": 1203,
+      "reasoning_tokens": 1008,
+      "total_tokens": 2238,
+      "cached_tokens": 241
+     }
+    },
+    "elapsed_ms": 40411.04805699433,
+    "split_context": {
+     "country": "germany",
+     "country_iso3": "DEU",
+     "country_source": "inherited",
+     "years": [
+      2023
+     ],
+     "years_source": "inherited"
+    }
+   }
+  ],
+  "rollup": {
+   "supported": 1,
+   "partially_supported": 1,
+   "contradicted": 0,
+   "unverifiable": 0,
+   "not_assessable": 0
+  },
+  "errors": 0,
+  "elapsed_ms": 42518.53585799108,
+  "meta": {
+   "app_version": "0.4.0",
+   "prompt_version": "4",
+   "deadline_s": null,
+   "deadline_exceeded": false,
+   "splitter_actor": "model",
+   "splitter_model": "meta-model-api",
+   "splitter_notes": [],
+   "usage_split": {
+    "prompt_tokens": 230,
+    "completion_tokens": 482,
+    "reasoning_tokens": 435,
+    "total_tokens": 712,
+    "cached_tokens": 113
+   },
+   "input_sha256": "f942bf1b3e9e504dbc3aa6efe1d392db7ebbeda549291678f17a0402459dcc63"
+  }
+ }
+}

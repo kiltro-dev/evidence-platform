@@ -1,0 +1,371 @@
+{
+ "judge_cache_version": 1,
+ "source_text": "The population of Japan was 500 million in 2020.",
+ "endpoint": "/api/analyze",
+ "request": {
+  "limit": 5,
+  "domain": "auto",
+  "persist": false
+ },
+ "generated_at": "2026-11-01T19:30:19Z",
+ "model": "muse-spark-1.3",
+ "report": {
+  "report_id": "rep_f59aad7dc57a",
+  "claim": {
+   "claim_id": "clm_c5670cf515bb",
+   "raw_text": "The population of Japan was 500 million in 2020.",
+   "domain": "economy",
+   "claim_type": "quantitative",
+   "subject": "population of Japan in 2020",
+   "indicator": "population",
+   "entities": [
+    "Japan"
+   ],
+   "quantities": [
+    {
+     "label": "population",
+     "raw_text": "500 million",
+     "value": 500000000.0,
+     "unit": "count",
+     "normalized_value": 500000000.0,
+     "normalized_unit": "count"
+    }
+   ],
+   "time_refs": [
+    {
+     "raw": "2020",
+     "year": 2020,
+     "start_year": null,
+     "end_year": null,
+     "period_type": "year"
+    }
+   ],
+   "geo_refs": [
+    {
+     "raw": "Japan",
+     "name": "Japan",
+     "iso3": "JPN"
+    }
+   ],
+   "conditions": [],
+   "context_notes": "Claim asserts Japan's total population in 2020.",
+   "extraction_actor": "model",
+   "extraction_model": "meta-model-api"
+  },
+  "evidences": [
+   {
+    "evidence_id": "ev_e1b2799abf4d",
+    "claim_id": "clm_c5670cf515bb",
+    "connector": "worldbank",
+    "source_name": "World Bank Open Data",
+    "source_url": "https://data.worldbank.org/indicator/SP.POP.TOTL?locations=JPN",
+    "source_kind": "secondary",
+    "evidence_kind": "direct",
+    "locator": "SP.POP.TOTL JPN 2020",
+    "excerpt": "Population, total for Japan in 2020: 126261000",
+    "payload": {
+     "indicator": "SP.POP.TOTL",
+     "label": "Population, total",
+     "unit": "count",
+     "iso3": "JPN",
+     "year": "2020",
+     "value": 126261000,
+     "query": "SP.POP.TOTL JPN 2020:2020",
+     "source_vintage": "2026-10-08",
+     "obs_status": "",
+     "source_decimal": 0
+    },
+    "retrieved_at": "2026-11-01T19:30:25.417943Z"
+   }
+  ],
+  "comparisons": [
+   {
+    "comparison_id": "cmp_ffcb6f13b2df",
+    "claim_id": "clm_c5670cf515bb",
+    "evidence_id": "ev_e1b2799abf4d",
+    "actor": "code",
+    "model": null,
+    "metric": "time_compatibility",
+    "claim_value": "2020",
+    "evidence_value": "2020",
+    "unit": null,
+    "abs_diff": null,
+    "rel_diff_pct": null,
+    "tolerance_rule": "calendar-year overlap required",
+    "within_tolerance": true,
+    "verdict": "consistent",
+    "notes": "Claim and evidence refer to overlapping periods."
+   },
+   {
+    "comparison_id": "cmp_f0a01e428a2d",
+    "claim_id": "clm_c5670cf515bb",
+    "evidence_id": "ev_e1b2799abf4d",
+    "actor": "code",
+    "model": null,
+    "metric": "Population, total",
+    "claim_value": "500 million [count]",
+    "evidence_value": "Population, total for Japan in 2020: 126261000",
+    "unit": "count",
+    "abs_diff": 373739000.0,
+    "rel_diff_pct": 296.00510054569503,
+    "tolerance_rule": "|claim-evidence|/|evidence| <= 0.02 (relative)",
+    "within_tolerance": false,
+    "verdict": "contradicts",
+    "notes": "Measured difference exceeds tolerance; check methodology, period and definitions before drawing conclusions."
+   },
+   {
+    "comparison_id": "cmp_56b95c14ff1e",
+    "claim_id": "clm_c5670cf515bb",
+    "evidence_id": null,
+    "actor": "model",
+    "model": "meta-model-api",
+    "metric": "falsification_review",
+    "claim_value": "cmp_f0a01e428a2d",
+    "evidence_value": "",
+    "unit": null,
+    "abs_diff": null,
+    "rel_diff_pct": null,
+    "tolerance_rule": "",
+    "within_tolerance": null,
+    "verdict": "inconclusive",
+    "notes": "[non_verifying_overclaim/fatal/high] Verdict is 'contradicts' while its own notes state to 'check methodology, period and definitions before drawing conclusions' and uncertainties flag indicator definition assumed without checking methodology notes; a firm contradiction is asserted while required checks are explicitly still pending."
+   },
+   {
+    "comparison_id": "cmp_1c09a73e60ef",
+    "claim_id": "clm_c5670cf515bb",
+    "evidence_id": null,
+    "actor": "model",
+    "model": "meta-model-api",
+    "metric": "falsification_review",
+    "claim_value": "cmp_ffcb6f13b2df",
+    "evidence_value": "",
+    "unit": null,
+    "abs_diff": null,
+    "rel_diff_pct": null,
+    "tolerance_rule": "",
+    "within_tolerance": null,
+    "verdict": "inconclusive",
+    "notes": "[non_verifying_overclaim/serious/med] Verdict 'consistent' for time_compatibility is based only on 'overlapping periods'; for a claim specific to 2020, mere overlap does not establish exact-year alignment, so consistency is overstated."
+   },
+   {
+    "comparison_id": "cmp_dce2fe3f29d9",
+    "claim_id": "clm_c5670cf515bb",
+    "evidence_id": null,
+    "actor": "model",
+    "model": "meta-responses-web-search",
+    "metric": "web_counter_evidence",
+    "claim_value": "https://www.stat.go.jp/english/data/kokusei/2020/summary/pdf/01.pdf",
+    "evidence_value": "- Official 2020 Census: \u201cThe population of Japan as of October 1, 2020, was 126,146 thousand.\u201d",
+    "unit": null,
+    "abs_diff": null,
+    "rel_diff_pct": null,
+    "tolerance_rule": "",
+    "within_tolerance": null,
+    "verdict": "inconclusive",
+    "notes": "[www.stat.go.jp] - Official 2020 Census: \u201cThe population of Japan as of October 1, 2020, was 126,146 thousand.\u201d \u2014 https://www.stat.go.jp/english/data/kokusei/2020/summary/pdf/01.pdf (model-reported quote; page not fetched by code)"
+   },
+   {
+    "comparison_id": "cmp_6a835916e3ab",
+    "claim_id": "clm_c5670cf515bb",
+    "evidence_id": null,
+    "actor": "model",
+    "model": "meta-responses-web-search",
+    "metric": "web_counter_evidence",
+    "claim_value": "https://www.stat.go.jp/english/data/kokusei/2020/summary/pdf/01.pdf",
+    "evidence_value": ", detailed as 126,146,099 total",
+    "unit": null,
+    "abs_diff": null,
+    "rel_diff_pct": null,
+    "tolerance_rule": "",
+    "within_tolerance": null,
+    "verdict": "inconclusive",
+    "notes": "[www.stat.go.jp] , detailed as 126,146,099 total \u2014 https://www.stat.go.jp/english/data/kokusei/2020/summary/pdf/01.pdf (model-reported quote; page not fetched by code)"
+   }
+  ],
+  "uncertainties": [
+   {
+    "code": "indicator_definition_assumed",
+    "description": "World Bank indicator 'Population, total' was matched by keyword; its definition is assumed to match the claim's intent without checking methodology notes.",
+    "severity": "minor",
+    "related_ids": [
+     "cmp_f0a01e428a2d"
+    ]
+   },
+   {
+    "code": "source_revision_risk",
+    "description": "World Bank historical values are revised over time; today's match may not hold against past or future vintages.",
+    "severity": "minor",
+    "related_ids": [
+     "cmp_f0a01e428a2d"
+    ]
+   },
+   {
+    "code": "falsification_flag",
+    "description": "Self-review fatal flag on [cmp_f0a01e428a2d] (non_verifying_overclaim): Verdict is 'contradicts' while its own notes state to 'check methodology, period and definitions before drawing conclusions' and uncertainties flag indicator definition assumed without checking methodology notes; a firm contradiction is asserted while required checks are explicitly still pending.",
+    "severity": "major",
+    "related_ids": [
+     "cmp_f0a01e428a2d"
+    ]
+   },
+   {
+    "code": "falsification_flag",
+    "description": "Self-review serious flag on [cmp_ffcb6f13b2df] (non_verifying_overclaim): Verdict 'consistent' for time_compatibility is based only on 'overlapping periods'; for a claim specific to 2020, mere overlap does not establish exact-year alignment, so consistency is overstated.",
+    "severity": "minor",
+    "related_ids": [
+     "cmp_ffcb6f13b2df"
+    ]
+   },
+   {
+    "code": "web_counter_evidence",
+    "description": "Live-web counter-evidence (www.stat.go.jp): - Official 2020 Census: \u201cThe population of Japan as of October 1, 2020, was 126,146 thousand.\u201d [https://www.stat.go.jp/english/data/kokusei/2020/summary/pdf/01.pdf] (model-reported quote; page not fetched by code)",
+    "severity": "minor",
+    "related_ids": []
+   },
+   {
+    "code": "web_counter_evidence",
+    "description": "Live-web counter-evidence (www.stat.go.jp): , detailed as 126,146,099 total [https://www.stat.go.jp/english/data/kokusei/2020/summary/pdf/01.pdf] (model-reported quote; page not fetched by code)",
+    "severity": "minor",
+    "related_ids": []
+   },
+   {
+    "code": "web_considered_not_cited",
+    "description": "Considered but not cited (data.worldbank.org): Data for World, Cuba, Japan, Bermuda, Sudan, Palau | Data [https://data.worldbank.org/?locations=1W-CU-JP-BM-SD-PW] \u2014 retrieved by the model, listed by code; not evidence.",
+    "severity": "minor",
+    "related_ids": []
+   },
+   {
+    "code": "web_considered_not_cited",
+    "description": "Considered but not cited (data.worldbank.org): Data for World, Cuba, Japan, Bermuda, Seychelles, Maldives | Data [https://data.worldbank.org/?locations=1W-CU-JP-BM-SC-MV] \u2014 retrieved by the model, listed by code; not evidence.",
+    "severity": "minor",
+    "related_ids": []
+   },
+   {
+    "code": "web_considered_not_cited",
+    "description": "Considered but not cited (data.worldbank.org): Data for World, Cuba, Japan, Bermuda, Seychelles, San Marino | Data [https://data.worldbank.org/?locations=1W-CU-JP-BM-SC-SM] \u2014 retrieved by the model, listed by code; not evidence.",
+    "severity": "minor",
+    "related_ids": []
+   },
+   {
+    "code": "web_considered_not_cited",
+    "description": "Considered but not cited (www.populationpyramid.net): Japan Population Pyramid 2020 [https://www.populationpyramid.net/japan/2020/] \u2014 retrieved by the model, listed by code; not evidence.",
+    "severity": "minor",
+    "related_ids": []
+   },
+   {
+    "code": "web_considered_not_cited",
+    "description": "Considered but not cited (en.m.wikipedia.org): Japan - Wikipedia [https://en.m.wikipedia.org/wiki/Nihon#Notes] \u2014 retrieved by the model, listed by code; not evidence.",
+    "severity": "minor",
+    "related_ids": []
+   }
+  ],
+  "limitations": [
+   "Evidence Atlas is an analysis aid, not an arbiter of truth.",
+   "Retrieved sources may disagree for legitimate methodological reasons.",
+   "A measured discrepancy is not proof of falsehood.",
+   "Results depend on the sources reachable at analysis time."
+  ],
+  "conclusion": {
+   "stance": "contradicted",
+   "summary": "The overall stance is \"contradicted\", with [cmp_f0a01e428a2d] recorded as contradicts with a measured difference of 296.01%. Time compatibility is consistent for overlapping periods [cmp_ffcb6f13b2df], while falsification reviews for both comparisons are inconclusive [cmp_56b95c14ff1e] [cmp_1c09a73e60ef]. Web counter evidence is inconclusive [cmp_dce2fe3f29d9] [cmp_6a835916e3ab] and direct evidence is missing because pages were not fetched by code.",
+   "support_comparison_ids": [
+    "cmp_ffcb6f13b2df"
+   ],
+   "contradict_comparison_ids": [
+    "cmp_f0a01e428a2d"
+   ],
+   "caveats": [
+    "Self-review fatal flag on [cmp_f0a01e428a2d] (non_verifying_overclaim): Verdict is 'contradicts' while its own notes state to 'check methodology, period and definitions before drawing conclusions' and uncertainties flag indicator definition assumed without checking methodology notes; a firm contradiction is asserted while required checks are explicitly still pending.",
+    "indicator definition assumed without checking methodology",
+    "historical values subject to revision",
+    "contradiction asserted while checks still pending",
+    "overlap does not establish exact-year alignment"
+   ],
+   "actor": "model",
+   "model": "meta-model-api"
+  },
+  "audit": [
+   {
+    "step": "extract",
+    "actor": "model:meta-model-api",
+    "started_at": "2026-11-01T19:30:19.759427Z",
+    "ended_at": "2026-11-01T19:30:25.267491Z",
+    "detail": "domain=economy type=quantitative quantities=1 times=1 geo=1",
+    "duration_ms": 5508.0518210015725
+   },
+   {
+    "step": "route",
+    "actor": "code",
+    "started_at": "2026-11-01T19:30:25.267494Z",
+    "ended_at": "2026-11-01T19:30:25.267505Z",
+    "detail": "connectors=['worldbank']",
+    "duration_ms": 0.0069029920268803835
+   },
+   {
+    "step": "retrieve",
+    "actor": "code",
+    "started_at": "2026-11-01T19:30:25.267977Z",
+    "ended_at": "2026-11-01T19:30:25.418210Z",
+    "detail": "worldbank: status=ok count=1 query='SP.POP.TOTL JPN 2020:2020'",
+    "duration_ms": 150.22062299249228
+   },
+   {
+    "step": "verify",
+    "actor": "code",
+    "started_at": "2026-11-01T19:30:25.418214Z",
+    "ended_at": "2026-11-01T19:30:25.418564Z",
+    "detail": "2 comparison(s), 2 uncertaintie(s)",
+    "duration_ms": 0.3441359876887873
+   },
+   {
+    "step": "falsify",
+    "actor": "model:meta-model-api",
+    "started_at": "2026-11-01T19:30:25.418567Z",
+    "ended_at": "2026-11-01T19:30:43.218417Z",
+    "detail": "attacks=2 fatal_high=1 advisory_only web_citations=2 cited=2/considered=31",
+    "duration_ms": 17799.846249996335
+   },
+   {
+    "step": "synthesize",
+    "actor": "model:meta-model-api",
+    "started_at": "2026-11-01T19:30:43.218419Z",
+    "ended_at": "2026-11-01T19:30:49.368612Z",
+    "detail": "stance=contradicted",
+    "duration_ms": 6150.18593800778
+   }
+  ],
+  "created_at": "2026-11-01T19:30:25.267478Z",
+  "meta": {
+   "app_version": "0.4.0",
+   "model": "muse-spark-1.3",
+   "temperature": 0,
+   "max_tokens": 4000,
+   "tolerance": 0.02,
+   "default": 5,
+   "prompt_version": "4",
+   "input_sha256": "1bb5148c6d8d03733c4b670ce6be34ae8e1b22601c5c14d86b6b788579627b2f",
+   "usage_extract": {
+    "prompt_tokens": 984,
+    "completion_tokens": 1627,
+    "reasoning_tokens": 1462,
+    "total_tokens": 2611,
+    "cached_tokens": 881
+   },
+   "usage_science": null,
+   "usage_falsify": {
+    "prompt_tokens": 21984,
+    "completion_tokens": 2974,
+    "reasoning_tokens": 2157,
+    "total_tokens": 24958,
+    "cached_tokens": 9781
+   },
+   "usage_summary": {
+    "prompt_tokens": 995,
+    "completion_tokens": 1592,
+    "reasoning_tokens": 1409,
+    "total_tokens": 2587,
+    "cached_tokens": 113
+   }
+  },
+  "elapsed_ms": 29609.20506399998
+ }
+}

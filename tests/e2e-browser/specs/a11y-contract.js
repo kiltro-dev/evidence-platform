@@ -121,12 +121,20 @@ module.exports = async function a11yContract(ctx) {
     const cbH = (await page.locator('.checksbar button').first().boundingBox() || {}).height || 0;
     check('touch-min32', pillH >= 32 && cbH >= 32, 'pill=' + pillH + ' bar=' + cbH);
     // One assertive card per batch (fabricated 2-error batch body).
-    await page.route('**/api/check', async route => {
-      await route.fulfill({ status: 200, contentType: 'application/json',
-        body: JSON.stringify({ claim_count: 2, elapsed_ms: 3, errors: 2,
-          rollup: {}, meta: {},
-          reports: [{ claim_text: 'first bad claim text here', error: 'boom-a' },
-                    { claim_text: 'second bad claim text here', error: 'boom-b' }] }) });
+    // SSE-primary UI: mock the stream (started->claim->done), not the POST.
+    const sseErr = evts => evts.map(
+      e => 'data: ' + JSON.stringify(e)).join('\n\n') + '\n\n';
+    await page.route('**/api/check/stream', async route => {
+      await route.fulfill({ status: 200, contentType: 'text/event-stream',
+        body: sseErr([
+          { type: 'started', claim_count: 2 },
+          { type: 'claim', index: 0, done: 1, total: 2, error: 'boom-a' },
+          { type: 'claim', index: 1, done: 2, total: 2, error: 'boom-b' },
+          { type: 'done', result: { claim_count: 2, elapsed_ms: 3, errors: 2,
+            rollup: {}, meta: {},
+            reports: [{ claim_text: 'first bad claim text here', error: 'boom-a' },
+                      { claim_text: 'second bad claim text here', error: 'boom-b' }] } },
+        ]) });
     });
     await page.check('input[name="mode"][value="batch"]');
     await page.fill('#batchText', 'The GDP of the United States was $27.36 trillion in 2023. The population of Japan was 125 million in 2023.');
@@ -136,7 +144,7 @@ module.exports = async function a11yContract(ctx) {
     const groups = await page.locator('#out .batcherr[role="group"]').count();
     check('batch-live-single-alert', alerts === 1 && groups === 1,
       'alerts=' + alerts + ' groups=' + groups);
-    await page.unroute('**/api/check');
+    await page.unroute('**/api/check/stream');
     check('favicon-never-requested', !requested.some(u => u.endsWith('/favicon.ico')),
       requested.length + ' requests, no favicon');
     check('no-pageerrors', pageErrors.length === 0, pageErrors.slice(0, 3).join(' | ') || 'clean');

@@ -1,6 +1,11 @@
 # Mission backlog (living, lead-owned)
 
-STATUS 2026-11-01 (War Room sweeps + RERUN, on top of 64ce0f1):
+STATUS 2026-11-01 (V3 waves 1+2, 7 pillars built + judged):
+spike-adjusted plan; A/B/C/D/E/F/G delivered with live metrics;
+hb_f06 real bug fixed (renormalization reset); H narrative shipped.
+755 unit+e2e green, repro 55/0, browser 6/6. Full10 pending → commit.
+
+Prior STATUS 2026-11-01 (War Room sweeps + RERUN, on top of 64ce0f1):
 OPENALEX_API_KEY configured → full run 9 43/43 (new gate pin);
 smoke live 49/0; sweep fixes (SSE-callback guard, call-count/security
 docs, stale deferred, keyed example, API index); fresh-install verified.

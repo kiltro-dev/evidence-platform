@@ -1,0 +1,397 @@
+{
+ "judge_cache_version": 1,
+ "source_text": "The GDP of the United States was $27.36 trillion in 2023.",
+ "endpoint": "/api/analyze",
+ "request": {
+  "limit": 5,
+  "domain": "auto",
+  "persist": false
+ },
+ "generated_at": "2026-11-01T19:29:44Z",
+ "model": "muse-spark-1.3",
+ "report": {
+  "report_id": "rep_b5fefd3f04ae",
+  "claim": {
+   "claim_id": "clm_d14475489014",
+   "raw_text": "The GDP of the United States was $27.36 trillion in 2023.",
+   "domain": "economy",
+   "claim_type": "quantitative",
+   "subject": "United States GDP in 2023",
+   "indicator": "GDP",
+   "entities": [
+    "United States"
+   ],
+   "quantities": [
+    {
+     "label": "GDP",
+     "raw_text": "$27.36 trillion",
+     "value": 27360000000000.0,
+     "unit": "USD",
+     "normalized_value": 27360000000000.0,
+     "normalized_unit": "USD"
+    }
+   ],
+   "time_refs": [
+    {
+     "raw": "2023",
+     "year": 2023,
+     "start_year": null,
+     "end_year": null,
+     "period_type": "year"
+    }
+   ],
+   "geo_refs": [
+    {
+     "raw": "United States",
+     "name": "United States",
+     "iso3": "USA"
+    }
+   ],
+   "conditions": [],
+   "context_notes": "",
+   "extraction_actor": "model",
+   "extraction_model": "meta-model-api"
+  },
+  "evidences": [
+   {
+    "evidence_id": "ev_14adaab92f92",
+    "claim_id": "clm_d14475489014",
+    "connector": "worldbank",
+    "source_name": "World Bank Open Data",
+    "source_url": "https://data.worldbank.org/indicator/NY.GDP.MKTP.CD?locations=USA",
+    "source_kind": "secondary",
+    "evidence_kind": "direct",
+    "locator": "NY.GDP.MKTP.CD USA 2023",
+    "excerpt": "GDP (current US$) for United States in 2023: 27811517000000",
+    "payload": {
+     "indicator": "NY.GDP.MKTP.CD",
+     "label": "GDP (current US$)",
+     "unit": "USD",
+     "iso3": "USA",
+     "year": "2023",
+     "value": 27811517000000,
+     "query": "NY.GDP.MKTP.CD USA 2023:2023",
+     "source_vintage": "2026-10-08",
+     "obs_status": "",
+     "source_decimal": 0
+    },
+    "retrieved_at": "2026-11-01T19:29:53.664217Z"
+   }
+  ],
+  "comparisons": [
+   {
+    "comparison_id": "cmp_b4f39ccb1966",
+    "claim_id": "clm_d14475489014",
+    "evidence_id": "ev_14adaab92f92",
+    "actor": "code",
+    "model": null,
+    "metric": "time_compatibility",
+    "claim_value": "2023",
+    "evidence_value": "2023",
+    "unit": null,
+    "abs_diff": null,
+    "rel_diff_pct": null,
+    "tolerance_rule": "calendar-year overlap required",
+    "within_tolerance": true,
+    "verdict": "consistent",
+    "notes": "Claim and evidence refer to overlapping periods."
+   },
+   {
+    "comparison_id": "cmp_d2316e6e41fe",
+    "claim_id": "clm_d14475489014",
+    "evidence_id": "ev_14adaab92f92",
+    "actor": "code",
+    "model": null,
+    "metric": "GDP (current US$)",
+    "claim_value": "$27.36 trillion [USD]",
+    "evidence_value": "GDP (current US$) for United States in 2023: 27811517000000",
+    "unit": "USD",
+    "abs_diff": 451517000000.0,
+    "rel_diff_pct": 1.6234892904259772,
+    "tolerance_rule": "|claim-evidence|/|evidence| <= 0.02 (relative)",
+    "within_tolerance": true,
+    "verdict": "consistent",
+    "notes": "Values agree within tolerance. Claimed-precision check: the claim as written implies resolution ~1e+10 [USD], but the measured gap is 4.51517e+11; the agreement is coarser than the claimed precision. Materiality note: the absolute gap of 4.51517e+11 [USD] exceeds the 1e+11 disclosure threshold even though the values agree in relative terms. Price-basis check: evidence is in current prices but the claim names no price basis (current/constant/real/nominal/PPP); the comparison assumes current prices."
+   },
+   {
+    "comparison_id": "cmp_33b9c7f844ec",
+    "claim_id": "clm_d14475489014",
+    "evidence_id": null,
+    "actor": "model",
+    "model": "meta-model-api",
+    "metric": "falsification_review",
+    "claim_value": "cmp_b4f39ccb1966",
+    "evidence_value": "",
+    "unit": null,
+    "abs_diff": null,
+    "rel_diff_pct": null,
+    "tolerance_rule": "",
+    "within_tolerance": null,
+    "verdict": "inconclusive",
+    "notes": "[non_verifying_overclaim/fatal/high] Claim is pinned to 2023 annual GDP, but notes justify time_compatibility as only 'overlapping periods'. Overlap does not establish same-year match, so verdict 'consistent' overstates what was verified."
+   },
+   {
+    "comparison_id": "cmp_40bbcc13d40f",
+    "claim_id": "clm_d14475489014",
+    "evidence_id": null,
+    "actor": "model",
+    "model": "meta-model-api",
+    "metric": "falsification_review",
+    "claim_value": "cmp_d2316e6e41fe",
+    "evidence_value": "",
+    "unit": null,
+    "abs_diff": null,
+    "rel_diff_pct": null,
+    "tolerance_rule": "",
+    "within_tolerance": null,
+    "verdict": "inconclusive",
+    "notes": "[non_verifying_overclaim/fatal/high] Notes admit the claim names no price basis while evidence is in current prices and the comparison assumes current prices. Verdict 'consistent' therefore rests on an unchecked assumption that is itself listed as a major uncertainty."
+   },
+   {
+    "comparison_id": "cmp_4e4cfde070bf",
+    "claim_id": "clm_d14475489014",
+    "evidence_id": null,
+    "actor": "model",
+    "model": "meta-responses-web-search",
+    "metric": "web_counter_evidence",
+    "claim_value": "https://bea.gov/news/2024/gross-domestic-product-fourth-quarter-and-year-2023-second-estimate",
+    "evidence_value": "- `Current-dollar GDP increased 6.3 percent, or $1.61 trillion, in 2023 to a level of $27.36 trillion`",
+    "unit": null,
+    "abs_diff": null,
+    "rel_diff_pct": null,
+    "tolerance_rule": "",
+    "within_tolerance": null,
+    "verdict": "inconclusive",
+    "notes": "[bea.gov] - `Current-dollar GDP increased 6.3 percent, or $1.61 trillion, in 2023 to a level of $27.36 trillion` \u2014 https://bea.gov/news/2024/gross-domestic-product-fourth-quarter-and-year-2023-second-estimate (model-reported quote; page not fetched by code)"
+   },
+   {
+    "comparison_id": "cmp_38e6184b3ded",
+    "claim_id": "clm_d14475489014",
+    "evidence_id": null,
+    "actor": "model",
+    "model": "meta-responses-web-search",
+    "metric": "web_counter_evidence",
+    "claim_value": "https://whatisgdp.com/us-gdp-data",
+    "evidence_value": "- `US nominal GDP was $27,825.9 billion in 2023 and $30,861.3 billion in 2025, from BEA NIPA Table 1.1.5 after the 2026 annual update.`",
+    "unit": null,
+    "abs_diff": null,
+    "rel_diff_pct": null,
+    "tolerance_rule": "",
+    "within_tolerance": null,
+    "verdict": "inconclusive",
+    "notes": "[whatisgdp.com] - `US nominal GDP was $27,825.9 billion in 2023 and $30,861.3 billion in 2025, from BEA NIPA Table 1.1.5 after the 2026 annual update.` \u2014 https://whatisgdp.com/us-gdp-data (model-reported quote; page not fetched by code)"
+   }
+  ],
+  "uncertainties": [
+   {
+    "code": "claimed_precision_exceeded",
+    "description": "Claim quantity $27.36 trillion implies resolution ~1e+10 [USD] but differs from evidence by 4.51517e+11; stance capped at partially_supported.",
+    "severity": "major",
+    "related_ids": [
+     "cmp_d2316e6e41fe"
+    ]
+   },
+   {
+    "code": "material_absolute_gap",
+    "description": "Absolute gap 4.51517e+11 [USD] on GDP (current US$) exceeds the 1e+11 materiality threshold; reported for disclosure, verdict unchanged.",
+    "severity": "minor",
+    "related_ids": [
+     "cmp_d2316e6e41fe"
+    ]
+   },
+   {
+    "code": "indicator_definition_assumed",
+    "description": "World Bank indicator 'GDP (current US$)' was matched by keyword; its definition is assumed to match the claim's intent without checking methodology notes.",
+    "severity": "minor",
+    "related_ids": [
+     "cmp_d2316e6e41fe"
+    ]
+   },
+   {
+    "code": "price_basis_unchecked",
+    "description": "Evidence 'GDP (current US$)' is in current prices but the claim states no price basis; compared as current prices (unchecked assumption).",
+    "severity": "major",
+    "related_ids": [
+     "cmp_d2316e6e41fe"
+    ]
+   },
+   {
+    "code": "source_revision_risk",
+    "description": "World Bank historical values are revised over time; today's match may not hold against past or future vintages.",
+    "severity": "minor",
+    "related_ids": [
+     "cmp_d2316e6e41fe"
+    ]
+   },
+   {
+    "code": "falsification_flag",
+    "description": "Self-review fatal flag on [cmp_b4f39ccb1966] (non_verifying_overclaim): Claim is pinned to 2023 annual GDP, but notes justify time_compatibility as only 'overlapping periods'. Overlap does not establish same-year match, so verdict 'consistent' overstates what was verified.",
+    "severity": "major",
+    "related_ids": [
+     "cmp_b4f39ccb1966"
+    ]
+   },
+   {
+    "code": "falsification_flag",
+    "description": "Self-review fatal flag on [cmp_d2316e6e41fe] (non_verifying_overclaim): Notes admit the claim names no price basis while evidence is in current prices and the comparison assumes current prices. Verdict 'consistent' therefore rests on an unchecked assumption that is itself listed as a major uncertainty.",
+    "severity": "major",
+    "related_ids": [
+     "cmp_d2316e6e41fe"
+    ]
+   },
+   {
+    "code": "web_counter_evidence",
+    "description": "Live-web counter-evidence (bea.gov): - `Current-dollar GDP increased 6.3 percent, or $1.61 trillion, in 2023 to a level of $27.36 trillion` [https://bea.gov/news/2024/gross-domestic-product-fourth-quarter-and-year-2023-second-estimate] (model-reported quote; page not fetched by code)",
+    "severity": "minor",
+    "related_ids": []
+   },
+   {
+    "code": "web_counter_evidence",
+    "description": "Live-web counter-evidence (whatisgdp.com): - `US nominal GDP was $27,825.9 billion in 2023 and $30,861.3 billion in 2025, from BEA NIPA Table 1.1.5 after the 2026 annual update.` [https://whatisgdp.com/us-gdp-data] (model-reported quote; page not fetched by code)",
+    "severity": "minor",
+    "related_ids": []
+   },
+   {
+    "code": "web_considered_not_cited",
+    "description": "Considered but not cited (datacatalogfiles.worldbank.org): Gross domestic product 2023 [https://datacatalogfiles.worldbank.org/ddh-published/0038130/8/DR0046441/GDP.pdf] \u2014 retrieved by the model, listed by code; not evidence.",
+    "severity": "minor",
+    "related_ids": []
+   },
+   {
+    "code": "web_considered_not_cited",
+    "description": "Considered but not cited (datacatalogfiles.worldbank.org): Gross domestic product 2023 [https://datacatalogfiles.worldbank.org/ddh-published/0038130/9/DR0046441/GDP.pdf] \u2014 retrieved by the model, listed by code; not evidence.",
+    "severity": "minor",
+    "related_ids": []
+   },
+   {
+    "code": "web_considered_not_cited",
+    "description": "Considered but not cited (webgate.ec.europa.eu): United States [https://webgate.ec.europa.eu/isdb_results/factsheets/country/overview_usa_en.pdf?utm_] \u2014 retrieved by the model, listed by code; not evidence.",
+    "severity": "minor",
+    "related_ids": []
+   },
+   {
+    "code": "web_considered_not_cited",
+    "description": "Considered but not cited (webgate.ec.europa.eu): USA [https://webgate.ec.europa.eu/isdb_results/factsheets/country/overview_usa_en.pdf] \u2014 retrieved by the model, listed by code; not evidence.",
+    "severity": "minor",
+    "related_ids": []
+   },
+   {
+    "code": "web_considered_not_cited",
+    "description": "Considered but not cited (data.worldbank.org): GDP (current US$) - United States | Data [https://data.worldbank.org/indicator/NY.GDP.MKTP.CD?end=2021&locations=US&most_recent_value_desc=true&start=1960&view=chart] \u2014 retrieved by the model, listed by code; not evidence.",
+    "severity": "minor",
+    "related_ids": []
+   }
+  ],
+  "limitations": [
+   "Evidence Atlas is an analysis aid, not an arbiter of truth.",
+   "Retrieved sources may disagree for legitimate methodological reasons.",
+   "A measured discrepancy is not proof of falsehood.",
+   "Results depend on the sources reachable at analysis time."
+  ],
+  "conclusion": {
+   "stance": "partially_supported",
+   "summary": "The claim is rated \"partially_supported\" with GDP (current US$) consistent at 1.62% delta [cmp_d2316e6e41fe] and time_compatibility consistent [cmp_b4f39ccb1966]. Falsification reviews are inconclusive [cmp_33b9c7f844ec] [cmp_40bbcc13d40f] and web counter evidence is inconclusive [cmp_4e4cfde070bf] [cmp_38e6184b3ded]. Evidence is missing where pages were not fetched by code, so same-year and price-basis checks remain unverified.",
+   "support_comparison_ids": [
+    "cmp_b4f39ccb1966",
+    "cmp_d2316e6e41fe"
+   ],
+   "contradict_comparison_ids": [],
+   "caveats": [
+    "Claim quantity $27.36 trillion implies resolution ~1e+10 [USD] but differs from evidence by 4.51517e+11; stance capped at partially_supported.",
+    "Evidence 'GDP (current US$)' is in current prices but the claim states no price basis; compared as current prices (unchecked assumption).",
+    "Self-review fatal flag on [cmp_b4f39ccb1966] (non_verifying_overclaim): Claim is pinned to 2023 annual GDP, but notes justify time_compatibility as only 'overlapping periods'. Overlap does not establish same-year match, so verdict 'consistent' overstates what was verified.",
+    "Self-review fatal flag on [cmp_d2316e6e41fe] (non_verifying_overclaim): Notes admit the claim names no price basis while evidence is in current prices and the comparison assumes current prices. Verdict 'consistent' therefore rests on an unchecked assumption that is itself listed as a major uncertainty.",
+    "claimed precision exceeded",
+    "material absolute gap disclosed",
+    "price basis assumed",
+    "overlap not same-year match"
+   ],
+   "actor": "model",
+   "model": "meta-model-api"
+  },
+  "audit": [
+   {
+    "step": "extract",
+    "actor": "model:meta-model-api",
+    "started_at": "2026-11-01T19:29:44.424884Z",
+    "ended_at": "2026-11-01T19:29:53.537898Z",
+    "detail": "domain=economy type=quantitative quantities=1 times=1 geo=1",
+    "duration_ms": 9113.00038000627
+   },
+   {
+    "step": "route",
+    "actor": "code",
+    "started_at": "2026-11-01T19:29:53.537911Z",
+    "ended_at": "2026-11-01T19:29:53.537924Z",
+    "detail": "connectors=['worldbank']",
+    "duration_ms": 0.00790499325376004
+   },
+   {
+    "step": "retrieve",
+    "actor": "code",
+    "started_at": "2026-11-01T19:29:53.538346Z",
+    "ended_at": "2026-11-01T19:29:53.664454Z",
+    "detail": "worldbank: status=ok count=1 query='NY.GDP.MKTP.CD USA 2023:2023'",
+    "duration_ms": 126.09725700167473
+   },
+   {
+    "step": "verify",
+    "actor": "code",
+    "started_at": "2026-11-01T19:29:53.664456Z",
+    "ended_at": "2026-11-01T19:29:53.664972Z",
+    "detail": "2 comparison(s), 5 uncertaintie(s)",
+    "duration_ms": 0.5113369988976046
+   },
+   {
+    "step": "falsify",
+    "actor": "model:meta-model-api",
+    "started_at": "2026-11-01T19:29:53.664974Z",
+    "ended_at": "2026-11-01T19:30:13.874807Z",
+    "detail": "attacks=2 fatal_high=2 advisory_only web_citations=2 cited=2/considered=41",
+    "duration_ms": 20209.829258994432
+   },
+   {
+    "step": "synthesize",
+    "actor": "model:meta-model-api",
+    "started_at": "2026-11-01T19:30:13.874810Z",
+    "ended_at": "2026-11-01T19:30:19.755987Z",
+    "detail": "stance=partially_supported",
+    "duration_ms": 5881.172113004141
+   }
+  ],
+  "created_at": "2026-11-01T19:29:53.537872Z",
+  "meta": {
+   "app_version": "0.4.0",
+   "model": "muse-spark-1.3",
+   "temperature": 0,
+   "max_tokens": 4000,
+   "tolerance": 0.02,
+   "default": 5,
+   "prompt_version": "4",
+   "input_sha256": "5a884a62c08fc5a2ba816cd52cd7565c9c09a1c56652c5fc01620f802ae2adb9",
+   "usage_extract": {
+    "prompt_tokens": 988,
+    "completion_tokens": 2436,
+    "reasoning_tokens": 2276,
+    "total_tokens": 3424,
+    "cached_tokens": 881
+   },
+   "usage_science": null,
+   "usage_falsify": {
+    "prompt_tokens": 111535,
+    "completion_tokens": 3855,
+    "reasoning_tokens": 2637,
+    "total_tokens": 115390,
+    "cached_tokens": 88456
+   },
+   "usage_summary": {
+    "prompt_tokens": 1042,
+    "completion_tokens": 1461,
+    "reasoning_tokens": 1288,
+    "total_tokens": 2503,
+    "cached_tokens": 113
+   }
+  },
+  "elapsed_ms": 35331.162025991944
+ }
+}

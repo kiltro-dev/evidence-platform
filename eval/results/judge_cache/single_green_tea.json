@@ -1,0 +1,540 @@
+{
+ "judge_cache_version": 1,
+ "source_text": "A recent study suggests green tea may improve memory.",
+ "endpoint": "/api/analyze",
+ "request": {
+  "limit": 5,
+  "domain": "auto",
+  "persist": false
+ },
+ "generated_at": "2026-11-01T19:30:49Z",
+ "model": "muse-spark-1.3",
+ "report": {
+  "report_id": "rep_86deeaf730fe",
+  "claim": {
+   "claim_id": "clm_ccdd6f87afda",
+   "raw_text": "A recent study suggests green tea may improve memory.",
+   "domain": "science",
+   "claim_type": "other",
+   "subject": "green tea memory improvement study",
+   "indicator": null,
+   "entities": [],
+   "quantities": [],
+   "time_refs": [
+    {
+     "raw": "recent",
+     "year": null,
+     "start_year": null,
+     "end_year": null,
+     "period_type": "vague"
+    }
+   ],
+   "geo_refs": [],
+   "conditions": [
+    "suggested by recent study",
+    "effect described as may improve"
+   ],
+   "context_notes": "Claim is hedged with 'suggests' and 'may'; no specific study, effect size, population, or methodology provided.",
+   "extraction_actor": "model",
+   "extraction_model": "meta-model-api"
+  },
+  "evidences": [
+   {
+    "evidence_id": "ev_88587538ca33",
+    "claim_id": "clm_ccdd6f87afda",
+    "connector": "openalex",
+    "source_name": "OpenAlex",
+    "source_url": "https://doi.org/10.1007/s00213-014-3526-1",
+    "source_kind": "secondary",
+    "evidence_kind": "contextual",
+    "locator": "https://openalex.org/W1971352988 (2014)",
+    "excerpt": "\"Green tea extract enhances parieto-frontal connectivity during working memory processing\" (2014) \u2014 Andr\u00e9 Schmidt, Felix Hammann, Bettina Karin W\u00f6lnerhanssen \u2014 Psychopharmacology [cited by 57]",
+    "payload": {
+     "openalex_id": "https://openalex.org/W1971352988",
+     "title": "Green tea extract enhances parieto-frontal connectivity during working memory processing",
+     "year": 2014,
+     "doi": "https://doi.org/10.1007/s00213-014-3526-1",
+     "cited_by_count": 57,
+     "authors": [
+      "Andr\u00e9 Schmidt",
+      "Felix Hammann",
+      "Bettina Karin W\u00f6lnerhanssen"
+     ],
+     "venue": "Psychopharmacology",
+     "type": "article",
+     "abstract": "RATIONALE: It has been proposed that green tea extract may have a beneficial impact on cognitive functioning, suggesting promising clinical implications. However, the neural mechanisms underlying this putative cognitive enhancing effect of green tea extract still remain unknown. OBJECTIVES: This study investigates whether the intake of green tea extract modulates effective brain connectivity during working memory processing and whether connectivity parameters are related to task performance. MATERIAL AND METHODS: Using a double-blind, counterbalanced, within-subject design, 12 healthy volunteers received a milk whey-based soft drink containing 27.5 g of green tea extract or a milk whey-based soft drink without green tea as control substance while undergoing functional magnetic resonance imaging. Working memory effect on effective connectivity between frontal and parietal brain regions was evaluated using dynamic causal modeling. RESULTS: Green tea extract increased the working memory induced modulation of connectivity from the right superior parietal lobule to the middle frontal gyrus. Notably, the magnitude of green tea induced increase in parieto-frontal connectivity positively correlated with improvement in task performance. CONCLUSIONS: Our findings provide first evidence for the putative beneficial effect of green tea on cognitive functioning, in particular, on working memory processing at the neural system level by suggesting changes in short-term plasticity of parieto-frontal brain connections. Modeling effective connectivity among frontal and parietal brain regions during working memory processing might help to assess the efficacy of green tea for the treatment of cognitive impairments in psychiatric disorders such as dementia.",
+     "query": "green tea memory improvement study"
+    },
+    "retrieved_at": "2026-11-01T19:30:58.990636Z"
+   },
+   {
+    "evidence_id": "ev_20ed16fbc8f2",
+    "claim_id": "clm_ccdd6f87afda",
+    "connector": "openalex",
+    "source_name": "OpenAlex",
+    "source_url": "https://doi.org/10.1186/1749-8546-5-13",
+    "source_kind": "secondary",
+    "evidence_kind": "contextual",
+    "locator": "https://openalex.org/W2114057457 (2010)",
+    "excerpt": "\"Beneficial effects of green tea: A literature review\" (2010) \u2014 Mandumpal Chacko Sabu, Priya T Thambi, Ramadasan Kuttan \u2014 Chinese Medicine [cited by 992]",
+    "payload": {
+     "openalex_id": "https://openalex.org/W2114057457",
+     "title": "Beneficial effects of green tea: A literature review",
+     "year": 2010,
+     "doi": "https://doi.org/10.1186/1749-8546-5-13",
+     "cited_by_count": 992,
+     "authors": [
+      "Mandumpal Chacko Sabu",
+      "Priya T Thambi",
+      "Ramadasan Kuttan"
+     ],
+     "venue": "Chinese Medicine",
+     "type": "article",
+     "abstract": "The health benefits of green tea for a wide variety of ailments, including different types of cancer, heart disease, and liver disease, were reported. Many of these beneficial effects of green tea are related to its catechin, particularly (-)-epigallocatechin-3-gallate, content. There is evidence from in vitro and animal studies on the underlying mechanisms of green tea catechins and their biological actions. There are also human studies on using green tea catechins to treat metabolic syndrome, such as obesity, type II diabetes, and cardiovascular risk factors.Long-term consumption of tea catechins could be beneficial against high-fat diet-induced obesity and type II diabetes and could reduce the risk of coronary disease. Further research that conforms to international standards should be performed to monitor the pharmacological and clinical effects of green tea and to elucidate its mechanisms of action.",
+     "query": "green tea memory improvement study"
+    },
+    "retrieved_at": "2026-11-01T19:30:58.990695Z"
+   },
+   {
+    "evidence_id": "ev_c229da919fc4",
+    "claim_id": "clm_ccdd6f87afda",
+    "connector": "openalex",
+    "source_name": "OpenAlex",
+    "source_url": "https://doi.org/10.1016/j.neuint.2014.08.008",
+    "source_kind": "secondary",
+    "evidence_kind": "contextual",
+    "locator": "https://openalex.org/W2038711586 (2014)",
+    "excerpt": "\"Effects of green tea and physical exercise on memory impairments associated with aging\" (2014) \u2014 Ma\u00edra Frigo Fl\u00f4res, Alexandre Martins, Helen L. Schimidt \u2014 Neurochemistry International [cited by 41]",
+    "payload": {
+     "openalex_id": "https://openalex.org/W2038711586",
+     "title": "Effects of green tea and physical exercise on memory impairments associated with aging",
+     "year": 2014,
+     "doi": "https://doi.org/10.1016/j.neuint.2014.08.008",
+     "cited_by_count": 41,
+     "authors": [
+      "Ma\u00edra Frigo Fl\u00f4res",
+      "Alexandre Martins",
+      "Helen L. Schimidt"
+     ],
+     "venue": "Neurochemistry International",
+     "type": "article",
+     "abstract": null,
+     "query": "green tea memory improvement study"
+    },
+    "retrieved_at": "2026-11-01T19:30:58.990707Z"
+   },
+   {
+    "evidence_id": "ev_910e6ef98d95",
+    "claim_id": "clm_ccdd6f87afda",
+    "connector": "openalex",
+    "source_name": "OpenAlex",
+    "source_url": "https://doi.org/10.3390/nu14142949",
+    "source_kind": "secondary",
+    "evidence_kind": "contextual",
+    "locator": "https://openalex.org/W4286214917 (2022)",
+    "excerpt": "\"Improvement of Depressed Mood with Green Tea Intake\" (2022) \u2014 Keiko Unno, Daisuke Furushima, Yuya Tanaka \u2014 Nutrients [cited by 17]",
+    "payload": {
+     "openalex_id": "https://openalex.org/W4286214917",
+     "title": "Improvement of Depressed Mood with Green Tea Intake",
+     "year": 2022,
+     "doi": "https://doi.org/10.3390/nu14142949",
+     "cited_by_count": 17,
+     "authors": [
+      "Keiko Unno",
+      "Daisuke Furushima",
+      "Yuya Tanaka"
+     ],
+     "venue": "Nutrients",
+     "type": "article",
+     "abstract": "Being in a prolonged depressed state increases the risk of developing depression. To investigate whether green tea intake is effective in improving depression-like moods, we used an experimental animal model of depression with lipopolysaccharide (LPS) and clarified the effects of green tea on the biological stress response and inflammation in the brain. Regarding the stress reduction effect of green tea, we found that the sum of caffeine (C) and epigallocatechin gallate (E) relative to the sum of theanine (T) and arginine (A), the major components of green tea, or the CE/TA ratio, is important. The results showed that depression-like behavior, adrenal hypertrophy as a typical stress response, and brain inflammation were suppressed in mice fed green tea components with CE/TA ratios of 2 to 8. In addition, the expression of Npas4, which is reduced in anxiety and depression, was maintained at the same level as controls in mice that consumed green tea with a CE/TA ratio of 4. In clinical human trials, the consumption of green tea with CE/TA ratios of 3.9 and 4.7 reduced susceptibility to subjective depression. These results suggest that the daily consumption of green tea with a CE/TA ratio of 4\u20135 is beneficial to improving depressed mood.",
+     "query": "green tea memory improvement study"
+    },
+    "retrieved_at": "2026-11-01T19:30:58.990770Z"
+   },
+   {
+    "evidence_id": "ev_836a14c25d1e",
+    "claim_id": "clm_ccdd6f87afda",
+    "connector": "openalex",
+    "source_name": "OpenAlex",
+    "source_url": "https://doi.org/10.1089/jmf.2009.1374",
+    "source_kind": "secondary",
+    "evidence_kind": "contextual",
+    "locator": "https://openalex.org/W1971654647 (2011)",
+    "excerpt": "\"A Combination of Green Tea Extract and l -Theanine Improves Memory and Attention in Subjects with Mild Cognitive Impairment: A Double-Blind Placebo-Controlled Study\" (2011) \u2014 Sang-Ki Park, In Chul Jung, Won Kyung Lee \u2014 Journal of Medicinal Food [cited by 105]",
+    "payload": {
+     "openalex_id": "https://openalex.org/W1971654647",
+     "title": "A Combination of Green Tea Extract and l -Theanine Improves Memory and Attention in Subjects with Mild Cognitive Impairment: A Double-Blind Placebo-Controlled Study",
+     "year": 2011,
+     "doi": "https://doi.org/10.1089/jmf.2009.1374",
+     "cited_by_count": 105,
+     "authors": [
+      "Sang-Ki Park",
+      "In Chul Jung",
+      "Won Kyung Lee"
+     ],
+     "venue": "Journal of Medicinal Food",
+     "type": "article",
+     "abstract": "A combination of green tea extract and l-theanine (LGNC-07) has been reported to have beneficial effects on cognition in animal studies. In this randomized, double-blind, placebo-controlled study, the effect of LGNC-07 on memory and attention in subjects with mild cognitive impairment (MCI) was investigated. Ninety-one MCI subjects whose Mini Mental State Examination-K (MMSE-K) scores were between 21 and 26 and who were in either stage 2 or 3 on the Global Deterioration Scale were enrolled in this study. The treatment group (13 men, 32 women; 57.58 \u00b1 9.45 years) took 1,680 mg of LGNC-07, and the placebo group (12 men, 34 women; 56.28 \u00b1 9.92 years) received an equivalent amount of maltodextrin and lactose for 16 weeks. Neuropsychological tests (Rey-Kim memory test and Stroop color-word test) and electroencephalography were conducted to evaluate the effect of LGNC-07 on memory and attention. Further analyses were stratified by baseline severity to evaluate treatment response on the degree of impairment (MMSE-K 21-23 and 24-26). LGNC-07 led to improvements in memory by marginally increasing delayed recognition in the Rey-Kim memory test (P = .0572). Stratified analyses showed that LGNC-07 improved memory and selective attention by significantly increasing the Rey-Kim memory quotient and word reading in the subjects with MMSE-K scores of 21-23 (LGNC-07, n = 11; placebo, n = 9). Electroencephalograms were recorded in 24 randomly selected subjects hourly for 3 hours in eye-open, eye-closed, and reading states after a single dose of LGNC-07 (LGNC-07, n = 12; placebo, n = 12). Brain theta waves, an indicator of cognitive alertness, were increased significantly in the temporal, frontal, parietal, and occipital areas after 3 hours in the eye-open and reading states. Therefore, this study suggests that LGNC-07 has potential as an intervention for cognitive improvement.",
+     "query": "green tea memory improvement study"
+    },
+    "retrieved_at": "2026-11-01T19:30:58.990856Z"
+   }
+  ],
+  "comparisons": [
+   {
+    "comparison_id": "cmp_c438f9d4d15b",
+    "claim_id": "clm_ccdd6f87afda",
+    "evidence_id": "ev_88587538ca33",
+    "actor": "model",
+    "model": "meta-model-api",
+    "metric": "abstract_stance",
+    "claim_value": "A recent study suggests green tea may improve memory.",
+    "evidence_value": "Green tea extract enhances parieto-frontal connectivity during working memory processing",
+    "unit": null,
+    "abs_diff": null,
+    "rel_diff_pct": null,
+    "tolerance_rule": "model abstract-stance judgment; contextual only, never verifying",
+    "within_tolerance": null,
+    "verdict": "consistent",
+    "notes": "Abstract supports the claim. The title reports enhanced parieto-frontal connectivity during working memory processing and the rationale notes a proposed beneficial impact on cognitive functioning."
+   },
+   {
+    "comparison_id": "cmp_46c6bd6c02ae",
+    "claim_id": "clm_ccdd6f87afda",
+    "evidence_id": null,
+    "actor": "model",
+    "model": "meta-model-api",
+    "metric": "falsification_review",
+    "claim_value": "cmp_c438f9d4d15b",
+    "evidence_value": "",
+    "unit": null,
+    "abs_diff": null,
+    "rel_diff_pct": null,
+    "tolerance_rule": "",
+    "within_tolerance": null,
+    "verdict": "inconclusive",
+    "notes": "[non_verifying_overclaim/serious/high] Notes cite only enhanced parieto-frontal connectivity during working memory processing and a proposed beneficial impact on cognitive functioning, which does not verify actual memory improvement; labeling this as supports overstates what the cited title/rationale establish."
+   },
+   {
+    "comparison_id": "cmp_13ae9e404452",
+    "claim_id": "clm_ccdd6f87afda",
+    "evidence_id": null,
+    "actor": "model",
+    "model": "meta-model-api",
+    "metric": "falsification_review",
+    "claim_value": "cmp_c438f9d4d15b",
+    "evidence_value": "",
+    "unit": null,
+    "abs_diff": null,
+    "rel_diff_pct": null,
+    "tolerance_rule": "",
+    "within_tolerance": null,
+    "verdict": "inconclusive",
+    "notes": "[missing_uncertainty/serious/high] Verdict asserts abstract support without acknowledging the major metadata_only limitation that verifying the claim requires reading full texts which this MVP does not do."
+   },
+   {
+    "comparison_id": "cmp_4d290300e30a",
+    "claim_id": "clm_ccdd6f87afda",
+    "evidence_id": null,
+    "actor": "model",
+    "model": "meta-responses-web-search",
+    "metric": "web_counter_evidence",
+    "claim_value": "https://pmc.ncbi.nlm.nih.gov:443/articles/PMC4159594/",
+    "evidence_value": "> \u201cIt has been proposed that green tea extract may have a beneficial impact on cognitive functioning\u2026 However, the neural mechanisms underlying this putative cognitive enhancing effect\u2026 still remain unknown.\u201d",
+    "unit": null,
+    "abs_diff": null,
+    "rel_diff_pct": null,
+    "tolerance_rule": "",
+    "within_tolerance": null,
+    "verdict": "inconclusive",
+    "notes": "[pmc.ncbi.nlm.nih.gov] > \u201cIt has been proposed that green tea extract may have a beneficial impact on cognitive functioning\u2026 However, the neural mechanisms underlying this putative cognitive enhancing effect\u2026 still remain unknown.\u201d \u2014 https://pmc.ncbi.nlm.nih.gov:443/articles/PMC4159594/ (model-reported quote; page not fetched by code)"
+   },
+   {
+    "comparison_id": "cmp_9aa83e5ca084",
+    "claim_id": "clm_ccdd6f87afda",
+    "evidence_id": null,
+    "actor": "model",
+    "model": "meta-responses-web-search",
+    "metric": "web_counter_evidence",
+    "claim_value": "https://pmc.ncbi.nlm.nih.gov:443/articles/PMC4159594/",
+    "evidence_value": "> \u201cOur findings provide first evidence for the putative beneficial effect\u2026 in particular, on working memory processing at the neural system level\u201d",
+    "unit": null,
+    "abs_diff": null,
+    "rel_diff_pct": null,
+    "tolerance_rule": "",
+    "within_tolerance": null,
+    "verdict": "inconclusive",
+    "notes": "[pmc.ncbi.nlm.nih.gov] > \u201cOur findings provide first evidence for the putative beneficial effect\u2026 in particular, on working memory processing at the neural system level\u201d \u2014 https://pmc.ncbi.nlm.nih.gov:443/articles/PMC4159594/ (model-reported quote; page not fetched by code)"
+   },
+   {
+    "comparison_id": "cmp_ecdf1bc535b2",
+    "claim_id": "clm_ccdd6f87afda",
+    "evidence_id": null,
+    "actor": "model",
+    "model": "meta-responses-web-search",
+    "metric": "web_counter_evidence",
+    "claim_value": "https://pmc.ncbi.nlm.nih.gov:443/articles/PMC4159594/",
+    "evidence_value": "> \u201c12 healthy volunteers received a milk whey-based soft drink containing 27.5 g of green tea extract or a milk whey-based soft drink without green tea\u201d",
+    "unit": null,
+    "abs_diff": null,
+    "rel_diff_pct": null,
+    "tolerance_rule": "",
+    "within_tolerance": null,
+    "verdict": "inconclusive",
+    "notes": "[pmc.ncbi.nlm.nih.gov] > \u201c12 healthy volunteers received a milk whey-based soft drink containing 27.5 g of green tea extract or a milk whey-based soft drink without green tea\u201d \u2014 https://pmc.ncbi.nlm.nih.gov:443/articles/PMC4159594/ (model-reported quote; page not fetched by code)"
+   },
+   {
+    "comparison_id": "cmp_7eff2b6213b6",
+    "claim_id": "clm_ccdd6f87afda",
+    "evidence_id": null,
+    "actor": "model",
+    "model": "meta-responses-web-search",
+    "metric": "web_counter_evidence",
+    "claim_value": "https://pmc.ncbi.nlm.nih.gov:443/articles/PMC4159594/",
+    "evidence_value": "> \u201cIn total, 12 healthy right-handed male completed the study (mean age 24.1 years\u2026)\u201d",
+    "unit": null,
+    "abs_diff": null,
+    "rel_diff_pct": null,
+    "tolerance_rule": "",
+    "within_tolerance": null,
+    "verdict": "inconclusive",
+    "notes": "[pmc.ncbi.nlm.nih.gov] > \u201cIn total, 12 healthy right-handed male completed the study (mean age 24.1 years\u2026)\u201d \u2014 https://pmc.ncbi.nlm.nih.gov:443/articles/PMC4159594/ (model-reported quote; page not fetched by code)"
+   },
+   {
+    "comparison_id": "cmp_d56570b0f5b3",
+    "claim_id": "clm_ccdd6f87afda",
+    "evidence_id": null,
+    "actor": "model",
+    "model": "meta-responses-web-search",
+    "metric": "web_counter_evidence",
+    "claim_value": "https://www.alzdiscovery.org/cognitive-vitality/ratings/green-tea",
+    "evidence_value": "> \u201cIn one trial in 99 older adults with subjective cognitive decline or mild cognitive impairment, matcha green tea (2 grams) taken daily for 12 months improved social acuity score compared to placebo, but not global cognition or other cognitive functions including attention, cognitive flexibility, and executive attention\u201d",
+    "unit": null,
+    "abs_diff": null,
+    "rel_diff_pct": null,
+    "tolerance_rule": "",
+    "within_tolerance": null,
+    "verdict": "inconclusive",
+    "notes": "[www.alzdiscovery.org] > \u201cIn one trial in 99 older adults with subjective cognitive decline or mild cognitive impairment, matcha green tea (2 grams) taken daily for 12 months improved social acuity score compared to placebo, but not global cognition or other cognitive functions including attention, cognitive flexibility, and executive attention\u201d \u2014 https://www.alzdiscovery.org/cognitive-vitality/ratings/green-tea (model-reported quote; page not fetched by code)"
+   }
+  ],
+  "uncertainties": [
+   {
+    "code": "metadata_only",
+    "description": "Evidence consists of bibliographic metadata (titles, years, venues). Verifying the claim requires reading full texts, which this MVP does not do.",
+    "severity": "major",
+    "related_ids": [
+     "ev_88587538ca33",
+     "ev_20ed16fbc8f2",
+     "ev_c229da919fc4",
+     "ev_910e6ef98d95",
+     "ev_836a14c25d1e"
+    ]
+   },
+   {
+    "code": "abstract_off_topic",
+    "description": "Abstract for https://openalex.org/W2114057457 (2010) is off-topic for this claim; no stance was assessed. Model note: The review discusses cancer, heart disease, liver disease, and metabolic syndrome without mentioning memory or cognition.",
+    "severity": "minor",
+    "related_ids": [
+     "ev_20ed16fbc8f2"
+    ]
+   },
+   {
+    "code": "abstract_off_topic",
+    "description": "Abstract for https://openalex.org/W4286214917 (2022) is off-topic for this claim; no stance was assessed. Model note: The study investigates green tea intake for improving depression-like moods and stress response, not memory.",
+    "severity": "minor",
+    "related_ids": [
+     "ev_910e6ef98d95"
+    ]
+   },
+   {
+    "code": "falsification_flag",
+    "description": "Self-review serious flag on [cmp_c438f9d4d15b] (non_verifying_overclaim): Notes cite only enhanced parieto-frontal connectivity during working memory processing and a proposed beneficial impact on cognitive functioning, which does not verify actual memory improvement; labeling this as supports overstates what the cited title/rationale establish.",
+    "severity": "minor",
+    "related_ids": [
+     "cmp_c438f9d4d15b"
+    ]
+   },
+   {
+    "code": "falsification_flag",
+    "description": "Self-review serious flag on [cmp_c438f9d4d15b] (missing_uncertainty): Verdict asserts abstract support without acknowledging the major metadata_only limitation that verifying the claim requires reading full texts which this MVP does not do.",
+    "severity": "minor",
+    "related_ids": [
+     "cmp_c438f9d4d15b"
+    ]
+   },
+   {
+    "code": "web_counter_evidence",
+    "description": "Live-web counter-evidence (pmc.ncbi.nlm.nih.gov): > \u201cIt has been proposed that green tea extract may have a beneficial impact on cognitive functioning\u2026 However, the neural mechanisms underlying this putative cognitive enhancing effect\u2026 still remain unknown.\u201d [https://pmc.ncbi.nlm.nih.gov:443/articles/PMC4159594/] (model-reported quote; page not fetched by code)",
+    "severity": "minor",
+    "related_ids": []
+   },
+   {
+    "code": "web_counter_evidence",
+    "description": "Live-web counter-evidence (pmc.ncbi.nlm.nih.gov): > \u201cOur findings provide first evidence for the putative beneficial effect\u2026 in particular, on working memory processing at the neural system level\u201d [https://pmc.ncbi.nlm.nih.gov:443/articles/PMC4159594/] (model-reported quote; page not fetched by code)",
+    "severity": "minor",
+    "related_ids": []
+   },
+   {
+    "code": "web_counter_evidence",
+    "description": "Live-web counter-evidence (pmc.ncbi.nlm.nih.gov): > \u201c12 healthy volunteers received a milk whey-based soft drink containing 27.5 g of green tea extract or a milk whey-based soft drink without green tea\u201d [https://pmc.ncbi.nlm.nih.gov:443/articles/PMC4159594/] (model-reported quote; page not fetched by code)",
+    "severity": "minor",
+    "related_ids": []
+   },
+   {
+    "code": "web_counter_evidence",
+    "description": "Live-web counter-evidence (pmc.ncbi.nlm.nih.gov): > \u201cIn total, 12 healthy right-handed male completed the study (mean age 24.1 years\u2026)\u201d [https://pmc.ncbi.nlm.nih.gov:443/articles/PMC4159594/] (model-reported quote; page not fetched by code)",
+    "severity": "minor",
+    "related_ids": []
+   },
+   {
+    "code": "web_counter_evidence",
+    "description": "Live-web counter-evidence (www.alzdiscovery.org): > \u201cIn one trial in 99 older adults with subjective cognitive decline or mild cognitive impairment, matcha green tea (2 grams) taken daily for 12 months improved social acuity score compared to placebo, but not global cognition or other cognitive functions including attention, cognitive flexibility,  [https://www.alzdiscovery.org/cognitive-vitality/ratings/green-tea] (model-reported quote; page not fetched by code)",
+    "severity": "minor",
+    "related_ids": []
+   },
+   {
+    "code": "web_considered_not_cited",
+    "description": "Considered but not cited (link.springer.com): Green tea extract enhances parieto-frontal connectivity during working memory processing | Psychopharmacology | Springer Nature Link [https://link.springer.com/article/10.1007/s00213-014-3526-1] \u2014 retrieved by the model, listed by code; not evidence.",
+    "severity": "minor",
+    "related_ids": []
+   },
+   {
+    "code": "web_considered_not_cited",
+    "description": "Considered but not cited (www.nutritional-psychology.org): Green Tea Extract and Memory: Effects on Brain Function [https://www.nutritional-psychology.org/research-summaries/green-tea-extract-enhances-parieto-frontal-connectivity-during-working-memory-processing/] \u2014 retrieved by the model, listed by code; not evidence.",
+    "severity": "minor",
+    "related_ids": []
+   },
+   {
+    "code": "web_considered_not_cited",
+    "description": "Considered but not cited (d.docksci.com): Green tea extract enhances parieto-frontal connectivity during working memory processing. - PDF Download Free [https://d.docksci.com/green-tea-extract-enhances-parieto-frontal-connectivity-during-working-memory-pr_5af427abd64ab2c66e6a5b59.html] \u2014 retrieved by the model, listed by code; not evidence.",
+    "severity": "minor",
+    "related_ids": []
+   },
+   {
+    "code": "web_considered_not_cited",
+    "description": "Considered but not cited (edoc.unibas.ch): Green tea extract enhances parieto-frontal connectivity during working memory processing  - edoc [https://edoc.unibas.ch/63089/] \u2014 retrieved by the model, listed by code; not evidence.",
+    "severity": "minor",
+    "related_ids": []
+   },
+   {
+    "code": "web_considered_not_cited",
+    "description": "Considered but not cited (openurl.ebsco.com): Green tea extract enhances parieto-frontal connectivity during working memory processing. [https://openurl.ebsco.com/contentitem/doi%3A10.1007%2Fs00213-014-3526-1?sid=ebsco%3Aocu_results%3Asitemap&id=ebsco%3Adoi%3A10.1007%2Fs00213-014-3526-1&bquery=IS+00333158+AND+DT+2014+AND+VI+231+AND+IP+] \u2014 retrieved by the model, listed by code; not evidence.",
+    "severity": "minor",
+    "related_ids": []
+   }
+  ],
+  "limitations": [
+   "Evidence Atlas is an analysis aid, not an arbiter of truth.",
+   "Retrieved sources may disagree for legitimate methodological reasons.",
+   "A measured discrepancy is not proof of falsehood.",
+   "Results depend on the sources reachable at analysis time."
+  ],
+  "conclusion": {
+   "stance": "partially_supported",
+   "summary": "The claim stance is \"partially_supported\" with abstract_stance consistent [cmp_c438f9d4d15b] noting enhanced parieto-frontal connectivity and proposed beneficial impact. Falsification reviews are inconclusive [cmp_46c6bd6c02ae] [cmp_13ae9e404452] noting connectivity does not verify memory improvement and full-text reading is missing. Web counter-evidence is inconclusive [cmp_4d290300e30a] [cmp_9aa83e5ca084] [cmp_ecdf1bc535b2] [cmp_7eff2b6213b6], with model-reported quotes not fetched by code, so verification evidence is missing.",
+   "support_comparison_ids": [
+    "cmp_c438f9d4d15b"
+   ],
+   "contradict_comparison_ids": [],
+   "caveats": [
+    "Evidence consists of bibliographic metadata (titles, years, venues). Verifying the claim requires reading full texts, which this MVP does not do.",
+    "connectivity does not verify improvement",
+    "full texts not read",
+    "web quotes not fetched by code"
+   ],
+   "actor": "model",
+   "model": "meta-model-api"
+  },
+  "audit": [
+   {
+    "step": "extract",
+    "actor": "model:meta-model-api",
+    "started_at": "2026-11-01T19:30:49.371916Z",
+    "ended_at": "2026-11-01T19:30:57.152589Z",
+    "detail": "domain=science type=other quantities=0 times=1 geo=0",
+    "duration_ms": 7780.660788004752
+   },
+   {
+    "step": "route",
+    "actor": "code",
+    "started_at": "2026-11-01T19:30:57.152591Z",
+    "ended_at": "2026-11-01T19:30:57.152602Z",
+    "detail": "connectors=['openalex']",
+    "duration_ms": 0.005880996468476951
+   },
+   {
+    "step": "retrieve",
+    "actor": "code",
+    "started_at": "2026-11-01T19:30:57.153007Z",
+    "ended_at": "2026-11-01T19:30:58.991138Z",
+    "detail": "openalex: status=ok count=5 query='green tea memory improvement study'",
+    "duration_ms": 1838.1177119881613
+   },
+   {
+    "step": "verify",
+    "actor": "code",
+    "started_at": "2026-11-01T19:30:58.991148Z",
+    "ended_at": "2026-11-01T19:31:02.727812Z",
+    "detail": "1 comparison(s), 3 uncertaintie(s)",
+    "duration_ms": 3736.657383997226
+   },
+   {
+    "step": "falsify",
+    "actor": "model:meta-model-api",
+    "started_at": "2026-11-01T19:31:02.727819Z",
+    "ended_at": "2026-11-01T19:31:20.374105Z",
+    "detail": "attacks=2 fatal_high=0 advisory_only web_citations=5 cited=5/considered=33",
+    "duration_ms": 17646.27975100302
+   },
+   {
+    "step": "synthesize",
+    "actor": "model:meta-model-api",
+    "started_at": "2026-11-01T19:31:20.374108Z",
+    "ended_at": "2026-11-01T19:31:24.129781Z",
+    "detail": "stance=partially_supported",
+    "duration_ms": 3755.666987010045
+   }
+  ],
+  "created_at": "2026-11-01T19:30:57.152575Z",
+  "meta": {
+   "app_version": "0.4.0",
+   "model": "muse-spark-1.3",
+   "temperature": 0,
+   "max_tokens": 4000,
+   "tolerance": 0.02,
+   "default": 5,
+   "prompt_version": "4",
+   "input_sha256": "b9ec144450bed9514431f2afae7f8be956c76425498d3d74652ef515620620b0",
+   "usage_extract": {
+    "prompt_tokens": 981,
+    "completion_tokens": 1751,
+    "reasoning_tokens": 1613,
+    "total_tokens": 2732,
+    "cached_tokens": 881
+   },
+   "usage_science": {
+    "prompt_tokens": 691,
+    "completion_tokens": 941,
+    "reasoning_tokens": 763,
+    "total_tokens": 1632,
+    "cached_tokens": 113
+   },
+   "usage_falsify": {
+    "prompt_tokens": 24971,
+    "completion_tokens": 3239,
+    "reasoning_tokens": 2096,
+    "total_tokens": 28210,
+    "cached_tokens": 9796
+   },
+   "usage_summary": {
+    "prompt_tokens": 1018,
+    "completion_tokens": 1122,
+    "reasoning_tokens": 934,
+    "total_tokens": 2140,
+    "cached_tokens": 113
+   }
+  },
+  "elapsed_ms": 34757.89074601198
+ }
+}

@@ -298,6 +298,54 @@ def test_model_unit_conversion_reset_to_span_literal():
     assert "conversion" in claim.context_notes
 
 
+def _renorm_client(value, unit, raw):
+    return ScriptedClient(responses={"Claim:": {
+        "domain": "economy", "claim_type": "quantitative",
+        "subject": "germany unemployment", "indicator_hint": None,
+        "entities": [],
+        "quantities": [{"label": "unemployment", "raw": raw,
+                        "value": value, "unit": unit}],
+        "time_refs": [{"raw": "2023", "year": 2023,
+                       "start_year": None, "end_year": None,
+                       "period_type": "year"}],
+        "geo_refs": [{"raw": "Germany", "name": "germany", "iso3": "DEU"}],
+        "conditions": [], "context_notes": "",
+    }})
+
+
+def test_model_digit_renormalization_reset_to_span_literal():
+    """V3 E-hb_f06: model read EN "3,071%" as 3.071 (decimal comma).
+    Same unit, different digits -> reset value to span-literal 3071,
+    keep the unit."""
+    text = "Unemployment in Germany was 3,071% in 2023."
+    claim = structure_claim(
+        text, _renorm_client(3.071, "percent", "3,071%"))
+    assert claim.extraction_actor == "model"
+    q = claim.quantities[0]
+    assert q.value == 3071.0
+    assert q.unit == "percent" and q.normalized_unit == "percent"
+    assert "renormalization" in claim.context_notes
+
+
+def test_model_span_agreement_untouched():
+    text = "Unemployment in Germany was 3,071% in 2023."
+    claim = structure_claim(
+        text, _renorm_client(3071.0, "percent", "3,071%"))
+    q = claim.quantities[0]
+    assert q.value == 3071.0
+    assert "renormalization" not in claim.context_notes
+    assert "conversion" not in claim.context_notes
+
+
+def test_model_scaled_value_untouched():
+    text = "The GDP of the United States was $27.36 trillion in 2023."
+    claim = structure_claim(
+        text, _renorm_client(27.36e12, "USD", "$27.36 trillion"))
+    q = claim.quantities[0]
+    assert q.value == 27.36e12
+    assert "renormalization" not in claim.context_notes
+
+
 def test_model_unit_conversion_abstains_downstream():
     """Reset quantity routes to unit_mismatch, never a verdict."""
     text = "Unemployment in Germany was 310 basis points in 2023."

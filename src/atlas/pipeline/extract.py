@@ -231,6 +231,7 @@ def _parse_llm_quantities(
     dropped_nonfinite = 0
     dropped_years = 0
     reset_conversions = 0
+    reset_renormalizations = 0
     items = raw_items if isinstance(raw_items, list) else []
     for q in items:
         if not isinstance(q, dict) or q.get("value") is None:
@@ -288,6 +289,19 @@ def _parse_llm_quantities(
                     candidate.unit = None
                     candidate.normalized_value = lit.value
                     candidate.normalized_unit = None
+                elif (
+                    lit.normalized_unit == unit
+                    and not math.isclose(
+                        lit.value, value, rel_tol=0.01, abs_tol=0.0
+                    )
+                ):
+                    # V3 E-hb_f06: same unit, different digits — the model
+                    # renormalized the number instead of extracting
+                    # (observed live: EN "3,071%" read as 3.071, decimal
+                    # comma). Reset the value to span-literal, keep unit.
+                    reset_renormalizations += 1
+                    candidate.value = lit.value
+                    candidate.normalized_value = lit.value
         quantities.append(candidate)
     if dropped_invalid:
         notes.append(f"dropped {dropped_invalid} invalid quantities")
@@ -299,6 +313,11 @@ def _parse_llm_quantities(
         notes.append(
             f"reset {reset_conversions} model unit conversion(s) "
             "to span-literal"
+        )
+    if reset_renormalizations:
+        notes.append(
+            f"reset {reset_renormalizations} model digit "
+            "renormalization(s) to span-literal"
         )
     return quantities
 
