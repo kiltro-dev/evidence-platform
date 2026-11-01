@@ -166,12 +166,13 @@ class _RecordingClient(ScriptedClient):
         self.kwargs_seen: list[dict] = []
 
     def complete_json(self, system, user, max_tokens=1500,
-                      reasoning_effort=None):
+                      reasoning_effort=None, json_schema=None):
         self.kwargs_seen.append({"max_tokens": max_tokens,
-                                 "reasoning_effort": reasoning_effort})
+                                 "reasoning_effort": reasoning_effort,
+                                 "json_schema": json_schema})
         return super().complete_json(
             system, user, max_tokens=max_tokens,
-            reasoning_effort=reasoning_effort)
+            reasoning_effort=reasoning_effort, json_schema=json_schema)
 
 
 def _scripted_claim():

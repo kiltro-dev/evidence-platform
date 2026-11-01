@@ -16,7 +16,7 @@ see `docs/EVAL_REPORT.md`), so "untouched" no longer holds repo-wide.
 | econ_boundary_1_9_consistent | supported + consistent (rel 1.9000%) + recompute | PASS |
 | econ_boundary_2_1_contradicts | contradicted + contradicts (rel 2.1000%) + recompute | PASS |
 
-Degraded suite: **11/11 passed, stance 1.00, 17 skipped (live), 0 blocked.**
+Degraded suite: **11/11 passed, pin conformance 1.00, 17 skipped (live), 0 blocked.**
 E1 `--paraphrase` (offline): **36/36 agreement = 1.000, gate PASS.**
 E2 `--unanswerable` (offline): **17/20 abstention = 0.850** (3 findings below).
 Ablation `--ablation`: RULE=0 rate 0.85, RULE=1 rate 0.85, **flip set = 1**

@@ -40,6 +40,26 @@ opinion → `not_assessable`. Falsify stage returns real attacks at
 claim). Per-stage usage persists in `meta.usage_*`; observed totals
 ~2–4k tokens/analysis. Detail: [EVAL_REPORT.md](EVAL_REPORT.md).
 
+## v4 live verification (2026-11-01, v0.4.0 ShipCheck)
+
+- Strict `json_schema` decoding verified on Chat Completions (incl.
+  null-union types); structure/science/summary/falsify/split calls use
+  it. GDP structuring probe: correct value/unit/spans/geo under the
+  schema.
+- Responses API + `web_search` verified: end-to-end counter-evidence
+  call returned 5 real `url_citation`s (INSEE + WorldEconomics,
+  genuine 7.4%/7.5% vs 7.3% counter-evidence). Usage observed:
+  **60,001 in / 1,532 out / 61,533 total tokens** — search context
+  inflates input ~20–60k tokens/call. At Standard Spark pricing
+  ($1.25/in + $4.25/out per 1M) that single call costs ~$0.08; a full
+  analysis with web falsify lands ~$0.10–0.15, not ~$0.02. Disable
+  with `ATLAS_WEB_FALSIFY=0` when cost matters.
+- Vision input verified mechanically (data-URL accepted,
+  schema-constrained JSON out) but OCR on probe images was unreliable
+  (misread digits, then a reasoning truncation on a 3.7KB image);
+  image intake is CUT for v0.4.0 (see ADR-0009). No vision code
+  ships.
+
 ## Operational findings (muse-spark-1.3)
 
 - The model spends heavily on hidden reasoning tokens (~48+ even for
@@ -55,10 +75,13 @@ claim). Per-stage usage persists in `meta.usage_*`; observed totals
   warning naming the cause. No credentials appear in these logs.
 - Summary payload was slimmed to id/metric/verdict/notes + code/
   description/severity to cut prompt + reasoning cost.
-- Single-analysis cost observed: up to 4 model calls (structure +
-  abstract-stance + falsify + summary; 3 on non-science paths), a few
-  thousand tokens total (exact usage varies with reasoning length;
-  per-stage usage persists in `meta.usage_*`).
+- Single-analysis cost observed (v0.4.0): up to 5 model calls on the
+  single-claim path (structure + abstract-stance + falsify + summary +
+  web counter-evidence; 3–4 on non-science/no-web paths), plus 1 split
+  call on the batch path. Chat calls cost a few thousand tokens total;
+  the web call adds ~20–60k input tokens (~$0.08 at Standard pricing).
+  Per-stage usage persists in `meta.usage_*`; batch cost scales with
+  sub-claims (cap 8).
 
 ## Limits
 

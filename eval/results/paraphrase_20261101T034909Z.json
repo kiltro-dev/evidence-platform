@@ -1,0 +1,249 @@
+{
+  "kind": "paraphrase",
+  "created_at": "20261101T034909Z",
+  "mode": "degraded",
+  "bases": 6,
+  "runs": 36,
+  "agreed": 36,
+  "agreement": 1.0,
+  "agreement_ci95": [
+    0.9035781695514236,
+    1.0
+  ],
+  "details": [
+    {
+      "id": "para_gdp_supported",
+      "expected": "supported",
+      "base_stance": "supported",
+      "agreement": 1.0,
+      "runs": [
+        {
+          "text": "The GDP of the United States was $27.36 trillion in 2023.",
+          "stance": "supported",
+          "is_base": true,
+          "agree": true
+        },
+        {
+          "text": "US GDP was $27.36tn in 2023.",
+          "stance": "supported",
+          "agree": true
+        },
+        {
+          "text": "The GDP of the United States was 27360 billion dollars in 2023.",
+          "stance": "supported",
+          "agree": true
+        },
+        {
+          "text": "The GDP of the United States was $27,360,000,000,000 in 2023.",
+          "stance": "supported",
+          "agree": true
+        },
+        {
+          "text": "El PIB de Estados Unidos fue de $27.36 billones en 2023.",
+          "stance": "supported",
+          "agree": true
+        },
+        {
+          "text": "In 2023, the GDP of the United States was $27.36 trillion.",
+          "stance": "supported",
+          "agree": true
+        }
+      ]
+    },
+    {
+      "id": "para_unemployment_supported",
+      "expected": "supported",
+      "base_stance": "supported",
+      "agreement": 1.0,
+      "runs": [
+        {
+          "text": "Unemployment in Germany was 3.1% in 2023.",
+          "stance": "supported",
+          "is_base": true,
+          "agree": true
+        },
+        {
+          "text": "Unemployment in Germany was 3.1 percent in 2023.",
+          "stance": "supported",
+          "agree": true
+        },
+        {
+          "text": "Germany's unemployment rate was 3.1 percent in 2023.",
+          "stance": "supported",
+          "agree": true
+        },
+        {
+          "text": "Unemployment in Germany was 3.10% in 2023.",
+          "stance": "supported",
+          "agree": true
+        },
+        {
+          "text": "In 2023, unemployment in Germany stood at 3.1%.",
+          "stance": "supported",
+          "agree": true
+        },
+        {
+          "text": "El desempleo en Alemania fue de 3,1 por ciento en 2023.",
+          "stance": "supported",
+          "agree": true
+        }
+      ]
+    },
+    {
+      "id": "para_population_contradicted",
+      "expected": "contradicted",
+      "base_stance": "contradicted",
+      "agreement": 1.0,
+      "runs": [
+        {
+          "text": "The population of Japan was 500 million in 2020.",
+          "stance": "contradicted",
+          "is_base": true,
+          "agree": true
+        },
+        {
+          "text": "The population of Japan was 500,000,000 in 2020.",
+          "stance": "contradicted",
+          "agree": true
+        },
+        {
+          "text": "The population of Japan was 0.5 billion in 2020.",
+          "stance": "contradicted",
+          "agree": true
+        },
+        {
+          "text": "Japan's population was 500 mn in 2020.",
+          "stance": "contradicted",
+          "agree": true
+        },
+        {
+          "text": "La poblaci\u00f3n de Jap\u00f3n fue de 500 millones en 2020.",
+          "stance": "contradicted",
+          "agree": true
+        },
+        {
+          "text": "In 2020, 500 million people lived in Japan.",
+          "stance": "contradicted",
+          "agree": true
+        }
+      ]
+    },
+    {
+      "id": "para_unit_mismatch",
+      "expected": "unverifiable",
+      "base_stance": "unverifiable",
+      "agreement": 1.0,
+      "runs": [
+        {
+          "text": "The GDP of the United States was 27 trillion euros in 2023.",
+          "stance": "unverifiable",
+          "is_base": true,
+          "agree": true
+        },
+        {
+          "text": "The GDP of the United States was \u20ac27 trillion in 2023.",
+          "stance": "unverifiable",
+          "agree": true
+        },
+        {
+          "text": "US GDP was 27 trillion EUR in 2023.",
+          "stance": "unverifiable",
+          "agree": true
+        },
+        {
+          "text": "The GDP of the United States was 27000 billion euros in 2023.",
+          "stance": "unverifiable",
+          "agree": true
+        },
+        {
+          "text": "El PIB de Estados Unidos fue de 27 billones de euros en 2023.",
+          "stance": "unverifiable",
+          "agree": true
+        },
+        {
+          "text": "In 2023, the GDP of the United States was 27 trillion euros.",
+          "stance": "unverifiable",
+          "agree": true
+        }
+      ]
+    },
+    {
+      "id": "para_opinion_not_assessable",
+      "expected": "not_assessable",
+      "base_stance": "not_assessable",
+      "agreement": 1.0,
+      "runs": [
+        {
+          "text": "Democracy is the best form of government.",
+          "stance": "not_assessable",
+          "is_base": true,
+          "agree": true
+        },
+        {
+          "text": "Democracy is the worst form of government.",
+          "stance": "not_assessable",
+          "agree": true
+        },
+        {
+          "text": "I think democracy is the best form of government.",
+          "stance": "not_assessable",
+          "agree": true
+        },
+        {
+          "text": "Democracy should be the only form of government.",
+          "stance": "not_assessable",
+          "agree": true
+        },
+        {
+          "text": "What is the best form of government?",
+          "stance": "not_assessable",
+          "agree": true
+        },
+        {
+          "text": "Democracy is believed to be the best form of government.",
+          "stance": "not_assessable",
+          "agree": true
+        }
+      ]
+    },
+    {
+      "id": "para_vague_unverifiable",
+      "expected": "unverifiable",
+      "base_stance": "unverifiable",
+      "agreement": 1.0,
+      "runs": [
+        {
+          "text": "The inflation of Brazil is high.",
+          "stance": "unverifiable",
+          "is_base": true,
+          "agree": true
+        },
+        {
+          "text": "Brazil's inflation is high.",
+          "stance": "unverifiable",
+          "agree": true
+        },
+        {
+          "text": "Inflation in Brazil is elevated.",
+          "stance": "unverifiable",
+          "agree": true
+        },
+        {
+          "text": "High inflation in Brazil.",
+          "stance": "unverifiable",
+          "agree": true
+        },
+        {
+          "text": "Brazil has high inflation.",
+          "stance": "unverifiable",
+          "agree": true
+        },
+        {
+          "text": "La inflaci\u00f3n de Brasil es alta.",
+          "stance": "unverifiable",
+          "agree": true
+        }
+      ]
+    }
+  ]
+}

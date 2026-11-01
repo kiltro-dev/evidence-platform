@@ -111,11 +111,41 @@ Persistent record for the autonomous build. Latest entry last.
   abstention probe 17/20 documented; full-mode eval re-run (see
   docs/EVAL_REPORT.md). Demo script rewritten (precision star beat).
 
+## 2026-11-01 — Operation Find the Breakthrough (v0.4.0 ShipCheck)
+
+- 8 research agents (product, market, commercial, frontier, EVS, 3×
+  domain) + independent red team → ranked opportunities; ONE bet:
+  ShipCheck, the sidecar that checks every stat AI ships
+  (docs/BREAKTHROUGH_DECISION.md).
+- Lead build: claim-splitter (strict schema, verbatim-only) +
+  POST /api/check batch + roll-up, json_schema decoding on all calls,
+  usage_split accounting, smoke phase 4b, ADR-0009.
+- Agent W: Responses-API web_search counter-evidence (default on,
+  code-validated citations, advisory-only, degrade-to-skip).
+- Agent H: EVS hardening H2 (pin_conformance + Wilson CIs + preamble),
+  H4 (independent recompute + 47-cell decide_stance table), H5
+  (partial_coverage caveat).
+- Agent U: sidecar UI (single/batch toggle, roll-up strip, per-claim
+  cards reusing single builders, honest loading/empty/error states).
+- Killed with rationale: proposal-audit, ad-substantiation skin,
+  legal/GRC/newsroom/live-debate, image intake (probes unreliable).
+- Verified: 416/416 offline, degraded/full/paraphrase/unanswerable
+  probes (see docs/EVAL_REPORT.md); live 3-claim batch 1-1-1
+  (partially_supported/supported/contradicted, 0 errors), twice —
+  2nd run recorded at eval/results/demo_batch_20261101T040906Z.json.
+
 ## Open risks / not done
 
 - Submit-portal fields and video specs unverifiable without login; demo
   video recording itself is a human task (script ready in docs/).
 - Truncation fallback possible under load (handled by degradation).
-- Falsifier false-alarm rate measured per run, not yet gated.
-- Deferred per PRD §2: full compound split, async jobs, grounding
-  integration, retention TTL, gateway rate limits, charts/i18n UI.
+- Web falsify pass is token-hungry (~20–60k input tokens/call,
+  ~$0.08); full analysis ~$0.10–0.15 with web on — disable via
+  ATLAS_WEB_FALSIFY=0 when cost matters. Span quality syntactic only.
+- Falsifier attack quality still ungraded (yield counted, correctness
+  not claimed); false-alarm rate measured per run, not gated.
+- Tolerance (2%) + materiality guides still unvalidated priors;
+  no inter-rater κ study (needs 2 humans); no representative benchmark.
+- Deferred per PRD §2: in-pipeline compound split, async jobs,
+  web-source verification, image/PDF intake, retention TTL, gateway
+  rate limits, charts/i18n UI.

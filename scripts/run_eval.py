@@ -27,7 +27,9 @@ Scripted harness ("script" key, or per-subcase "script"):
     the model summary in full mode).
 
 Metrics (v1 kept, v2 added):
-  - stance_accuracy: expected stance (or stance_set membership) matches
+  - pin_conformance: expected stance (or stance_set membership) matches
+    (renamed from stance_accuracy in H2: the suite pins regressions, it
+    does not measure accuracy on a sample of real traffic)
   - domain_accuracy, retrieval_hit, verdict checks, uncertainty checks
   - traceability: cited comparison ids resolve and link to an evidence
   - prose_traceability (auto): every [cmp_*] token in the summary resolves
@@ -75,8 +77,9 @@ sys.path.insert(0, str(ROOT / "eval"))
 import httpx  # noqa: E402  (dependency of connectors; used for fault stubs)
 
 from atlas.connectors import REGISTRY  # noqa: E402
-from atlas.core.compare import implied_resolution  # noqa: E402
+from atlas.core.compare import implied_resolution, is_year_quantity  # noqa: E402
 from atlas.core.types import Evidence  # noqa: E402
+from atlas.core.units import convert_temperature, normalize_unit  # noqa: E402
 from atlas.models.scripted import FaultClient, ScriptedClient  # noqa: E402
 from atlas.pipeline.run import analyze  # noqa: E402
 from atlas.pipeline.synthesize import NON_VERIFYING_METRICS  # noqa: E402
@@ -88,7 +91,41 @@ _CMP_REF_RE = re.compile(r"\[cmp_[A-Za-z0-9_]+\]")
 _TOL_RE = re.compile(r"<=\s*([0-9]*\.?[0-9]+)")
 _DEFAULT_TOLERANCE = 0.02
 
+# H4: harness-side tolerance for the INDEPENDENT recompute. Deliberately a
+# literal here — not imported from product code and never parsed from the
+# artifact's own tolerance_rule string. The point is to check the artifact
+# against an expectation the artifact did not write.
+HARNESS_REL_TOLERANCE = 0.02
+# Float slack when comparing the recomputed rel_diff_pct against the
+# artifact's recorded value (same arithmetic, so ~1e-13 in practice;
+# 1e-6 keeps platform float variance green without touching verdicts).
+_HARNESS_REL_EPSILON = 1e-6
+
+# H2: pin-freeze preamble, printed on every run (stdout in text mode so it
+# lands in console logs; stderr under --format json so stdout stays pure
+# JSON for the ablation subprocess parser).
+PIN_FREEZE_PREAMBLE = (
+    "[eval] pin-freeze rule: pins frozen before full runs; "
+    "changes need dated rationale."
+)
+
 _UNSET = object()  # sentinel: script sets no llm override
+
+
+def wilson_ci95(k: int, n: int) -> list[float]:
+    """Wilson score 95% interval for a k-of-n rate (hand-rolled, no deps).
+
+    Returns [lo, hi] clamped to [0, 1]. With no trials the rate is
+    uninformative: [0.0, 1.0].
+    """
+    if n <= 0:
+        return [0.0, 1.0]
+    z = 1.96
+    p = k / n
+    denom = 1.0 + z * z / n
+    center = (p + z * z / (2.0 * n)) / denom
+    half = z * ((p * (1.0 - p) / n + z * z / (4.0 * n * n)) ** 0.5) / denom
+    return [max(0.0, center - half), min(1.0, center + half)]
 
 
 def build_client(spec: dict):
@@ -174,13 +211,66 @@ def _as_list(value) -> list:
     return list(value) if isinstance(value, (list, tuple)) else [value]
 
 
-def _recompute_ok(report) -> tuple[bool, str]:
-    """Independently re-derive numeric verdicts from rel_diff_pct.
+def _raw_pair_values(report, comparison) -> tuple[float | None,
+                                                 float | None, str]:
+    """Locate the RAW floats behind a numeric comparison.
 
-    Returns (ok, detail). Requires >=1 numeric comparison; each must equal
-    consistent-iff-rel_diff_pct<=tolerance with tolerance parsed from the
-    comparison's own tolerance_rule (default 0.02). Not-comparable and
-    non-verifying (time/year) checks are out of scope.
+    Returns (claim_float, evidence_float, detail). The evidence side is the
+    int/float payload value behind the comparison's own evidence_id; the
+    claim side is the unique unit-matching non-year quantity (falling back
+    to the single non-year quantity when units are bare/assumed).
+    Temperature pairs are converted evidence->claim unit harness-side.
+    (None, None, reason) when no unique raw pair exists.
+    """
+    by_ev = {e.evidence_id: e for e in report.evidences}
+    ev = by_ev.get(comparison.evidence_id or "")
+    if ev is None:
+        return None, None, f"{comparison.comparison_id}: evidence_id missing"
+    raw_ev = ev.payload.get("value")
+    if not isinstance(raw_ev, (int, float)):
+        return None, None, (
+            f"{comparison.comparison_id}: evidence payload value is not a "
+            f"float ({raw_ev!r})"
+        )
+    quants = [q for q in report.claim.quantities if not is_year_quantity(q)]
+    unit = normalize_unit(comparison.unit)
+    matches = [q for q in quants
+               if normalize_unit(q.normalized_unit) == unit]
+    if len(matches) == 1:
+        quant = matches[0]
+    elif len(quants) == 1:
+        quant = quants[0]
+    else:
+        return None, None, (
+            f"{comparison.comparison_id}: {len(matches)} unit-matching "
+            f"quantities of {len(quants)} (unit={comparison.unit})"
+        )
+    ev_val = float(raw_ev)
+    if normalize_unit(ev.payload.get("unit")) != unit:
+        converted = convert_temperature(
+            ev_val, normalize_unit(ev.payload.get("unit")), unit)
+        if converted is None:
+            return None, None, (
+                f"{comparison.comparison_id}: unit conversion unavailable "
+                f"({ev.payload.get('unit')} -> {comparison.unit})"
+            )
+        ev_val = converted
+    return float(quant.value), ev_val, "raw pair ok"
+
+
+def _recompute_ok(report) -> tuple[bool, str]:
+    """Re-derive numeric verdicts from RAW floats + harness tolerance (H4).
+
+    Returns (ok, detail). Requires >=1 numeric comparison. PRIMARY
+    (independent): rel_diff_pct is recomputed from the raw claim-quantity
+    and evidence-payload floats (|c-e|/|e|*100, denom 1.0 when evidence is
+    0 — the documented relative rule) and the verdict is re-derived with
+    the harness-side HARNESS_REL_TOLERANCE constant, never parsed from the
+    artifact's own tolerance_rule string. SECONDARY (self-consistency, the
+    pre-H4 check): the recorded verdict equals
+    consistent-iff-recorded-rel<=parsed-tolerance. Both must hold; the
+    detail reports each side so a failure says which one broke.
+    Not-comparable and non-verifying (time/year) checks are out of scope.
     """
     numeric = [
         c for c in report.comparisons
@@ -188,16 +278,49 @@ def _recompute_ok(report) -> tuple[bool, str]:
     ]
     if not numeric:
         return False, "no numeric comparisons to recompute"
+    primary_bad: list[str] = []
+    for c in numeric:
+        claim_f, ev_f, detail = _raw_pair_values(report, c)
+        if claim_f is None or ev_f is None:
+            primary_bad.append(f"unpaired: {detail}")
+            continue
+        denom = abs(ev_f) if ev_f != 0 else 1.0
+        expected_rel = abs(claim_f - ev_f) / denom * 100.0
+        if abs(expected_rel - c.rel_diff_pct) > _HARNESS_REL_EPSILON:
+            primary_bad.append(
+                f"{c.comparison_id}: recorded rel={c.rel_diff_pct} != "
+                f"recomputed {expected_rel} from raw "
+                f"(claim={claim_f}, evidence={ev_f})"
+            )
+            continue
+        want = ("consistent" if expected_rel <= HARNESS_REL_TOLERANCE * 100.0
+                else "contradicts")
+        if c.verdict != want:
+            primary_bad.append(
+                f"{c.comparison_id}: verdict={c.verdict} != {want} "
+                f"(recomputed rel={expected_rel}, "
+                f"harness tol={HARNESS_REL_TOLERANCE})"
+            )
+    secondary_bad: list[str] = []
     for c in numeric:
         m = _TOL_RE.search(c.tolerance_rule or "")
         tol = float(m.group(1)) if m else _DEFAULT_TOLERANCE
         want = "consistent" if c.rel_diff_pct <= tol * 100.0 else "contradicts"
         if c.verdict != want:
-            return False, (
+            secondary_bad.append(
                 f"{c.comparison_id}: verdict={c.verdict} rel={c.rel_diff_pct} "
                 f"tol={tol} -> want {want}"
             )
-    return True, f"{len(numeric)} verdict(s) match recomputation"
+    n = len(numeric)
+    detail = (
+        f"independent: {n - len(primary_bad)}/{n} rel+verdict match from "
+        f"raw floats (harness tol={HARNESS_REL_TOLERANCE})"
+        + (f" [{'; '.join(primary_bad)}]" if primary_bad else "")
+        + f"; self-consistency: {n - len(secondary_bad)}/{n} match recorded "
+        "rel vs parsed rule"
+        + (f" [{'; '.join(secondary_bad)}]" if secondary_bad else "")
+    )
+    return (not primary_bad and not secondary_bad), detail
 
 
 def _falsify_counts(report) -> dict:
@@ -371,7 +494,7 @@ def score_case(case: dict, runner_llm, is_full: bool = False,
             "mode": case.get("mode", "live")}
 
 
-def _stance_ok(result: dict) -> bool:
+def _pin_ok(result: dict) -> bool:
     if "subcases" in result:
         return all(
             s["checks"].get("stance", True)
@@ -431,7 +554,7 @@ def run_suite(cases: list[dict], runner_llm, skip_live: bool,
         "skipped": skipped,
         "blocked": blocked,
         "passed": n_pass,
-        "stance_accuracy": (sum(1 for r in decided if _stance_ok(r))
+        "pin_conformance": (sum(1 for r in decided if _pin_ok(r))
                             / len(decided) if decided else 1.0),
         "results": results,
     }
@@ -473,7 +596,9 @@ def run_paraphrase(runner_llm) -> dict:
                       "agreement": sum(1 for r in runs if r["agree"]) / len(runs),
                       "runs": runs})
     return {"bases": len(bases), "runs": n_tot, "agreed": n_ok,
-            "agreement": n_ok / n_tot if n_tot else 1.0, "details": bases}
+            "agreement": n_ok / n_tot if n_tot else 1.0,
+            "agreement_ci95": wilson_ci95(n_ok, n_tot),
+            "details": bases}
 
 
 def run_unanswerable(runner_llm) -> dict:
@@ -500,6 +625,7 @@ def run_unanswerable(runner_llm) -> dict:
     n_abs = sum(1 for v in variants if v["abstained"])
     return {"variants": len(variants), "abstained": n_abs,
             "abstention_rate": n_abs / len(variants) if variants else 1.0,
+            "abstention_rate_ci95": wilson_ci95(n_abs, len(variants)),
             "results": variants}
 
 
@@ -552,9 +678,13 @@ def _main_probe(args, stamp: str, outdir: Path) -> int:
         if args.format == "json":
             print(json.dumps(summary, indent=2))
             return 0
+        ci0 = summary.get("runs", {}).get("0", {}).get(
+            "abstention_rate_ci95")
+        ci1 = summary.get("runs", {}).get("1", {}).get(
+            "abstention_rate_ci95")
         print(f"[ablation] RULE=0 rate={summary['rule_0_rate']} "
-              f"RULE=1 rate={summary['rule_1_rate']} "
-              f"flips={len(summary['flips'])}")
+              f"95% CI={ci0} RULE=1 rate={summary['rule_1_rate']} "
+              f"95% CI={ci1} flips={len(summary['flips'])}")
         for f in summary["flips"]:
             print(f"  [FLIP] {f['id']}: {f['rule_0']} -> {f['rule_1']}")
         if not summary["flips"]:
@@ -574,9 +704,11 @@ def _main_probe(args, stamp: str, outdir: Path) -> int:
         if args.format == "json":
             print(json.dumps(summary, indent=2))
         else:
+            lo, hi = summary["agreement_ci95"]
             print(f"[paraphrase:{args.mode}] agreement "
                   f"{summary['agreed']}/{summary['runs']} = "
-                  f"{summary['agreement']:.3f} (gate: 1.000)")
+                  f"{summary['agreement']:.3f} "
+                  f"(95% CI [{lo:.3f}, {hi:.3f}], gate: 1.000)")
             for b in summary["details"]:
                 if "error" in b:
                     print(f"  [ERROR] {b['id']}: {b['error']}")
@@ -597,9 +729,11 @@ def _main_probe(args, stamp: str, outdir: Path) -> int:
     if args.format == "json":
         print(json.dumps(summary, indent=2))
         return 0
+    lo, hi = summary["abstention_rate_ci95"]
     print(f"[unanswerable:{args.mode}] abstention "
           f"{summary['abstained']}/{summary['variants']} = "
-          f"{summary['abstention_rate']:.3f} (target 1.000)")
+          f"{summary['abstention_rate']:.3f} "
+          f"(95% CI [{lo:.3f}, {hi:.3f}], target 1.000)")
     for v in summary["results"]:
         mark = "ABSTAIN" if v.get("abstained") else "CONCLUDED"
         print(f"  [{mark}] {v['id']}: stance={v.get('stance')} "
@@ -625,6 +759,10 @@ def main() -> int:
                         help="machine-readable output for --paraphrase / "
                         "--unanswerable / --ablation")
     args = parser.parse_args()
+    # H2 preamble on every run; stderr under --format json so probe
+    # stdout stays pure JSON for the ablation subprocess parser.
+    _preamble_out = sys.stderr if args.format == "json" else sys.stdout
+    print(PIN_FREEZE_PREAMBLE, file=_preamble_out)
     if args.db:
         os.environ["ATLAS_DB"] = args.db
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
@@ -651,7 +789,7 @@ def main() -> int:
     code = 0
     for name, suite in modes.items():
         print(f"[{name}] {suite['passed']}/{suite['executed']} cases passed "
-              f"(stance accuracy {suite['stance_accuracy']:.2f}, "
+              f"(pin conformance {suite['pin_conformance']:.2f}, "
               f"skipped {len(suite['skipped'])}, "
               f"blocked {len(suite.get('blocked', []))})")
         if suite["skipped"]:

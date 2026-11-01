@@ -40,6 +40,8 @@ found — the hackathon runs on Cerebral Valley.
 
 ## Compliance notes for this project
 
-- Uses `muse-spark-1.3` via Meta Model API (real integration, 25%).
-- Original code; MIT-licensed; no reference-repo code copied.
+- Uses `muse-spark-1.3` via Meta Model API (real integration, 25%):
+  Chat Completions with strict `json_schema` decoding (structuring,
+  splitting, judgment, summaries) + Responses API `web_search` for
+  live counter-evidence. Original code; MIT-licensed.
 - No secrets in repo; no confidential content in model prompts.

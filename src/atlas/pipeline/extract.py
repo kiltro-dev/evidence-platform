@@ -61,6 +61,79 @@ KNOWN_UNITS = frozenset(
     }
 )
 
+# Strict decoding schema for the structuring call (mirrors STRUCTURE_SYSTEM
+# exactly; verified live 2026-11-01). Units stay free-form strings on
+# purpose: forcing an enum choice when the true unit is outside the list
+# would distort extraction — code validates against KNOWN_UNITS instead.
+STRUCTURE_SCHEMA = {
+    "name": "claim_structure",
+    "schema": {
+        "type": "object",
+        "properties": {
+            "domain": {"type": "string", "enum": ["economy", "science", "general"]},
+            "claim_type": {
+                "type": "string",
+                "enum": ["quantitative", "comparative", "existence", "other"],
+            },
+            "subject": {"type": "string"},
+            "indicator_hint": {"type": ["string", "null"]},
+            "entities": {"type": "array", "items": {"type": "string"}},
+            "quantities": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "label": {"type": "string"},
+                        "raw": {"type": "string"},
+                        "value": {"type": "number"},
+                        "unit": {"type": ["string", "null"]},
+                    },
+                    "required": ["label", "raw", "value", "unit"],
+                    "additionalProperties": False,
+                },
+            },
+            "time_refs": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "raw": {"type": "string"},
+                        "year": {"type": ["integer", "null"]},
+                        "start_year": {"type": ["integer", "null"]},
+                        "end_year": {"type": ["integer", "null"]},
+                        "period_type": {
+                            "type": "string",
+                            "enum": ["year", "range", "date", "vague", "none"],
+                        },
+                    },
+                    "required": ["raw", "year", "start_year", "end_year", "period_type"],
+                    "additionalProperties": False,
+                },
+            },
+            "geo_refs": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "raw": {"type": "string"},
+                        "name": {"type": ["string", "null"]},
+                        "iso3": {"type": ["string", "null"]},
+                    },
+                    "required": ["raw", "name", "iso3"],
+                    "additionalProperties": False,
+                },
+            },
+            "conditions": {"type": "array", "items": {"type": "string"}},
+            "context_notes": {"type": "string"},
+        },
+        "required": [
+            "domain", "claim_type", "subject", "indicator_hint", "entities",
+            "quantities", "time_refs", "geo_refs", "conditions", "context_notes",
+        ],
+        "additionalProperties": False,
+    },
+}
+
 # Security cap (PRD §5): model list fields are truncated past this length.
 _MAX_LIST_ITEMS = 20
 
@@ -84,7 +157,8 @@ def structure_claim(raw_text: str, llm=None) -> StructuredClaim:
     if llm is not None and llm.available:
         try:
             data = llm.complete_json(
-                STRUCTURE_SYSTEM, f"Claim: {text}", max_tokens=4000
+                STRUCTURE_SYSTEM, f"Claim: {text}", max_tokens=4000,
+                json_schema=STRUCTURE_SCHEMA,
             )
             return _from_llm_json(text, data, getattr(llm, "name", "model"))
         except Exception as exc:

@@ -562,3 +562,19 @@ def test_synthesize_keeps_compliant_model_summary():
     assert conclusion.actor == "model"
     assert "supported" in conclusion.summary
     assert "model-note" in conclusion.caveats
+
+
+def test_support_contra_ids_exclude_falsify_metrics():
+    """Advisory-only extends to the id lists: even a hypothetical
+    decisive verdict on a falsify metric must not appear as support or
+    contradiction. Verifying + ceiling ids still do."""
+    comps = [
+        _cmp("gdp", "consistent", 1.6, cid="cmp_v"),
+        _cmp("abstract_stance", "consistent", None, cid="cmp_c"),
+        _cmp("falsification_review", "consistent", None, cid="cmp_f"),
+        _cmp("web_counter_evidence", "contradicts", None, cid="cmp_w"),
+    ]
+    conclusion = synthesize(_claim(), comps, [], llm=None)
+    assert conclusion.stance == "supported"
+    assert conclusion.support_comparison_ids == ["cmp_v", "cmp_c"]
+    assert conclusion.contradict_comparison_ids == []

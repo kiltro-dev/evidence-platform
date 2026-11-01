@@ -530,6 +530,44 @@ phase4_offline_analyze() {
   fi
 }
 
+phase4b_check_batch() {
+  echo "=== Phase 4b: offline batch check (/api/check) ==="
+  if [ "$SERVER_OK" != "1" ]; then
+    skip_ "batch check (server not running)"
+    return 0
+  fi
+  ensure_tmpdir
+  local base="http://127.0.0.1:${PORT}"
+  local fb="$TMPDIR_SMOKE/r_batch.json" cb=""
+  cb=$(curl_code "$fb" -m 120 -H "Content-Type: application/json" \
+    -d '{"text": "The GDP of Germany was $4.52 trillion in 2023. The population of Japan was 500 million in 2020."}' "$base/api/check")
+  if [ "$cb" = "200" ]; then
+    local shape=""
+    shape=$("$PY" -c '
+import json, sys
+b = json.load(open(sys.argv[1]))
+ok = (b.get("claim_count") == 2
+      and set(b.get("rollup", {})) == {"supported", "partially_supported", "contradicted", "unverifiable", "not_assessable"}
+      and len(b.get("reports", [])) == 2
+      and b.get("errors", 1) == 0
+      and all(r.get("report_id", "").startswith("rep_") for r in b["reports"])
+      and b.get("meta", {}).get("splitter_actor") in ("model", "heuristic"))
+print("ok" if ok else "bad-shape")
+' "$fb" 2>/dev/null || echo "unparseable")
+    if [ "$shape" = "ok" ]; then
+      pass_ "POST /api/check (2-claim batch) 200 + roll-up shape"
+    else
+      fail_ "POST /api/check batch shape invalid ($shape)"
+    fi
+  else
+    fail_ "POST /api/check (2-claim batch) expected 200, got $cb"
+  fi
+  local fe="$TMPDIR_SMOKE/r_batch_empty.json" ce=""
+  ce=$(curl_code "$fe" -m 30 -H "Content-Type: application/json" \
+    -d '{"text": "   "}' "$base/api/check")
+  check_error_envelope "$fe" "400" "$ce" "batch empty text" "empty_claim"
+}
+
 phase5_live() {
   echo "=== Phase 5: live-source API checks ==="
   if [ "$WANT_LIVE" != "1" ]; then
@@ -552,7 +590,7 @@ phase5_live() {
   cg=$(curl_code "$fg" -m 60 -H "Content-Type: application/json" \
     -d '{"text": "The GDP of the United States was $27.36 trillion in 2023."}' "$base/api/analyze")
   if [ "$cg" = "200" ]; then
-    run_check "$fg" "live GDP claim" "live:supported"
+    run_check "$fg" "live GDP claim" "live:partially_supported"
   else
     fail_ "live GDP claim: expected 200, got $cg"
   fi
@@ -626,6 +664,7 @@ phase1_install
 phase2_offline_gate
 phase3_boot
 phase4_offline_analyze
+phase4b_check_batch
 phase5_live
 phase6_eval
 phase7_teardown

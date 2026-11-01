@@ -45,6 +45,79 @@ materials not listed in the input. State plainly when evidence is missing.
 Never use strength words that overclaim: prove, proves, proven, confirm,
 confirms, definitively, categorically, "exactly right"."""
 
+# Strict decoding schema for the summary call (mirrors SUMMARY_SYSTEM;
+# verified pattern live 2026-11-01). Strength/citation validation stays
+# in code — the schema guarantees shape, not honesty.
+SUMMARY_SCHEMA = {
+    "name": "analysis_summary",
+    "schema": {
+        "type": "object",
+        "properties": {
+            "summary": {"type": "string"},
+            "caveats": {"type": "array", "items": {"type": "string"}},
+        },
+        "required": ["summary", "caveats"],
+        "additionalProperties": False,
+    },
+}
+
+
+# H5-minimal: second-clause-without-coverage detector. verify.py owns
+# compound *flagging* (and is owned by another agent), so this module keeps
+# a small local conjunction+quantity heuristic: split the raw text into
+# clauses on conjunctions/semicolons/sentence ends (decimals never split,
+# mirroring verify's guard), then look for a substantive digit-less clause
+# beside a digit-bearing one, or more real quantities than decisive
+# comparisons. Either shape means part of the text went unchecked.
+_CLAUSE_SPLIT_RE = re.compile(
+    r"\s+and\s+|\s+but\s+|\s+plus\s+|;|[.!?]+(?:\s+|$)", re.IGNORECASE
+)
+_HAS_DIGIT_RE = re.compile(r"\d")
+_MIN_UNCOVERED_CLAUSE_WORDS = 4
+
+PARTIAL_COVERAGE_CODE = "partial_coverage"
+
+
+def uncovered_clause_reason(
+    claim: StructuredClaim,
+    comparisons: list[Comparison],
+) -> str:
+    """Return why a clause looks uncovered, or "" when coverage looks whole.
+
+    Signal 1 (quantity/comparison gap): more real (non-year) quantities
+    than decisive (consistent/contradicts) verifying comparisons — a
+    second measured clause with no paired comparison.
+    Signal 2 (vague second clause): 2+ clauses where one bears a digit
+    and another substantive (4+ words) clause bears none — a checkable
+    half beside a vague/opinion half the pipeline silently ignored.
+    """
+    n_real = sum(1 for q in claim.quantities if not is_year_quantity(q))
+    n_decisive = sum(
+        1
+        for c in comparisons
+        if c.metric not in NON_VERIFYING_METRICS
+        and c.verdict in ("consistent", "contradicts")
+    )
+    if n_real > n_decisive:
+        return (
+            f"{n_real} measured quantities but only "
+            f"{n_decisive} decisive comparison(s)"
+        )
+    clauses = [
+        s.strip() for s in _CLAUSE_SPLIT_RE.split(claim.raw_text or "")
+    ]
+    clauses = [s for s in clauses if s]
+    if len(clauses) >= 2 and any(_HAS_DIGIT_RE.search(s) for s in clauses):
+        bare = [
+            s
+            for s in clauses
+            if not _HAS_DIGIT_RE.search(s)
+            and len(s.split()) >= _MIN_UNCOVERED_CLAUSE_WORDS
+        ]
+        if bare:
+            return f"unchecked clause without a measured quantity ({bare[0][:60]!r})"
+    return ""
+
 
 # Checks that corroborate context but can never verify a claim on their own.
 # abstract_stance (science abstracts, Operation First Place M3): a model
@@ -58,6 +131,23 @@ NON_VERIFYING_METRICS = frozenset(
         "publication_year_match",
         "abstract_stance",
         "falsification_review",
+        # P1-A web counter-evidence: live-web doubt, stance-neutral by
+        # construction (inconclusive verdicts only).
+        "web_counter_evidence",
+    }
+)
+
+# Ceiling allowlist (red-team v0.4.0 fix): the ONLY non-verifying metrics
+# whose `consistent` verdict may lift `unverifiable` to
+# `partially_supported`. Falsify metrics are EXCLUDED on purpose —
+# advisory doubt must never move a stance even if a future producer
+# emits a non-inconclusive verdict. decide_stance + the support/
+# contradict id lists below both honor this set.
+CEILING_METRICS = frozenset(
+    {
+        "time_compatibility",
+        "publication_year_match",
+        "abstract_stance",
     }
 )
 
@@ -106,7 +196,12 @@ def decide_stance(
             if len(verifying) < n_real:
                 return "partially_supported"
         return "supported"
-    if any(c.verdict == "consistent" for c in comparisons):
+    # Ceiling path: only allowlisted non-verifying metrics lift to
+    # partial. Falsify metrics never lift (advisory-only, structural).
+    if any(
+        c.verdict == "consistent" and c.metric in CEILING_METRICS
+        for c in comparisons
+    ):
         return "partially_supported"
     return "unverifiable"
 
@@ -199,8 +294,44 @@ def synthesize(
     llm=None,
 ) -> Conclusion:
     stance = decide_stance(comparisons, uncertainties, claim)
-    support = [c.comparison_id for c in comparisons if c.verdict == "consistent"]
-    contra = [c.comparison_id for c in comparisons if c.verdict == "contradicts"]
+    # H5-minimal: partial-coverage disclosure. Caveat ONLY — appended AFTER
+    # decide_stance (and decide_stance itself is untouched), so this can
+    # never move a stance; it only stops a decisive stance from shipping
+    # silently on a half-checked conjunction. Gated on decisive stances:
+    # abstentions (unverifiable/not_assessable) already disclose fully.
+    if stance in ("supported", "partially_supported", "contradicted"):
+        _reason = uncovered_clause_reason(claim, comparisons)
+        if _reason and not any(
+            u.code == PARTIAL_COVERAGE_CODE for u in uncertainties
+        ):
+            uncertainties.append(
+                Uncertainty(
+                    code=PARTIAL_COVERAGE_CODE,
+                    description=(
+                        f"Partial coverage: {claim.raw_text[:80]!r} looks "
+                        f"like a multi-part claim ({_reason}); the {stance} "
+                        "stance rests on the checked part only — verify the "
+                        "remainder separately."
+                    ),
+                    severity="major",
+                    related_ids=[claim.claim_id],
+                )
+            )
+    # Support/contradict ids honor the same boundary as decide_stance:
+    # verifying metrics plus the ceiling allowlist. Falsify-metric ids
+    # stay out even if a future producer emits a decisive verdict.
+    support = [
+        c.comparison_id
+        for c in comparisons
+        if c.verdict == "consistent"
+        and (c.metric not in NON_VERIFYING_METRICS or c.metric in CEILING_METRICS)
+    ]
+    contra = [
+        c.comparison_id
+        for c in comparisons
+        if c.verdict == "contradicts"
+        and (c.metric not in NON_VERIFYING_METRICS or c.metric in CEILING_METRICS)
+    ]
     actor: str = "code"
     model: str | None = None
     summary, caveats = template_summary(stance, comparisons, uncertainties)
@@ -229,7 +360,8 @@ def synthesize(
             import json as _json
 
             data = llm.complete_json(
-                SUMMARY_SYSTEM, _json.dumps(payload)[:3000], max_tokens=4000
+                SUMMARY_SYSTEM, _json.dumps(payload)[:3000], max_tokens=4000,
+                json_schema=SUMMARY_SCHEMA,
             )
             model_ok = False
             if isinstance(data.get("summary"), str) and data["summary"].strip():

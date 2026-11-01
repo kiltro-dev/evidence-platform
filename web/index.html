@@ -150,6 +150,26 @@
   @media(max-width:760px){ .coverage ul{columns:1;} }
   .coverage li { margin:2px 0; }
   #rerunMsg { font-size:13px; }
+  /* --- ShipCheck sidecar: mode toggle, roll-up, batch cards --- */
+  .modetoggle { display:flex; gap:8px; margin:0 0 14px; flex-wrap:wrap; }
+  .modetoggle label { border:1px solid var(--line); border-radius:20px; padding:6px 16px;
+    font-size:14px; font-weight:600; cursor:pointer; background:#0d1220; }
+  .modetoggle label:has(input:checked) { border-color:var(--acc); color:var(--acc); }
+  .modetoggle input { accent-color:var(--acc); margin-right:6px; }
+  #batchText { min-height:160px; }
+  #batchCounter { font-size:13px; color:var(--mut); font-variant-numeric:tabular-nums; }
+  #batchCounter.over { color:var(--bad); font-weight:700; }
+  .rollup { list-style:none; display:flex; gap:8px; flex-wrap:wrap; padding:0; margin:8px 0; }
+  .rollup li { border:1px solid var(--line); border-radius:8px; padding:6px 10px;
+    background:#0d1220; font-size:13px; }
+  .batchcard { border-left:3px solid var(--acc); }
+  .batchcard .claimtext { font-size:15px; }
+  .batchcard .card { margin-left:0; margin-right:0; }
+  .caveats { margin:8px 0; padding-left:20px; font-size:14px; }
+  .caveats li { margin:4px 0; }
+  .batcherr { border-left-color:var(--bad); }
+  .b-err { background:#3a1420; color:var(--bad); }
+  .errcount { color:var(--warn); font-weight:700; }
 </style>
 </head>
 <body>
@@ -163,11 +183,17 @@
     <li><b>Paste a factual claim</b> — a statistic, a study result, a jobs or price figure — and pick a domain (or leave it on auto).</li>
     <li><b>Atlas structures it</b>, pulls real records from World Bank Open Data and OpenAlex, and runs deterministic checks in code.</li>
     <li><b>You get a traceable verdict</b> — every number links to its source, and gaps are disclosed, never papered over.</li>
+    <li><b>Checking AI output?</b> Switch to “Check AI output” below to paste a whole answer and get a verdict per claim.</li>
   </ul>
 </header>
 <main>
   <section class="card" aria-labelledby="inputH">
     <h2 id="inputH">Check a claim</h2>
+    <div class="modetoggle" role="radiogroup" aria-label="Check mode">
+      <label><input type="radio" name="mode" value="single" checked> Single claim</label>
+      <label><input type="radio" name="mode" value="batch"> Check AI output</label>
+    </div>
+    <div id="singlePanel">
     <label class="lbl" for="claim">Claim text</label>
     <textarea id="claim" rows="4" aria-describedby="counter svcNote"
       placeholder="Enter a factual claim, e.g. The GDP of the United States was $27.36 trillion in 2023."></textarea>
@@ -187,7 +213,6 @@
       <span id="busy" class="mut" role="status"></span>
     </p>
     <p id="formErr" class="err small" hidden></p>
-    <p id="svcNote" class="err small" hidden></p>
     <p class="mut small">Tip: press Cmd+Enter (Mac) or Ctrl+Enter to run. One-click examples fill the box and run immediately:</p>
     <div class="examples">
       <button data-ex="The GDP of the United States was $27.36 trillion in 2023.">US GDP 2023 (precision cap)</button>
@@ -195,6 +220,37 @@
       <button data-ex="A recent study suggests green tea may improve memory.">Vague science: green tea</button>
       <button data-ex="Unemployment in Germany was 3.1% in 2023.">Jobs stat: German unemployment</button>
     </div>
+    </div><!-- /singlePanel -->
+    <div id="batchPanel" hidden>
+      <label class="lbl" for="batchText">Pasted AI output</label>
+      <textarea id="batchText" rows="8" aria-describedby="batchCounter svcNote"
+        placeholder="Paste AI-generated text with statistics, e.g. a full answer about GDP, population, or jobs figures. Every checkable claim gets its own verdict below."></textarea>
+      <div class="row">
+        <span id="batchCounter" aria-live="off">0 / 12000</span>
+        <label for="batchDomain" class="small mut">Domain</label>
+        <select id="batchDomain">
+          <option value="auto" selected>Auto-detect</option>
+          <option value="economy">Economy</option>
+          <option value="science">Science</option>
+          <option value="general">General</option>
+        </select>
+      </div>
+      <p>
+        <button id="batchRun">Check AI output</button>
+        <button id="batchRetry" class="ghost" hidden>Retry</button>
+        <span id="batchBusy" class="mut" role="status"></span>
+      </p>
+      <p id="batchErr" class="err small" hidden></p>
+      <p class="mut small">Tip: press Cmd+Enter (Mac) or Ctrl+Enter to run. One-click examples fill the box and run immediately:</p>
+      <div class="examples">
+        <button data-bex="The GDP of the United States was $27.36 trillion in 2023. The population of Japan was 125 million in 2023.">Two economy stats</button>
+        <button data-bex="Unemployment in Germany was 3.1% in 2023. A recent study suggests green tea may improve memory.">Mixed: stat plus vague claim</button>
+      </div>
+      <p class="mut small">Coverage today: economy stats for ~16 indicators across ~50 countries
+      (World Bank) plus science paper search (OpenAlex). Anything outside that comes back
+      “unverifiable” — which means not enough evidence was found, not that the claim is false.</p>
+    </div>
+    <p id="svcNote" class="err small" hidden></p>
     <!-- Coverage honesty: static mirror of src/atlas/connectors/worldbank.py INDICATORS (read-only).
          KEEP IN SYNC with that dict by hand when it changes; this list never auto-grows. -->
     <details class="coverage">
@@ -331,6 +387,8 @@ async function refreshStatus() {
     serviceDown = false;
     $("run").disabled = false;
     $("run").title = "";
+    $("batchRun").disabled = false;
+    $("batchRun").title = "";
     $("svcNote").hidden = true;
     const conns = Array.isArray(s.connectors) ? s.connectors.map(connectorName).join(" · ") : "";
     if (s.llm_available) {
@@ -347,6 +405,8 @@ async function refreshStatus() {
     b.textContent = "● Service unreachable — analysis is unavailable. Check that the server is running, then reload.";
     $("run").disabled = true;
     $("run").title = "Disabled: service unreachable";
+    $("batchRun").disabled = true;
+    $("batchRun").title = "Disabled: service unreachable";
     $("svcNote").textContent = "Analyze is disabled because the service is unreachable.";
     $("svcNote").hidden = false;
   }
@@ -441,7 +501,10 @@ async function parseErrBody(res) {
   } catch { message = ""; }
   return {status: res.status, code, message};
 }
-function errorCard(title, detail, code, retryable) {
+function errorCard(title, detail, code, retryable, opts) {
+  /* opts.retryTopId / opts.onRetry let the batch flow reuse this card with its
+     own retry target; single-claim callers pass nothing and behave as before. */
+  opts = opts || {};
   const codeBit = code ? ' <span class="mut small">(code: ' + esc(human(code)) + ")</span>" : "";
   $("out").innerHTML =
     '<div class="card" role="alert"><h2>' + esc(title) + "</h2><p>" + esc(detail) + codeBit + "</p>" +
@@ -450,9 +513,10 @@ function errorCard(title, detail, code, retryable) {
       : '<p class="mut small">Your claim text is kept above — edit it and run again.</p>') + "</div>";
   const rb = $("retryBtn");
   if (rb) rb.addEventListener("click", () => {
+    if (opts.onRetry) { opts.onRetry(); return; }
     if (lastRun) { $("claim").value = lastRun.text; updateCounter(); doAnalyze(lastRun.text, lastRun.domain); }
   });
-  $("retryTop").hidden = !retryable;
+  $(opts.retryTopId || "retryTop").hidden = !retryable;
 }
 async function doAnalyze(text, domain) {
   if (aborter) { try { aborter.abort("superseded"); } catch {} }
@@ -490,8 +554,17 @@ async function doAnalyze(text, domain) {
     clearTimeout(timer);
     stopElapsed();
     if (e && e.name === "AbortError") {
-      errorCard("Analysis stopped", "The request was stopped after 45 seconds without an answer. " +
-        "The server may be busy — retry, or try a shorter claim.", "timeout", true);
+      const reason = (aborter && aborter.signal) ? aborter.signal.reason : "";
+      if (reason === "cancelled") {
+        errorCard("Analysis cancelled", "You stopped the request. Nothing was lost — " +
+          "retry whenever ready.", "cancelled", false);
+      } else if (reason === "superseded") {
+        errorCard("Analysis superseded", "A newer analysis replaced this one; showing the " +
+          "latest result when it arrives.", "superseded", false);
+      } else {
+        errorCard("Analysis stopped", "The request was stopped after 45 seconds without an answer. " +
+          "The server may be busy — retry, or try a shorter claim.", "timeout", true);
+      }
     } else {
       errorCard("Service issue — please retry",
         "Could not reach the analysis service (" + safeMsg(e && e.message) + "). " +
@@ -540,7 +613,11 @@ function srcLink(url) {
 }
 
 /* ---------- result rendering (IA order per spec) ---------- */
-function verdictHTML(report, nums) {
+/* All report-section builders take an optional pfx so batch per-claim cards
+   can reuse them with collision-free ids; single-claim callers pass "" and
+   get byte-identical markup to before. */
+function verdictHTML(report, nums, pfx) {
+  pfx = pfx || "";
   const k = report.conclusion || {};
   const st = stanceInfo(k.stance);
   const nSrc = Array.isArray(report.evidences) ? report.evidences.length : 0;
@@ -554,8 +631,8 @@ function verdictHTML(report, nums) {
     : '<span class="mut small">none</span>';
   const elapsed = isNum(report.elapsed_ms) ? fmtDur(report.elapsed_ms)
     : (isNum(report.elapsedMs) ? fmtDur(report.elapsedMs) : "");
-  return '<section class="card sticky" aria-labelledby="verdictH">' +
-    '<h2 id="verdictH" tabindex="-1"><span class="stance s-' + esc(String(k.stance || "unverifiable")) +
+  return '<section class="card sticky" aria-labelledby="' + pfx + 'verdictH">' +
+    '<h2 id="' + pfx + 'verdictH" tabindex="-1"><span class="stance s-' + esc(String(k.stance || "unverifiable")) +
     '">' + esc(st.icon) + " " + esc(st.label) + "</span> " + actorBadge(k.actor) + "</h2>" +
     "<p>" + esc(st.def) + "</p>" +
     (k.summary ? "<p>" + esc(k.summary) + "</p>" : "") +
@@ -676,10 +753,11 @@ function methodPanelHTML(report) {
       '<p class="small mut">First ' + Math.min(4, steps.length) + " of " + steps.length +
       " audit steps — full tables below.</p>" : "") + "</section>";
 }
-function evidenceHTML(report, nums) {
+function evidenceHTML(report, nums, pfx) {
+  pfx = pfx || "";
   const evs = Array.isArray(report.evidences) ? report.evidences : [];
   if (!evs.length) {
-    return '<section class="card" aria-labelledby="evH"><h2 id="evH">Key evidence (0)</h2>' +
+    return '<section class="card" aria-labelledby="' + pfx + 'evH"><h2 id="' + pfx + 'evH">Key evidence (0)</h2>' +
       "<p>No evidence was retrieved for this claim — see uncertainties below for why.</p></section>";
   }
   const cards = evs.map((e, i) => {
@@ -690,11 +768,11 @@ function evidenceHTML(report, nums) {
     const bits = [cap(e.source_kind), cap(e.evidence_kind), connectorName(e.connector)]
       .filter(x => x && x !== "—");
     const dt = fmtDate(e.retrieved_at || e.retrievedAt);
-    return '<article class="ev" id="ev-' + esc(en) + '"' + (i >= 3 ? ' data-extra="1" hidden' : "") + ">" +
+    return '<article class="ev" id="' + pfx + "ev-" + esc(en) + '"' + (i >= 3 ? ' data-extra="1" hidden' : "") + ">" +
       '<div><span class="enum">' + esc(en) + "</span><b>" + esc(e.source_name || "Unnamed source") +
       '</b><span class="tier ' + tier.c + '">' + esc(tier.t) + "</span><br>" +
       '<span class="small mut">' + esc(bits.join(" · ")) + "</span></div>" +
-      '<p><span id="ex-' + esc(en) + '">' + esc(cut ? full.slice(0, 280) + "…" : (full || "No excerpt provided.")) +
+      '<p><span id="' + pfx + "ex-" + esc(en) + '">' + esc(cut ? full.slice(0, 280) + "…" : (full || "No excerpt provided.")) +
       "</span>" + (cut ? ' <button class="ghost small" data-exbtn="' + esc(en) + '" data-full="' +
         esc(full) + '" data-cut="' + esc(full.slice(0, 280) + "…") + '">Expand</button>' : "") + "</p>" +
       (e.locator ? '<p class="small mut">' + esc(e.locator) + "</p>" : "") +
@@ -702,8 +780,8 @@ function evidenceHTML(report, nums) {
       "<p>" + srcLink(e.source_url) + "</p></article>";
   }).join("");
   const more = evs.length > 3
-    ? '<p><button id="evMore" class="ghost small">Show all ' + evs.length + " sources</button></p>" : "";
-  return '<section class="card" aria-labelledby="evH"><h2 id="evH">Key evidence (' + evs.length +
+    ? '<p><button id="' + pfx + 'evMore" class="ghost small">Show all ' + evs.length + " sources</button></p>" : "";
+  return '<section class="card" aria-labelledby="' + pfx + 'evH"><h2 id="' + pfx + 'evH">Key evidence (' + evs.length +
     ")</h2>" + cards + more + "</section>";
 }
 function deltaText(x) {
@@ -713,10 +791,11 @@ function deltaText(x) {
   if (isNum(x.absDiff)) return "Δ " + x.absDiff;
   return "—";
 }
-function comparisonsHTML(report, nums) {
+function comparisonsHTML(report, nums, pfx) {
+  pfx = pfx || "";
   const cmps = Array.isArray(report.comparisons) ? report.comparisons : [];
   if (!cmps.length) {
-    return '<section class="card" aria-labelledby="cmpH"><h2 id="cmpH">Comparisons (0)</h2>' +
+    return '<section class="card" aria-labelledby="' + pfx + 'cmpH"><h2 id="' + pfx + 'cmpH">Comparisons (0)</h2>' +
       "<p>No direct comparisons could be made — there was nothing measurable to check " +
       "against the sources. See uncertainties below.</p></section>";
   }
@@ -726,7 +805,7 @@ function comparisonsHTML(report, nums) {
     const en = x.evidence_id && nums.eNum[x.evidence_id] ? nums.eNum[x.evidence_id] : "";
     const whyBits = [x.notes ? "Notes: " + x.notes : "",
       x.tolerance_rule ? "Tolerance: " + x.tolerance_rule : ""].filter(Boolean).join(" ");
-    return '<tr id="cmp-' + esc(cn) + '"' + (i >= 5 ? ' data-extra="1" hidden' : "") + ">" +
+    return '<tr id="' + pfx + "cmp-" + esc(cn) + '"' + (i >= 5 ? ' data-extra="1" hidden' : "") + ">" +
       '<td><span class="cnum">' + esc(cn) + "</span>" + actorBadge(x.actor) + "<br>" +
       '<span class="small">' + esc(cap(x.metric)) + "</span></td>" +
       '<td class="small">' + esc(x.claim_value != null && x.claim_value !== "" ? x.claim_value : "—") + "</td>" +
@@ -739,14 +818,15 @@ function comparisonsHTML(report, nums) {
         : '<span class="mut small">—</span>') + "</td></tr>";
   }).join("");
   const more = cmps.length > 5
-    ? '<p><button id="cmpMore" class="ghost small">Show all ' + cmps.length + " checks</button></p>" : "";
-  return '<section class="card" aria-labelledby="cmpH"><h2 id="cmpH">Comparisons (' + cmps.length + ")</h2>" +
+    ? '<p><button id="' + pfx + 'cmpMore" class="ghost small">Show all ' + cmps.length + " checks</button></p>" : "";
+  return '<section class="card" aria-labelledby="' + pfx + 'cmpH"><h2 id="' + pfx + 'cmpH">Comparisons (' + cmps.length + ")</h2>" +
     '<div class="tblwrap"><table><caption class="small mut" style="text-align:left">' +
     "Each check compares a claimed value with a sourced value.</caption>" +
     "<tr><th>Check</th><th>Claim</th><th>Evidence</th><th>Difference</th><th>Verdict</th><th>Why</th><th>Source</th></tr>" +
     rows + "</table></div>" + more + "</section>";
 }
-function uncertaintiesHTML(report) {
+function uncertaintiesHTML(report, pfx) {
+  pfx = pfx || "";
   const uncs = Array.isArray(report.uncertainties) ? report.uncertainties : [];
   const lims = Array.isArray(report.limitations) ? report.limitations : [];
   /* Severity rail: 3 lanes (HIGH blocks / MED weakens / LOW caveat). */
@@ -771,7 +851,7 @@ function uncertaintiesHTML(report) {
   const limBox = '<div class="limbox"><h3>Method and limits</h3>' +
     (lims.length ? "<ul>" + lims.map(l => "<li>" + esc(safeMsg(l)) + "</li>").join("") + "</ul>"
       : "<p class=\"small\">No method limits were recorded for this report.</p>") + "</div>";
-  return '<section class="card" aria-labelledby="uncH"><h2 id="uncH">Uncertainties (' + uncs.length +
+  return '<section class="card" aria-labelledby="' + pfx + 'uncH"><h2 id="' + pfx + 'uncH">Uncertainties (' + uncs.length +
     ")</h2>" + rail + limBox + "</section>";
 }
 function claimHTML(report) {
@@ -830,8 +910,11 @@ function footHTML(report) {
 }
 /* Re-run: re-POST the same claim text and compare input_sha256 — a match is
    the determinism proof. Defensive: missing hashes are reported, never throw. */
-async function reRunDeterminism(report) {
-  const msg = $("rerunMsg");
+async function reRunDeterminism(report, msgEl) {
+  /* msgEl lets batch per-claim cards reuse this logic with their own status
+     line; single-claim callers pass nothing and use the global one. */
+  const msg = msgEl || $("rerunMsg");
+  if (!msg) return;
   const text = (report.claim && report.claim.raw_text) || (lastRun && lastRun.text) || "";
   if (!text) { msg.textContent = "Re-run unavailable: no claim text on this report."; return; }
   const oldHash = report.meta && report.meta.input_sha256;
@@ -931,38 +1014,46 @@ function exportReceipt(report, nums) {
   a.click();
   setTimeout(() => { try { URL.revokeObjectURL(a.href); } catch {} a.remove(); }, 500);
 }
+/* Shared wiring for one rendered report: traceability pills, excerpt
+   expanders, show-all toggles. Scoped to root + pfx so batch cards reuse it;
+   single-claim render passes the whole output with pfx "". */
+function wireReport(root, report, pfx) {
+  pfx = pfx || "";
+  root.querySelectorAll("[data-cmp]").forEach(b =>
+    b.addEventListener("click", () => jumpTo(pfx + "cmp-" + b.dataset.cmp)));
+  root.querySelectorAll("[data-ev]").forEach(b =>
+    b.addEventListener("click", () => jumpTo(pfx + "ev-" + b.dataset.ev)));
+  root.querySelectorAll("[data-exbtn]").forEach(b =>
+    b.addEventListener("click", () => {
+      const span = document.getElementById(pfx + "ex-" + b.dataset.exbtn);
+      if (!span) return;
+      const open = b.textContent === "Expand";
+      span.textContent = open ? b.dataset.full : b.dataset.cut;
+      b.textContent = open ? "Collapse" : "Expand";
+    }));
+  const evMore = document.getElementById(pfx + "evMore");
+  if (evMore) evMore.addEventListener("click", () => {
+    const show = root.querySelectorAll('.ev[data-extra="1"][hidden]').length > 0;
+    root.querySelectorAll('.ev[data-extra="1"]').forEach(el => { el.hidden = !show; });
+    evMore.textContent = show ? "Show fewer sources" : "Show all " +
+      (Array.isArray(report.evidences) ? report.evidences.length : 0) + " sources";
+  });
+  const cmpMore = document.getElementById(pfx + "cmpMore");
+  if (cmpMore) cmpMore.addEventListener("click", () => {
+    const show = root.querySelectorAll('tr[data-extra="1"][hidden]').length > 0;
+    root.querySelectorAll('tr[data-extra="1"]').forEach(el => { el.hidden = !show; });
+    cmpMore.textContent = show ? "Show fewer checks" : "Show all " +
+      (Array.isArray(report.comparisons) ? report.comparisons.length : 0) + " checks";
+  });
+}
 function render(report) {
   const nums = buildNums(report);
   $("out").innerHTML = verdictHTML(report, nums) + vsStripHTML(report, nums) +
     evidenceHTML(report, nums) + comparisonsHTML(report, nums) +
     uncertaintiesHTML(report) + methodPanelHTML(report) +
     claimHTML(report) + auditHTML(report) + footHTML(report);
-  /* wire traceability pills + expanders + copy link */
-  document.querySelectorAll("#out [data-cmp]").forEach(b =>
-    b.addEventListener("click", () => jumpTo("cmp-" + b.dataset.cmp)));
-  document.querySelectorAll("#out [data-ev]").forEach(b =>
-    b.addEventListener("click", () => jumpTo("ev-" + b.dataset.ev)));
-  document.querySelectorAll("#out [data-exbtn]").forEach(b =>
-    b.addEventListener("click", () => {
-      const span = $("ex-" + b.dataset.exbtn);
-      const open = b.textContent === "Expand";
-      span.textContent = open ? b.dataset.full : b.dataset.cut;
-      b.textContent = open ? "Collapse" : "Expand";
-    }));
-  const evMore = $("evMore");
-  if (evMore) evMore.addEventListener("click", () => {
-    const show = document.querySelectorAll('.ev[data-extra="1"][hidden]').length > 0;
-    document.querySelectorAll('.ev[data-extra="1"]').forEach(el => { el.hidden = !show; });
-    evMore.textContent = show ? "Show fewer sources" : "Show all " +
-      (Array.isArray(report.evidences) ? report.evidences.length : 0) + " sources";
-  });
-  const cmpMore = $("cmpMore");
-  if (cmpMore) cmpMore.addEventListener("click", () => {
-    const show = document.querySelectorAll('tr[data-extra="1"][hidden]').length > 0;
-    document.querySelectorAll('tr[data-extra="1"]').forEach(el => { el.hidden = !show; });
-    cmpMore.textContent = show ? "Show fewer checks" : "Show all " +
-      (Array.isArray(report.comparisons) ? report.comparisons.length : 0) + " checks";
-  });
+  /* wire traceability pills + expanders, then single-only controls */
+  wireReport($("out"), report, "");
   $("copyLink").addEventListener("click", () => copyLink(report.report_id));
   const vsHide = $("vsHide");
   if (vsHide) vsHide.addEventListener("click", () => {
@@ -999,6 +1090,278 @@ function afterReport(report) {
     try { history.replaceState(null, "", "?report=" + encodeURIComponent(report.report_id)); } catch {}
     $("footReport").textContent = " Report " + report.report_id + ".";
   }
+  loadRecent();
+}
+
+/* ---------- ShipCheck sidecar: batch mode (POST /api/check) ---------- */
+const BATCH_MAXLEN = 12000, BATCH_TIMEOUT_MS = 300000;
+let lastBatch = null;
+
+document.querySelectorAll('input[name="mode"]').forEach(r =>
+  r.addEventListener("change", () => {
+    const batch = document.querySelector('input[name="mode"]:checked').value === "batch";
+    $("singlePanel").hidden = batch;
+    $("batchPanel").hidden = !batch;
+  }));
+
+function updateBatchCounter() {
+  const n = $("batchText").value.length;
+  const c = $("batchCounter");
+  c.textContent = n + " / " + BATCH_MAXLEN;
+  c.classList.toggle("over", n > BATCH_MAXLEN * 0.95);
+  return n;
+}
+function showBatchErr(msg) {
+  const p = $("batchErr");
+  if (!msg) { p.hidden = true; p.textContent = ""; return; }
+  p.textContent = msg;
+  p.hidden = false;
+}
+$("batchText").addEventListener("input", () => { updateBatchCounter(); showBatchErr(""); });
+$("batchText").addEventListener("keydown", ev => {
+  if ((ev.metaKey || ev.ctrlKey) && ev.key === "Enter") { ev.preventDefault(); submitBatch(); }
+});
+$("batchRun").addEventListener("click", submitBatch);
+$("batchRetry").addEventListener("click", () => {
+  if (lastBatch) doCheck(lastBatch.text, lastBatch.domain);
+});
+document.querySelectorAll("[data-bex]").forEach(btn =>
+  btn.addEventListener("click", () => {
+    $("batchText").value = btn.dataset.bex || "";
+    updateBatchCounter();
+    showBatchErr("");
+    submitBatch();
+  }));
+function submitBatch() {
+  if (serviceDown) { showBatchErr("Analysis is unavailable: the service is unreachable."); return; }
+  const text = $("batchText").value.trim();
+  if (!text) { showBatchErr("Enter some text to check — the box is empty."); $("batchText").focus(); return; }
+  if (text.length > BATCH_MAXLEN) {
+    showBatchErr("That text is " + text.length + " characters; the limit is " + BATCH_MAXLEN + ". Shorten it and try again.");
+    return;
+  }
+  showBatchErr("");
+  $("batchRetry").hidden = true;
+  doCheck(text, $("batchDomain").value);
+}
+function showBatchSkeleton() {
+  /* Honest indeterminate progress: /api/check is ONE call, so "claim N of M"
+     is unknowable until it returns — elapsed timer only, plus cancel. */
+  $("out").innerHTML =
+    '<div class="card" role="status" aria-label="Batch check in progress">' +
+    '<h2>Checking… <span id="batchElapsed" class="mut small">0.0s</span></h2>' +
+    '<div class="skelbar" style="width:92%"></div><div class="skelbar" style="width:78%"></div>' +
+    '<div class="skelbar" style="width:64%"></div>' +
+    '<p class="mut small">One request splits and checks every claim — per-claim progress ' +
+    "is not available until it returns. Automatically stops after 5 minutes. " +
+    '<button id="batchCancel" class="ghost small">Cancel</button></p></div>';
+  $("batchCancel").addEventListener("click", () => { if (aborter) aborter.abort("cancelled"); });
+}
+function startBatchElapsed() {
+  const t0 = performance.now();
+  clearInterval(elapsedTimer);
+  elapsedTimer = setInterval(() => {
+    const s = (performance.now() - t0) / 1000;
+    const el = $("batchElapsed");
+    if (!el) { clearInterval(elapsedTimer); return; }
+    el.textContent = s.toFixed(1) + "s";
+  }, 100);
+}
+async function doCheck(text, domain) {
+  if (aborter) { try { aborter.abort("superseded"); } catch {} }
+  lastBatch = {text, domain};
+  const retryLast = () => {
+    $("batchText").value = lastBatch.text;
+    updateBatchCounter();
+    doCheck(lastBatch.text, lastBatch.domain);
+  };
+  aborter = new AbortController();
+  showBatchSkeleton();
+  startBatchElapsed();
+  $("batchRun").disabled = true;
+  $("batchBusy").textContent = "Checking…";
+  const timer = setTimeout(() => { try { aborter.abort("timeout"); } catch {} }, BATCH_TIMEOUT_MS);
+  try {
+    const res = await fetch("/api/check", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({text, limit: 5, domain, persist: true}),
+      signal: aborter.signal
+    });
+    clearTimeout(timer);
+    stopElapsed();
+    if (!res.ok) {
+      const e = await parseErrBody(res);
+      const detail = e.message || ("The server answered with status " + e.status + ".");
+      if (e.status === 400 || e.status === 404 || e.status === 422) {
+        errorCard("Please check your text", detail, e.code, false,
+          {retryTopId: "batchRetry", onRetry: retryLast});
+      } else {
+        errorCard("Service issue — please retry", detail, e.code, true,
+          {retryTopId: "batchRetry", onRetry: retryLast});
+      }
+      return;
+    }
+    const body = await res.json();
+    $("batchRetry").hidden = true;
+    renderBatch(body);
+  } catch (e) {
+    clearTimeout(timer);
+    stopElapsed();
+    if (e && e.name === "AbortError") {
+      const reason = (typeof aborter !== "undefined" && aborter && aborter.signal)
+        ? aborter.signal.reason : "";
+      if (reason === "cancelled") {
+        errorCard("Check cancelled", "You stopped the request. Nothing was lost — " +
+          "retry whenever ready.", "cancelled", false,
+          {retryTopId: "batchRetry", onRetry: retryLast});
+      } else if (reason === "superseded") {
+        errorCard("Check superseded", "A newer check replaced this one; showing the " +
+          "latest result when it arrives.", "superseded", false,
+          {retryTopId: "batchRetry", onRetry: retryLast});
+      } else {
+        errorCard("Check stopped", "The request was stopped after 5 minutes without an answer. " +
+          "The server may be busy — retry, or paste a shorter text.", "timeout", true,
+          {retryTopId: "batchRetry", onRetry: retryLast});
+      }
+    } else {
+      errorCard("Service issue — please retry",
+        "Could not reach the analysis service (" + safeMsg(e && e.message) + "). " +
+        "Check your connection and retry.", "network", true,
+        {retryTopId: "batchRetry", onRetry: retryLast});
+    }
+  } finally {
+    clearTimeout(timer);
+    stopElapsed();
+    aborter = null;
+    if (!serviceDown) $("batchRun").disabled = false;
+    $("batchBusy").textContent = "";
+  }
+}
+
+/* One normalized splitter actor for badge + label: the backend contract
+   is model|heuristic; anything else (stale server, garbage) displays as
+   heuristic so badge and label can never disagree. */
+function splitterActor(meta) {
+  const a = String((meta && meta.splitter_actor) || "").toLowerCase();
+  return a.startsWith("model") ? "model" : "heuristic";
+}
+/* Roll-up strip: claim count + stance counts + errors + splitter provenance. */
+function rollupHTML(body) {
+  const meta = (body && body.meta) || {};
+  const roll = (body && body.rollup) || {};
+  const n = body && isNum(body.claim_count) ? body.claim_count : 0;
+  const nErr = body && isNum(body.errors) ? body.errors : 0;
+  const keys = ["supported", "partially_supported", "contradicted",
+    "unverifiable", "not_assessable"];
+  const items = keys.map(k => {
+    const st = stanceInfo(k);
+    const c = isNum(roll[k]) ? roll[k] : 0;
+    return '<li><span class="stance s-' + k + '" style="font-size:12px">' +
+      esc(st.icon) + " " + esc(st.short || st.label) + "</span> <b>" + c + "</b></li>";
+  }).join("");
+  const notes = Array.isArray(meta.splitter_notes) ? meta.splitter_notes : [];
+  const elapsed = isNum(body.elapsed_ms) ? fmtDur(body.elapsed_ms) : "";
+  return '<section class="card sticky" aria-labelledby="rollH">' +
+    '<h2 id="rollH" tabindex="-1">Roll-up: ' + n + " claim" + (n === 1 ? "" : "s") +
+    (elapsed ? " checked in " + esc(elapsed) : "") + "</h2>" +
+    '<ul class="rollup">' + items + "</ul>" +
+    (nErr > 0
+      ? '<p class="errcount">' + nErr + " claim" + (nErr === 1 ? "" : "s") +
+        " could not be checked — shown as errors below, not verdicts.</p>"
+      : "") +
+    '<p class="small">Split by ' + actorBadge(splitterActor(meta)) +
+    ' <span class="mut">' + esc(cap(splitterActor(meta))) +
+    (meta.splitter_model ? " · " + esc(meta.splitter_model) : "") + "</span></p>" +
+    '<details style="margin:8px 0"><summary class="small">Splitter notes (' + notes.length + ")</summary>" +
+    (notes.length ? "<ul>" + notes.map(x => "<li>" + esc(safeMsg(x)) + "</li>").join("") + "</ul>"
+      : '<p class="small mut">No splitter notes recorded.</p>') + "</details>" +
+    '<p class="small mut">Coverage: economy stats for ~16 indicators across ~50 countries ' +
+    "(World Bank) plus science paper search (OpenAlex). “Unverifiable” means not enough " +
+    "evidence was found — not that the claim is false.</p></section>";
+}
+/* One batch card reuses the single-claim section builders + wiring with a
+   per-claim id prefix: verdict header, checks bar, comparisons, sources,
+   uncertainties, plus per-claim export and re-run. */
+function batchCardHTML(rep, i, total) {
+  const pfx = "b" + i + "-";
+  const nums = buildNums(rep);
+  const k = rep.conclusion || {};
+  const st = stanceInfo(k.stance);
+  const c = rep.claim || {};
+  const nSrc = Array.isArray(rep.evidences) ? rep.evidences.length : 0;
+  const nCmp = Array.isArray(rep.comparisons) ? rep.comparisons.length : 0;
+  const elapsed = isNum(rep.elapsed_ms) ? fmtDur(rep.elapsed_ms)
+    : (isNum(rep.elapsedMs) ? fmtDur(rep.elapsedMs) : "");
+  const cavs = Array.isArray(k.caveats) ? k.caveats : [];
+  return '<article class="card batchcard" id="' + pfx + 'card" aria-labelledby="' + pfx + 'h">' +
+    '<h2 id="' + pfx + 'h">Claim ' + (i + 1) + " of " + total + "</h2>" +
+    (c.raw_text ? '<p class="claimtext">“' + esc(c.raw_text) + "”</p>" : "") +
+    '<p><span class="stance s-' + esc(String(k.stance || "unverifiable")) + '">' +
+    esc(st.icon) + " " + esc(st.label) + "</span> " + actorBadge(k.actor) + "</p>" +
+    "<p>" + esc(st.def) + "</p>" +
+    (k.summary ? "<p>" + esc(k.summary) + "</p>" : "") +
+    '<p class="small">Based on <b>' + nSrc + "</b> source" + (nSrc === 1 ? "" : "s") +
+    " and <b>" + nCmp + "</b> check" + (nCmp === 1 ? "" : "s") +
+    (elapsed ? " · analyzed in " + esc(elapsed) : "") + "</p>" +
+    (cavs.length ? '<ul class="caveats" aria-label="Caveats">' +
+      cavs.map(x => "<li>" + esc(safeMsg(x)) + "</li>").join("") + "</ul>" : "") +
+    checksBarHTML(rep, nums) +
+    comparisonsHTML(rep, nums, pfx) +
+    evidenceHTML(rep, nums, pfx) +
+    uncertaintiesHTML(rep, pfx) +
+    '<div class="card small"><span class="mut">Report </span><code>' +
+    esc(rep.report_id || "unknown") + "</code><br><br>" +
+    '<button id="' + pfx + 'rerun" class="ghost small">Re-run (determinism check)</button> ' +
+    '<button id="' + pfx + 'receipt" class="ghost small">Export receipt (.md)</button>' +
+    '<p id="' + pfx + 'rerunMsg" class="mut" role="status"></p></div></article>';
+}
+/* Error entries are rendered distinctly — badge + explanation, never a stance. */
+function batchErrorHTML(entry, i, total) {
+  const text = (entry && entry.claim_text) || "";
+  const detail = entry && entry.error ? safeMsg(entry.error) : "";
+  return '<article class="card batchcard batcherr" role="alert" aria-labelledby="b' + i + 'h">' +
+    '<h2 id="b' + i + 'h">Claim ' + (i + 1) + " of " + total + " — not checked</h2>" +
+    (text ? '<p class="claimtext">“' + esc(text) + "”</p>" : "") +
+    '<p><span class="badge b-err">ERROR</span> This claim could not be checked, ' +
+    "so it has no verdict and is not counted in the roll-up above.</p>" +
+    (detail ? '<p class="small mut">' + esc(detail) + "</p>" : "") + "</article>";
+}
+function renderBatch(body) {
+  const meta = (body && body.meta) || {};
+  const list = body && Array.isArray(body.reports) ? body.reports : [];
+  let html = rollupHTML(body);
+  if (!list.length) {
+    const notes = Array.isArray(meta.splitter_notes) ? meta.splitter_notes : [];
+    html += '<div class="card" role="status"><h2>No checkable claims found</h2>' +
+      "<p>The splitter found nothing to check in that text. Try pasting text with " +
+      "concrete statistics or study results.</p>" +
+      (notes.length ? "<p><b>Splitter notes:</b></p><ul>" +
+        notes.map(x => "<li>" + esc(safeMsg(x)) + "</li>").join("") + "</ul>" : "") +
+      "</div>";
+  } else {
+    list.forEach((rep, i) => {
+      html += (rep && rep.error && !rep.conclusion)
+        ? batchErrorHTML(rep, i, list.length)
+        : batchCardHTML(rep, i, list.length);
+    });
+  }
+  $("out").innerHTML = html;
+  list.forEach((rep, i) => {
+    if (!rep || (rep.error && !rep.conclusion)) return;
+    const pfx = "b" + i + "-";
+    const root = document.getElementById(pfx + "card");
+    if (!root) return;
+    const nums = buildNums(rep);
+    wireReport(root, rep, pfx);
+    const ex = document.getElementById(pfx + "receipt");
+    if (ex) ex.addEventListener("click", () => exportReceipt(rep, nums));
+    const rr = document.getElementById(pfx + "rerun");
+    if (rr) rr.addEventListener("click", () =>
+      reRunDeterminism(rep, document.getElementById(pfx + "rerunMsg")));
+  });
+  const rh = $("rollH");
+  if (rh) rh.focus({preventScroll: true});
   loadRecent();
 }
 
@@ -1095,6 +1458,7 @@ async function loadReport(id) {
 
 /* ---------- init ---------- */
 updateCounter();
+updateBatchCounter();
 refreshStatus();
 loadRecent();
 try {

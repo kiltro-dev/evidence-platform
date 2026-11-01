@@ -134,7 +134,7 @@ def test_degraded_noop_llm_unavailable():
         name = "down"
         available = False
 
-        def complete_json(self, system, user, max_tokens=1500):
+        def complete_json(self, system, user, max_tokens=1500, **kw):
             raise AssertionError("must not be called")
     new_c, new_u, audit = falsify_draft(
         _claim(), [_cmp()], [], "supported", Down())
@@ -162,7 +162,7 @@ def test_model_transport_failure_dropped_safely():
 
 def test_non_dict_model_output_dropped_safely():
     class Weird(ScriptedClient):
-        def complete_json(self, system, user, max_tokens=1500):
+        def complete_json(self, system, user, max_tokens=1500, **kw):
             return ["not", "a", "dict"]  # type: ignore[return-value]
     new_c, new_u, audit = falsify_draft(
         _claim(), [_cmp()], [], "supported", Weird({}))

@@ -50,6 +50,36 @@ SCIENCE_SYSTEM = """You judge scholarly abstracts against a claim. Return ONLY a
 {"assessments": [{"evidence_id": "...", "relevance": "relevant|off_topic", "direction": "supports|contradicts|unclear", "argument": "one sentence"}]}
 Rules: one entry per input abstract, same evidence_id. relevance is off_topic when the abstract is about another subject. direction judges stance only for relevant abstracts. Base everything ONLY on the given abstracts."""
 
+# Strict decoding schema for the abstract-stance call (mirrors
+# SCIENCE_SYSTEM; verified pattern live 2026-11-01).
+SCIENCE_SCHEMA = {
+    "name": "abstract_stance",
+    "schema": {
+        "type": "object",
+        "properties": {
+            "assessments": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "evidence_id": {"type": "string"},
+                        "relevance": {"type": "string", "enum": ["relevant", "off_topic"]},
+                        "direction": {
+                            "type": "string",
+                            "enum": ["supports", "contradicts", "unclear"],
+                        },
+                        "argument": {"type": "string"},
+                    },
+                    "required": ["evidence_id", "relevance", "direction", "argument"],
+                    "additionalProperties": False,
+                },
+            },
+        },
+        "required": ["assessments"],
+        "additionalProperties": False,
+    },
+}
+
 
 def _candidates(evidences: list[Evidence]) -> list[Evidence]:
     """First MAX_ABSTRACT_ITEMS evidence items carrying a non-blank abstract."""
@@ -112,6 +142,7 @@ def assess_science_abstracts(
             SCIENCE_SYSTEM, _prompt_user(claim, items),
             max_tokens=MODEL_MAX_TOKENS,
             reasoning_effort="low",
+            json_schema=SCIENCE_SCHEMA,
         )
     except Exception as exc:
         log.warning("Abstract stance assessment failed, dropping: %r", exc)

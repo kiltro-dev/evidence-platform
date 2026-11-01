@@ -1,4 +1,4 @@
-# API reference (v0.3.0)
+# API reference (v0.4.0)
 
 Base URL (local): `http://127.0.0.1:8765`. Machine-readable schema:
 [openapi.json](openapi.json) (exported from the live app's `/openapi.json`;
@@ -13,6 +13,7 @@ Every request and response body is JSON.
 |---|---|---|
 | GET | `/api/status` | Service, version, mode, connectors |
 | POST | `/api/analyze` | Analyze a claim → full `Report` |
+| POST | `/api/check` | ShipCheck batch: split text → per-claim reports + roll-up |
 | GET | `/api/reports?limit=N` | List recent reports (default 50, clamped 1–200) |
 | GET | `/api/reports/{report_id}` | Fetch one report |
 | DELETE | `/api/reports/{report_id}` | Delete one report |
@@ -25,7 +26,7 @@ No parameters. Use it to check full vs degraded mode before a demo:
 ```json
 {
   "service": "evidence-atlas",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "llm_available": true,
   "llm_model": "muse-spark-1.3",
   "mode": "full (model + deterministic)",
@@ -52,12 +53,59 @@ Request (`AnalyzeRequest`):
 
  guards:
 
-- Rate limit: 60 `POST /api/analyze` per minute per IP (429 after that).
-- Cache: identical `(text, domain, limit)` hits return the cached `Report`
-  without running the pipeline (128 entries FIFO, 1h TTL).
+- Rate limit: 60 analysis `POST`s per minute per IP (429 after that),
+  shared bucket across `/api/analyze` and `/api/check`.
+- Cache: identical `(text, domain, limit, persist, model)` hits return
+  the cached `Report` without running the pipeline (128 entries FIFO,
+  1h TTL). `/api/check` has no cache: every call re-runs.
 
 Response: `200` with the full `Report` object (see Schemas).
 Success bodies carry no `request_id`.
+
+### POST /api/check
+
+ShipCheck batch (v0.4.0): split pasted text (e.g. an AI answer) into
+atomic claims and analyze each one through the full pipeline.
+
+Request (`CheckRequest`): same fields as `AnalyzeRequest`, except `text`
+allows 1–12000 chars after trim. `limit`/`domain`/`persist` apply to
+every sub-claim; each persisted sub-claim is re-fetchable via
+`GET /api/reports/{report_id}`.
+
+Response: `200` with a roll-up object (NOT a `Report` — there is no
+single claim):
+
+```json
+{
+  "claim_count": 2,
+  "reports": [{}, {}],
+  "rollup": {"supported": 1, "partially_supported": 0, "contradicted": 0,
+             "unverifiable": 1, "not_assessable": 0},
+  "errors": 0,
+  "elapsed_ms": 11800.5,
+  "meta": {"app_version": "0.4.0", "prompt_version": "4",
+           "splitter_actor": "heuristic", "splitter_model": null,
+           "splitter_notes": ["no model available; heuristic sentence split used"],
+           "usage_split": null,
+           "input_sha256": "…"}
+}
+```
+
+- `reports[i]` is a full `Report` per sub-claim, or
+  `{"claim_text": "…", "error": "…"}` when that sub-claim failed — one
+  failure never kills the batch, and error entries stay out of the
+  roll-up.
+- At most 8 sub-claims (splitter cap); over-long input is truncated
+  before splitting (disclosed in `splitter_notes`).
+- Splitting limitation: a verbatim span can drop a qualifier living in
+  another clause, changing the meaning. Spans are exact substrings,
+  never complete interpretations — each report checks the span, not
+  the discourse.
+- Guards: same 60 req/min/IP rate limit (shared bucket with
+  `/api/analyze`). No identical-text cache: every call re-runs.
+- Cost scales with sub-claims: each runs the full pipeline (up to 5
+  model calls per claim, plus 1 split call per batch — an 8-claim batch
+  costs up to 1+8×5=41 calls). Post-hoc use, not inline.
 
 ### GET /api/reports
 
@@ -92,7 +140,7 @@ with server logs. Tracebacks and request bodies never appear in responses.
 | HTTP | `code` | When |
 |---|---|---|
 | 400 | `empty_claim` | `text` blank after trim |
-| 400 | `claim_too_long` | `text` longer than 4000 chars |
+| 400 | `claim_too_long` | `text` longer than 4000 chars (`/api/analyze`) or 12000 (`/api/check`) |
 | 400 | `invalid_domain` | `domain` not in `auto/economy/science/general` |
 | 422 | `invalid_limit` | Non-integer `limit` (out-of-range integers are clamped, not rejected). Missing/wrong-typed `text` also returns 422 with a field-specific mapping |
 | 404 | `report_not_found` | Unknown report id, or unknown route |
@@ -126,9 +174,9 @@ curl -s -X POST http://127.0.0.1:8765/api/analyze \
 | `meta` | object | Reproducibility block (below) |
 | `elapsed_ms` | number | Wall ms for `analyze()` |
 
-`meta` block: `app_version` ("0.3.0"), `model` (name or null),
+`meta` block: `app_version` ("0.4.0"), `model` (name or null),
 `temperature` (0), `max_tokens` (4000), `tolerance` (0.02),
-`default` (limit default 5), `prompt_version` ("3"), `input_sha256`,
+`default` (limit default 5), `prompt_version` ("4"), `input_sha256`,
 plus per-stage token usage `usage_extract`, `usage_science`,
 `usage_falsify`, `usage_summary` (each
 `{prompt_tokens, completion_tokens, reasoning_tokens, total_tokens}`
@@ -165,7 +213,7 @@ Observed (ids shortened):
   template summary in degraded mode): relative agreement holds, but the
   stated digits ($10B resolution) exceed what the retrieved value
   confirms ($451B gap).
-- `meta`: `app_version 0.3.0`, `model null`, `temperature 0`,
+- `meta`: `app_version 0.4.0`, `model null`, `temperature 0`,
   `max_tokens 4000`, `tolerance 0.02`, plus `input_sha256`; all
   `usage_*` null (degraded mode made no model call).
 

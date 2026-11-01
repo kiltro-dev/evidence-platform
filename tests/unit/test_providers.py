@@ -380,9 +380,9 @@ def test_meta_and_elapsed_ms(monkeypatch):
     monkeypatch.setattr(runmod, "for_domain", lambda domain: [])
     text = "GDP grew strongly"
     report = analyze(text, persist=False)
-    assert APP_VERSION == "0.3.0"
+    assert APP_VERSION == "0.4.0"
     meta = report.meta
-    assert meta["app_version"] == "0.3.0"
+    assert meta["app_version"] == "0.4.0"
     for key in ("model", "temperature", "max_tokens", "tolerance",
                 "default", "prompt_version", "input_sha256",
                 "usage_extract", "usage_science", "usage_falsify",

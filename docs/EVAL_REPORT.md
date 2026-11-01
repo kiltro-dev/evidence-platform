@@ -3,7 +3,11 @@
 Runner: `PYTHONPATH=src .venv/bin/python scripts/run_eval.py`.
 Dataset: 28 cases in `eval/cases.py` (10 original + 14 v2 + 4 v3) plus
 two offline probes (`--paraphrase`: 36 inputs; `--unanswerable`: 20
-variants). Result JSONs: `eval/results/` (gitignored; timestamped).
+variants). Result JSONs: `eval/results/` (timestamped; the directory
+is gitignored but the pinned v0.4.0 artifacts below are force-added so
+a fresh clone can audit them: `20261101T033233Z.json` (run 4),
+`paraphrase_20261101T034909Z.json`, `unanswerable_20261101T034914Z.json`,
+`demo_batch_20261101T040906Z.json`).
 
 "N/N" below is a green regression suite, not a benchmark score:
 hand-picked cases with wide margins, single-author expectations.
@@ -12,7 +16,7 @@ What the numbers do and do not prove is restated at the end.
 ## Degraded run (offline) — 11/11
 
 ```text
-[degraded] 11/11 cases passed (stance accuracy 1.00, skipped 17, blocked 0)
+[degraded] 11/11 cases passed (pin conformance 1.00, skipped 17, blocked 0)
 ```
 
 The 11 executed cases cover the v2 honesty machinery (geo abstention,
@@ -24,18 +28,21 @@ network, as designed.
 
 ## Probes (offline)
 
-- `--paraphrase`: **36/36 agreement = 1.000, gate PASS.** 6 base claims
-  × (base + 5 paraphrases: unit rewordings, EN/ES incl. decimal commas,
-  scale words), scripted evidence, `llm=None`. Any split would be a
-  determinism/extraction bug; none found.
-- `--unanswerable`: **17/20 abstention = 0.850** (offline). Three
-  non-abstentions, all dispositioned, none a false verdict:
+- `--paraphrase`: **36/36 agreement = 1.000, gate PASS** (95% Wilson CI
+  [0.904, 1.000]). 6 base claims × (base + 5 paraphrases: unit
+  rewordings, EN/ES incl. decimal commas, scale words), scripted
+  evidence, `llm=None`. Any split would be a determinism/extraction
+  bug; none found. Re-run on the v0.4.0 tree: identical.
+- `--unanswerable`: **17/20 abstention = 0.850** (offline; 95% Wilson
+  CI [0.640, 0.948]). Three non-abstentions, all dispositioned, none a
+  false verdict:
   1. `e2_question_with_quantity` ("Was unemployment in Germany 3.1% in
      2023?") → `supported`. Design decision, not a bug: a polar
      question with a verifiable proposition gets answered.
-  2. `e2_compound_half_vague` → `supported` on the verifiable half with
-     no caveat. Known compound-detection gap (documented; compound
-     splitting stays detect-and-disclose per PRD §2).
+  2. `e2_compound_half_vague` → `supported` on the verifiable half,
+     now WITH the `partial_coverage` caveat (H5 closes the M6 finding
+     #3: no more silent half-checked conclusion; stance still
+     `supported` by the verified half — caveat-only by design).
   3. `e2_compound_half_unretrievable` → `contradicted` via the
      retrievable half. Harness artifact (both halves get canned
      evidence); live behavior would still conclude via the USA half.
@@ -47,7 +54,7 @@ network, as designed.
 ## Full run 1 (`--mode full`, pre-fix code) — 22/28
 
 ```text
-[full] 22/28 cases passed (stance accuracy 0.79, skipped 0, blocked 0)
+[full] 22/28 cases passed (pin conformance 0.79, skipped 0, blocked 0)
   [FAIL] econ_supported_gdp (stance: partially_supported — EXPECTED, see §v3 methodology)
   [FAIL] econ_supported_unemployment (falsify override — spurious)
   [FAIL] econ_contradicted_wrong_year_value (falsify override — spurious)
@@ -117,7 +124,7 @@ auditable from the artifact.
 ## Full run 2 (`--mode full`, final code) — 28/28
 
 ```text
-[full] 28/28 cases passed (stance accuracy 1.00, skipped 0, blocked 0)
+[full] 28/28 cases passed (pin conformance 1.00, skipped 0, blocked 0)
 ```
 
 Result JSON: `eval/results/20261101T015005Z.json` (observed values
@@ -150,7 +157,7 @@ match observed model variance.
 ## Full run 3 (`--mode full`, final code + red-team fixes) — 28/28
 
 ```text
-[full] 28/28 cases passed (stance accuracy 1.00, skipped 0, blocked 0)
+[full] 28/28 cases passed (pin conformance 1.00, skipped 0, blocked 0)
 ```
 
 Result JSON: `eval/results/20261101T021039Z.json`. Deltas vs run 2:
@@ -172,6 +179,67 @@ Artifact check (red-team S2/M1 closure) — GDP case, from the JSON:
 The demo's star arithmetic ($451B gap vs $10B resolution) and the
 advisory yield are now auditable from the artifact, not just
 derivable. This run is the pinned v0.3.0 evidence.
+
+## Full run 4 (`--mode both`, v0.4.0 ShipCheck tree) — 28/28 + 11/11
+
+```text
+[degraded] 11/11 cases passed (pin conformance 1.00, skipped 17, blocked 0)
+[full] 28/28 cases passed (pin conformance 1.00, skipped 0, blocked 0)
+```
+
+Result JSON: `eval/results/20261101T033233Z.json`. Tree: strict
+`json_schema` decoding on all model calls, Responses web-search
+counter-evidence (default ON), H5 `partial_coverage` caveat, H4
+independent recompute, `web_counter_evidence` in
+`NON_VERIFYING_METRICS`. **Zero pin changes, zero stance moves** — the
+v0.4.0 power is additive (intake, decoding, doubt), exactly as
+ADR-0009 claims.
+
+Observed from the artifact (26 core results; 2 entries are boundary
+sub-groups):
+
+- Stances: 4 partially_supported / 3 supported / 8 contradicted /
+  10 unverifiable / 1 not_assessable — all five exercised.
+- Extraction actor: 26/26 `model` (schema-constrained, no fallbacks).
+  Conclusion actor: 20 `model` / 6 `code` (template fallback when the
+  model summary failed strength validation — the honest path).
+- Main falsify: 38 attacks, 16 fatal_high — all surfaced, none moving
+  stances (advisory by construction). Attack quality still ungraded.
+- Web counter-evidence: doubt surfaced in 22/26 cases (1 validated
+  citation each in this run; 4 cases none). Survivors are `inconclusive`
+  + minor by construction — stance-neutral, verified by the green pins.
+- H5: `partial_coverage` fired once
+  (`econ_compound_gdp_unemployment`, stance `contradicted` unmoved).
+- GDP methodology stability: `numeric[0]` still verdict `consistent`,
+  abs_diff 451.517e9, rel 1.62% — the v0.3.0 arithmetic reproduces
+  exactly under the new decoding + doubt layers.
+
+Pre-registration note (EVS H2): pins were frozen before this run; no
+pin was edited to match observed model variance. This run is the
+pinned v0.4.0 evidence.
+
+## Repeatability (EVS H3): 3× full mode, 0 stance flips
+
+Two further `--mode full` runs on the final v0.4.0 tree (red-team
+fixes included):
+
+```text
+[full] 28/28 cases passed (pin conformance 1.00, skipped 0, blocked 0)  # rep1
+[full] 28/28 cases passed (pin conformance 1.00, skipped 0, blocked 0)  # rep2
+```
+
+Result JSONs: `eval/results/20261101T041215Z.json`,
+`eval/results/20261101T042724Z.json` (not force-added; run 4 above is
+the pinned artifact — these corroborate it).
+
+Per-case stance comparison across run4/rep1/rep2: **0 flips in 26
+core cases** (2 sub-group entries pass in all 3). What varies is
+honest machinery, not verdicts: extraction 26/26 `model` in all 3
+runs (zero fallbacks); conclusions 20/6, 20/6, 18/8 model/code
+(template fallback when the model summary fails strength validation);
+main falsify attacks 38/36/39; web-doubt cases 22/24/22. Verdicts
+stable, doubt varies — the desired property for an advisory-doubt
+architecture. No pin needed a stance-set; no flip to disposition.
 
 ## v3 methodology note (what changed since v2)
 
@@ -261,7 +329,7 @@ JSON, and classify into one of the five before touching code.
 
 ## v2 history (condensed)
 
-v2 closed at 24/24 (stance 1.00) after honest reconciliation:
+v2 closed at 24/24 (pin conformance 1.00) after honest reconciliation:
 not_assessable narrowing (real bug fix), `expected_full` overlays for
 legitimate model variance (no stance/traceability weakened), transient
 retry after an observed OpenAlex outage. Prior detail preserved in git

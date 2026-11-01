@@ -5,8 +5,11 @@ JSON API and a static single-page UI; a staged pipeline turns a claim into
 a traceable report; SQLite persists reports; two HTTP connectors reach
 public sources; one model client reaches the Meta Model API.
 
-Version described here: **0.3.0** (`APP_VERSION` in `pipeline/run.py`,
+Version described here: **0.4.0** (`APP_VERSION` in `pipeline/run.py`,
 surfaced as `version` in `GET /api/status` and `meta.app_version`).
+The ShipCheck sidecar (`POST /api/check`, `pipeline/split.py`, web
+counter-evidence) is intake + doubt around the unchanged 7-stage
+per-claim core.
 
 ## C4 L1 — System context
 
@@ -18,10 +21,11 @@ flowchart TB
     oa[("OpenAlex<br/>(keyless HTTPS API)")]
     meta[("Meta Model API<br/>(muse-spark-1.3, keyed)")]
 
-    user -- "claim text, reads report" --> atlas
+    user -- "claim text / pasted AI output, reads report" --> atlas
     atlas -- "indicator observations" --> wb
     atlas -- "works metadata" --> oa
-    atlas -- "structure + summarize (optional)" --> meta
+    atlas -- "structure + judge + summarize (optional)" --> meta
+    atlas -- "live counter-evidence search (optional)" --> meta
 ```
 
 The system is single-user and localhost-only. Without a model key it
@@ -43,18 +47,19 @@ flowchart TB
     meta[("Meta Model API")]
 
     ui -- "GET / + /api/*" --> api
-    api -- "analyze(text, limit, domain, persist)" --> pipe
+    api -- "analyze() / check_document()" --> pipe
     api -- "save/get/list/delete" --> store
     pipe -- "retrieve()" --> wb
     pipe -- "retrieve()" --> oa
-    pipe -- "complete_json() x <= 4" --> meta
+    pipe -- "complete_json() x <= 5" --> meta
+    pipe -- "Responses web_search x <= 1" --> meta
 ```
 
 | Container | Path | Responsibility |
 |---|---|---|
-| UI | `web/index.html` | One static page: input, verdict, evidence, comparisons, uncertainties, audit, recent-analyses history with delete. Never imports the pipeline. |
-| API | `api/app.py` | Endpoints, unified error envelope, rate limit, identical-text cache, static mount. |
-| Pipeline | `pipeline/` | Seven audited stages: extract → route → retrieve → verify → falsify → synthesize → persist. |
+| UI | `web/index.html` | One static page: single-claim + batch sidecar modes, roll-up, per-claim cards, recent-analyses history with delete. Never imports the pipeline. |
+| API | `api/app.py` | Endpoints (`/api/analyze`, `/api/check`), unified error envelope, rate limit, identical-text cache (analyze only), static mount. |
+| Pipeline | `pipeline/` | ShipCheck intake (`split.py`) + seven audited per-claim stages: extract → route → retrieve → verify → falsify → synthesize → persist. |
 | Store | `storage/store.py` + `data/atlas.db` | One-table SQLite persistence. Reads never create files. |
 
 ## C4 L3 — Components
@@ -76,12 +81,15 @@ flowchart TB
     cwb["connectors/worldbank.py<br/>+ countries.py"]
     coa["connectors/openalex.py"]
     meta["models/meta.py<br/>MetaClient"]
+    rsp["models/responses.py<br/>ResponsesClient"]
+    spl["pipeline/split.py<br/>claim splitter"]
     heu["models/heuristic.py<br/>regex fallback"]
     scr["models/scripted.py<br/>test doubles"]
     store["storage/store.py<br/>save/get/list/delete"]
 
     api --> run
     api --> store
+    run --> spl
     run --> ext
     run --> ret
     run --> reg
@@ -95,8 +103,10 @@ flowchart TB
     reg --> coa
     ext --> heu
     ext --> meta
+    spl --> meta
     sci --> meta
     fal --> meta
+    fal --> rsp
     syn --> meta
     ver --> cmp
     ver --> units
@@ -113,16 +123,17 @@ flowchart TB
 | Units | `core/units.py` | Deterministic parsing/normalization of quantities, scales, currencies, temperatures, decimal commas. |
 | Compare | `core/compare.py` | Deterministic numeric + time comparison; strict comparability; 2% tolerance default (`DEFAULT_REL_TOLERANCE`); claimed-precision resolution parsing (`implied_resolution`); absolute-materiality guides. |
 | Connectors | `connectors/` | `SourceConnector` protocol + `REGISTRY`; `worldbank.py` (+ ISO3 allowlist, `countries.py`), `openalex.py` (+ abstract fetch/reconstruction). `ProviderError(transient)` / `InvalidGeoError`. `last_query` echo per retrieve. |
-| Models | `models/` | `meta.py` (`MetaClient`, lazy OpenAI SDK, `reasoning_effort` passthrough, per-call `last_usage` + seq), `heuristic.py` (regex fallback), `scripted.py` (test doubles). |
+| Models | `models/` | `meta.py` (`MetaClient`: lazy OpenAI SDK, `reasoning_effort` passthrough, strict `json_schema` decoding, per-call `last_usage` + seq), `responses.py` (`ResponsesClient`: Responses API + `web_search`, code-validated `url_citation`s), `heuristic.py` (regex fallback), `scripted.py` (test doubles). |
+| Split | `pipeline/split.py` | ShipCheck intake: model-first splitting under a strict schema (verbatim spans only, deduped, capped at 8) with deterministic sentence-split fallback. |
 | Extract | `pipeline/extract.py` | Claim structuring via LLM with heuristic fallback; model output sanitized (unit allowlist, finite floats, year-like drop, 20-item caps); verbatim `raw` spans + deterministic span recovery; LLM gaps backfilled deterministically. |
 | Retrieve | `pipeline/retrieve.py` | Parallel connector fan-out (`ThreadPoolExecutor`); deterministic ordering; per-connector retry-once-transient + error isolation. |
 | Verify | `pipeline/verify.py` | `verify_quantitative` (economy: precision rule, materiality disclosure, methodological codes) and `assess_science` (bibliographic); `detect_claim_shape` (opinion/compound flags); code-only. |
 | Science | `pipeline/science.py` | Additive abstract-stance assessment (one bounded model call over top-3 abstracts); non-verifying by construction. |
-| Falsify | `pipeline/falsify.py` | Advisory adversarial self-review: schema-constrained attacks validated by code and surfaced as doubt; never moves stances; degraded-safe no-op. |
-| Synthesize | `pipeline/synthesize.py` | Deterministic stance rules (`decide_stance`, incl. precision + compound caps); citation validation; summary-strength validation; caveat union; optional LLM summary rewrite. |
-| Run | `pipeline/run.py` | Orchestrator: 7 audited stages, domain override, uncertainty dedupe, connector error isolation, per-stage usage accounting, `meta` block, persistence. |
+| Falsify | `pipeline/falsify.py` | Advisory adversarial self-review: schema-constrained attacks + one live-web counter-evidence pass (default on, `ATLAS_WEB_FALSIFY=0` disables), all validated by code and surfaced as doubt; never moves stances; degraded-safe no-op. |
+| Synthesize | `pipeline/synthesize.py` | Deterministic stance rules (`decide_stance`, incl. precision + compound caps); `partial_coverage` caveat for half-checked conjunctions; citation validation; summary-strength validation; caveat union; optional LLM summary rewrite. |
+| Run | `pipeline/run.py` | Orchestrator: `analyze()` (7 audited stages, domain override, uncertainty dedupe, connector error isolation, per-stage usage accounting, `meta` block, persistence) + `check_document()` (split → per-claim reports → stance roll-up; one failure never kills the batch). |
 | Store | `storage/store.py` | SQLite: save/get/list/delete reports. Init-on-write; reads are create-free. |
-| API | `api/app.py` | FastAPI app; status/analyze/reports/delete endpoints; envelope; 60/min/IP rate limit; 128-entry 1h cache; static mount. |
+| API | `api/app.py` | FastAPI app; status/analyze/check/reports/delete endpoints; envelope; 60/min/IP rate limit (shared bucket); 128-entry 1h cache (analyze only); static mount. |
 
 ## Sequence — analysis (`POST /api/analyze`)
 
@@ -210,14 +221,21 @@ sequenceDiagram
     Note over R: degraded mode: llm=None → heuristic + template directly
 ```
 
-At most 4 model calls per analysis (structure + abstract-stance +
-falsify + summary; science-only for abstracts), asserted by
-`tests/e2e/test_pipeline_offline.py` (3 on the economy path).
-Structure/falsify/summary use `max_tokens=4000`, abstracts `1500`;
-all use `temperature=0`. Falsify/abstract calls pass
-`reasoning_effort="low"` (default depth truncated them live);
+At most 5 model calls per single-claim analysis (structure +
+abstract-stance + falsify + web counter-evidence + summary;
+science-only for abstracts). `tests/e2e/test_pipeline_offline.py`
+asserts the offline call count on its covered paths (3 on the economy
+path); the live budget above is by construction (one call per stage,
+retries only on transient failures). The batch path adds 1 split call
+plus a full run per sub-claim (cap 8).
+All Chat Completions calls use strict `json_schema` decoding (shape
+guaranteed; honesty still validated in code) and `temperature=0`; the
+Responses web-search call is free-form + code-validated and sets no
+temperature. Structure/falsify/summary/split use `max_tokens=4000`,
+abstracts `1500`, web pass `2000` output. Falsify/abstract/split calls
+pass `reasoning_effort="low"` (default depth truncated them live);
 structure/summary stay at default depth. Per-stage token usage lands
-in `meta.usage_*`.
+in `meta.usage_*` (`usage_split` on the batch roll-up).
 
 ## Sequence — retrieval (per connector)
 
@@ -307,11 +325,14 @@ sequenceDiagram
   (code ∪ model), `actor`, `model`.
 - `audit[]: AuditStep` — `step`, `actor`, `started_at`, `ended_at`,
   `duration_ms`, `detail`. Order: extract → route → retrieve* → verify →
-  synthesize → persist?.
+  falsify → synthesize → persist?.
 - `limitations[]` — fixed 4-item honesty block (`LIMITATIONS` in `run.py`).
 - `meta{}` — `app_version`, `model` (name or null), `temperature` (0),
   `max_tokens` (4000), `tolerance` (0.02), `default` (limit default 5),
-  `prompt_version` ("2": structure prompt with domain-preference rule), `input_sha256`.
+  `prompt_version` ("4": strict decoding schemas on all model calls),
+  `input_sha256`, `usage_extract`, `usage_science`, `usage_falsify`,
+  `usage_summary` (per-stage token accounting; `usage_split` lives on
+  the batch roll-up instead).
 
 SQLite (`storage/store.py`): one `reports` table
 `(report_id PK, created_at, claim_text, stance, report_json)`.
@@ -346,12 +367,25 @@ SQLite (`storage/store.py`): one `reports` table
    comparisons also get the science assessment. `detect_claim_shape` flags
    opinions/non-claims (`opinion_or_nonclaim`) and compound claims
    (`compound_claim`, detect+disclose only). Nothing here calls a model.
-5. **synthesize** — `decide_stance` rules (see below); LLM summary rewrite
-   attempted only if a client is available, else the deterministic template.
-   Model citations to unknown `[cmp_*]` ids are stripped (logged);
-   blocking/major template caveats are always retained (caveat union).
-6. **persist** — report JSON saved to SQLite when `persist=true`;
+5. **falsify** — advisory only. The model attacks the draft through a
+   falsify-only schema (code validates target ids/enums), then one live
+   web-search pass hunts counter-evidence (code validates every
+   `url_citation`); survivors surface as doubt. Never moves stances;
+   degraded-safe no-op; `ATLAS_WEB_FALSIFY=0` disables the web pass.
+6. **synthesize** — `decide_stance` rules (see below), then the
+   `partial_coverage` caveat when part of the text went unchecked; LLM
+   summary rewrite attempted only if a client is available, else the
+   deterministic template. Model citations to unknown `[cmp_*]` ids are
+   stripped (logged); blocking/major template caveats are always
+   retained (caveat union).
+7. **persist** — report JSON saved to SQLite when `persist=true`;
    report id returned. Skipped (and absent from the audit) otherwise.
+
+`POST /api/check {text (≤12000 chars), limit, domain, persist}` →
+`check_document()`: split into ≤8 verbatim sub-claims, run `analyze()`
+per sub-claim (each persisted and re-fetchable), return full reports +
+stance roll-up. One failing sub-claim becomes an error entry, never a
+batch failure.
 
 Every stage appends an `AuditStep{step, actor, detail, duration_ms}`; the
 UI renders `CODE` / `MODEL` / `HEURISTIC` badges from it.

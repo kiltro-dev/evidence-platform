@@ -1,6 +1,16 @@
 # Mission backlog (living, lead-owned)
 
-STATUS 2026-11-01 (Operation First Place, v0.3.0): 7-team competitive
+STATUS 2026-11-01 (Operation Find the Breakthrough, v0.4.0 ShipCheck):
+8 research agents + red team → ranked opportunities → ONE bet
+(AI-output auditor sidecar; rationale in BREAKTHROUGH_DECISION.md).
+Build: claim-splitter + POST /api/check + strict json_schema decoding
++ Responses web_search counter-evidence (default on) + EVS hardening
+(H2/H4/H5) + sidecar UI. 416 unit+e2e green. Killed: proposal-audit
+(Vera GA'd), ad-substantiation skin, legal/GRC/newsroom/live-debate,
+image intake (unreliable probes). Exit gate: full-eval green +
+repeatability + red-team sign-off + milestone commit + push.
+
+Prior STATUS (Operation First Place, v0.3.0): 7-team competitive
 research → readiness report → 6-agent implementation wave (M1 methodology
 core, M2 falsification pass, M3 science abstracts, M4 infra, M5 UX,
 M6 eval) + lead integration (run.py wiring, span recovery, usage

@@ -93,6 +93,7 @@ class MetaClient:
         user: str,
         max_tokens: int = 1500,
         reasoning_effort: str | None = None,
+        json_schema: dict | None = None,
     ) -> dict:
         if not self.available:
             raise RuntimeError("MODEL_API_KEY not configured; MetaClient unavailable.")
@@ -100,13 +101,28 @@ class MetaClient:
         # reasoning_effort, so it is sent when explicitly provided. Default
         # None keeps current behavior: the field is omitted entirely and the
         # request is byte-identical to before this change.
+        # LIVE PROBE 2026-11-01 (strict json_schema + null-union types):
+        # the API constrains decoding to the schema and accepts
+        # "type": ["string", "null"] unions. `json_schema` is
+        # {"name": str, "schema": dict}; None keeps json_object mode.
+        if json_schema is None:
+            response_format: dict = {"type": "json_object"}
+        else:
+            response_format = {
+                "type": "json_schema",
+                "json_schema": {
+                    "name": str(json_schema.get("name", "output")),
+                    "strict": True,
+                    "schema": json_schema["schema"],
+                },
+            }
         kwargs: dict = {
             "model": self.model,
             "messages": [
                 {"role": "system", "content": system},
                 {"role": "user", "content": user},
             ],
-            "response_format": {"type": "json_object"},
+            "response_format": response_format,
             "temperature": 0,
             "max_tokens": max_tokens,
         }

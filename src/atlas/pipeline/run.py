@@ -15,6 +15,7 @@ from .extract import structure_claim
 from .falsify import falsify_draft
 from .retrieve import retrieve_all
 from .science import assess_science_abstracts
+from .split import split_claims
 from .synthesize import decide_stance, synthesize
 from .verify import assess_science, verify_quantitative
 
@@ -24,8 +25,8 @@ import atlas.connectors.worldbank  # noqa: F401  (self-register)
 # Single app-version constant. NOTE (A2b integration): api/app.py is owned by
 # another agent; it should `from atlas.pipeline.run import APP_VERSION` rather
 # than defining its own copy, until the constant moves to a shared module.
-APP_VERSION = "0.3.0"
-PROMPT_VERSION = "3"
+APP_VERSION = "0.4.0"
+PROMPT_VERSION = "4"
 MODEL_TEMPERATURE = 0
 MODEL_MAX_TOKENS = 4000
 DEFAULT_LIMIT = 5
@@ -312,3 +313,69 @@ def analyze(
     }
     report.elapsed_ms = elapsed_ms
     return report
+
+
+# Stances counted in the check roll-up (must match core.types.Stance).
+ROLLUP_STANCES = (
+    "supported",
+    "partially_supported",
+    "contradicted",
+    "unverifiable",
+    "not_assessable",
+)
+
+
+def check_document(
+    raw_text: str,
+    llm=None,
+    limit: int = DEFAULT_LIMIT,
+    persist: bool = True,
+    domain: str = "auto",
+) -> dict:
+    """ShipCheck batch: split pasted text into claims, analyze each one.
+
+    Returns a JSON-serializable dict (NOT a Report — the roll-up has no
+    single claim): {"claim_count", "reports" (full per-claim reports),
+    "rollup" (stance counts), "errors" (failed sub-claim count),
+    "elapsed_ms", "meta" (splitter provenance)}.
+    Each sub-claim runs the full analyze() pipeline, including persist,
+    so per-claim report_ids stay re-fetchable via GET /api/reports/{id}.
+    A sub-claim that raises does not kill the batch: it is recorded as
+    an error entry and counted outside the stance roll-up.
+    """
+    if domain not in VALID_DOMAINS:
+        raise ValueError(f"Invalid domain {domain!r}; expected one of {VALID_DOMAINS}.")
+    t_start = time.perf_counter()
+    seq_before = _usage_seq(llm)
+    claims, actor, model, notes = split_claims(raw_text, llm)
+    usage_split = _take_usage(llm, seq_before)
+    reports: list[dict] = []
+    rollup: dict[str, int] = {s: 0 for s in ROLLUP_STANCES}
+    errors = 0
+    for sub in claims:
+        try:
+            rep = analyze(sub, llm=llm, limit=limit, persist=persist, domain=domain)
+        except Exception as exc:  # one bad apple never kills the batch
+            errors += 1
+            reports.append({"claim_text": sub, "error": _truncate(str(exc))})
+            continue
+        stance = rep.conclusion.stance if rep.conclusion else "unverifiable"
+        rollup[stance] = rollup.get(stance, 0) + 1
+        reports.append(rep.model_dump(mode="json"))
+    elapsed_ms = (time.perf_counter() - t_start) * 1000.0
+    return {
+        "claim_count": len(claims),
+        "reports": reports,
+        "rollup": rollup,
+        "errors": errors,
+        "elapsed_ms": elapsed_ms,
+        "meta": {
+            "app_version": APP_VERSION,
+            "prompt_version": PROMPT_VERSION,
+            "splitter_actor": actor,
+            "splitter_model": model,
+            "splitter_notes": notes,
+            "usage_split": usage_split,
+            "input_sha256": hashlib.sha256(raw_text.encode("utf-8")).hexdigest(),
+        },
+    }

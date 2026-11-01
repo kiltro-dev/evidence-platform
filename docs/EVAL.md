@@ -85,7 +85,7 @@ pins, paraphrase stability, and abstention probing.
 
 Kept from v1:
 
-- **stance_accuracy** — fraction of cases where observed stance equals
+- **pin_conformance** — fraction of cases where observed stance equals
   expected (or stance-set membership / property holds). End-to-end only;
   says nothing about *why*.
 - **domain_accuracy** — extraction routed to the intended domain.
@@ -146,10 +146,12 @@ legitimately flip it back to `supported`.
 
 ## Test suites (pytest)
 
-- `tests/unit` + `tests/e2e` — 306 tests, offline: units, comparison,
-  stance rules, verification edge cases, i18n, API errors, store,
-  provider/fallback behavior, falsification, abstract stance, span
-  recovery, usage attribution, scripted LLM + stub connectors (≤4 model
-  calls, model/code actor split, conclusion traceability). The offline gate.
+- `tests/unit` + `tests/e2e` — 416 tests, offline: units, comparison,
+  stance rules (incl. 47-cell `decide_stance` truth-table sweep),
+  verification edge cases, i18n, API errors, store, provider/fallback
+  behavior, falsification (main + web, mocked), abstract stance, span
+  recovery, usage attribution, claim splitting + batch roll-up,
+  partial-coverage caveats, scripted LLM + stub connectors (model/code
+  actor split, conclusion traceability). The offline gate.
 - `tests/integration -m live` — tests against real APIs (not in the
   offline gate; fail on network/source breakage, honestly labeled).

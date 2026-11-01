@@ -2,8 +2,10 @@
 
 ## 1. Executive assessment
 
-Evidence Atlas v0.2.0 is the best-crafted small idea in the room: real
-deterministic verification, honest refusal states, 185 tests, 24/24 eval.
+Evidence Atlas v0.2.0 was, at the time of writing (Operation First
+Place), the best-crafted small idea in the room: real deterministic
+verification, honest refusal states, 185 tests, 24/24 eval. (Historical
+assessment preserved; see the v0.4.0 addendum at the end.)
 It loses as-is to any competent team with deeper Meta-model use or a more
 memorable demo. The winning move is NOT breadth (more connectors) but
 **methodological depth + adversarial model use + refusal-centered demo**:
@@ -71,3 +73,31 @@ graphs with physics, monitoring/scheduling, science reliability scores,
 tolerance per-indicator floors (cut: precision rule covers it), new
 half-done connectors, charts implying unverified verification, accuracy%
 headlines (reframe as pinned regressions).
+
+---
+
+# Operation Find the Breakthrough — addendum (2026-11-01, v0.4.0)
+
+Eight research agents + independent red team killed the fact-checker
+skin (no buyers, ban-adjacent, ambition deficit) and the proposal-audit
+(occupied: UnicornIQ Vera GA 2026-10-07), ad-substantiation (misleading
+demo), legal, GRC, newsroom, and live-debate directions. The bet:
+**ShipCheck** — the sidecar that checks every stat AI ships
+(post-hoc numeric-claim verification API + defensible receipts).
+Full rationale: [BREAKTHROUGH_DECISION.md](BREAKTHROUGH_DECISION.md).
+
+## Updated scorecard (v0.3.0 shipped → v0.4.0)
+
+| Dimension | v0.3.0 | v0.4.0 | What changed |
+|---|---|---|---|
+| Impact 30% | 7 | 8 | Named beneficiary (AI engineers) + measurable ROI story (escape rate, verification hours); batch UX proves the workflow, not a slide |
+| Meta Tooling 25% | 8 | 9 | Strict `json_schema` decoding everywhere + Responses `web_search` adversarial layer + claim-splitter; model load-bearing in up to 6 calls (batch path), code still judges |
+| Demo 25% | 8 | 9 | 1-1-1 batch (caught hallucination + refused credit + confirmed) + "tried to disprove itself live" beat; refusal + re-run retained |
+| Tech Depth 20% | 9 | 9 | EVS hardening (pin-conformance + Wilson CIs, independent recompute, 47-cell decision table, partial-coverage fix); residuals disclosed, not hidden |
+
+Honest ceiling: narrow catalog (WB-16/~50 countries, abstracts-only
+science) caps Impact — most real AI claims land `unverifiable`, which
+the demo discloses rather than hides. Speed/distribution belong to
+funded incumbents (Galileo, Braintrust, TrustScale claims); the
+defensible artifact is the inspectable receipt. No win promised; this
+is the highest real-value, most winnable build found.

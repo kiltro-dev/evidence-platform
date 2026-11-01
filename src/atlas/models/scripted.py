@@ -23,8 +23,10 @@ class ScriptedClient:
         user: str,
         max_tokens: int = 1500,
         reasoning_effort: str | None = None,
+        json_schema: dict | None = None,
     ) -> dict:
         _ = reasoning_effort  # test double: accepted, ignored
+        _ = json_schema  # test double: accepted, ignored (no decoding to constrain)
         self.calls.append(user)
         for key, payload in self.responses.items():
             if key in user:
@@ -67,8 +69,10 @@ class FaultClient(ScriptedClient):
         user: str,
         max_tokens: int = 1500,
         reasoning_effort: str | None = None,
+        json_schema: dict | None = None,
     ) -> dict:
         _ = reasoning_effort  # test double: accepted, ignored
+        _ = json_schema  # test double: accepted, ignored (no decoding to constrain)
         self.calls.append(user)
         for key, mode in self.faults.items():
             if key in user:

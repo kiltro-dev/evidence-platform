@@ -1,0 +1,264 @@
+{
+  "kind": "unanswerable",
+  "created_at": "20261101T034914Z",
+  "mode": "degraded",
+  "variants": 20,
+  "abstained": 17,
+  "abstention_rate": 0.85,
+  "abstention_rate_ci95": [
+    0.6395767041130426,
+    0.9476322080405041
+  ],
+  "results": [
+    {
+      "id": "e2_geo_atlantis_gdp",
+      "stance": "unverifiable",
+      "uncertainties": [
+        "no_direct_evidence"
+      ],
+      "abstained": true,
+      "abstention_codes_hit": [
+        "no_direct_evidence"
+      ],
+      "report_id": "rep_6f1e3707ed46"
+    },
+    {
+      "id": "e2_geo_ruritania_unemp",
+      "stance": "unverifiable",
+      "uncertainties": [
+        "no_direct_evidence"
+      ],
+      "abstained": true,
+      "abstention_codes_hit": [
+        "no_direct_evidence"
+      ],
+      "report_id": "rep_fdf2d1853c5b"
+    },
+    {
+      "id": "e2_geo_narnia_flurbles",
+      "stance": "unverifiable",
+      "uncertainties": [
+        "no_direct_evidence"
+      ],
+      "abstained": true,
+      "abstention_codes_hit": [
+        "no_direct_evidence"
+      ],
+      "report_id": "rep_95c81458428d"
+    },
+    {
+      "id": "e2_future_gdp_2030",
+      "stance": "unverifiable",
+      "uncertainties": [
+        "period_mismatch"
+      ],
+      "abstained": true,
+      "abstention_codes_hit": [
+        "period_mismatch"
+      ],
+      "report_id": "rep_e8692399caad"
+    },
+    {
+      "id": "e2_future_unemp_2030",
+      "stance": "unverifiable",
+      "uncertainties": [
+        "period_mismatch"
+      ],
+      "abstained": true,
+      "abstention_codes_hit": [
+        "period_mismatch"
+      ],
+      "report_id": "rep_93f891d74e44"
+    },
+    {
+      "id": "e2_unit_basis_points",
+      "stance": "unverifiable",
+      "uncertainties": [
+        "unit_mismatch"
+      ],
+      "abstained": true,
+      "abstention_codes_hit": [
+        "unit_mismatch"
+      ],
+      "report_id": "rep_acc66b22baa2"
+    },
+    {
+      "id": "e2_unit_furlongs",
+      "stance": "unverifiable",
+      "uncertainties": [
+        "unit_mismatch"
+      ],
+      "abstained": true,
+      "abstention_codes_hit": [
+        "unit_mismatch"
+      ],
+      "report_id": "rep_03f7072edd28"
+    },
+    {
+      "id": "e2_unit_word_number",
+      "stance": "unverifiable",
+      "uncertainties": [
+        "no_measurable_quantity"
+      ],
+      "abstained": true,
+      "abstention_codes_hit": [
+        "no_measurable_quantity"
+      ],
+      "report_id": "rep_47a89423372f"
+    },
+    {
+      "id": "e2_opinion_democracy",
+      "stance": "not_assessable",
+      "uncertainties": [
+        "no_measurable_quantity",
+        "no_sources_found",
+        "opinion_or_nonclaim"
+      ],
+      "abstained": true,
+      "abstention_codes_hit": [
+        "opinion_or_nonclaim"
+      ],
+      "report_id": "rep_6ee8bc18a124"
+    },
+    {
+      "id": "e2_opinion_with_number",
+      "stance": "not_assessable",
+      "uncertainties": [
+        "indicator_definition_assumed",
+        "opinion_or_nonclaim",
+        "source_revision_risk"
+      ],
+      "abstained": true,
+      "abstention_codes_hit": [
+        "opinion_or_nonclaim"
+      ],
+      "report_id": "rep_253a9a48da79"
+    },
+    {
+      "id": "e2_question_bare",
+      "stance": "not_assessable",
+      "uncertainties": [
+        "no_measurable_quantity",
+        "opinion_or_nonclaim"
+      ],
+      "abstained": true,
+      "abstention_codes_hit": [
+        "opinion_or_nonclaim"
+      ],
+      "report_id": "rep_45bda4da3d95"
+    },
+    {
+      "id": "e2_question_wh",
+      "stance": "not_assessable",
+      "uncertainties": [
+        "no_measurable_quantity",
+        "opinion_or_nonclaim"
+      ],
+      "abstained": true,
+      "abstention_codes_hit": [
+        "opinion_or_nonclaim"
+      ],
+      "report_id": "rep_1b18a06a61e9"
+    },
+    {
+      "id": "e2_question_with_quantity",
+      "stance": "supported",
+      "uncertainties": [
+        "indicator_definition_assumed",
+        "source_revision_risk"
+      ],
+      "abstained": false,
+      "abstention_codes_hit": [],
+      "report_id": "rep_eac791a01146"
+    },
+    {
+      "id": "e2_empty",
+      "stance": "not_assessable",
+      "uncertainties": [
+        "no_measurable_quantity",
+        "no_sources_found"
+      ],
+      "abstained": true,
+      "abstention_codes_hit": [
+        "no_measurable_quantity"
+      ],
+      "report_id": "rep_9c6c2730cf0d"
+    },
+    {
+      "id": "e2_whitespace",
+      "stance": "not_assessable",
+      "uncertainties": [
+        "no_measurable_quantity",
+        "no_sources_found"
+      ],
+      "abstained": true,
+      "abstention_codes_hit": [
+        "no_measurable_quantity"
+      ],
+      "report_id": "rep_f2e10803890e"
+    },
+    {
+      "id": "e2_compound_half_vague",
+      "stance": "supported",
+      "uncertainties": [
+        "indicator_definition_assumed",
+        "partial_coverage",
+        "source_revision_risk"
+      ],
+      "abstained": false,
+      "abstention_codes_hit": [],
+      "report_id": "rep_9a0d01ebe658"
+    },
+    {
+      "id": "e2_compound_half_unretrievable",
+      "stance": "contradicted",
+      "uncertainties": [
+        "claimed_precision_exceeded",
+        "compound_claim",
+        "indicator_definition_assumed",
+        "material_absolute_gap",
+        "price_basis_unchecked",
+        "source_revision_risk"
+      ],
+      "abstained": false,
+      "abstention_codes_hit": [],
+      "report_id": "rep_5b3a90995fda"
+    },
+    {
+      "id": "e2_no_year",
+      "stance": "unverifiable",
+      "uncertainties": [
+        "period_mismatch"
+      ],
+      "abstained": true,
+      "abstention_codes_hit": [
+        "period_mismatch"
+      ],
+      "report_id": "rep_dc8a4f82bd43"
+    },
+    {
+      "id": "e2_geoless",
+      "stance": "unverifiable",
+      "uncertainties": [
+        "no_direct_evidence"
+      ],
+      "abstained": true,
+      "abstention_codes_hit": [
+        "no_direct_evidence"
+      ],
+      "report_id": "rep_6c60d763dca3"
+    },
+    {
+      "id": "e2_vague_temporal",
+      "stance": "unverifiable",
+      "uncertainties": [
+        "no_measurable_quantity"
+      ],
+      "abstained": true,
+      "abstention_codes_hit": [
+        "no_measurable_quantity"
+      ],
+      "report_id": "rep_df0298a17b8a"
+    }
+  ]
+}

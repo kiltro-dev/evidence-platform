@@ -69,6 +69,13 @@ class AnalyzeRequest(BaseModel):
     persist: bool = True
 
 
+class CheckRequest(BaseModel):
+    text: str
+    limit: int = 5
+    domain: str = "auto"
+    persist: bool = True
+
+
 class ApiError(Exception):
     """Endpoint-raised error that renders as the unified envelope."""
 
@@ -255,6 +262,38 @@ def analyze_claim(req: AnalyzeRequest, request: Request) -> Report:
         raise ApiError(500, "analysis_failed", "Analysis failed.") from None
     _cache_put(cache_key, report)
     return report
+
+
+@app.post("/api/check")
+def check_document(req: CheckRequest, request: Request) -> dict:
+    """ShipCheck batch: split pasted text (e.g. an AI answer) into atomic
+    claims and analyze each one. Returns per-claim reports + stance roll-up.
+    No identical-text cache (unlike /api/analyze): each call re-runs."""
+    client_ip = request.client.host if request.client else "unknown"
+    _check_rate_limit(client_ip)
+    text = req.text.strip()
+    if not text:
+        raise ApiError(400, "empty_claim", "Empty claim text.")
+    if len(text) > 12000:
+        raise ApiError(
+            400, "claim_too_long", "Text too long (max 12000 chars)."
+        )
+    if req.domain not in VALID_DOMAINS:
+        raise ApiError(
+            400,
+            "invalid_domain",
+            f"Invalid domain {req.domain!r} (expected one of: auto, economy, science, general).",
+        )
+    clamped = max(1, min(req.limit, 10))
+    try:
+        return pipeline_run.check_document(
+            text, llm=get_llm(), limit=clamped,
+            persist=req.persist, domain=req.domain,
+        )
+    except ApiError:
+        raise
+    except Exception:
+        raise ApiError(500, "analysis_failed", "Analysis failed.") from None
 
 
 @app.get("/api/reports")

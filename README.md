@@ -1,8 +1,10 @@
-# Evidence Atlas
+# Evidence Atlas — ShipCheck sidecar
 
-Traceable claim analysis: structure a claim, retrieve real evidence, run
-deterministic checks, and show exactly what is evidence, what is
-interpretation, and what remains uncertain.
+Paste AI-generated text, get a verdict per claim: Evidence Atlas splits
+it into atomic claims, structures each one, retrieves real evidence,
+runs deterministic checks, tries to disprove its own draft against the
+live web, and shows exactly what is evidence, what is interpretation,
+and what remains uncertain.
 
 Built for the **Meta Global AI Developer Hackathon 2026** (Indie track).
 See [docs/HACKATHON.md](docs/HACKATHON.md) for the verified rules and deadlines.
@@ -12,16 +14,21 @@ See [docs/HACKATHON.md](docs/HACKATHON.md) for the verified rules and deadlines.
 
 ## Problem
 
-Fact-checking chatbots answer "true or false" without showing their work:
-which sources were consulted, what each source actually says, how numbers
-were compared, or what the model guessed versus what code verified.
+AI apps ship statistics nobody checks — and LLM-judge guardrails can
+hallucinate about hallucinations. You get "true or false" without the
+work: which sources were consulted, what each source actually says, how
+numbers were compared, or what the model guessed versus what code
+verified.
 
 ## What this does
 
-Given a factual claim, Evidence Atlas:
+Given pasted text (e.g. an AI answer), ShipCheck (`POST /api/check`):
 
-1. **Structures** it (domain, quantities, units, time, geography, conditions)
-   with Muse Spark, falling back to deterministic heuristics offline.
+0. **Splits** it into atomic checkable claims (model-first under a
+   strict schema, verbatim-spans-only, heuristic fallback; max 8).
+1. **Structures** each claim (domain, quantities, units, time,
+   geography, conditions) with Muse Spark under strict decoding
+   schemas, falling back to deterministic heuristics offline.
 2. **Retrieves** evidence from real, keyless public sources — World Bank
    Open Data (economy) and OpenAlex (science, incl. abstracts) — in parallel.
 3. **Verifies** with deterministic code: unit normalization, same-period
@@ -29,14 +36,17 @@ Given a factual claim, Evidence Atlas:
    claimed-precision rule (stated digits vs. retrieved value), absolute-gap
    disclosure, and methodological uncertainties.
 4. **Red-teams itself**: Muse Spark attacks the draft verdict through a
-   falsify-only schema; code validates every attack and surfaces it as
-   doubt (advisory only — stances stay code-decided). Science abstracts
-   get a bounded stance assessment that corroborates but never verifies.
-5. **Reports** stance (one of five, including `not_assessable` for opinions
-   and non-claims), evidence for/against, uncertainties, limitations, a
-   full audit trail where every step is badged `CODE`, `MODEL`, or
-   `HEURISTIC`, and per-stage token usage. Reports export as methods
-   receipts and re-run deterministically.
+   falsify-only schema, then hunts LIVE counter-evidence via Responses
+   API `web_search`; code validates every attack and citation and
+   surfaces them as doubt (advisory only — stances stay code-decided).
+   Science abstracts get a bounded stance assessment that corroborates
+   but never verifies.
+5. **Reports** per claim: stance (one of five, including
+   `not_assessable` for opinions and non-claims), evidence for/against,
+   uncertainties, limitations, a full audit trail where every step is
+   badged `CODE`, `MODEL`, or `HEURISTIC`, and per-stage token usage —
+   plus a batch roll-up. Reports export as methods receipts and re-run
+   deterministically.
 
 No confidence scores, no invented citations. When evidence is missing or
 incomparable, the report says so. Snippets and excerpts are pointers to
@@ -50,14 +60,21 @@ uv venv -p 3.12 && uv pip install --python .venv/bin/python -r requirements.txt
 PYTHONPATH=src .venv/bin/python -m uvicorn atlas.api.app:app --host 127.0.0.1 --port 8765
 ```
 
-Open [http://127.0.0.1:8765](http://127.0.0.1:8765) and try:
+Open [http://127.0.0.1:8765](http://127.0.0.1:8765), switch to **Check AI
+output**, and paste:
 
-- `Unemployment in Germany was 3.1% in 2023.` → consistent with evidence
-- `The GDP of the United States was $27.36 trillion in 2023.` → partially
-  supported (within tolerance, but the stated digits exceed what the
-  retrieved value confirms — the claimed-precision cap)
-- `The population of Japan was 500 million in 2020.` → contradicted
-- `Democracy is the best form of government.` → not assessable (opinion)
+> The GDP of the United States was $27.36 trillion in 2023. The
+> population of Japan was 125 million in 2023. Unemployment in Germany
+> was 9.8% in 2023.
+
+You get three receipts: precision-capped `partially_supported` (Δ1.62%
+but the stated digits exceed what the retrieved value confirms),
+`supported`, and `contradicted` (Δ219% — the hallucination, caught) —
+with live-web counter-evidence attached as doubt (recorded run:
+`eval/results/demo_batch_20261101T040906Z.json`). Single-claim mode
+(`POST /api/analyze`) still works: try `The population of Japan was 500
+million in 2020.` → contradicted, or `Democracy is the best form of
+government.` → not assessable (opinion).
 
 Full script: [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md).
 
@@ -65,9 +82,10 @@ Full script: [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md).
 
 Python 3.12 monolith (3.11+ supported), one process: FastAPI + static
 single-page UI, httpx connectors, SQLite persistence, pydantic models.
-The only model dependency is the Meta Model API (OpenAI-compatible SDK,
-`muse-spark-1.3`). Seven dependencies total — see
-[requirements.txt](requirements.txt).
+The only model dependency is the Meta Model API: Chat Completions
+(`muse-spark-1.3`, strict `json_schema` decoding) for structuring and
+judgment calls, Responses API + `web_search` for live counter-evidence.
+Seven dependencies total — see [requirements.txt](requirements.txt).
 
 Architecture: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) ·
 API: [docs/API.md](docs/API.md) ·
@@ -122,32 +140,32 @@ Notes:
 - After adding or changing `MODEL_API_KEY` in `.env`, **restart the server**:
   the key is read once at startup and a running server keeps its old mode.
 
-API: `GET /api/status`, `POST /api/analyze`, `GET /api/reports`,
-`GET /api/reports/{id}`, `DELETE /api/reports/{id}`. UI at `/`.
-Full reference: [docs/API.md](docs/API.md).
+API: `GET /api/status`, `POST /api/analyze`, `POST /api/check`,
+`GET /api/reports`, `GET /api/reports/{id}`, `DELETE /api/reports/{id}`.
+UI at `/`. Full reference: [docs/API.md](docs/API.md).
 
 ## Tests & evaluation
 
 ```bash
-.venv/bin/python -m pytest tests/unit tests/e2e -q        # offline gate (306 tests)
+.venv/bin/python -m pytest tests/unit tests/e2e -q        # offline gate (416 tests)
 .venv/bin/python -m pytest tests/integration -q -m live   # live sources (needs network)
 PYTHONPATH=src .venv/bin/python scripts/run_eval.py --mode degraded  # 11 scripted cases, offline
 PYTHONPATH=src .venv/bin/python scripts/run_eval.py --mode full      # all 28 cases, needs network + key
 PYTHONPATH=src .venv/bin/python scripts/run_eval.py --paraphrase     # 36-input stability probe, offline
 PYTHONPATH=src .venv/bin/python scripts/run_eval.py --unanswerable   # 20-variant abstention probe, offline
-bash scripts/smoke.sh --port 8765                           # offline smoke (29 checks)
+bash scripts/smoke.sh --port 8765                           # offline smoke (31 checks)
 bash scripts/smoke.sh --port 8765 --live --eval              # + live API + full eval
 ```
 
-- `tests/unit tests/e2e` is the offline gate: **306 tests, all green**,
+- `tests/unit tests/e2e` is the offline gate: **416 tests, all green**,
   no network, no key.
 - `-m live` selects the `live` pytest marker (registered in
   `pyproject.toml`): tests that hit real public APIs.
 - Eval: 28 cases total. `--mode degraded` runs the 11 offline-capable
   cases and skips the 17 `live` ones; `--mode full` runs everything but
-  needs network and takes several minutes (live source latency plus up
-  to 4 model calls per case).
-- Current results: **306/306 offline, 11/11 degraded eval, 36/36
+  needs network and takes many minutes (live source latency plus up to
+  5 model calls per case, incl. the token-hungry web pass).
+- Current results: **416/416 offline, 11/11 degraded eval, 36/36
   paraphrase agreement, full-mode eval with real muse-spark-1.3** —
   see [docs/EVAL_REPORT.md](docs/EVAL_REPORT.md) for the pinned run.
   What these numbers do and do not prove is stated there honestly:
@@ -188,10 +206,14 @@ bash scripts/smoke.sh --port 8765 --live --eval              # + live API + full
 
 ## Project status
 
-v3 (0.3.0) complete and verified end-to-end: adversarial self-review,
-claimed-precision methodology, abstract-stance science path, per-stage
-token accounting, receipt export + deterministic re-run. Progress log:
-[PROGRESS.md](PROGRESS.md).
+v4 (0.4.0) ShipCheck sidecar: multi-claim batch intake, strict decoding
+schemas, live-web adversarial falsification, EVS hardening
+(pin-conformance + Wilson CIs, independent recompute, partial-coverage
+caveat). Prior v3 (0.3.0): adversarial self-review, claimed-precision
+methodology, abstract-stance science path, per-stage token accounting,
+receipt export + deterministic re-run. Direction rationale:
+[docs/BREAKTHROUGH_DECISION.md](docs/BREAKTHROUGH_DECISION.md).
+Progress log: [PROGRESS.md](PROGRESS.md).
 Study/defense guide: [docs/STUDY_GUIDE.md](docs/STUDY_GUIDE.md).
 Developer guide: [docs/DEVELOPER_GUIDE.md](docs/DEVELOPER_GUIDE.md).
 
