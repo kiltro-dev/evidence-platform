@@ -94,6 +94,9 @@ class CounterEvidence:
     text: str
     citations: list[WebCitation] = field(default_factory=list)
     candidates: list[WebCandidate] = field(default_factory=list)
+    # V3 spike P4: status=="incomplete" (e.g. max_output_tokens) means a
+    # zero-citation run is UNINFORMATIVE, not genuine no-counter-evidence.
+    truncated: bool = False
 
 
 def _iter_text_parts(response: object):
@@ -499,6 +502,7 @@ class ResponsesClient:
             text=response_text(data),
             citations=parse_url_citations(data),
             candidates=parse_search_candidates(data),
+            truncated=data.get("status") == "incomplete",
         )
 
     def _post_with_retry(

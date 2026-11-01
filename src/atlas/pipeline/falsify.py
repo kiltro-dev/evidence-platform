@@ -390,10 +390,12 @@ def _run_web_pass(
         )
         for c in uncited
     ]
-    fragment = (
-        f"web_citations={len(citations)}"
-        if citations else "web_citations=0(none validated)"
-    )
+    if citations:
+        fragment = f"web_citations={len(citations)}"
+    elif getattr(result, "truncated", False):
+        fragment = "web_citations=0(TRUNCATED: output cap hit, zero uninformative)"
+    else:
+        fragment = "web_citations=0(none validated)"
     fragment += f" cited={len(citations)}/considered={len(considered)}"
     return (new_comparisons, new_uncertainties + considered_uncertainties,
             fragment, model_name)

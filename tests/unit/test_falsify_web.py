@@ -310,6 +310,22 @@ def test_no_citations_validated_is_clean_skip(monkeypatch):
     assert "web_citations=0" in audit.detail
 
 
+def test_truncated_run_flagged_uninformative_not_validated_zero(monkeypatch):
+    # V3 spike P4: status=incomplete + 0 citations must read as
+    # TRUNCATED in the audit, never as a validated zero.
+    monkeypatch.delenv("ATLAS_WEB_FALSIFY", raising=False)
+    payload = _responses_payload("cut off mid-search", [])
+    payload["status"] = "incomplete"
+    transport = MockTransport(payloads=[payload])
+    llm = ScriptedClient({}, default={"attacks": []})
+    new_c, new_u, audit = falsify_draft(
+        _claim(), [_cmp()], [], "supported", llm,
+        web_client=_web_client(transport))
+    assert (new_c, new_u) == ([], [])
+    assert "TRUNCATED" in audit.detail
+    assert "none validated" not in audit.detail
+
+
 # --- degrade-to-skip: transport errors, timeouts, malformed payloads ---
 
 
