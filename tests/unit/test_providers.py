@@ -288,7 +288,9 @@ def test_invalid_geo_uncertainty_end_to_end(monkeypatch):
         "time_refs": [], "conditions": [], "context_notes": "",
         "geo_refs": [{"raw": "Xanadu", "name": "Xanadu", "iso3": "XX"}],
     }}, default={})
-    report = analyze("GDP grew strongly", llm=llm, persist=False)
+    # UT-A2: the geo must be literal in the text to reach retrieval;
+    # non-literal model geos are dropped at extraction instead.
+    report = analyze("GDP grew strongly in Xanadu", llm=llm, persist=False)
     assert any(u.code == "invalid_geo" and u.severity == "major"
                for u in report.uncertainties)
     detail = next(a.detail for a in report.audit if a.step == "retrieve")
@@ -647,3 +649,69 @@ def test_retrieve_yearless_geoless_returns_empty_zero_http(monkeypatch):
     monkeypatch.setattr(httpx.Client, "get", guarded)
     claim = _claim(raw_text="GDP is $2 trillion.", subject="gdp")
     assert WorldBankConnector().retrieve(claim) == []
+
+
+@pytest.mark.parametrize("order", ["asc", "desc"])
+def test_retrieve_year_fan_out(monkeypatch, order):
+    # UT-d (d2): claimed years survive rows[:limit] either row order.
+    rows = [{"date": str(y), "value": 1.0 * y,
+             "country": {"value": "United States"}} for y in range(2015, 2025)]
+    if order == "desc":
+        rows = rows[::-1]
+    monkeypatch.setattr(wbmod, "fetch_observations",
+                        lambda *a, **k: [dict(r) for r in rows])
+    claim = _claim(
+        raw_text="GDP of the United States was X in 2015 and Y in 2024.",
+        subject="GDP of the United States",
+        time_refs=[TimeRef(raw="2015", year=2015, period_type="year"),
+                   TimeRef(raw="2024", year=2024, period_type="year")],
+        geo_refs=[GeoRef(raw="United States", name="United States",
+                         iso3="USA")])
+    got = WorldBankConnector().retrieve(claim, limit=5)
+    years = sorted(e.payload["year"] for e in got)
+    assert "2015" in years and "2024" in years, years
+    assert len(got) == 5
+
+
+def test_retrieve_fan_out_never_drops_named_year(monkeypatch):
+    # UT-d iter2 (judge P11): limit=1 with 2 named years keeps both.
+    rows = [{"date": str(y), "value": 1.0 * y,
+             "country": {"value": "United States"}} for y in range(2015, 2025)]
+    monkeypatch.setattr(wbmod, "fetch_observations",
+                        lambda *a, **k: [dict(r) for r in rows])
+    claim = _claim(
+        raw_text="GDP of the United States was X in 2015 and Y in 2024.",
+        subject="GDP of the United States",
+        time_refs=[TimeRef(raw="2015", year=2015, period_type="year"),
+                   TimeRef(raw="2024", year=2024, period_type="year")],
+        geo_refs=[GeoRef(raw="United States", name="United States",
+                         iso3="USA")])
+    got = WorldBankConnector().retrieve(claim, limit=1)
+    years = sorted(e.payload["year"] for e in got)
+    assert "2015" in years and "2024" in years, years
+
+
+def test_openalex_mailto_not_placeholder_and_omitted_when_unset(monkeypatch):
+    # UT-k (k1): no example.org default; omitted unless configured.
+    assert oamod.MAILTO != "evidence-atlas@example.org"
+    seen: dict = {}
+
+    class _Resp:
+        def raise_for_status(self):
+            pass
+
+        def json(self):
+            return {"results": []}
+
+    def capture(self, url, params=None):
+        seen.clear()
+        seen.update(params or {})
+        return _Resp()
+
+    monkeypatch.setattr(httpx.Client, "get", capture)
+    monkeypatch.setattr(oamod, "MAILTO", "")
+    oamod.search_works("climate")
+    assert "mailto" not in seen
+    monkeypatch.setattr(oamod, "MAILTO", "real@example.com")
+    oamod.search_works("climate")
+    assert seen["mailto"] == "real@example.com"

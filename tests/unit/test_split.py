@@ -192,3 +192,58 @@ def test_input_truncation_names_rollup_scope():
             * (SPLIT_INPUT_CHARS // 50 + 10))
     _, _, _, notes = split_claims(text, None)
     assert any("roll-up covers analyzed claims only" in n for n in notes)
+
+
+def test_split_with_context_carries_country():
+    # UT-g (g1/g2/g3): verbatim spans + resolved country apart.
+    from atlas.pipeline.split import split_with_context
+
+    spans, ctxs, _, _ = split_with_context(
+        "France's population is 68 million. Its GDP is $3 trillion.",
+        llm=None)
+    assert len(spans) == 2
+    assert spans[1] == "Its GDP is $3 trillion."
+    assert ctxs[1].get("country_iso3") == "FRA"
+    assert ctxs[1].get("country_source") == "inherited"
+    assert ctxs[0].get("country_source") == "own"
+
+
+def test_split_context_own_beats_inherited():
+    from atlas.pipeline.split import split_with_context
+
+    spans, ctxs, _, _ = split_with_context(
+        "France's population is 68 million. Germany's GDP is $4 trillion.",
+        llm=None)
+    assert ctxs[1].get("country_iso3") == "DEU"
+    assert ctxs[1].get("country_source") == "own"
+
+
+def test_split_context_no_antecedent_invents_nothing():
+    from atlas.pipeline.split import split_with_context
+
+    spans, ctxs, _, _ = split_with_context("Its GDP is $3 trillion.",
+                                           llm=None)
+    assert len(spans) == 1
+    assert "country_iso3" not in ctxs[0]
+
+
+def test_split_context_years_own_and_inherited():
+    from atlas.pipeline.split import split_with_context
+
+    spans, ctxs, _, _ = split_with_context(
+        "GDP was $27 trillion in 2020. It grew steadily after that.",
+        llm=None)
+    assert ctxs[0].get("years") == [2020]
+    assert ctxs[0].get("years_source") == "own"
+    assert ctxs[1].get("years") == [2020]
+    assert ctxs[1].get("years_source") == "inherited"
+
+
+def test_split_context_spanish_anaphora():
+    from atlas.pipeline.split import split_with_context
+
+    spans, ctxs, _, _ = split_with_context(
+        "La población de Francia es 68 millones. Su PIB es $3 billones.",
+        llm=None)
+    assert len(spans) == 2
+    assert ctxs[1].get("country_iso3") == "FRA"

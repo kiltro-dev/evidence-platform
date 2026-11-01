@@ -33,6 +33,12 @@ _FORBIDDEN_STRENGTH_RES = tuple(
     for word in FORBIDDEN_STRENGTH
 )
 _DELTA_PCT_RE = re.compile(r"\d\s*%")
+_CITED_PCT_RE = re.compile(r"(\d+(?:\.\d+)?)\s*%")
+
+
+def _delta_matches_measured(cited: float, measured: float) -> bool:
+    # Rounding tolerance: models legitimately round 1.62% to "2%".
+    return abs(cited - measured) <= 0.5 + 0.05 * abs(measured)
 
 SUMMARY_SYSTEM = """You write evidence-analysis summaries. Return ONLY a JSON object:
 {"summary": "max 4 sentences", "caveats": ["short strings"]}
@@ -60,6 +66,11 @@ SUMMARY_SCHEMA = {
         "additionalProperties": False,
     },
 }
+
+# UT-o: hidden-reasoning budget for the summary call. "low": the
+# summary restates decided comparisons (same rationale as the split
+# call's "low"), so a small budget suffices and bounds cost.
+SUMMARY_REASONING_EFFORT = "low"
 
 
 # H5-minimal: second-clause-without-coverage detector. verify.py owns
@@ -184,6 +195,10 @@ def decide_stance(
         # partially_supported (the code is verify's stance-cap signal).
         if any(u.code == "claimed_precision_exceeded" for u in uncertainties):
             return "partially_supported"
+        # UT-f: a comparison against an assumed (latest) period never
+        # earns full supported — the period is the system's guess.
+        if any(u.code == "assumed_period" for u in uncertainties):
+            return "partially_supported"
         # Team-E F5b compound cap: a compound claim with fewer verifying
         # comparisons than real (non-year) quantities analyzed only part
         # of itself; supported is capped at partially_supported.
@@ -203,7 +218,16 @@ def decide_stance(
             n_real = sum(
                 1 for q in claim.quantities if not is_year_quantity(q)
             )
-            if len(verifying) < n_real:
+            # UT-d iter2 (judge): only DECISIVE comparisons count toward
+            # coverage — a not_comparable/inconclusive abstention (e.g.
+            # the UT-c rate guard refusing one pair) verifies nothing,
+            # so a half-compared compound caps at partially_supported.
+            # Aligns with uncovered_clause_reason's decisive-only count.
+            decisive = [
+                c for c in verifying
+                if c.verdict in ("consistent", "contradicts")
+            ]
+            if len(decisive) < n_real:
                 return "partially_supported"
         return "supported"
     # Ceiling path: only allowlisted non-verifying metrics lift to
@@ -284,7 +308,8 @@ def validate_summary_strength(
     1. No forbidden strength-lexicon word (whole-word, case-insensitive).
     2. The stance token must appear verbatim.
     3. When numeric verdicts exist (rel_diff_pct recorded), the summary
-       must state a measured delta percent ("<digits>%").
+       must state a delta percent ("<digits>%") CLOSE to a measured one
+       (UT-A5 arch 5e: presence alone lets the model invent "99%").
     """
     violations: list[str] = []
     for word, pat in zip(FORBIDDEN_STRENGTH, _FORBIDDEN_STRENGTH_RES):
@@ -292,12 +317,24 @@ def validate_summary_strength(
             violations.append(f"forbidden strength word: {word!r}")
     if stance not in summary:
         violations.append(f"stance token {stance!r} not quoted verbatim")
-    has_numeric = any(
-        c.rel_diff_pct is not None and c.verdict in ("consistent", "contradicts")
+    measured = [
+        c.rel_diff_pct
         for c in comparisons
-    )
-    if has_numeric and not _DELTA_PCT_RE.search(summary):
-        violations.append("measured delta percent missing for numeric verdicts")
+        if c.rel_diff_pct is not None and c.verdict in ("consistent", "contradicts")
+    ]
+    if measured:
+        if not _DELTA_PCT_RE.search(summary):
+            violations.append("measured delta percent missing for numeric verdicts")
+        else:
+            cited = [float(m.group(1)) for m in _CITED_PCT_RE.finditer(summary)]
+            if not any(
+                _delta_matches_measured(c, m) for c in cited for m in measured
+            ):
+                show = ", ".join(f"{m:.2f}%" for m in measured)
+                violations.append(
+                    "cited delta percent does not match measured "
+                    f"(measured: {show})"
+                )
     return violations
 
 
@@ -375,6 +412,7 @@ def synthesize(
 
             data = llm.complete_json(
                 SUMMARY_SYSTEM, _json.dumps(payload)[:3000], max_tokens=4000,
+                reasoning_effort=SUMMARY_REASONING_EFFORT,
                 json_schema=SUMMARY_SCHEMA,
             )
             model_ok = False

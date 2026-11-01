@@ -175,3 +175,128 @@ def test_parse_percent_still_percent_and_ppm_not_pp():
     assert q.normalized_unit == "percent"
     (m,) = [q for q in parse_quantities("2 ppm of lead") if q.value == 2.0]
     assert m.normalized_unit != "pp"
+
+
+def test_parse_attached_uppercase_t_is_trillion():
+    # P0a: "$27.72T" misread as 27.72 USD caused a false contradicted.
+    (q,) = parse_quantities("$27.72T")
+    assert q.value == 27.72e12
+    assert q.normalized_unit == "USD"
+
+
+def test_parse_lowercase_t_stays_tonnes():
+    (q,) = parse_quantities("5 t")
+    assert q.value == 5.0
+
+
+def test_parse_spanish_thousand_dots():
+    # P0a: ES thousand separators are dots of exactly 3 digits.
+    (q,) = parse_quantities("1.400 millones de dolares")
+    assert q.value == 1.4e9
+    qs = parse_quantities("1.400.000 habitantes")
+    assert len(qs) == 1
+    assert qs[0].value == 1400000.0
+    assert qs[0].normalized_unit == "count"
+
+
+def test_parse_decimal_dots_untouched():
+    (q,) = parse_quantities("value 27.36")
+    assert q.value == 27.36
+    (q,) = parse_quantities("pi is about 3.14159")
+    assert q.value == 3.14159
+
+
+def test_parse_mil_millones_is_billion():
+    # P0a: compound ES scale was truncated to "mil" (5e3, false contradict).
+    (q,) = parse_quantities("5 mil millones")
+    assert q.value == 5e9
+    (q,) = parse_quantities("5 mil")
+    assert q.value == 5000.0
+
+
+def test_parse_three_digit_decimals_stay_decimal():
+    # UT-a iter2 (judge): EN 3dp readings must not become thousands.
+    for text, want in (("3.142", 3.142), ("0.500", 0.5), ("1.025", 1.025),
+                       ("9.875", 9.875), ("1.500 million", 1.5e6),
+                       ("27.360 trillion", 27.36e12), ("1.400 USD", 1.4),
+                       ("price 1.459 EUR", 1.459)):
+        (q,) = parse_quantities(text)
+        assert q.value == want, (text, q.value)
+
+
+def test_parse_thousand_dots_need_spanish_marker_or_multigroup():
+    # UT-a iter2: single "1.500" needs an ES marker; multi-group never lies.
+    (q,) = parse_quantities("1.400 dólares")
+    assert q.value == 1400.0
+    (q,) = parse_quantities("1.400 pesos")
+    assert q.value == 1400.0
+    (q,) = parse_quantities("12.345.678")
+    assert q.value == 12345678.0
+    (q,) = parse_quantities("27 T")
+    assert q.value == 27.0
+
+
+def test_parse_scale_prefixes_take_no_scale():
+    # UT-a iter2 (judge): prefixes must not fabricate scale.
+    for text in ("5 millionaires", "3 billionaires", "5 millonarios",
+                 "2 billonarios", "1 thousandth"):
+        (q,) = parse_quantities(text)
+        assert q.value == float(text.split()[0]), (text, q.value)
+    for text, want in (("5 millions", 5e6), ("2 billions", 2e9),
+                       ("3 trillions", 3e12)):
+        (q,) = parse_quantities(text)
+        assert q.value == want, (text, q.value)
+
+
+def test_parse_euro_marker_and_dot_comma_decimals():
+    # UT-a iter3 (judge): eur-shadowed-euros bug + ES 1.500,25 mirror.
+    for text, want in (("1.500 euros", 1500.0), ("0.500 euros", 500.0),
+                       ("1.500 euro", 1500.0), ("1.500,25", 1500.25),
+                       ("1.000,50", 1000.50), ("1.400.000,75", 1400000.75)):
+        (q,) = parse_quantities(text)
+        assert q.value == want, (text, q.value)
+
+
+def test_parse_guard_bypasses_hold():
+    (q,) = parse_quantities("5 millionsx")
+    assert q.value == 5.0
+    (q,) = parse_quantities("5 T-shirts")
+    assert q.value == 5.0
+
+
+def test_explicit_scale_words():
+    # UT-e: full scale words are explicit; bare digits and single
+    # letters are not.
+    from atlas.core.units import is_explicit_scale as f
+
+    for raw in ("1.25 billion", "27 trillion dollars", "5 million people",
+                "3 thousand units", "5 hundred units", "27 billones",
+                "1 millardo", "5 millones", "3 mil personas", "2 BILLION USD"):
+        assert f(raw) is True, raw
+    for raw in ("27.72", "$27.72T", "27T", "5 M", "3 K", "27720000000000",
+                "1.25 b", "the 2023 total"):
+        assert f(raw) is False, raw
+
+
+def test_mil_is_explicit_scale():
+    # UT-e: ES "mil" (and EN informal "mil") states a scale.
+    from atlas.core.units import is_explicit_scale as f
+
+    assert f("5 mil") is True
+    assert f("5 thousand") is True
+
+
+def test_scale_error_power():
+    # UT-e: ratio within 1% of 10^±{3,6,9,12} matches, else None.
+    from atlas.core.units import scale_error_power as f
+
+    assert f(27.72, 27.72e12) == 12
+    assert f(27.72e12, 27.72) == -12
+    assert f(1.0, 1000.0) == 3
+    assert f(1000.0, 1.0) == -3
+    assert f(1.0, 1.009e3) == 3      # inside the 1% band
+    assert f(1.0, 1.011e3) is None   # outside the band
+    assert f(1.0, 500.0) is None     # not a 10^k ratio
+    assert f(1.0, 1e15) is None      # beyond the ±12 range
+    assert f(0.0, 1000.0) is None
+    assert f(1.0, 0.0) is None

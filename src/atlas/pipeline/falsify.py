@@ -357,7 +357,10 @@ def _run_web_pass(
             claim_value=c.url[:300],
             evidence_value=c.span[:500],
             verdict="inconclusive",  # doubt without a vote: stance-neutral
-            notes=f"[{c.domain}] {c.span[:400]} — {c.url[:300]}",
+            # UT-A4 (arch 5d): quote is model-reported from search results;
+            # code never fetched the page, so label it — not a verified cite.
+            notes=(f"[{c.domain}] {c.span[:400]} — {c.url[:300]} "
+                   "(model-reported quote; page not fetched by code)"),
         )
         for c in citations
     ]
@@ -366,7 +369,8 @@ def _run_web_pass(
             code="web_counter_evidence",
             description=(
                 f"Live-web counter-evidence ({c.domain}): "
-                f"{c.span[:300]} [{c.url[:200]}]"
+                f"{c.span[:300]} [{c.url[:200]}] (model-reported quote; "
+                "page not fetched by code)"
             ),
             severity="minor",  # never blocking: advisory only, stance-neutral
         )

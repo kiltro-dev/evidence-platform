@@ -107,15 +107,20 @@ def test_request_ids_unique_per_error(client):
 def test_rate_limit_loopback_variants_share_one_bucket():
     # Sec LOW (xff-rate): 127.0.0.1/::1/localhost/testclient resolve to the
     # same localhost caller, so XFF spellings must not multiply the quota.
+    # UT-j: buckets are "ip:<addr>"/"key:<hash>"; only ip-loopbacks collapse.
     appmod._rate_hits.clear()
     for _ in range(60):
-        appmod._check_rate_limit_locked("127.0.0.1", 1)
+        appmod._check_rate_limit_locked("ip:127.0.0.1", 1)
     with pytest.raises(appmod.ApiError):
-        appmod._check_rate_limit_locked("localhost", 1)
+        appmod._check_rate_limit_locked("ip:localhost", 1)
     with pytest.raises(appmod.ApiError):
-        appmod._check_rate_limit_locked("::1", 1)
+        appmod._check_rate_limit_locked("ip:::1", 1)
     # A genuinely different caller keeps its own bucket.
-    appmod._check_rate_limit_locked("203.0.113.9", 1)
+    appmod._check_rate_limit_locked("ip:203.0.113.9", 1)
+    # Key buckets never collapse, even loopback-shaped ones.
+    appmod._check_rate_limit_locked("key:abc", 1)
+    appmod._check_rate_limit_locked("key:def", 1)
+    assert "key:abc" in appmod._rate_hits and "key:def" in appmod._rate_hits
 
 
 def test_openapi_doc_matches_served_schema(client):
@@ -126,3 +131,97 @@ def test_openapi_doc_matches_served_schema(client):
 
     doc_path = Path(__file__).resolve().parents[2] / "docs" / "openapi.json"
     assert client.get("/openapi.json").json() == json.loads(doc_path.read_text())
+
+
+def test_persist_defaults_to_false():
+    # UT-j (j1): public default must not archive visitor texts.
+    assert appmod.AnalyzeRequest.model_fields["persist"].default is False
+    assert appmod.CheckRequest.model_fields["persist"].default is False
+
+
+def test_require_api_key_exists():
+    # UT-j (j2): auth dependency exists.
+    assert hasattr(appmod, "require_api_key")
+
+
+def _auth_client(tmp_path, monkeypatch, key="k-secret"):
+    monkeypatch.setenv("ATLAS_DB", str(tmp_path / "t.db"))
+    monkeypatch.setenv("ATLAS_API_KEY", key)
+    monkeypatch.setattr(appmod, "get_llm", lambda: None)
+    appmod._rate_hits.clear()
+    appmod._cache.clear()
+    return TestClient(appmod.app, raise_server_exceptions=False)
+
+
+def test_auth_required_when_key_configured(tmp_path, monkeypatch):
+    c = _auth_client(tmp_path, monkeypatch)
+    with c:
+        r = c.post("/api/analyze", json={"text": "GDP was $5 in 2023."})
+        assert_envelope(r, 401, "unauthorized")
+        r = c.post("/api/analyze", json={"text": "GDP was $5 in 2023."},
+                   headers={"X-API-Key": "wrong"})
+        assert_envelope(r, 401, "unauthorized")
+        r = c.post("/api/analyze", json={"text": "GDP was $5 in 2023."},
+                   headers={"X-API-Key": "k-secret"})
+        assert r.status_code == 200, r.text
+        r = c.get("/api/reports")
+        assert_envelope(r, 401, "unauthorized")
+        r = c.get("/api/reports", headers={"X-API-Key": "k-secret"})
+        assert r.status_code == 200, r.text
+
+
+def test_auth_open_without_key(client):
+    # Localhost mode unchanged: no key configured -> no 401s.
+    r = client.post("/api/analyze", json={"text": "GDP was $5 in 2023."})
+    assert r.status_code == 200, r.text
+
+
+def test_rate_limit_per_api_key(tmp_path, monkeypatch):
+    monkeypatch.setattr(appmod, "RATE_LIMIT_PER_MINUTE", 2)
+    c = _auth_client(tmp_path, monkeypatch)
+    with c:
+        h1 = {"X-API-Key": "k-secret"}
+        assert c.post("/api/analyze", json={"text": "one"},
+                      headers=h1).status_code == 200
+        assert c.post("/api/analyze", json={"text": "two"},
+                      headers=h1).status_code == 200
+        r = c.post("/api/analyze", json={"text": "three"}, headers=h1)
+        assert_envelope(r, 429, "rate_limited")
+
+
+def test_request_ip_trust_proxy():
+    from fastapi import Request
+
+    def _req(headers=None, host="9.9.9.9"):
+        scope = {"type": "http", "headers": [
+            (k.lower().encode(), v.encode()) for k, v in (headers or {}).items()
+        ], "client": (host, 123)}
+        return Request(scope)
+
+    assert appmod._request_ip(_req()) == "9.9.9.9"
+    # XFF ignored unless explicitly trusted.
+    r = _req({"x-forwarded-for": "1.2.3.4"})
+    assert appmod._request_ip(r) == "9.9.9.9"
+
+
+def test_check_cache_only_without_persist(tmp_path, monkeypatch):
+    from atlas.core.types import Conclusion, Report, StructuredClaim
+
+    calls: list[str] = []
+
+    def fake(text, llm=None, limit=5, persist=True, domain="auto", **kw):
+        calls.append(text)
+        return {"claim_count": 1, "echo": text}
+
+    monkeypatch.setattr(runmod, "check_document", fake)
+    monkeypatch.setenv("ATLAS_DB", str(tmp_path / "t.db"))
+    monkeypatch.setattr(appmod, "get_llm", lambda: None)
+    appmod._rate_hits.clear()
+    appmod._check_cache.clear()
+    with TestClient(appmod.app, raise_server_exceptions=False) as c:
+        c.post("/api/check", json={"text": "cached me", "persist": False})
+        c.post("/api/check", json={"text": "cached me", "persist": False})
+        assert calls == ["cached me"]
+        c.post("/api/check", json={"text": "fresh me", "persist": True})
+        c.post("/api/check", json={"text": "fresh me", "persist": True})
+        assert calls == ["cached me", "fresh me", "fresh me"]

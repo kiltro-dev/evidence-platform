@@ -28,8 +28,10 @@ def make_report(text: str, stance: str = "unverifiable") -> Report:
 def ctx(tmp_path, monkeypatch):
     monkeypatch.setenv("ATLAS_DB", str(tmp_path / "t.db"))
     monkeypatch.setattr(appmod, "get_llm", lambda: None)
+    monkeypatch.delenv("ATLAS_API_KEY", raising=False)
     appmod._rate_hits.clear()
     appmod._cache.clear()
+    appmod._check_cache.clear()
     calls: list[dict] = []
 
     def fake(text, llm=None, limit=5, persist=True, domain="auto", **kw):
@@ -55,7 +57,7 @@ def test_check_happy_path(ctx):
     assert len(body["reports"]) == 2
     assert body["meta"]["splitter_actor"] == "heuristic"
     assert len(calls) == 2
-    assert calls[0]["persist"] is True and calls[0]["domain"] == "auto"
+    assert calls[0]["persist"] is False and calls[0]["domain"] == "auto"  # UT-j
 
 
 def test_check_empty_rejected(ctx):
@@ -90,12 +92,18 @@ def test_check_limit_clamped(ctx):
     assert calls[0]["limit"] == 10
 
 
-def test_check_no_cache_reruns(ctx):
+def test_check_cache_policy_by_persist(ctx):
+    # UT-j: persist=false batches cache (1 run); persisted batches
+    # always re-run (fresh report ids per call, DELETE-safe).
     client, calls = ctx
     payload = {"text": "Some claim here today."}
     assert client.post("/api/check", json=payload).status_code == 200
     assert client.post("/api/check", json=payload).status_code == 200
-    assert len(calls) == 2  # documented: each call re-runs
+    assert len(calls) == 1
+    payload_p = {"text": "Other claim here today.", "persist": True}
+    assert client.post("/api/check", json=payload_p).status_code == 200
+    assert client.post("/api/check", json=payload_p).status_code == 200
+    assert len(calls) == 3
 
 
 def test_check_costs_eight_rate_hits(ctx):
@@ -117,3 +125,30 @@ def test_invalid_check_requests_do_not_burn_batch_quota(ctx):
         "/api/check",
         json={"text": "valid batch claim", "domain": "nope"}).status_code == 400
     assert appmod._rate_hits.get("testclient", []) == []
+
+
+def test_check_stream_route_exists_and_streams(ctx):
+    # UT-l (l1): SSE batch streams started/claim/done with reports.
+    import json
+
+    client, _ = ctx
+    resp = client.post("/api/check/stream", json={
+        "text": "This is good news today. Something else happened too."})
+    assert resp.status_code == 200, resp.text
+    assert "text/event-stream" in resp.headers["content-type"]
+    events = [json.loads(line[6:]) for line in resp.text.splitlines()
+              if line.startswith("data: ")]
+    kinds = [e["type"] for e in events]
+    assert kinds[0] == "started"
+    assert kinds[-1] == "done"
+    assert kinds.count("claim") == 2
+    assert events[-1]["result"]["claim_count"] == 2
+    assert len(events[-1]["result"]["reports"]) == 2
+
+
+def test_check_stream_auth_and_validation(ctx):
+    client, _ = ctx
+    r = client.post("/api/check/stream", json={"text": "   "})
+    assert r.status_code == 400
+    r = client.post("/api/check/stream", json={"text": "x", "domain": "nope"})
+    assert r.status_code == 400

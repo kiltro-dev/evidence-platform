@@ -226,8 +226,7 @@ def test_science_ceiling_preserved_once_wired():
     # decide_stance inputs are unchanged in shape; stance over the wired
     # set cannot exceed partially_supported for these outputs.
     stance_now = decide_stance(comps, uncs, claim)
-    assert stance_now in ("supported", "partially_supported", "unverifiable",
-                          "contradicted", "not_assessable")
+    assert stance_now == "partially_supported"  # UT-A1: ceiling real, no tautología
     # The ceiling claim itself: no verifying comparison exists, so under
     # the wired set this output cannot drive supported/contradicted.
     assert not any(c.verdict == "consistent" for c in verifying)

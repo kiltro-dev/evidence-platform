@@ -16,6 +16,8 @@ Every request and response body is JSON.
 | GET | `/api/status` | Service, version, mode, connectors |
 | POST | `/api/analyze` | Analyze a claim → full `Report` |
 | POST | `/api/check` | ShipCheck batch: split text → per-claim reports + roll-up |
+| POST | `/api/check/stream` | Same batch over SSE: `started` → `claim` events → `done` (never cached) |
+| GET | `/openapi.json` | Live OpenAPI schema (exported copy in `docs/openapi.json`) |
 | GET | `/api/reports?limit=N` | List recent reports (default 50, clamped 1–200) |
 | GET | `/api/reports/{report_id}` | Fetch one report |
 | DELETE | `/api/reports/{report_id}` | Delete one report |
@@ -48,7 +50,7 @@ Request (`AnalyzeRequest`):
 | `text` | string | required | Trimmed; 1–4000 chars after trim |
 | `limit` | int | 5 | Clamped to 1–10 (documented clamp, not an error); non-integers 422 |
 | `domain` | string | `"auto"` | One of `auto`, `economy`, `science`, `general` |
-| `persist` | bool | true | `false` skips SQLite (no row, no `persist` audit step) |
+| `persist` | bool | false | `true` writes SQLite (row + `persist` audit step); default `false` so public callers never archive visitor texts by accident (UT-j; the UI sends `true` explicitly) |
 | `fresh` | bool | false | `true` skips the identical-text cache READ (re-runs the pipeline) but still refreshes the entry — the UI re-run button uses this |
 
 `domain` overrides the extracted domain when it differs from `auto`
@@ -56,7 +58,8 @@ Request (`AnalyzeRequest`):
 
  guards:
 
-- Rate limit: 60 quota units per minute per IP (429 after that),
+- Rate limit: 60 quota units per minute per client (429 after that),
+  per API key when authenticated else per IP (see Auth below),
   shared bucket across `/api/analyze` (cost 1) and `/api/check`
   (fixed worst-case cost 8 — charging actuals would need a model
   split before the gate, an abuse vector). Validation runs before
@@ -67,12 +70,14 @@ Request (`AnalyzeRequest`):
   1h TTL), unless `fresh: true`. Concurrent identical misses are
   coalesced: one request runs the pipeline while the others wait and
   share its cached report (a waiter whose owner failed runs the
-  pipeline itself instead of inheriting the error). `/api/check` has
-  no cache: every call re-runs. `DELETE /api/reports/{id}` also evicts
+  pipeline itself instead of inheriting the error). `/api/check`
+  caches `persist: false` batches only (same 128/FIFO/1h policy);
+  persisted batches always re-run so report ids stay fresh.
+  `DELETE /api/reports/{id}` also evicts
   that report's cache entries (no deleted-id resurrection).
 - Loopback only: non-`127.0.0.1`/`::1`/`localhost` clients get 403
-  `non_loopback_blocked` unless `ATLAS_ALLOW_NON_LOOPBACK=1` (the
-  demo server has no auth, so it must not serve the network).
+  `non_loopback_blocked` unless `ATLAS_ALLOW_NON_LOOPBACK=1` or the
+  request carries a valid `X-API-Key` (see Auth below, UT-j).
 
 Response: `200` with the full `Report` object (see Schemas).
 Success bodies carry no `request_id`.
@@ -120,9 +125,22 @@ single claim):
   another clause, changing the meaning. Spans are exact substrings,
   never complete interpretations — each report checks the span, not
   the discourse.
-- Guards: same 60-units/min/IP bucket (a batch costs 8, charged
-  after validation). No identical-text cache: every call re-runs.
+- Guards: same 60-units/min bucket per client (a batch costs 8,
+  charged after validation; per API key when authenticated, else per
+  IP). Identical-text cache covers `persist: false` batches only
+  (and only when no `deadline_s` is set).
   Sub-claims run in parallel (one thread each, input order kept).
+- `deadline_s` (optional, clamped 1–600s): global batch budget.
+  Late sub-claims become `deadline_exceeded` error entries; partial
+  results keep their roll-up; `meta.deadline_exceeded` flags it.
+
+### POST /api/check/stream (SSE, UT-l)
+
+Same contract as `/api/check` (validation, auth, cost 8, deadline),
+but `text/event-stream`: `started` → one light `claim` event per
+finished sub-claim (`index`/`stance` or `error`) → final `done` with
+the complete batch dict. Never cached. Pipeline failures stream a
+single generic `error` event instead of an HTTP 500 body.
   Batch wall time is the slowest sub-claim: there is no batch-level
   deadline, each leaf times out on its own (connectors 20s + one
   retry, model 120s). Per-claim elapsed times ride in each sub-report.
@@ -147,6 +165,22 @@ Ordered newest first. `limit` query param defaults to 50, clamped 1–200.
 
 `200 {"deleted": true}`, or `404 report_not_found` when the id is unknown.
 Deletion is permanent; the report JSON is removed from SQLite.
+
+### Auth (UT-j public-deploy mode)
+
+- Without `ATLAS_API_KEY`: localhost only (loopback guard, no auth).
+- With `ATLAS_API_KEY`: `X-API-Key` header REQUIRED on
+  `/api/analyze`, `/api/check`, `GET /api/reports[/{id}]` and
+  `DELETE /api/reports/{id}` (401 `unauthorized` otherwise);
+  `/api/status` and `/` stay open. A valid key also bypasses the
+  loopback guard (public deploy behind a proxy).
+- Buckets are per API key when authenticated (one user cannot burn
+  another's quota behind a shared proxy IP), else per client IP.
+  `X-Forwarded-For` is honored ONLY with `ATLAS_TRUST_PROXY=1`
+  (set it solely behind a proxy that overwrites the header).
+- Cost ceiling by construction: 60 units/min × batch-cost 8 ×
+  ≤8 sub-claims × bounded model calls (4000 tokens each) — see
+  `docs/SECURITY_OPS.md` for the deploy checklist.
 
 ## Error envelope
 

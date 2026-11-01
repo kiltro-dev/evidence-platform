@@ -432,3 +432,129 @@ def test_synthesize_validates_model_summary_citations():
     assert conclusion.actor == "model"
     assert "[cmp_abc123]" in conclusion.summary
     assert "cmp_fake" not in conclusion.summary
+
+
+# --- UT-A2: model times/geos must be literal (invented years move retrieval) ---
+
+
+def test_a2_invented_model_year_dropped():
+    claim = _from_llm_json(
+        "The GDP of France was $1 trillion in 2023.",
+        _llm_json(
+            time_refs=[{"raw": "1999", "year": 1999, "period_type": "year"}],
+        ),
+        "m",
+    )
+    assert [t.year for t in claim.time_refs] == [2023]  # heuristic backfill
+    assert "non-literal time_refs" in claim.context_notes
+
+
+def test_a2_literal_model_year_kept():
+    claim = _from_llm_json(
+        "The GDP of France was $1 trillion in 2023.",
+        _llm_json(
+            time_refs=[{"raw": "2023", "year": 2023, "period_type": "year"}],
+        ),
+        "m",
+    )
+    assert [t.year for t in claim.time_refs] == [2023]
+    assert "non-literal time_refs" not in claim.context_notes
+
+
+def test_a2_range_needs_both_ends_literal():
+    claim = _from_llm_json(
+        "GDP grew from 2015 to 2019.",
+        _llm_json(
+            time_refs=[{
+                "raw": "2015-2020", "start_year": 2015, "end_year": 2020,
+                "period_type": "range",
+            }],
+        ),
+        "m",
+    )
+    assert all(t.start_year != 2015 or t.end_year != 2020 for t in claim.time_refs)
+
+
+def test_a2_vague_time_kept_without_year():
+    claim = _from_llm_json(
+        "The population is 125 million.",
+        _llm_json(
+            time_refs=[{"raw": "present", "period_type": "vague"}],
+        ),
+        "m",
+    )
+    assert any(t.period_type == "vague" for t in claim.time_refs)
+
+
+def test_a2_invented_model_geo_dropped():
+    claim = _from_llm_json(
+        "The GDP of France was $1 trillion in 2023.",
+        _llm_json(
+            geo_refs=[{"raw": "Germany", "name": "Germany", "iso3": "DEU"}],
+        ),
+        "m",
+    )
+    assert [g.iso3 for g in claim.geo_refs] == ["FRA"]  # heuristic backfill
+    assert "non-literal geo_refs" in claim.context_notes
+
+
+def test_a2_short_geo_needs_word_boundary():
+    claim = _from_llm_json(
+        "The virus status update mentions 5 cases.",
+        _llm_json(
+            geo_refs=[{"raw": "US", "name": "United States", "iso3": "USA"}],
+        ),
+        "m",
+    )
+    assert claim.geo_refs == []
+    assert "non-literal geo_refs" in claim.context_notes
+
+
+def test_a3_unknown_model_domain_coerced_to_heuristic():
+    claim = _from_llm_json(
+        "The GDP of France was $1 trillion in 2023.",
+        _llm_json(domain="politics"),
+        "m",
+    )
+    assert claim.domain == "economy"
+    assert "unknown domain" in claim.context_notes
+
+
+def test_a3_typo_model_domain_coerced():
+    claim = _from_llm_json(
+        "The GDP of France was $1 trillion in 2023.",
+        _llm_json(domain="ecomony"),
+        "m",
+    )
+    assert claim.domain == "economy"
+
+
+def test_a3_unknown_claim_type_coerced():
+    claim = _from_llm_json(
+        "The GDP of France was $1 trillion in 2023.",
+        _llm_json(claim_type="narrative"),
+        "m",
+    )
+    assert claim.claim_type in (
+        "quantitative", "comparative", "existence", "other")
+    assert "unknown claim_type" in claim.context_notes
+
+
+def test_a3_valid_domain_kept():
+    claim = _from_llm_json(
+        "The GDP of France was $1 trillion in 2023.",
+        _llm_json(domain="science"),
+        "m",
+    )
+    assert claim.domain == "science"
+
+
+def test_a2_literal_model_geo_kept():
+    claim = _from_llm_json(
+        "The GDP of France was $1 trillion in 2023.",
+        _llm_json(
+            geo_refs=[{"raw": "France", "name": "France", "iso3": "FRA"}],
+        ),
+        "m",
+    )
+    assert [g.iso3 for g in claim.geo_refs] == ["FRA"]

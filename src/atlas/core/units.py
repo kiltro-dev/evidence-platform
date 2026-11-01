@@ -8,18 +8,23 @@ from .types import Quantity
 
 SCALE_WORDS: dict[str, float] = {
     "trillion": 1e12,
+    "trillions": 1e12,
     "tn": 1e12,
     "billion": 1e9,
+    "billions": 1e9,
     # "b" (attached only, e.g. "$27b") = billion; bare "t" is DELIBERATELY
     # absent — "5 t" reads as 5 tonnes, never 5 trillion (M6 finding).
     "b": 1e9,
     "bn": 1e9,
     "million": 1e6,
+    "millions": 1e6,
     "mn": 1e6,
     "m": 1e6,
     "thousand": 1e3,
+    "thousands": 1e3,
     "k": 1e3,
     "hundred": 1e2,
+    "hundreds": 1e2,
     # --- Spanish (ES) scale words ---
     # NOTE: ES "billón" = 1e12, i.e. the same magnitude as EN "trillion"
     # (long scale), NOT EN "billion". ES "millardo" = 1e9 = EN "billion".
@@ -32,6 +37,12 @@ SCALE_WORDS: dict[str, float] = {
     "millon": 1e6,
     "millones": 1e6,
     "mil": 1e3,
+    # Compound ES scale: "5 mil millones" = 5e9 (short "mil" alone stays 1e3).
+    "mil millones": 1e9,
+    # Attached UPPERCASE "T" only ("$27.72T" = trillion). Lowercase "t" is
+    # tonnes ("5 t"), never trillion — enforced case-sensitively in the
+    # regex, not here (see _QUANTITY_RE).
+    "T": 1e12,
 }
 
 CURRENCY_SYMBOLS: dict[str, str] = {
@@ -111,16 +122,49 @@ UNIT_ALIASES: dict[str, str] = {
 # thousand even in Spanish text — a documented limitation.
 _DECIMAL_COMMA_RE = re.compile(r"\d+,\d{1,2}$")
 
+# Spanish thousand separators: dot groups of EXACTLY 3 digits. Two or
+# more groups ("1.400.000") are never a decimal in any locale, so they
+# always read as thousands. A SINGLE group ("1.500") is genuinely
+# ambiguous (ES 1500 vs EN 1.5): it reads as thousands ONLY with a
+# Spanish scale/unit marker nearby, else decimal (fuel prices like
+# "1.459 EUR/L" and EN decimals win the default).
+_THOUSAND_DOT_MULTI_RE = re.compile(r"\d{1,3}(?:\.\d{3}){2,}$")
+_THOUSAND_DOT_SINGLE_RE = re.compile(r"\d{1,3}\.\d{3}$")
+# ES mirror of EN "1,000.50": dot-thousands + comma-decimal.
+_THOUSAND_DOT_COMMA_RE = re.compile(r"\d{1,3}(?:\.\d{3})+,\d+$")
+
+_ES_SCALES = frozenset({
+    "millones", "millón", "millon", "billones", "billón", "billon",
+    "millardos", "millardo", "mil", "mil millones",
+})
+_ES_UNITS = frozenset({
+    "dólares", "dolares", "dólar", "dolar", "euros", "euro", "pesos",
+    "peso", "libras", "libra", "personas", "persona", "habitantes",
+    "habitante", "muertes", "muerte", "casos", "caso", "años", "anos",
+    "año", "ano", "por ciento", "puntos porcentuales",
+    "punto porcentual",
+})
+
 # Single-letter scales (k/m/b) count ONLY when attached to the digits
 # ("$27m", "5k"): space-separated single letters are units, not scales
 # ("100 m" = 100 meters, never 100 million — SI convention). Multi-char
 # scale words allow the space ("27.36 trillion", "5 mil").
+# Attached UPPERCASE "T" ("$27.72T") is trillion; the (?-i:T) scope keeps
+# it case-sensitive inside this IGNORECASE pattern so "5 t" (tonnes)
+# never matches. "mil millones" precedes "mil" (ordered alternation).
+# Every scale word carries ONE trailing-letter guard so prefixes never
+# fabricate scale ("millionaires", "billonarios", "thousandth" take no
+# scale); plurals are explicit ("millions" still works). Spaced "tn"
+# stays trillion (pinned by a unit test; live eval cases pin attached
+# "$27.36tn") even though "Tn" is also tonnes — documented collision,
+# claims context wins.
 _QUANTITY_RE = re.compile(
-    r"(?P<symbol>[$€£¥])?\s*(?P<num>\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+,\d{1,2}(?!\d)|\d+(?:\.\d+)?)"
-    r"(?:\s*(?P<scale>trillion|billion|million|thousand|hundred|tn|bn|mn|"
-    r"billones|billón|billon|millones|millón|millon|millardos|millardo|"
-    r"mil(?![a-zA-Z/]))"
-    r"|(?P<scale_short>k(?![a-zA-Z/])|m(?![a-zA-Z/])|b(?![a-zA-Z/])))?"
+    r"(?P<symbol>[$€£¥])?\s*(?P<num>\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+,\d{1,2}(?!\d)|"
+    r"\d{1,3}(?:\.\d{3})+,\d+|\d{1,3}(?:\.\d{3}){2,}(?![\d.])|\d{1,3}\.\d{3}(?![\d.])|\d+(?:\.\d+)?)"
+    r"(?:\s*(?P<scale>trillions?|billions?|millions?|thousands?|hundreds?|"
+    r"tn|bn|mn|billones|billón|billon|millones|millón|millon|"
+    r"millardos|millardo|mil millones|mil)(?![a-zA-Záéíóúüñ/])"
+    r"|(?P<scale_short>k(?![a-zA-Z/])|m(?![a-zA-Z/])|b(?![a-zA-Z/])|(?-i:T)(?![a-zA-Z/])))?"
     r"(?P<pct>\s*%)?",
     re.IGNORECASE,
 )
@@ -133,7 +177,7 @@ _QUANTITY_RE = re.compile(
 # would otherwise win). Bare "pp" needs a trailing guard so "2 ppm"
 # (parts per million) does not read as percentage points.
 _UNIT_AFTER_RE = re.compile(
-    r"^\s*(?:de\s+)?(usd|us\$|dollars?|dólares|dolares|dólar|dolar|eur|euros?|gbp|pounds?|libras?|jpy|yen|"
+    r"^\s*(?:de\s+)?(usd|us\$|dollars?|dólares|dolares|dólar|dolar|euros?|eur|gbp|pounds?|pesos?|libras?|jpy|yen|"
     r"percentage points?|percent|pp(?![a-zA-Z])|por ciento|puntos? porcentuales?|"
     r"people|personas?|inhabitants|habitantes?|deaths|muertes?|cases|casos?|"
     r"m/s|meters per second|metres per second|km/s|"
@@ -167,14 +211,11 @@ def parse_quantities(text: str, label: str = "") -> list[Quantity]:
     out: list[Quantity] = []
     for m in _QUANTITY_RE.finditer(text):
         raw_num = m.group("num")
-        if _DECIMAL_COMMA_RE.fullmatch(raw_num):
-            num = float(raw_num.replace(",", "."))
-        else:
-            num = float(raw_num.replace(",", ""))
-        scale_word = (
-            m.group("scale") or m.group("scale_short") or ""
-        ).lower()
-        scale = SCALE_WORDS.get(scale_word, 1.0)
+        scale_word = m.group("scale") or m.group("scale_short") or ""
+        # Exact-case lookup first ("T" = trillion), then lowercase.
+        scale = SCALE_WORDS.get(
+            scale_word, SCALE_WORDS.get(scale_word.lower(), 1.0)
+        )
         if m.group("pct"):
             unit: str | None = "percent"
         elif m.group("symbol"):
@@ -183,6 +224,23 @@ def parse_quantities(text: str, label: str = "") -> list[Quantity]:
             after = text[m.end() : m.end() + 28]
             um = _UNIT_AFTER_RE.match(after)
             unit = um.group(1).strip() if um else None
+        if _THOUSAND_DOT_MULTI_RE.fullmatch(raw_num):
+            num = float(raw_num.replace(".", ""))
+        elif _THOUSAND_DOT_COMMA_RE.fullmatch(raw_num):
+            int_part, frac = raw_num.split(",")
+            num = float(int_part.replace(".", "") + "." + frac)
+        elif _THOUSAND_DOT_SINGLE_RE.fullmatch(raw_num):
+            # Ambiguous "1.500": thousands only with a Spanish marker.
+            u = unit or ""
+            u = u[3:] if u.lower().startswith("de ") else u
+            es_marker = (scale_word.lower() in _ES_SCALES
+                         or u.lower() in _ES_UNITS)
+            num = (float(raw_num.replace(".", "")) if es_marker
+                   else float(raw_num))
+        elif _DECIMAL_COMMA_RE.fullmatch(raw_num):
+            num = float(raw_num.replace(",", "."))
+        else:
+            num = float(raw_num.replace(",", ""))
         value = num * scale
         norm_unit = normalize_unit(unit)
         out.append(
@@ -216,3 +274,50 @@ def convert_temperature(value: float, from_unit: str, to_unit: str) -> float | N
         return None
     c = to_c[fu](value)  # type: ignore[operator]
     return from_c[tu](c)  # type: ignore[operator]
+
+
+# UT-e: full scale WORDS (any case, ES accents optional) state an
+# unambiguous scale. Single letters ("27.72T", "5 M") and bare digit
+# strings ("27720000000000") do NOT: a letter is ambiguous (tonnes?)
+# and a long digit run is typo-prone, so both stay conservative
+# (scale slips abstain via possible_scale_error).
+_EXPLICIT_SCALE_RE = re.compile(
+    r"\b(trillions?|billions?|millions?|thousands?|hundreds?|billones?|"
+    r"bill[oó]n(?:es)?|millardos?|millones?|mill[oó]n(?:es)?|mil|"
+    r"centenas?|centenares?)\b",
+    re.IGNORECASE,
+)
+
+
+def is_explicit_scale(raw: str) -> bool:
+    """True when raw text states its scale in unambiguous words."""
+    return bool(_EXPLICIT_SCALE_RE.search(raw or ""))
+
+
+# UT-e: 10^k backstop powers (both directions; k a multiple of 3).
+_SCALE_POWERS = (3, 6, 9, 12)
+_SCALE_BAND = 0.01  # ±1% around the exact power
+
+
+def scale_error_power(claim_value: float | None,
+                      evidence_value: float | None) -> int | None:
+    """Signed k when ev/claim sits within ±1% of 10^k, else None.
+
+    k ranges over ±{3, 6, 9, 12} (thousand to trillion and back).
+    Zero/None values never match; ratios beyond 1e12 (or below
+    1e-12) are real hallucinations, not scale slips.
+    """
+    if not claim_value or not evidence_value:
+        return None
+    try:
+        ratio = abs(float(evidence_value) / float(claim_value))
+    except (TypeError, ValueError, ZeroDivisionError):
+        return None
+    for k in _SCALE_POWERS:
+        target = 10.0 ** k
+        if abs(ratio - target) / target <= _SCALE_BAND:
+            return k
+        inv = 1.0 / target
+        if abs(ratio - inv) / inv <= _SCALE_BAND:
+            return -k
+    return None

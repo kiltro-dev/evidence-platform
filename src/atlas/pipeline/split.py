@@ -24,6 +24,8 @@ from __future__ import annotations
 import logging
 import re
 
+from ..connectors.countries import resolve_country
+
 log = logging.getLogger(__name__)
 
 # Input longer than this is truncated before splitting (disclosed in notes).
@@ -149,6 +151,65 @@ def split_claims(
     segs, hnotes = split_heuristic(clean)
     notes.extend(hnotes)
     return segs, "heuristic", None, notes
+
+
+# UT-g: years mentioned in a span (candidate context, never asserted).
+_YEAR_CTX_RE = re.compile(r"\b(19|20|21)\d{2}\b")
+
+
+def span_contexts(spans: list[str]) -> list[dict]:
+    """Resolved discourse context per span, carried APART from the text.
+
+    Each span keeps its verbatim text untouched; the context dict holds
+    what the pipeline may assume about it: the country (own mention
+    wins, else the nearest preceding span's country) and mentioned
+    years (same rule). Every entry declares its provenance ("own" vs
+    "inherited") so consumers never mistake discourse context for an
+    asserted fact — and nothing is invented when no antecedent
+    exists. Deterministic, model-free, order-dependent by design.
+    """
+    ctxs: list[dict] = []
+    last_country: tuple[str | None, str | None] = (None, None)
+    last_years: list[int] = []
+    for span in spans:
+        ctx: dict = {}
+        name, iso3 = resolve_country(span)
+        if iso3 is not None:
+            ctx["country"] = name
+            ctx["country_iso3"] = iso3
+            ctx["country_source"] = "own"
+            last_country = (name, iso3)
+        elif last_country[1] is not None:
+            ctx["country"] = last_country[0]
+            ctx["country_iso3"] = last_country[1]
+            ctx["country_source"] = "inherited"
+        years = sorted({int(m.group(0)) for m in _YEAR_CTX_RE.finditer(span)})
+        if years:
+            ctx["years"] = years
+            ctx["years_source"] = "own"
+            last_years = years
+        elif last_years:
+            ctx["years"] = list(last_years)
+            ctx["years_source"] = "inherited"
+        ctxs.append(ctx)
+    return ctxs
+
+
+def split_with_context(
+    text: str, llm=None
+) -> tuple[list[str], list[dict], str, list[str]]:
+    """Split `text` like split_claims, plus per-span resolved context.
+
+    Returns (spans, contexts, actor, notes): spans are verbatim (same
+    guarantees as split_claims); contexts[i] carries the resolved
+    country/years for spans[i] as a separate dict (see
+    span_contexts). `actor` is "model"/"heuristic" and notes disclose
+    the model name when the model path ran.
+    """
+    spans, actor, model, notes = split_claims(text, llm)
+    if actor == "model" and model:
+        notes = list(notes) + [f"split model: {model}"]
+    return spans, span_contexts(spans), actor, notes
 
 
 def _from_model_json(

@@ -156,3 +156,58 @@ def test_responses_usage_cached_tokens_defaults_zero():
     assert result.candidates == []
     assert client.last_usage is not None
     assert client.last_usage["cached_tokens"] == 0
+
+
+def test_metaclient_fork_independent_usage():
+    # UT-m (m1/m2): forks attribute usage independently, even from a
+    # partially-initialized base.
+    from atlas.models.meta import MetaClient
+    from atlas.pipeline.run import _take_usage, _usage_seq
+
+    assert hasattr(MetaClient, "fork")
+    base = MetaClient.__new__(MetaClient)
+    base.last_usage_seq, base.last_usage = 0, None
+    fa, fb = base.fork(), base.fork()
+    seq_a = _usage_seq(fa)
+    fb.last_usage_seq, fb.last_usage = 1, {"total_tokens": 50}
+    assert _take_usage(fa, seq_a) is None
+
+
+def test_metaclient_fork_carries_config_fresh_state():
+    from atlas.models.meta import MetaClient
+
+    base = MetaClient(api_key="k", base_url="http://x", model="m",
+                      timeout_s=5.0)
+    base.last_usage_seq, base.last_usage = 3, {"total_tokens": 9}
+    f = base.fork()
+    assert (f.api_key, f.base_url, f.model, f.timeout_s) == (
+        "k", "http://x", "m", 5.0)
+    assert f.last_usage is None and f.last_usage_seq == 0
+    assert f is not base
+
+
+def test_fork_usage_thread_isolated():
+    # UT-m: concurrent writes to sibling forks never cross-attribute.
+    import threading
+    from atlas.models.meta import MetaClient
+    from atlas.pipeline.run import _take_usage, _usage_seq
+
+    base = MetaClient(api_key="k")
+    forks = [base.fork() for _ in range(8)]
+    seqs = [_usage_seq(f) for f in forks]
+    barrier = threading.Barrier(len(forks))
+
+    def write(i):
+        barrier.wait()
+        forks[i].last_usage = {"total_tokens": 100 + i}
+        forks[i].last_usage_seq += 1
+
+    threads = [threading.Thread(target=write, args=(i,))
+               for i in range(len(forks))]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    for i, f in enumerate(forks):
+        got = _take_usage(f, seqs[i])
+        assert got == {"total_tokens": 100 + i}, (i, got)

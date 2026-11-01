@@ -56,7 +56,7 @@ def test_analyze_happy_path(ctx):
     assert "error" not in body and "request_id" not in body
     assert len(calls) == 1
     assert calls[0]["limit"] == 5
-    assert calls[0]["persist"] is True
+    assert calls[0]["persist"] is False  # UT-j: public default
     assert calls[0]["domain"] == "auto"
 
 

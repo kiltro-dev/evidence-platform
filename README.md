@@ -71,7 +71,7 @@ output**, and paste:
 > population of Japan was 125 million in 2023. Unemployment in Germany
 > was 9.8% in 2023.
 
-You get three receipts: precision-capped `partially_supported` (Δ1.62%
+You get three receipts: precision-capped `partially_supported` (Δ≈1.6%
 but the stated digits exceed what the retrieved value confirms),
 `supported`, and `contradicted` (Δ219% — the hallucination, caught) —
 with live-web counter-evidence attached as doubt (recorded run:
@@ -79,6 +79,8 @@ with live-web counter-evidence attached as doubt (recorded run:
 (`POST /api/analyze`) still works: try `The population of Japan was 500
 million in 2020.` → contradicted, or `Democracy is the best form of
 government.` → not assessable (opinion).
+
+![Demo batch: roll-up 1 supported / 1 partial / 1 contradicted with a precision-capped receipt](docs/demo-batch.png)
 
 Full script: [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md).
 
@@ -89,7 +91,7 @@ single-page UI, httpx connectors, SQLite persistence, pydantic models.
 The only model dependency is the Meta Model API: Chat Completions
 (`muse-spark-1.3`, strict `json_schema` decoding) for structuring and
 judgment calls, Responses API + `web_search` for live counter-evidence.
-Seven dependencies total — see [requirements.txt](requirements.txt).
+Eight dependencies total (seven runtime + hypothesis for property tests) — see [requirements.txt](requirements.txt).
 
 Architecture: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) ·
 API: [docs/API.md](docs/API.md) ·
@@ -151,19 +153,22 @@ UI at `/`. Full reference: [docs/API.md](docs/API.md).
 ## Tests & evaluation
 
 ```bash
-.venv/bin/python -m pytest tests/unit tests/e2e -q        # offline gate (506 tests)
+.venv/bin/python -m pytest tests/unit tests/e2e -q        # offline gate (639 tests)
 .venv/bin/python -m pytest tests/integration -q -m live   # live sources (needs network)
 cd tests/e2e-browser && npm ci && npm run install-browser-shell && npm test  # 5 browser specs, degraded
 PYTHONPATH=src .venv/bin/python scripts/run_eval.py --mode degraded  # 11 scripted cases, offline
 PYTHONPATH=src .venv/bin/python scripts/run_eval.py --mode full      # all 43 cases, needs network + key
 PYTHONPATH=src .venv/bin/python scripts/run_eval.py --paraphrase     # 36-input stability probe, offline
 PYTHONPATH=src .venv/bin/python scripts/run_eval.py --unanswerable   # 20-variant abstention probe, offline
-bash scripts/smoke.sh --port 8765                           # offline smoke (31 checks)
+bash scripts/smoke.sh --port 8765                           # offline smoke (32 checks)
 bash scripts/smoke.sh --port 8765 --live --eval              # + live API + full eval
 ```
 
-- `tests/unit tests/e2e` is the offline gate: **506 tests, all green**,
-  no network, no key (pytest 9).
+- `tests/unit tests/e2e` is the offline gate: **639 tests, all green**,
+  no network, no key (pytest 9). No `PYTHONPATH` needed: the test
+  modules self-insert `src/` on `sys.path`. Direct scripts
+  (`scripts/run_eval.py`, `repro_findings.py`, `uvicorn`) DO need
+  `PYTHONPATH=src`.
 - `tests/e2e-browser` is the browser gate: 5 Playwright specs drive the
   real UI in degraded mode (a11y contract, abort paths, journeys,
   render fidelity, UI units) — see
@@ -174,7 +179,7 @@ bash scripts/smoke.sh --port 8765 --live --eval              # + live API + full
   cases and skips the 32 `live` ones; `--mode full` runs everything but
   needs network and takes many minutes (live source latency plus up to
   5 model calls per case, incl. the token-hungry web pass).
-- Current results: **486/486 offline, 11/11 degraded eval, 36/36
+- Current results: **639/639 offline, 11/11 degraded eval, 36/36
   paraphrase agreement, full-mode eval with real muse-spark-1.3** —
   see [docs/EVAL_REPORT.md](docs/EVAL_REPORT.md) for the pinned run.
   What these numbers do and do not prove is stated there honestly:

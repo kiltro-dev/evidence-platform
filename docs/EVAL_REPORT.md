@@ -482,6 +482,25 @@ JSON, and classify into one of the five before touching code.
   verify-inert (`period_mismatch`, pinned offline in
   `test_e2e_yearless_claim_skips_numeric_compare_with_period_mismatch`).
 
+## External-truth probe EVAL1-economy (War Room, 2026-11-01) — 12/12
+
+Not pin conformance: 12 fresh claims against live World Bank values
+(vintage 2026-10-08, fetched the same day), each with an expected stance
+SET. 4 true stats → {supported, partially_supported}; 4 false stats →
+{contradicted}; 1 rate-vs-level → {unverifiable}; 1 explicit-scale miss →
+{contradicted}; 1 bare-scale → {unverifiable} (scale guard); 1 multi-year
+→ {supported, partially_supported}.
+
+```text
+EVAL1-economy: 12/12 = 1.00, Wilson95=[0.76,1.00]; correct-abstention 2/2
+```
+
+Honest limits: n=12 (wide interval — the Wilson bound, not the point
+estimate, is the claim); economy-only (OpenAlex was HTTP 429 that day,
+so no science external-truth cases); true cases use near-exact rounded
+values (calibration, not robustness); run once, live model + live WB.
+Runner: `/tmp/eval1_economy.py` (War-Room scratch, not committed).
+
 ## v2 history (condensed)
 
 v2 closed at 24/24 (pin conformance 1.00) after honest reconciliation:

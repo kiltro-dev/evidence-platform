@@ -371,3 +371,39 @@ def test_unparseable_span_trusted_as_today():
     claim = structure_claim("There were a dozen eggs.", llm)
     assert claim.quantities[0].value == 12.0
     assert "conversion" not in claim.context_notes
+
+
+class _EffortRecorder(ScriptedClient):
+    def __init__(self, *a, **k):
+        super().__init__(*a, **k)
+        self.efforts: list = []
+
+    def complete_json(self, system, user, max_tokens=1500,
+                      reasoning_effort=None, json_schema=None):
+        self.efforts.append(reasoning_effort)
+        return super().complete_json(system, user, max_tokens,
+                                     reasoning_effort, json_schema)
+
+
+def test_structure_claim_sends_reasoning_effort():
+    # UT-o (o1): extraction budgets hidden reasoning explicitly.
+    from atlas.pipeline.extract import STRUCTURE_REASONING_EFFORT
+
+    llm = _EffortRecorder(responses=[{"quantities": []}])
+    structure_claim("GDP was $5 in 2023.", llm=llm)
+    assert llm.efforts and all(e == STRUCTURE_REASONING_EFFORT
+                               for e in llm.efforts)
+
+
+def test_synthesize_sends_reasoning_effort():
+    # UT-o (o2): summary budgets hidden reasoning explicitly.
+    from atlas.pipeline.synthesize import SUMMARY_REASONING_EFFORT, decide_stance
+
+    llm = _EffortRecorder(responses=[{"summary": "s", "caveats": []}])
+    claim = structure_claim("GDP was $5 in 2023.", llm=None)
+    cmps, uncs = verify_quantitative(
+        claim, [_usd_evidence(claim.claim_id, "2023", 5.0)])
+    decide_stance(cmps, uncs, claim)
+    synthesize(claim, cmps, uncs, llm=llm)
+    assert llm.efforts and all(e == SUMMARY_REASONING_EFFORT
+                               for e in llm.efforts)

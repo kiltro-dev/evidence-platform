@@ -22,7 +22,13 @@ from . import as_provider_error, register
 
 BASE_URL = "https://api.openalex.org"
 TIMEOUT_S = 20.0
-MAILTO = "evidence-atlas@example.org"
+# UT-k: contact email for the polite pool, from the environment. No
+# placeholder default: sending "example.org" misidentifies the
+# project, and inventing another address would be no better — when
+# unset, the parameter is omitted (the API works without it). Human
+# action: set a real contact address (OPENALEX_MAILTO) plus a free
+# key (OPENALEX_API_KEY) before any shared-IP demo.
+MAILTO = os.environ.get("OPENALEX_MAILTO", "").strip()
 
 
 def search_works(query: str, per_page: int = 5) -> list[dict]:
@@ -34,8 +40,9 @@ def search_works(query: str, per_page: int = 5) -> list[dict]:
             "authorships,primary_location,open_access,type,"
             "abstract_inverted_index"
         ),
-        "mailto": MAILTO,
     }
+    if MAILTO:
+        params["mailto"] = MAILTO
     api_key = os.environ.get("OPENALEX_API_KEY", "").strip()
     if api_key:
         params["api_key"] = api_key

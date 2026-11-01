@@ -9,19 +9,24 @@ request bodies into logs or responses.
 
 from __future__ import annotations
 
+import hashlib
+import hmac
+import json
 import os
+import queue
 import threading
 import time
 import uuid
 from pathlib import Path
 
 import atlas.pipeline.run as pipeline_run
-from fastapi import FastAPI, Request
+from fastapi import Depends, FastAPI, Request
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from starlette.exceptions import HTTPException as StarletteHTTPException
+from starlette.middleware.cors import CORSMiddleware
 
 from atlas.core.types import Report
 from atlas.models.meta import MetaClient
@@ -30,6 +35,24 @@ from atlas.storage.store import delete_report, get_report, list_reports
 WEB_DIR = Path(__file__).resolve().parents[3] / "web"
 
 app = FastAPI(title="Evidence Atlas", version=pipeline_run.APP_VERSION)
+
+# UT-n: opt-in CORS for sidecar/browser integrations. Origins come ONLY
+# from ATLAS_CORS_ORIGINS (comma-separated, e.g.
+# "https://app.example.com,https://demo.example.org"); unset/empty
+# means same-origin only (no CORS headers emitted). Methods/headers
+# are allowlisted (X-API-Key included for authed browser calls);
+# credentials stay disabled (key travels in the header, never cookies).
+_cors_origins = [o.strip() for o in
+                 os.environ.get("ATLAS_CORS_ORIGINS", "").split(",")
+                 if o.strip()]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=_cors_origins,
+    allow_methods=["GET", "POST", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "X-API-Key"],
+    allow_credentials=False,
+    max_age=600,
+)
 _llm: MetaClient | None = None
 
 VALID_DOMAINS = pipeline_run.VALID_DOMAINS
@@ -79,7 +102,10 @@ class AnalyzeRequest(BaseModel):
     text: str
     limit: int = 5
     domain: str = "auto"
-    persist: bool = True
+    # UT-j: persist defaults to False — a public default-true would
+    # archive every visitor's pasted text (user-data leak by design).
+    # The UI sends persist:true explicitly when history is wanted.
+    persist: bool = False
     # fresh=true skips the identical-text cache READ (re-runs the
     # pipeline) but still refreshes the cache entry on success.
     fresh: bool = False
@@ -89,7 +115,10 @@ class CheckRequest(BaseModel):
     text: str
     limit: int = 5
     domain: str = "auto"
-    persist: bool = True
+    persist: bool = False
+    # UT-l: optional global batch budget in seconds (clamped 1..600 at
+    # the endpoints; None waits for every sub-claim as before).
+    deadline_s: float | None = None
 
 
 class ApiError(Exception):
@@ -177,27 +206,27 @@ async def _unhandled_handler(request: Request, exc: Exception) -> JSONResponse:
 BATCH_RATE_COST = 8
 
 
-def _check_rate_limit(client_ip: str, cost: int = 1) -> None:
+def _check_rate_limit(bucket: str, cost: int = 1) -> None:
     with _state_lock:
-        _check_rate_limit_locked(client_ip, cost)
+        _check_rate_limit_locked(bucket, cost)
 
 
-def _check_rate_limit_locked(client_ip: str, cost: int) -> None:
+def _check_rate_limit_locked(bucket: str, cost: int) -> None:
     # Loopback callers share one bucket: 127.0.0.1/::1/localhost are
-    # spellings of the same local user (XFF-controlled under uvicorn's
-    # proxy headers), so per-spelling buckets would multiply the quota.
-    if client_ip in _LOOPBACK_HOSTS:
-        client_ip = "loopback"
+    # spellings of the same local user, so per-spelling buckets would
+    # multiply the quota. Key buckets ("key:...") never collapse.
+    if bucket.startswith("ip:") and bucket[3:] in _LOOPBACK_HOSTS:
+        bucket = "ip:loopback"
     now = time.monotonic()
-    hits = _rate_hits.get(client_ip)
+    hits = _rate_hits.get(bucket)
     if hits is None:
         if len(_rate_hits) >= _MAX_TRACKED_IPS:
             _rate_hits.pop(next(iter(_rate_hits)))
         if cost > RATE_LIMIT_PER_MINUTE:
             raise ApiError(
-                429, "rate_limited", "Rate limit exceeded (60 requests/min per IP)."
+                429, "rate_limited", "Rate limit exceeded."
             )
-        _rate_hits[client_ip] = [now] * cost
+        _rate_hits[bucket] = [now] * cost
         return
     cutoff = now - RATE_WINDOW_S
     i = 0
@@ -206,7 +235,7 @@ def _check_rate_limit_locked(client_ip: str, cost: int) -> None:
     del hits[:i]
     if len(hits) + cost > RATE_LIMIT_PER_MINUTE:
         raise ApiError(
-            429, "rate_limited", "Rate limit exceeded (60 requests/min per IP)."
+            429, "rate_limited", "Rate limit exceeded."
         )
     hits.extend([now] * cost)
 
@@ -230,6 +259,30 @@ def _cache_put(
         if key not in _cache and len(_cache) >= CACHE_CAP:
             _cache.pop(next(iter(_cache)))  # evict oldest-inserted (FIFO)
         _cache[key] = (report, time.monotonic())
+
+
+# UT-j: identical-text cache for /api/check (persist=false only — see
+# the endpoint docstring). Same FIFO+TTL policy as the analyze cache.
+_check_cache: dict[tuple[str, str, int, str | None], tuple[dict, float]] = {}
+
+
+def _check_cache_get(key: tuple[str, str, int, str | None]) -> dict | None:
+    with _state_lock:
+        entry = _check_cache.get(key)
+        if entry is None:
+            return None
+        out, ts = entry
+        if time.monotonic() - ts > CACHE_TTL_S:
+            _check_cache.pop(key, None)
+            return None
+        return out
+
+
+def _check_cache_put(key: tuple[str, str, int, str | None], out: dict) -> None:
+    with _state_lock:
+        if key not in _check_cache and len(_check_cache) >= CACHE_CAP:
+            _check_cache.pop(next(iter(_check_cache)))
+        _check_cache[key] = (out, time.monotonic())
 
 
 def _cache_evict_report(report_id: str) -> None:
@@ -271,6 +324,41 @@ def _inflight_release(key: tuple[str, str, int, bool, str | None]) -> None:
 _LOOPBACK_HOSTS = frozenset({"127.0.0.1", "::1", "localhost", "testclient"})
 
 
+def _expected_api_key() -> str:
+    return os.environ.get("ATLAS_API_KEY", "")
+
+
+def _request_api_key(request: Request) -> str:
+    return request.headers.get("x-api-key", "")
+
+
+def _api_key_ok(request: Request) -> bool:
+    expected = _expected_api_key()
+    if not expected:
+        return False
+    return hmac.compare_digest(_request_api_key(request), expected)
+
+
+def require_api_key(request: Request) -> str | None:
+    """Auth dependency for sensitive endpoints (UT-j).
+
+    Two modes: without ATLAS_API_KEY the server is localhost-only
+    (the loopback guard below is the boundary; dependency returns
+    None). With a key configured, X-API-Key is REQUIRED (401
+    otherwise) and the returned key identifies the caller for
+    per-user rate limiting. Constant-time comparison.
+    """
+    expected = _expected_api_key()
+    if not expected:
+        return None
+    if not hmac.compare_digest(_request_api_key(request), expected):
+        raise ApiError(
+            401, "unauthorized",
+            "Missing or invalid X-API-Key header.",
+        )
+    return _request_api_key(request)
+
+
 def _client_allowed(host: str | None) -> bool:
     """Localhost-only enforcement (code, not just docs).
 
@@ -286,6 +374,10 @@ def _client_allowed(host: str | None) -> bool:
 
 @app.middleware("http")
 async def _loopback_guard(request: Request, call_next):
+    # UT-j: a valid API key bypasses the loopback guard (public deploy
+    # behind a proxy authenticates instead of relying on source IP).
+    if _api_key_ok(request):
+        return await call_next(request)
     host = request.client.host if request.client else None
     if not _client_allowed(host):
         return JSONResponse(
@@ -299,6 +391,31 @@ async def _loopback_guard(request: Request, call_next):
     return await call_next(request)
 
 
+def _request_ip(request: Request) -> str:
+    """Client IP for rate-limit buckets (UT-j).
+
+    Behind a trusted proxy (ATLAS_TRUST_PROXY=1 ONLY behind a proxy
+    that overwrites X-Forwarded-For), the leftmost forwarded address
+    identifies the caller; otherwise the connection peer does. XFF is
+    never trusted by default: it is client-spoofable.
+    """
+    if os.environ.get("ATLAS_TRUST_PROXY") == "1":
+        first = request.headers.get("x-forwarded-for", "").split(",")[0].strip()
+        if first:
+            return first
+    return request.client.host if request.client else "unknown"
+
+
+def _rate_bucket(request: Request, api_key: str | None) -> str:
+    """Rate-limit bucket key (UT-j): per API key when authenticated
+    (one user cannot burn another's quota behind a shared proxy IP),
+    else per client IP. Keys hash before storage (never log raw)."""
+    if api_key:
+        digest = hashlib.sha256(api_key.encode("utf-8")).hexdigest()[:32]
+        return f"key:{digest}"
+    return f"ip:{_request_ip(request)}"
+
+
 def _call_pipeline(text: str, limit: int, domain: str, persist: bool) -> Report:
     """Call run.analyze, tolerating pipeline versions without `domain`.
 
@@ -307,7 +424,12 @@ def _call_pipeline(text: str, limit: int, domain: str, persist: bool) -> Report:
     the pipeline cannot take the override, the requested domain is still
     recorded as the claim's effective domain rather than silently dropped.
     """
-    llm = get_llm()
+    # UT-m: each request gets a forked client — the singleton's
+    # last_usage/seq would otherwise cross-attribute tokens between
+    # concurrent requests. Stateless doubles (no fork method) share.
+    shared = get_llm()
+    fork = getattr(shared, "fork", None)
+    llm = fork() if callable(fork) else shared
     try:
         return pipeline_run.analyze(
             text, llm=llm, limit=limit, persist=persist, domain=domain
@@ -333,8 +455,11 @@ def status() -> dict:
 
 
 @app.post("/api/analyze", response_model=Report)
-def analyze_claim(req: AnalyzeRequest, request: Request) -> Report:
-    client_ip = request.client.host if request.client else "unknown"
+def analyze_claim(
+    req: AnalyzeRequest,
+    request: Request,
+    api_key: str | None = Depends(require_api_key),
+) -> Report:
     text = req.text.strip()
     if not text:
         raise ApiError(400, "empty_claim", "Empty claim text.")
@@ -351,7 +476,7 @@ def analyze_claim(req: AnalyzeRequest, request: Request) -> Report:
     # R4: quota is charged AFTER validation — malformed requests are
     # free (localhost-only demo; a future multi-user server should
     # throttle invalid floods separately, see SECURITY_OPS).
-    _check_rate_limit(client_ip)
+    _check_rate_limit(_rate_bucket(request, api_key))
     # BACKLOG decision: keep clamp (documented) instead of 400 for
     # out-of-range limits; non-integer limits 422 via the validator.
     clamped = max(1, min(req.limit, 10))
@@ -397,11 +522,16 @@ def analyze_claim(req: AnalyzeRequest, request: Request) -> Report:
 
 
 @app.post("/api/check")
-def check_document(req: CheckRequest, request: Request) -> dict:
+def check_document(
+    req: CheckRequest,
+    request: Request,
+    api_key: str | None = Depends(require_api_key),
+) -> dict:
     """ShipCheck batch: split pasted text (e.g. an AI answer) into atomic
     claims and analyze each one. Returns per-claim reports + stance roll-up.
-    No identical-text cache (unlike /api/analyze): each call re-runs."""
-    client_ip = request.client.host if request.client else "unknown"
+    Identical-text cache (UT-j) covers persist=false only: persisted
+    batches mint fresh report ids per call and must never be served
+    from cache (DELETE-then-rePOST would 404 on re-fetch)."""
     text = req.text.strip()
     if not text:
         raise ApiError(400, "empty_claim", "Empty claim text.")
@@ -417,26 +547,117 @@ def check_document(req: CheckRequest, request: Request) -> dict:
         )
     # R4: an invalid batch must not burn 8 quota units — charge after
     # validation (same localhost-only caveat as /api/analyze).
-    _check_rate_limit(client_ip, cost=BATCH_RATE_COST)
+    _check_rate_limit(_rate_bucket(request, api_key), cost=BATCH_RATE_COST)
     clamped = max(1, min(req.limit, 10))
+    deadline = (_clamp_deadline(req.deadline_s)
+                if req.deadline_s is not None else None)
+    key_llm = get_llm()
+    model_name = key_llm.model if key_llm is not None else None
+    check_key = (text, req.domain, clamped, model_name)
+    if not req.persist and deadline is None:
+        hit = _check_cache_get(check_key)
+        if hit is not None:
+            return hit
+    shared = get_llm()
+    fork = getattr(shared, "fork", None)
+    req_llm = fork() if callable(fork) else shared
     try:
-        return pipeline_run.check_document(
-            text, llm=get_llm(), limit=clamped,
+        out = pipeline_run.check_document(
+            text, llm=req_llm, limit=clamped,
             persist=req.persist, domain=req.domain,
+            deadline_s=deadline,
         )
     except ApiError:
         raise
     except Exception:
         raise ApiError(500, "analysis_failed", "Analysis failed.") from None
+    if not req.persist and deadline is None:
+        _check_cache_put(check_key, out)
+    return out
+
+
+def _clamp_deadline(value: float) -> float:
+    return max(1.0, min(float(value), 600.0))
+
+
+@app.post("/api/check/stream")
+def check_stream(
+    req: CheckRequest,
+    request: Request,
+    api_key: str | None = Depends(require_api_key),
+) -> StreamingResponse:
+    """SSE batch with live progress (UT-l).
+
+    Same validation, auth, quota (cost 8) and deadline semantics as
+    /api/check, but streams `text/event-stream`: a `started` event,
+    one light `claim` event per finished sub-claim (index/stance or
+    error), and a final `done` event carrying the complete batch dict
+    (reports included). Never cached: each stream re-runs.
+    """
+    text = req.text.strip()
+    if not text:
+        raise ApiError(400, "empty_claim", "Empty claim text.")
+    if len(text) > 12000:
+        raise ApiError(
+            400, "claim_too_long", "Text too long (max 12000 chars)."
+        )
+    if req.domain not in VALID_DOMAINS:
+        raise ApiError(
+            400,
+            "invalid_domain",
+            f"Invalid domain {req.domain!r} (expected one of: auto, economy, science, general).",
+        )
+    _check_rate_limit(_rate_bucket(request, api_key), cost=BATCH_RATE_COST)
+    clamped = max(1, min(req.limit, 10))
+    deadline = (_clamp_deadline(req.deadline_s)
+                if req.deadline_s is not None else None)
+    shared = get_llm()
+    fork = getattr(shared, "fork", None)
+    req_llm = fork() if callable(fork) else shared
+    events: queue.Queue = queue.Queue()
+
+    def _run() -> None:
+        try:
+            out = pipeline_run.check_document(
+                text, llm=req_llm, limit=clamped,
+                persist=req.persist, domain=req.domain,
+                deadline_s=deadline, on_event=events.put,
+            )
+        except Exception:  # noqa: BLE001 — streamed, not raised
+            # Generic message, mirroring the REST 500 envelope (no
+            # traceback/detail leak into the stream).
+            events.put({"type": "error",
+                        "error": "analysis_failed",
+                        "message": "Analysis failed."})
+        else:
+            events.put({"type": "done", "result": out})
+        finally:
+            events.put(None)
+
+    threading.Thread(target=_run, daemon=True,
+                     name="atlas-check-stream").start()
+
+    def _generate():
+        while True:
+            event = events.get()
+            if event is None:
+                return
+            yield "data: " + json.dumps(event) + "\n\n"
+
+    return StreamingResponse(_generate(), media_type="text/event-stream")
 
 
 @app.get("/api/reports")
-def reports(limit: int = 50) -> dict:
+def reports(
+    limit: int = 50, api_key: str | None = Depends(require_api_key)
+) -> dict:
     return {"reports": list_reports(limit=max(1, min(limit, 200)))}
 
 
 @app.get("/api/reports/{report_id}", response_model=Report)
-def report_detail(report_id: str) -> Report:
+def report_detail(
+    report_id: str, api_key: str | None = Depends(require_api_key)
+) -> Report:
     report = get_report(report_id)
     if report is None:
         raise ApiError(404, "report_not_found", "Report not found.")
@@ -444,7 +665,9 @@ def report_detail(report_id: str) -> Report:
 
 
 @app.delete("/api/reports/{report_id}")
-def remove_report(report_id: str) -> dict:
+def remove_report(
+    report_id: str, api_key: str | None = Depends(require_api_key)
+) -> dict:
     if get_report(report_id) is None:
         raise ApiError(404, "report_not_found", "Report not found.")
     delete_report(report_id)

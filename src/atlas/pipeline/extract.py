@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import math
+import re
 
 from ..core.types import GeoRef, Quantity, StructuredClaim, TimeRef
 from ..core.units import normalize_unit, parse_quantities
@@ -60,6 +61,12 @@ KNOWN_UNITS = frozenset(
         "m/s", "km/s", "celsius", "fahrenheit", "kelvin", "years",
     }
 )
+
+# UT-o: hidden-reasoning budget for structuring. "medium": schema
+# extraction is the pipeline's hardest generation step, and hidden
+# reasoning that overruns max_tokens truncates into a silent
+# heuristic fallback — an explicit budget contains that failure.
+STRUCTURE_REASONING_EFFORT = "medium"
 
 # Strict decoding schema for the structuring call (mirrors STRUCTURE_SYSTEM
 # exactly; verified live 2026-11-01). Units stay free-form strings on
@@ -158,6 +165,7 @@ def structure_claim(raw_text: str, llm=None) -> StructuredClaim:
         try:
             data = llm.complete_json(
                 STRUCTURE_SYSTEM, f"Claim: {text}", max_tokens=4000,
+                reasoning_effort=STRUCTURE_REASONING_EFFORT,
                 json_schema=STRUCTURE_SCHEMA,
             )
             return _from_llm_json(text, data, getattr(llm, "name", "model"))
@@ -387,6 +395,45 @@ def _from_llm_json(raw_text: str, data: dict, model_name: str) -> StructuredClai
     conditions = _cap(
         [str(c) for c in data.get("conditions", [])], "conditions", notes
     )
+    # UT-A2 literal filter (arch 5b): model time_refs/geo_refs must be
+    # literal in the claim text. An invented year moves retrieval (claimed
+    # years first) and an invented geo moves the country match. Years are
+    # kept only as whole-digit tokens; ranges need both ends; vague/none
+    # refs without numeric years are kept (they cannot move year fan-out).
+    # Geos are kept when raw or name is a case-insensitive substring.
+    def _year_literal(y: int | None) -> bool:
+        return y is None or re.search(rf"(?<!\d){y}(?!\d)", raw_text) is not None
+
+    literal_times = [
+        t
+        for t in times
+        if _year_literal(t.year)
+        and _year_literal(t.start_year)
+        and _year_literal(t.end_year)
+    ]
+    if len(literal_times) != len(times):
+        notes.append(
+            f"dropped {len(times) - len(literal_times)} non-literal time_refs"
+        )
+        times = literal_times
+    lowered = raw_text.lower()
+
+    def _geo_literal(s: str | None) -> bool:
+        if not s:
+            return False
+        s = s.lower()
+        if len(s) <= 4:  # short codes need word boundaries ("US" in "status")
+            return re.search(rf"(?<![a-z]){re.escape(s)}(?![a-z])", lowered) is not None
+        return s in lowered
+
+    literal_geos = [
+        g for g in geos if _geo_literal(g.raw) or _geo_literal(g.name)
+    ]
+    if len(literal_geos) != len(geos):
+        notes.append(
+            f"dropped {len(geos) - len(literal_geos)} non-literal geo_refs"
+        )
+        geos = literal_geos
     # Heuristic time/geo backfill: LLM output gaps must not silently drop
     # explicit years or countries present in the raw text.
     heur = extract_heuristic(raw_text)
@@ -414,6 +461,20 @@ def _from_llm_json(raw_text: str, data: dict, model_name: str) -> StructuredClai
     extraction_model = (
         f"{model_name}+heuristic-backfill" if backfilled else model_name
     )
+    # UT-A3 (arch 5c): model enums must stay inside the Literals —
+    # an unknown domain silently misroutes verify (neither science nor
+    # general branch). Coerce to the heuristic value, audit-visibly.
+    # (Before context_notes assembly so the coercion is audited.)
+    domain = data.get("domain", heur.domain)
+    if domain not in ("economy", "science", "general"):
+        notes.append(f"coerced unknown domain {domain!r} to {heur.domain!r}")
+        domain = heur.domain
+    claim_type = data.get("claim_type", heur.claim_type)
+    if claim_type not in ("quantitative", "comparative", "existence", "other"):
+        notes.append(
+            f"coerced unknown claim_type {claim_type!r} to {heur.claim_type!r}"
+        )
+        claim_type = heur.claim_type
     context_notes = str(data.get("context_notes", ""))
     if notes:
         suffix = "Model output sanitized: " + "; ".join(notes) + "."
@@ -423,8 +484,8 @@ def _from_llm_json(raw_text: str, data: dict, model_name: str) -> StructuredClai
         log.info("LLM extraction backfilled (%s): %s", model_name, ",".join(backfilled))
     return StructuredClaim(
         raw_text=raw_text,
-        domain=data.get("domain", heur.domain),
-        claim_type=data.get("claim_type", heur.claim_type),
+        domain=domain,
+        claim_type=claim_type,
         subject=str(data.get("subject", heur.subject)),
         indicator=data.get("indicator_hint"),
         entities=entities,

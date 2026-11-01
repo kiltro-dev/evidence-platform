@@ -277,6 +277,9 @@ def test_web_citations_surface_as_attributed_doubt(monkeypatch):
     assert new_u[0].code == "web_counter_evidence"
     assert new_u[0].severity == "minor"  # never blocking
     assert "stats.example.gov" in new_u[0].description
+    # UT-A4: quotes are model-reported, pages never fetched by code.
+    assert "model-reported quote" in new_c[0].notes
+    assert "not fetched by code" in new_u[0].description
     assert "web_citations=1" in audit.detail
     assert "attacks=0" in audit.detail and "advisory_only" in audit.detail
 

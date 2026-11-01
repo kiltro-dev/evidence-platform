@@ -198,3 +198,17 @@ Persistent record for the autonomous build. Latest entry last.
 - Deferred per PRD §2: in-pipeline compound split, async jobs,
   web-source verification, image/PDF intake, retention TTL, gateway
   rate limits, charts/i18n UI.
+
+## 2026-11-01 — War Room (P0 false-contradicted wave + arch findings)
+
+- P0 a-o closed test-first with adversarial judges: T-suffix/ES-thousands
+  units, geo word-boundaries, rate-vs-level, multi-year pairing + fan-out,
+  10^k scale guard, year-less-latest (capped, disclosed), split context,
+  ES opinion lexicon, USD/pop-growth indicators, safe public deploy
+  (auth/proxy-rate/persist-off/caps/check-cache), OPENALEX_MAILTO,
+  SSE+deadline, per-request fork, CORS + python client, reasoning caps.
+- Arch A1-A5: abstract-ceiling pin hardened, literal model times/geos
+  (invented years dropped), domain/enum coercion, model-reported web-quote
+  labels, cited-% must match measured delta.
+- Verified: 639/639 offline, repro 55/0, browser 5/5 (prior wave),
+  degraded 11/11 + paraphrase 36/36 (prior pins; re-run pending).

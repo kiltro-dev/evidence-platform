@@ -518,6 +518,29 @@ def test_strength_validator_requires_delta_for_numeric():
         [_cmp("gdp", "consistent", 1.6)]) != []
 
 
+def test_a5_cited_delta_must_match_measured():
+    cmps = [_cmp("gdp", "consistent", 1.6)]
+    violations = validate_summary_strength(
+        "Stance supported: measured delta 99%.", "supported", cmps
+    )
+    assert any("does not match measured" in v for v in violations)
+
+
+def test_a5_rounded_cited_delta_accepted():
+    cmps = [_cmp("gdp", "consistent", 1.62)]
+    assert validate_summary_strength(
+        "Stance supported: measured delta 2%.", "supported", cmps
+    ) == []
+
+
+def test_a5_one_matching_delta_suffices():
+    cmps = [_cmp("gdp", "consistent", 1.6), _cmp("pop", "consistent", 45.0)]
+    assert validate_summary_strength(
+        "Stance supported: gdp delta 1.6% but pop rose 5% in the claim.",
+        "supported", cmps,
+    ) == []
+
+
 def test_strength_validator_no_delta_without_numeric():
     assert validate_summary_strength(
         "Stance unverifiable: nothing found.", "unverifiable",

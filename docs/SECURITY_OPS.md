@@ -125,3 +125,20 @@ Common failures:
 | Full-mode summaries fall back to template | Model truncation / key invalid | Check server log for `LLM summary failed`; verify key |
 | Smoke FAILs on install phase | `.venv` missing or stale | Re-run the README install block; smoke never creates venvs |
 | Disk growth in `data/` | Reports accumulate (no TTL) | DELETE unneeded reports; old DBs can be archived off |
+
+## Public-deploy checklist (UT-j)
+
+Localhost mode (no `ATLAS_API_KEY`) is loopback-only and needs nothing
+else. Before exposing the server beyond loopback, ALL of these must hold:
+
+1. `ATLAS_API_KEY` set to a long random secret (all sensitive endpoints
+   401 without it; `/api/status` and `/` stay open by design).
+2. TLS + a proxy that overwrites `X-Forwarded-For`, and ONLY then
+   `ATLAS_TRUST_PROXY=1` (never trust client-supplied XFF directly).
+3. `persist` left at its `false` default for anonymous traffic (opt-in
+   archiving only — the default no longer stores visitor texts).
+4. Cost ceiling understood: 60 quota units/min/client × batch cost 8 ×
+   ≤8 sub-claims × ≤4000-token model calls, plus the identical-text
+   caches (analyze always; check for `persist: false`). Lower
+   `RATE_LIMIT_PER_MINUTE` for tighter budgets.
+5. `OPENALEX_API_KEY` + `OPENALEX_MAILTO` set (own quota on shared IPs).

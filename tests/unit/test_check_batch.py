@@ -121,3 +121,57 @@ def test_reports_are_json_serializable(fake_pipeline):
 
     out = check_document("This is good news today. This is bad news today.", persist=False)
     json.dumps(out)  # must not raise
+
+
+def test_batch_reports_carry_split_context(fake_pipeline):
+    # UT-g wiring: each sub-report carries its resolved context apart.
+    out = check_document(
+        "France's population is good today. Its GDP is good today.",
+        persist=False)
+    assert out["claim_count"] == 2
+    assert out["reports"][1]["split_context"]["country_iso3"] == "FRA"
+    assert out["reports"][1]["split_context"]["country_source"] == "inherited"
+
+
+def test_check_document_accepts_deadline():
+    # UT-l (l2): global deadline parameter exists.
+    import inspect
+
+    from atlas.pipeline.run import check_document
+
+    assert "deadline_s" in inspect.signature(check_document).parameters
+
+
+def test_deadline_zero_aborts_gracefully(fake_pipeline):
+    # UT-l: expired deadline -> error entries + flag, never a crash.
+    from atlas.pipeline.run import check_document
+
+    out = check_document("This is good news today. This is bad news today.",
+                         persist=False, deadline_s=0)
+    assert out["errors"] == 2
+    assert out["meta"]["deadline_exceeded"] is True
+    assert all(r.get("error_code") == "deadline_exceeded"
+               for r in out["reports"])
+    assert out["rollup"].get("supported", 0) == 0
+
+
+def test_no_deadline_completes(fake_pipeline):
+    from atlas.pipeline.run import check_document
+
+    out = check_document("This is good news today. This is bad news today.",
+                         persist=False)
+    assert out["errors"] == 0
+    assert out["meta"]["deadline_exceeded"] is False
+
+
+def test_on_event_sequence(fake_pipeline):
+    from atlas.pipeline.run import check_document
+
+    events: list[dict] = []
+    check_document("This is good news today. This is bad news today.",
+                   persist=False, on_event=events.append)
+    assert events[0]["type"] == "started"
+    assert events[0]["claim_count"] == 2
+    claims = [e for e in events if e["type"] == "claim"]
+    assert sorted(e["index"] for e in claims) == [0, 1]
+    assert all(e["total"] == 2 for e in claims)

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import time
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 
@@ -17,7 +18,7 @@ from .extract import structure_claim
 from .falsify import falsify_draft
 from .retrieve import retrieve_all
 from .science import assess_science_abstracts
-from .split import split_claims
+from .split import span_contexts, split_claims
 from .synthesize import decide_stance, synthesize
 from .verify import assess_science, verify_quantitative
 
@@ -353,12 +354,7 @@ def _fork_llm(llm):
     Stateless doubles (and None) are shared as-is.
     """
     if isinstance(llm, MetaClient):
-        return MetaClient(
-            api_key=llm.api_key,
-            base_url=llm.base_url,
-            model=llm.model,
-            timeout_s=llm.timeout_s,
-        )
+        return llm.fork()
     return llm
 
 
@@ -371,22 +367,65 @@ def _analyze_one(args) -> Report | Exception:
         return exc
 
 
-def _analyze_parallel(claims, llm, limit, persist, domain) -> list:
-    """Analyze sub-claims on one thread each, results in input order."""
+def _analyze_parallel(claims, llm, limit, persist, domain,
+                      deadline=None, on_claim=None) -> list:
+    """Analyze sub-claims on one thread each, results in input order.
+
+    UT-l: `deadline` is an absolute perf_counter timestamp (None =
+    wait for all, the legacy behavior). Claims still running past it
+    resolve to TimeoutError entries instead of blocking the batch;
+    `on_claim(index, outcome)` fires per completed claim in
+    completion order. Deadline-hit shutdown is wait=False: orphaned
+    workers finish in the background (documented; the batch never
+    blocks past its budget).
+    """
+    from concurrent.futures import FIRST_COMPLETED, wait
+
     if not claims:
         return []
-    with ThreadPoolExecutor(
+    pool = ThreadPoolExecutor(
         max_workers=len(claims), thread_name_prefix="atlas-batch"
-    ) as pool:
-        return list(
-            pool.map(
-                _analyze_one,
-                [
-                    (sub, _fork_llm(llm), limit, persist, domain)
-                    for sub in claims
-                ],
-            )
-        )
+    )
+    fut2idx = {
+        pool.submit(_analyze_one,
+                    (sub, _fork_llm(llm), limit, persist, domain)): i
+        for i, sub in enumerate(claims)
+    }
+    results: list = [None] * len(claims)
+    pending = set(fut2idx)
+    hit = False
+    try:
+        while pending:
+            remaining = None
+            if deadline is not None:
+                remaining = deadline - time.perf_counter()
+                if remaining <= 0:
+                    hit = True
+                    break
+            done, pending = wait(pending, timeout=remaining,
+                                 return_when=FIRST_COMPLETED)
+            if not done:
+                hit = True  # wait() itself timed out: deadline hit
+                break
+            for fut in done:
+                i = fut2idx[fut]
+                try:
+                    results[i] = fut.result()
+                except Exception as exc:  # noqa: BLE001 — isolated per claim
+                    results[i] = exc
+                if on_claim is not None:
+                    on_claim(i, results[i])
+    finally:
+        if hit:
+            for fut in pending:
+                i = fut2idx[fut]
+                results[i] = TimeoutError("batch deadline exceeded")
+                if on_claim is not None:
+                    on_claim(i, results[i])
+            pool.shutdown(wait=False, cancel_futures=True)
+        else:
+            pool.shutdown(wait=True)
+    return results
 
 
 def check_document(
@@ -395,6 +434,8 @@ def check_document(
     limit: int = DEFAULT_LIMIT,
     persist: bool = True,
     domain: str = "auto",
+    deadline_s: float | None = None,
+    on_event: "Callable[[dict], None] | None" = None,
 ) -> dict:
     """ShipCheck batch: split pasted text into claims, analyze each one.
 
@@ -406,32 +447,67 @@ def check_document(
     so per-claim report_ids stay re-fetchable via GET /api/reports/{id}.
     A sub-claim that raises does not kill the batch: it is recorded as
     an error entry and counted outside the stance roll-up.
+    UT-l: `deadline_s` bounds the whole batch (claims still running
+    past it become "deadline_exceeded" error entries; partial results
+    keep their roll-up; meta.deadline_exceeded flags it). `on_event`
+    receives started/claim progress dicts for SSE streaming.
     """
     if domain not in VALID_DOMAINS:
         raise ValueError(f"Invalid domain {domain!r}; expected one of {VALID_DOMAINS}.")
     t_start = time.perf_counter()
+    deadline = t_start + deadline_s if deadline_s is not None else None
     seq_before = _usage_seq(llm)
     claims, actor, model, notes = split_claims(raw_text, llm)
+    # UT-g: resolved discourse context (country/years with provenance)
+    # travels apart from the verbatim spans, one dict per sub-claim.
+    contexts = span_contexts(claims)
     usage_split = _take_usage(llm, seq_before)
-    # Parallel sub-claim analysis (one thread each, input order kept via
-    # executor.map). Semantics mirror the old sequential loop exactly:
-    # per-claim error isolation, same roll-up, same persistence. No
-    # global timeout — each analyze() governs itself, as sequential did.
-    # Thread-safety: MetaClient is forked per claim (mutable usage
-    # state); connectors keep thread-local query echo; SQLite opens a
-    # fresh connection per write; shared doubles are append-only.
-    outcomes = _analyze_parallel(claims, llm, limit, persist, domain)
+    if on_event is not None:
+        on_event({"type": "started", "claim_count": len(claims)})
+    done_count = 0
+
+    def _claim_event(index: int, outcome) -> None:
+        nonlocal done_count
+        done_count += 1
+        if isinstance(outcome, Exception):
+            entry: dict = {"type": "claim", "index": index,
+                           "done": done_count, "total": len(claims),
+                           "error": _truncate(str(outcome))}
+            if isinstance(outcome, TimeoutError):
+                entry["error_code"] = "deadline_exceeded"
+        else:
+            entry = {"type": "claim", "index": index,
+                     "done": done_count, "total": len(claims),
+                     "stance": outcome.conclusion.stance
+                     if outcome.conclusion else "unverifiable"}
+        if on_event is not None:
+            on_event(entry)
+
+    # Parallel sub-claim analysis (one thread each, results in input
+    # order). Per-claim error isolation, same roll-up, same
+    # persistence. Thread-safety: MetaClient is forked per claim
+    # (mutable usage state); connectors keep thread-local query echo;
+    # SQLite opens a fresh connection per write; shared doubles are
+    # append-only.
+    outcomes = _analyze_parallel(claims, llm, limit, persist, domain,
+                                 deadline=deadline, on_claim=_claim_event)
     reports: list[dict] = []
     rollup: dict[str, int] = {s: 0 for s in ROLLUP_STANCES}
     errors = 0
-    for sub, outcome in zip(claims, outcomes):
+    for sub, ctx, outcome in zip(claims, contexts, outcomes):
         if isinstance(outcome, Exception):
             errors += 1
-            reports.append({"claim_text": sub, "error": _truncate(str(outcome))})
+            entry = {"claim_text": sub, "split_context": ctx,
+                     "error": _truncate(str(outcome))}
+            if isinstance(outcome, TimeoutError):
+                entry["error_code"] = "deadline_exceeded"
+            reports.append(entry)
             continue
         stance = outcome.conclusion.stance if outcome.conclusion else "unverifiable"
         rollup[stance] = rollup.get(stance, 0) + 1
-        reports.append(outcome.model_dump(mode="json"))
+        dumped = outcome.model_dump(mode="json")
+        dumped["split_context"] = ctx
+        reports.append(dumped)
     elapsed_ms = (time.perf_counter() - t_start) * 1000.0
     return {
         "claim_count": len(claims),
@@ -442,6 +518,9 @@ def check_document(
         "meta": {
             "app_version": APP_VERSION,
             "prompt_version": PROMPT_VERSION,
+            "deadline_s": deadline_s,
+            "deadline_exceeded": any(
+                isinstance(o, TimeoutError) for o in outcomes),
             "splitter_actor": actor,
             "splitter_model": model,
             "splitter_notes": notes,

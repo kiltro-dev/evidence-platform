@@ -1,6 +1,12 @@
 # Mission backlog (living, lead-owned)
 
-STATUS 2026-11-01 (Operation Night Shift, hardening on v0.4.0):
+STATUS 2026-11-01 (War Room, P0 a-o + arch A1-A5 closed):
+false-contradicted fixes (units/geo/rate/multi-year/scale-guard),
+literal times/geos, enum coercion, web-quote + cited-% honesty labels,
+safe public deploy (auth/rate/caps), SSE+deadline, CORS+python client.
+639 unit+e2e green, repro 55/0.
+
+Prior STATUS 2026-11-01 (Operation Night Shift, hardening on v0.4.0):
 parallel batch analysis, authoritative-first web ordering,
 World Bank vintage/mrnev/indicator upgrades, multi-geo disclosure,
 honesty fixes (best-collocation, claim-side period text, per-item

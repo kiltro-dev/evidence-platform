@@ -454,7 +454,7 @@ phase4_offline_analyze() {
   # Distinct texts per call: the API caches identical (text,domain,limit).
   local f1="$TMPDIR_SMOKE/r_moon.json" c1=""
   c1=$(curl_code "$f1" -m 60 -H "Content-Type: application/json" \
-    -d '{"text": "The moon is made of cheese."}' "$base/api/analyze")
+    -d '{"text": "The moon is made of cheese.", "persist": true}' "$base/api/analyze")
   if [ "$c1" = "200" ]; then
     pass_ "POST /api/analyze (general claim) 200"
     run_check "$f1" "general-claim shape" "shape"
@@ -477,12 +477,26 @@ phase4_offline_analyze() {
   fi
   local f2="$TMPDIR_SMOKE/r_ger.json" c2=""
   c2=$(curl_code "$f2" -m 60 -H "Content-Type: application/json" \
-    -d '{"text": "The GDP of Germany was $4.52 trillion in 2023."}' "$base/api/analyze")
+    -d '{"text": "The GDP of Germany was $4.52 trillion in 2023.", "persist": true}' "$base/api/analyze")
   if [ "$c2" = "200" ]; then
     pass_ "POST /api/analyze (economy claim) 200"
     run_check "$f2" "economy-claim shape" "shape"
   else
     fail_ "POST /api/analyze (economy claim) expected 200, got $c2"
+  fi
+  # UT-j: persist defaults to false (no user-text leak); without the flag
+  # the audit must NOT contain a persist step.
+  local fnp="$TMPDIR_SMOKE/r_nopersist.json" cnp=""
+  cnp=$(curl_code "$fnp" -m 60 -H "Content-Type: application/json" \
+    -d '{"text": "The population of France was 68 million in 2023."}' "$base/api/analyze")
+  if [ "$cnp" = "200" ]; then
+    if "$PY" -c 'import json,sys; sys.exit(0 if "persist" not in [a.get("step") for a in json.load(open(sys.argv[1])).get("audit",[])] else 1)' "$fnp"; then
+      pass_ "persist defaults off: no persist step without flag"
+    else
+      fail_ "persist defaults off: unexpected persist step without flag"
+    fi
+  else
+    fail_ "POST /api/analyze (no-persist probe) expected 200, got $cnp"
   fi
   # Negatives (envelope-tolerant: new {error:{}} or legacy {detail}).
   local fe="$TMPDIR_SMOKE/r_empty.json" ce=""

@@ -82,6 +82,26 @@ class MetaClient:
         # it (a stage that made no call sees an unchanged counter).
         self.last_usage_seq: int = 0
 
+    def fork(self) -> "MetaClient":
+        """Per-request/per-claim client: same config, fresh usage state.
+
+        last_usage/last_usage_seq are per-request mutable state; sharing
+        one client across concurrent requests misattributes tokens
+        between them. A fork carries api_key/base_url/model/timeout but
+        starts with last_usage=None, seq=0 and a lazily-built transport
+        of its own. Defensive getattr: works even on partially
+        initialized instances.
+        """
+        forked = MetaClient.__new__(MetaClient)
+        forked.api_key = getattr(self, "api_key", "")
+        forked.base_url = getattr(self, "base_url", DEFAULT_BASE_URL)
+        forked.model = getattr(self, "model", DEFAULT_MODEL)
+        forked.timeout_s = getattr(self, "timeout_s", 120.0)
+        forked._client = None
+        forked.last_usage = None
+        forked.last_usage_seq = 0
+        return forked
+
     @property
     def available(self) -> bool:
         return bool(self.api_key)

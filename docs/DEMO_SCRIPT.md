@@ -105,7 +105,7 @@ with links, caveats, versions."
 
 "Real sources with links you can open. Deterministic checks the model
 can't skip. A system that hunts counter-evidence against itself — then
-shows its work. 491 offline tests, 43 pinned eval cases plus
+shows its work. 639 offline tests, 43 pinned eval cases plus
 paraphrase, abstention, and decision-table probes. Evidence Atlas:
 verify before it ships."
 

@@ -195,6 +195,17 @@
   <p>Traceable claim analysis: structuring, real sources, deterministic checks.
   Every conclusion links to its evidence. An analysis aid, not an arbiter of truth.</p>
   <div id="modeBanner" class="banner" role="status">Checking service status…</div>
+  <details id="apiKeyBox" class="small mut" style="margin-top:8px">
+    <summary>Server access (only if this server requires an API key)</summary>
+    <p style="margin:6px 0">
+      <label for="apiKey">API key</label>
+      <input type="password" id="apiKey" autocomplete="off" spellcheck="false"
+        placeholder="paste key, stored only in this browser" style="width:min(320px,90%)">
+      <button id="apiKeySave" class="ghost" type="button">Save</button>
+      <button id="apiKeyClear" class="ghost" type="button">Clear</button>
+      <span id="apiKeyState" role="status"></span>
+    </p>
+  </details>
   <h2 class="small" style="margin:14px 0 0">How it works</h2>
   <ul class="how">
     <li><b>Paste a factual claim</b> — a statistic, a study result, a jobs or price figure — and pick a domain (or leave it on auto).</li>
@@ -443,11 +454,45 @@ function fmtDur(ms) {
   return ms >= 1000 ? (ms / 1000).toFixed(1) + "s" : Math.round(ms) + "ms";
 }
 
+/* ---------- optional API key (UT-UX1: keyed servers) ---------- */
+const API_KEY_STORE = "atlas_api_key";
+function getApiKey() {
+  try { return localStorage.getItem(API_KEY_STORE) || ""; } catch { return ""; }
+}
+/* AF: fetch wrapper that attaches X-API-Key when the user saved one. */
+async function AF(url, opts) {
+  opts = opts || {};
+  const key = getApiKey();
+  if (key) {
+    const h = Object.assign({}, opts.headers || {});
+    h["X-API-Key"] = key;
+    opts = Object.assign({}, opts, {headers: h});
+  }
+  return fetch(url, opts);
+}
+function initApiKeyBox() {
+  const input = $("apiKey"), state = $("apiKeyState");
+  if (!input) return;
+  if (getApiKey()) { input.value = "••••••••"; state.textContent = "saved"; }
+  $("apiKeySave").addEventListener("click", () => {
+    const v = input.value.trim();
+    if (!v || v === "••••••••") return;
+    try { localStorage.setItem(API_KEY_STORE, v); } catch {}
+    input.value = "••••••••";
+    state.textContent = "saved — retry your request";
+  });
+  $("apiKeyClear").addEventListener("click", () => {
+    try { localStorage.removeItem(API_KEY_STORE); } catch {}
+    input.value = "";
+    state.textContent = "cleared";
+  });
+}
+
 /* ---------- mode banner + service status ---------- */
 async function refreshStatus() {
   const b = $("modeBanner");
   try {
-    const res = await fetch("/api/status");
+    const res = await AF("/api/status");
     if (!res.ok) throw new Error("status " + res.status);
     const s = await res.json();
     serviceDown = false;
@@ -572,6 +617,9 @@ function errorCard(title, detail, code, retryable, opts) {
   /* opts.retryTopId / opts.onRetry let the batch flow reuse this card with its
      own retry target; single-claim callers pass nothing and behave as before. */
   opts = opts || {};
+  if (code === "unauthorized" && detail.indexOf("Server access") === -1) {
+    detail += " Open “Server access” under the header and enter this server's API key, then retry.";
+  }
   const codeBit = code ? ' <span class="mut small">(code: ' + esc(human(code)) + ")</span>" : "";
   const refBit = opts.ref ? ' <span class="mut small">(ref: <code>' + esc(opts.ref) + "</code>)</span>" : "";
   $("out").innerHTML =
@@ -598,7 +646,7 @@ async function doAnalyze(text, domain) {
   $("busy").textContent = "Analyzing…";
   const timer = setTimeout(() => { try { mine.abort("timeout"); } catch {} }, TIMEOUT_MS);
   try {
-    const res = await fetch("/api/analyze", {
+    const res = await AF("/api/analyze", {
       method: "POST",
       headers: {"Content-Type": "application/json"},
       body: JSON.stringify({text, limit: 5, domain, persist: true}),
@@ -1024,7 +1072,7 @@ async function reRunDeterminism(report, msgEl, domain) {
   const oldHash = report.meta && report.meta.input_sha256;
   msg.textContent = "Re-running the same claim…";
   try {
-    const res = await fetch("/api/analyze", {
+    const res = await AF("/api/analyze", {
       method: "POST",
       headers: {"Content-Type": "application/json"},
       body: JSON.stringify({text, limit: 5,
@@ -1298,7 +1346,7 @@ async function doCheck(text, domain) {
   $("batchBusy").textContent = "Checking…";
   const timer = setTimeout(() => { try { mine.abort("timeout"); } catch {} }, BATCH_TIMEOUT_MS);
   try {
-    const res = await fetch("/api/check", {
+    const res = await AF("/api/check", {
       method: "POST",
       headers: {"Content-Type": "application/json"},
       body: JSON.stringify({text, limit: 5, domain, persist: true}),
@@ -1501,7 +1549,7 @@ function renderBatch(body) {
 async function loadRecent() {
   const box = $("recent");
   try {
-    const res = await fetch("/api/reports?limit=10");
+    const res = await AF("/api/reports?limit=10");
     if (!res.ok) throw new Error("status " + res.status);
     const body = await res.json();
     const list = Array.isArray(body) ? body : (Array.isArray(body.reports) ? body.reports : []);
@@ -1545,7 +1593,7 @@ function confirmDelete(id) {
   row.querySelector("[data-yes]").addEventListener("click", async () => {
     const err = row.querySelector("[data-delerr]");
     try {
-      const res = await fetch("/api/reports/" + encodeURIComponent(id), {method: "DELETE"});
+      const res = await AF("/api/reports/" + encodeURIComponent(id), {method: "DELETE"});
       if (!res.ok) {
         const e = await parseErrBody(res);
         err.textContent = "Delete failed: " + (e.message || ("status " + e.status));
@@ -1568,7 +1616,7 @@ async function loadReport(id) {
   if (!id) return;
   $("busy").textContent = "Loading report…";
   try {
-    const res = await fetch("/api/reports/" + encodeURIComponent(id));
+    const res = await AF("/api/reports/" + encodeURIComponent(id));
     if (!res.ok) {
       const e = await parseErrBody(res);
       errorCard("Report not found",
@@ -1590,6 +1638,7 @@ async function loadReport(id) {
 }
 
 /* ---------- init ---------- */
+initApiKeyBox();
 updateCounter();
 updateBatchCounter();
 refreshStatus();

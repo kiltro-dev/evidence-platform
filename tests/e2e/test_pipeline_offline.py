@@ -116,11 +116,12 @@ def test_e2e_retrieve_audit_step_carries_connector_wall_time():
     assert "worldbank" in steps[0].detail
 
 
-def test_e2e_yearless_claim_skips_numeric_compare_with_period_mismatch():
-    # Eval MEDIUM (mrnev): a year-less claim retrieves most-recent-value
-    # evidence, but verify must never numerically compare against an
-    # unstated period. Pinned BY DESIGN: period_mismatch major, a
-    # not_comparable time check, zero numeric verdicts, unverifiable.
+def test_e2e_yearless_present_compares_vs_latest_capped():
+    # UT-f OVERRIDE of the mrnev pin: a year-less PRESENT-tense claim
+    # compares against the latest value, disclosed (assumed_period)
+    # and capped at partially_supported. The old unconditional
+    # verify-inert rule now applies to explicit-past year-less only
+    # (see test_e2e_yearless_past_skips_numeric_compare).
     class StubPct(StubWB):
         def retrieve(self, claim, limit=5):
             assert claim.time_refs == []
@@ -141,9 +142,36 @@ def test_e2e_yearless_claim_skips_numeric_compare_with_period_mismatch():
                          llm=None, persist=False)
     finally:
         runmod.for_domain = orig
+    assert report.conclusion.stance == "partially_supported"
+    assert any(u.code == "assumed_period" for u in report.uncertainties)
+    assert any(c.verdict == "consistent" and c.metric != "time_compatibility"
+               for c in report.comparisons)
+
+
+def test_e2e_yearless_past_skips_numeric_compare():
+    # UT-f: explicit-past year-less keeps the mrnev rule (comparing
+    # "was X" against 2023 would fabricate a period never meant).
+    class StubPct(StubWB):
+        def retrieve(self, claim, limit=5):
+            assert claim.time_refs == []
+            return [Evidence(
+                claim_id=claim.claim_id, connector=self.name,
+                source_name="World Bank Open Data (stub)",
+                source_kind="secondary", evidence_kind="direct",
+                locator="SL.UEM.TOTL.ZS DEU mrnev",
+                excerpt="Unemployment 2023: 3.1",
+                payload={"label": "Unemployment, total",
+                         "unit": "percent", "year": "2023", "value": 3.1},
+            )]
+
+    orig = runmod.for_domain
+    runmod.for_domain = lambda domain: [StubPct(3.1)]  # noqa: E731
+    try:
+        report = analyze("Unemployment in Germany was 3.1%.",
+                         llm=None, persist=False)
+    finally:
+        runmod.for_domain = orig
     assert report.conclusion.stance == "unverifiable"
     assert any(u.code == "period_mismatch" and u.severity == "major"
                for u in report.uncertainties)
-    assert any(c.metric == "time_compatibility"
-               and c.verdict == "not_comparable" for c in report.comparisons)
     assert all(c.metric == "time_compatibility" for c in report.comparisons)
