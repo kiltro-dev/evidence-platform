@@ -49,8 +49,28 @@ def save_report(report: Report, path: Path | None = None) -> str:
     return report.report_id
 
 
+def _has_reports_table(p: Path) -> bool:
+    """True only if an existing DB file already has the reports table.
+
+    Read-only: never creates directories, files, or tables.
+    """
+    if not p.exists() or not p.is_file():
+        return False
+    try:
+        with sqlite3.connect(p) as conn:
+            row = conn.execute(
+                "SELECT name FROM sqlite_master "
+                "WHERE type = 'table' AND name = 'reports'"
+            ).fetchone()
+    except sqlite3.Error:
+        return False
+    return row is not None
+
+
 def get_report(report_id: str, path: Path | None = None) -> Report | None:
-    p = init_db(path)
+    p = path or db_path()
+    if not _has_reports_table(p):
+        return None
     with sqlite3.connect(p) as conn:
         row = conn.execute(
             "SELECT report_json FROM reports WHERE report_id = ?", (report_id,)
@@ -60,8 +80,22 @@ def get_report(report_id: str, path: Path | None = None) -> Report | None:
     return Report.model_validate_json(row[0])
 
 
+def delete_report(report_id: str, path: Path | None = None) -> bool:
+    """Delete a report; True if a row was removed, False if missing."""
+    p = path or db_path()
+    if not _has_reports_table(p):
+        return False
+    with sqlite3.connect(p) as conn:
+        cur = conn.execute(
+            "DELETE FROM reports WHERE report_id = ?", (report_id,)
+        )
+        return cur.rowcount > 0
+
+
 def list_reports(limit: int = 50, path: Path | None = None) -> list[dict]:
-    p = init_db(path)
+    p = path or db_path()
+    if not _has_reports_table(p):
+        return []
     with sqlite3.connect(p) as conn:
         rows = conn.execute(
             "SELECT report_id, created_at, claim_text, stance FROM reports "

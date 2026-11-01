@@ -17,6 +17,18 @@ SCALE_WORDS: dict[str, float] = {
     "thousand": 1e3,
     "k": 1e3,
     "hundred": 1e2,
+    # --- Spanish (ES) scale words ---
+    # NOTE: ES "billón" = 1e12, i.e. the same magnitude as EN "trillion"
+    # (long scale), NOT EN "billion". ES "millardo" = 1e9 = EN "billion".
+    "billón": 1e12,
+    "billon": 1e12,
+    "billones": 1e12,
+    "millardo": 1e9,
+    "millardos": 1e9,
+    "millón": 1e6,
+    "millon": 1e6,
+    "millones": 1e6,
+    "mil": 1e3,
 }
 
 CURRENCY_SYMBOLS: dict[str, str] = {
@@ -48,6 +60,31 @@ UNIT_ALIASES: dict[str, str] = {
     "inhabitants": "count",
     "deaths": "count",
     "cases": "count",
+    # --- Spanish (ES) aliases ---
+    # "euro"/"euros" already covered above. Bare "ciento" is deliberately
+    # NOT an alias (too risky as a substring-adjacent common word); use
+    # the full "por ciento" form or "%" instead.
+    "dólar": "USD",
+    "dolar": "USD",
+    "dólares": "USD",
+    "dolares": "USD",
+    "libra": "GBP",
+    "libras": "GBP",
+    "por ciento": "percent",
+    "punto porcentual": "pp",
+    "puntos porcentuales": "pp",
+    "persona": "count",
+    "personas": "count",
+    "habitante": "count",
+    "habitantes": "count",
+    "muerte": "count",
+    "muertes": "count",
+    "caso": "count",
+    "casos": "count",
+    "año": "years",
+    "ano": "years",
+    "años": "years",
+    "anos": "years",
     "m/s": "m/s",
     "meters per second": "m/s",
     "metres per second": "m/s",
@@ -62,18 +99,33 @@ UNIT_ALIASES: dict[str, str] = {
     "year": "years",
 }
 
+# Decimal-comma rule (Spanish-style "3,1%"): a comma followed by exactly
+# 1-2 digits NOT followed by another digit is a decimal separator, e.g.
+# "3,1" -> 3.1. Comma groups of 3 digits remain thousands separators, e.g.
+# "299,792,458" -> 299792458 (the thousands alternative is tried first,
+# so EN behavior is unchanged). "1,000" therefore still reads as one
+# thousand even in Spanish text — a documented limitation.
+_DECIMAL_COMMA_RE = re.compile(r"\d+,\d{1,2}$")
+
 _QUANTITY_RE = re.compile(
-    r"(?P<symbol>[$€£¥])?\s*(?P<num>\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?)"
+    r"(?P<symbol>[$€£¥])?\s*(?P<num>\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+,\d{1,2}(?!\d)|\d+(?:\.\d+)?)"
     r"\s*(?P<scale>trillion|billion|million|thousand|hundred|tn|bn|mn|"
+    r"billones|billón|billon|millones|millón|millon|millardos|millardo|"
+    r"mil(?![a-zA-Z/])|"
     r"k(?![a-zA-Z/])|m(?![a-zA-Z/])|b(?![a-zA-Z/]))?"
     r"(?P<pct>\s*%)?",
     re.IGNORECASE,
 )
 
+# The optional "de" handles Spanish "5 millones de personas" (the
+# preposition sits between scale word and unit). EN-safe: "de" + space is
+# not an English construction after a bare number.
 _UNIT_AFTER_RE = re.compile(
-    r"^\s*(usd|us\$|dollars?|eur|euros?|gbp|pounds?|jpy|yen|percent|percentage points?|"
-    r"people|inhabitants|deaths|cases|m/s|meters per second|metres per second|km/s|"
-    r"celsius|fahrenheit|kelvin|°c|°f|years?)",
+    r"^\s*(?:de\s+)?(usd|us\$|dollars?|dólares|dolares|dólar|dolar|eur|euros?|gbp|pounds?|libras?|jpy|yen|"
+    r"percent|percentage points?|por ciento|puntos? porcentuales?|"
+    r"people|personas?|inhabitants|habitantes?|deaths|muertes?|cases|casos?|"
+    r"m/s|meters per second|metres per second|km/s|"
+    r"celsius|fahrenheit|kelvin|°c|°f|years?|años?|anos?)",
     re.IGNORECASE,
 )
 
@@ -102,7 +154,11 @@ def parse_quantities(text: str, label: str = "") -> list[Quantity]:
     """Extract raw quantities with scale words, symbols and trailing units."""
     out: list[Quantity] = []
     for m in _QUANTITY_RE.finditer(text):
-        num = float(m.group("num").replace(",", ""))
+        raw_num = m.group("num")
+        if _DECIMAL_COMMA_RE.fullmatch(raw_num):
+            num = float(raw_num.replace(",", "."))
+        else:
+            num = float(raw_num.replace(",", ""))
         scale_word = (m.group("scale") or "").lower()
         scale = SCALE_WORDS.get(scale_word, 1.0)
         if m.group("pct"):
@@ -112,7 +168,7 @@ def parse_quantities(text: str, label: str = "") -> list[Quantity]:
         else:
             after = text[m.end() : m.end() + 28]
             um = _UNIT_AFTER_RE.match(after)
-            unit = um.group(0).strip() if um else None
+            unit = um.group(1).strip() if um else None
         value = num * scale
         norm_unit = normalize_unit(unit)
         out.append(

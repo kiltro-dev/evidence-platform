@@ -1,0 +1,17 @@
+[project]
+name = "evidence-atlas"
+version = "0.2.0"
+requires-python = ">=3.11"
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "live: tests requiring live network access to public sources",
+]
+
+[tool.uv]
+package = false

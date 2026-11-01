@@ -19,7 +19,16 @@
 4. HTTP: `GET /api/status` → `full (model + deterministic)`,
    `llm_model: muse-spark-1.3`; `POST /api/analyze` (unemployment claim)
    → `supported`, model/model actors.
-5. Offline suite still green (28/28) — model path is additive only.
+5. Offline suite still green (179/179 at v2; 28/28 at the time) —
+   the model path is additive only.
+
+## v2 live verification (2026-11-01)
+
+Full-mode spot checks against the live app (`muse-spark-1.3`): EN GDP
+claim → `supported`; ES unemployment claim
+(`El desempleo en Alemania fue del 3,1% en 2023`) → `supported`;
+pure opinion → `not_assessable`. Degraded offline eval: 7/7.
+Detail: [EVAL_REPORT.md](EVAL_REPORT.md).
 
 ## Operational findings (muse-spark-1.3)
 

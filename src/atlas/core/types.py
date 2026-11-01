@@ -28,7 +28,10 @@ ClaimType = Literal["quantitative", "comparative", "existence", "other"]
 SourceKind = Literal["primary", "secondary", "reproduction"]
 EvidenceKind = Literal["direct", "contextual"]
 Verdict = Literal["consistent", "contradicts", "inconclusive", "not_comparable"]
-Stance = Literal["supported", "partially_supported", "contradicted", "unverifiable"]
+Stance = Literal[
+    "supported", "partially_supported", "contradicted", "unverifiable",
+    "not_assessable",
+]
 
 
 class Quantity(BaseModel):
@@ -126,6 +129,7 @@ class AuditStep(BaseModel):
     started_at: datetime = Field(default_factory=_utcnow)
     ended_at: datetime | None = None
     detail: str = ""
+    duration_ms: float = 0.0
 
 
 class Report(BaseModel):
@@ -138,3 +142,5 @@ class Report(BaseModel):
     conclusion: Conclusion | None = None
     audit: list[AuditStep] = Field(default_factory=list)
     created_at: datetime = Field(default_factory=_utcnow)
+    meta: dict = Field(default_factory=dict)
+    elapsed_ms: float = 0.0

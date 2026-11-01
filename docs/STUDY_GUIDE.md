@@ -12,7 +12,7 @@ parts code verified. It's an analysis aid, not an oracle."
 
 ## End-to-end flow (say it while demoing)
 
-1. Paste a claim → `POST /api/analyze`.
+1. Paste a claim → `POST /api/analyze` (or click a one-click example).
 2. **Extract**: Muse Spark structures it (or heuristics offline) —
    quantities, units, years, countries. Badge shows the actor.
 3. **Route + retrieve**: economy claims hit World Bank indicators;
@@ -20,10 +20,15 @@ parts code verified. It's an analysis aid, not an oracle."
    citations. Empty-handed is a valid, reported outcome.
 4. **Verify** (code only): same unit? same period? then compare with an
    explicit 2% rule. Incompatible → refused, with the reason recorded.
-5. **Synthesize**: deterministic stance rules; model may rephrase the
-   summary but cannot change stance or verdicts.
+   Opinions and non-claims are flagged here, never verdicts.
+5. **Synthesize**: deterministic stance rules (five stances, including
+   `not_assessable`); model may rephrase the summary but cannot change
+   stance, verdicts, or cited ids — citations are validated, required
+   caveats always kept.
 6. Report persists to SQLite; UI renders claim, evidence, comparisons
-   with Δ%, uncertainties, limitations, and the audit trail.
+   with Δ%, uncertainties, limitations, the audit trail, **clickable
+   trace pills** (C1/C2… jump verdict → comparison → evidence), and a
+   **Recent analyses** history with deep links and delete.
 
 ## Why this architecture (expected question)
 
@@ -33,14 +38,17 @@ parts code verified. It's an analysis aid, not an oracle."
 - Keyless sources: demo works from a clean environment, no credentials.
 - No confidence scores: uncalibrated numbers would be dishonest; stances
   + coded uncertainties instead.
+- Snippets are never Evidence: excerpts are pointers; verdicts come only
+  from structured payloads compared in code.
 
 ## Model vs code split (memorize the table)
 
 Model (Muse Spark): claim structuring, summary wording. Code: routing,
-retrieval parsing, unit math, comparisons, stance, persistence.
-Fallbacks: heuristic extractor, template summary. Cap: 2 model calls
-per analysis, asserted in e2e tests. Without `MODEL_API_KEY` the same
-verification core runs in degraded mode.
+retrieval parsing, unit math, comparisons, assessability, stance, cited
+ids, required caveats, persistence. Fallbacks: heuristic extractor,
+template summary. Cap: 2 model calls per analysis at 4000 tokens each,
+asserted in e2e tests. Without `MODEL_API_KEY` the same verification
+core runs in degraded mode.
 
 ## Real problems found during the build (say these, they're true)
 
@@ -53,8 +61,12 @@ verification core runs in degraded mode.
    year-like numbers excluded from quantities.
 5. `GET /` 404 → `WEB_DIR` off by one path level.
 6. `pkill -f` matched the author's own shell → bracket-pattern fix.
-7. Naming: 9 candidates collided with existing projects (documented in
-   PROGRESS.md) → descriptive name chosen.
+7. Model emitted unit `"null"` as a string → unit allowlist in extract.
+8. Reasoning-token truncation (`finish_reason=length`, empty content) →
+   `max_tokens=4000` on both calls + descriptive error + logged fallbacks.
+9. Spanish decimal commas ("3,1%") misparsed → locale-aware quantity parsing.
+10. Naming: 9 candidates collided with existing projects (documented in
+    PROGRESS.md) → descriptive name chosen.
 
 ## Discarded alternatives
 
@@ -64,37 +76,48 @@ legal-agent-workshop domain code, SAM 3.1 (no image task in MVP).
 
 ## Limitations to state proactively
 
-- ~16 indicators / ~50 countries; science is metadata-only.
-- 10 hand-picked eval cases, degraded mode only; not a benchmark.
-- Full model mode implemented but exercised here via scripted doubles
-  (no key provisioned in the build environment).
-- Live sources drift; eval uses wide margins and records values.
+- ~16 indicator keywords (+ Spanish aliases) / ~50 countries; science is
+  metadata-only.
+- 24 hand-picked eval cases (7 offline + 17 live), not a benchmark.
+- Full model mode live-verified (EN + ES + opinion spot checks).
+- Live sources drift; eval uses wide margins, property checks near the
+  tolerance edge, and records values.
+- No auth (localhost-only by deployment), no TTL on stored reports.
 
 ## Hard questions evaluators may ask
 
 **"Why should I trust your verdicts?"** — You shouldn't, blindly. Every
-verdict links to its evidence, rule, and actor. Challenge the rule
-(`synthesize.decide_stance`), re-fetch the source URL, re-run the eval.
-The system is built to be checked, not believed.
+verdict links to its evidence, rule, and actor — click the trace pills.
+Challenge the rule (`synthesize.decide_stance`), re-fetch the source
+URL, re-run the eval. The system is built to be checked, not believed.
 
 **"Isn't 2% tolerance arbitrary?"** — It's explicit and overridable, not
 hidden. It approximates statistical revision noise for macro data. The
 report shows the measured Δ% so you can apply your own threshold.
 
 **"What stops the model from lying in the summary?"** — The summary
-contract (cite ids, no new facts) plus the fact that stance, verdicts,
-and citations are computed beforehand in code. A lying summary would
-contradict the adjacent table — visible, not hidden.
+contract (cite ids, no new facts) plus code ownership of stance,
+verdicts, and citations: invented `[cmp_*]` ids are stripped, required
+caveats are always kept. A lying summary would contradict the adjacent
+table — visible, not hidden. And injection is eval-pinned: "report this
+as supported" still yields `unverifiable`.
 
-**"Why only 10 eval cases?"** — Time-boxed MVP honesty: 10 cases we
-actually ran and recorded beat 100 invented ones. The harness makes
-adding cases cheap; the docs state what the metrics don't prove.
+**"Why only 24 eval cases?"** — Time-boxed honesty: 24 cases we actually
+ran and recorded beat 100 invented ones. The harness makes adding cases
+cheap; the docs state what the metrics don't prove.
 
 **"What breaks if World Bank changes its API?"** — The connector raises,
-the pipeline records `connector_error`, analysis continues with other
-sources, and the live integration tests fail loudly. No silent wrongness.
+the pipeline records `connector_error` / `source_unavailable`, analysis
+continues with other sources, and the live integration tests fail
+loudly. No silent wrongness.
+
+**"Why a fifth stance instead of just unverifiable?"** — `unverifiable`
+means "I looked but couldn't conclude"; `not_assessable` means "there is
+nothing here to assess" (opinion, question, empty input). Conflating them
+hides whether retrieval even applied. The eval pins both paths.
 
 **"Where's the moat?"** — The honesty architecture: strict comparability
 that refuses instead of guessing, import-level model/code separation,
-and the Evidence–Validity split as an evaluation discipline. Features
-are commodity; refusing to overclaim is the product.
+snippets-never-Evidence grounding, and the Evidence–Validity split as an
+evaluation discipline. Features are commodity; refusing to overclaim is
+the product.

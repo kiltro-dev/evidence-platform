@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import re
+
 from ..core.compare import check_time_compatibility, compare_numbers
 from ..core.types import Comparison, Evidence, StructuredClaim, TimeRef, Uncertainty
 from ..core.units import normalize_unit
@@ -13,6 +15,79 @@ def _looks_like_year(q) -> bool:
         and len(q.raw_text.strip()) == 4
         and 1000 <= q.value <= 2100
     )
+
+
+# Conservative opinion/non-claim lexicon: whole-word match only, so
+# "shoulder" or "athletics bests" do not count as opinions.
+_OPINION_RE = re.compile(r"\b(think|believe|best|worst|should)\b", re.IGNORECASE)
+_HAS_NUMBER_RE = re.compile(r"\d")
+# Split on sentence-ending punctuation ONLY when followed by whitespace or
+# end-of-text, so decimals ("27.36") never split a sentence in two.
+_SENT_SPLIT_RE = re.compile(r"[.!?]+(?:\s+|$)")
+
+COMPOUND_CAVEAT = "analyzed as one unit; verify parts separately"
+
+
+def _looks_opinionated(text: str, n_real_quantities: int) -> bool:
+    """Conservative opinion/question test. Lexicon hit always counts; a bare
+    question counts only when the text *ends* in "?" and states no real
+    (non-year) quantity."""
+    if _OPINION_RE.search(text):
+        return True
+    return text.strip().endswith("?") and n_real_quantities == 0
+
+
+def _compound_reason(claim: StructuredClaim) -> str:
+    """Return why the claim is compound, or "" when it is a single unit.
+
+    Compound = 2+ real (non-year) quantities, OR 2+ sentences each
+    containing a number/year. Detection only — never splits or rewrites."""
+    real = [q for q in claim.quantities if not _looks_like_year(q)]
+    if len(real) >= 2:
+        return f"{len(real)} quantities"
+    numbered = [
+        s for s in _SENT_SPLIT_RE.split(claim.raw_text) if _HAS_NUMBER_RE.search(s)
+    ]
+    if len(numbered) >= 2:
+        return f"{len(numbered)} numbered sentences"
+    return ""
+
+
+def detect_claim_shape(claim: StructuredClaim) -> list[Uncertainty]:
+    """Flag non-claims and compound claims (detect+disclose, PRD §2 Out).
+
+    Emitted by both verify paths so run.py needs no changes. The
+    `opinion_or_nonclaim` flag steers decide_stance to `not_assessable`;
+    `compound_claim` only adds a caveat — analysis still proceeds as one unit.
+    """
+    flags: list[Uncertainty] = []
+    n_real = sum(1 for q in claim.quantities if not _looks_like_year(q))
+    if _looks_opinionated(claim.raw_text, n_real):
+        flags.append(
+            Uncertainty(
+                code="opinion_or_nonclaim",
+                description=(
+                    "The input reads as an opinion, recommendation or "
+                    "question rather than a verifiable factual claim; no "
+                    "verdict can be assessed."
+                ),
+                severity="blocking",
+                related_ids=[claim.claim_id],
+            )
+        )
+    reason = _compound_reason(claim)
+    if reason:
+        flags.append(
+            Uncertainty(
+                code="compound_claim",
+                description=(
+                    f"Compound claim detected ({reason}); {COMPOUND_CAVEAT}."
+                ),
+                severity="major",
+                related_ids=[claim.claim_id],
+            )
+        )
+    return flags
 
 
 def _evidence_year(ev: Evidence) -> TimeRef:
@@ -30,7 +105,7 @@ def verify_quantitative(
     claim: StructuredClaim, evidences: list[Evidence]
 ) -> tuple[list[Comparison], list[Uncertainty]]:
     comparisons: list[Comparison] = []
-    uncertainties: list[Uncertainty] = []
+    uncertainties: list[Uncertainty] = detect_claim_shape(claim)
     numeric = [e for e in evidences if isinstance(e.payload.get("value"), (int, float))]
     measured = [q for q in claim.quantities if normalize_unit(q.normalized_unit)]
     bare = [
@@ -148,7 +223,7 @@ def assess_science(
     """Deterministic bibliographic checks. Title metadata alone never verifies
     a scientific claim; that limit is recorded, not hidden."""
     comparisons: list[Comparison] = []
-    uncertainties: list[Uncertainty] = []
+    uncertainties: list[Uncertainty] = detect_claim_shape(claim)
     if not evidences:
         uncertainties.append(
             Uncertainty(

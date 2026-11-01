@@ -2,6 +2,15 @@
 
 from __future__ import annotations
 
+import unicodedata
+
+
+def _strip_accents(s: str) -> str:
+    """Fold accented characters to ASCII (méxico -> mexico)."""
+    return "".join(
+        c for c in unicodedata.normalize("NFKD", s) if not unicodedata.combining(c)
+    )
+
 COUNTRIES: dict[str, str] = {
     "united states": "USA",
     "usa": "USA",
@@ -64,14 +73,67 @@ COUNTRIES: dict[str, str] = {
     "global": "WLD",
     "european union": "EUU",
     "eu": "EUU",
+    # --- Spanish (ES) aliases (canonical keys keep their accents; matching
+    # is accent-insensitive so unaccented spellings work too) ---
+    "estados unidos": "USA",
+    "américa": "USA",
+    "alemania": "DEU",
+    "reino unido": "GBR",
+    "gran bretaña": "GBR",
+    "españa": "ESP",
+    "méxico": "MEX",
+    "japón": "JPN",
+    "francia": "FRA",
+    "italia": "ITA",
 }
 
 
+COUNTRIES.update(
+    {
+        "brasil": "BRA",
+        "canadá": "CAN",
+        "rusia": "RUS",
+        "corea del sur": "KOR",
+        "corea": "KOR",
+        "perú": "PER",
+        "grecia": "GRC",
+        "países bajos": "NLD",
+        "arabia saudita": "SAU",
+        "turquía": "TUR",
+        "suiza": "CHE",
+        "polonia": "POL",
+        "suecia": "SWE",
+        "bélgica": "BEL",
+        "tailandia": "THA",
+        "noruega": "NOR",
+        "irlanda": "IRL",
+        "singapur": "SGP",
+        "malasia": "MYS",
+        "sudáfrica": "ZAF",
+        "filipinas": "PHL",
+        "nueva zelanda": "NZL",
+        "dinamarca": "DNK",
+        "finlandia": "FIN",
+        "egipto": "EGY",
+        "kenia": "KEN",
+        "ucrania": "UKR",
+        "mundo": "WLD",
+        "unión europea": "EUU",
+    }
+)
+
+
 def resolve_country(text: str) -> tuple[str | None, str | None]:
-    """Return (display_name, iso3) for the first country mentioned, else (None, None)."""
-    lowered = text.lower()
+    """Return (display_name, iso3) for the first country mentioned, else (None, None).
+
+    Matching is case- and accent-insensitive: "México" and "Mexico" both
+    resolve to MEX. The returned display name is the canonical dict key.
+    For pure-ASCII (EN) inputs normalization is the identity, so EN
+    behavior is unchanged.
+    """
+    lowered = _strip_accents(text.lower())
     # longest names first so "united states" wins over shorter overlaps
     for name in sorted(COUNTRIES, key=len, reverse=True):
-        if name in lowered:
+        if _strip_accents(name) in lowered:
             return name, COUNTRIES[name]
     return None, None

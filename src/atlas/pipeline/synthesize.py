@@ -3,10 +3,13 @@
 from __future__ import annotations
 
 import logging
+import re
 
 from ..core.types import Comparison, Conclusion, StructuredClaim, Uncertainty
 
 log = logging.getLogger(__name__)
+
+_CMP_REF_RE = re.compile(r"\[cmp_[A-Za-z0-9_]+\]")
 
 SUMMARY_SYSTEM = """You write evidence-analysis summaries. Return ONLY a JSON object:
 {"summary": "max 4 sentences", "caveats": ["short strings"]}
@@ -21,8 +24,27 @@ NON_VERIFYING_METRICS = frozenset({"time_compatibility", "publication_year_match
 
 
 def decide_stance(
-    comparisons: list[Comparison], uncertainties: list[Uncertainty]
+    comparisons: list[Comparison],
+    uncertainties: list[Uncertainty],
+    claim: StructuredClaim | None = None,
 ) -> str:
+    # not_assessable rule (PRD §4; A2a honest-stances, lead fix 2026-11-01).
+    # Checked FIRST; when the input is not a verifiable claim there is no
+    # verdict to give:
+    #   (a) an `opinion_or_nonclaim` uncertainty is present (opinion,
+    #       recommendation or bare question per verify.detect_claim_shape), OR
+    #   (b) the raw input is empty/whitespace: literally nothing to assess.
+    # A factual claim with zero parsed refs is NOT not_assessable: retrieval
+    # also searches the subject text, so it must flow through and land
+    # `unverifiable` when nothing usable comes back. (An earlier revision
+    # used "no quantities/times/geos + type other" here; full-mode eval
+    # showed it misclassified bare factual claims such as moon-cheese.)
+    # `claim` is optional so older callers keep working; with claim=None
+    # only branch (a) can fire.
+    if any(u.code == "opinion_or_nonclaim" for u in uncertainties):
+        return "not_assessable"
+    if claim is not None and not (claim.raw_text or "").strip():
+        return "not_assessable"
     verifying = [c for c in comparisons if c.metric not in NON_VERIFYING_METRICS]
     if any(c.verdict == "contradicts" for c in verifying):
         return "contradicted"
@@ -54,13 +76,50 @@ def template_summary(
     return " ".join(parts), caveats
 
 
+def required_caveats(uncertainties: list[Uncertainty]) -> list[str]:
+    """Template caveats that must ALWAYS be retained (caveat union, PRD §4:
+    caveats are code∪model): the descriptions of blocking/major
+    uncertainties. Minor flags stay on their comparisons and yield to the
+    model's own caveats in the LLM path."""
+    return [
+        u.description for u in uncertainties if u.severity in ("blocking", "major")
+    ]
+
+
+def validate_citations(summary: str, comparisons: list[Comparison]) -> str:
+    """Strip [cmp_*] ids in a model summary that match no real comparison.
+
+    Invented citations are removed (never replaced with guesses) and nothing
+    is appended; stripping is logged so it stays auditable.
+    """
+    valid = {c.comparison_id for c in comparisons}
+    stripped: list[str] = []
+
+    def _keep(match: re.Match) -> str:
+        token = match.group(0)
+        if token[1:-1] in valid:
+            return token
+        stripped.append(token)
+        return ""
+
+    cleaned = _CMP_REF_RE.sub(_keep, summary)
+    if stripped:
+        log.warning(
+            "Stripped %d unknown comparison citation(s) from model summary: %s",
+            len(stripped),
+            stripped,
+        )
+        cleaned = re.sub(r"[ \t]{2,}", " ", cleaned).strip()
+    return cleaned
+
+
 def synthesize(
     claim: StructuredClaim,
     comparisons: list[Comparison],
     uncertainties: list[Uncertainty],
     llm=None,
 ) -> Conclusion:
-    stance = decide_stance(comparisons, uncertainties)
+    stance = decide_stance(comparisons, uncertainties, claim)
     support = [c.comparison_id for c in comparisons if c.verdict == "consistent"]
     contra = [c.comparison_id for c in comparisons if c.verdict == "contradicts"]
     actor: str = "code"
@@ -90,13 +149,18 @@ def synthesize(
                 SUMMARY_SYSTEM, _json.dumps(payload)[:3000], max_tokens=4000
             )
             if isinstance(data.get("summary"), str) and data["summary"].strip():
-                summary = data["summary"].strip()
+                summary = validate_citations(data["summary"].strip(), comparisons)
                 actor = "model"
                 model = getattr(llm, "name", "model")
             else:
                 log.warning("LLM summary missing 'summary' key, using template")
             if isinstance(data.get("caveats"), list):
-                caveats = [str(c) for c in data["caveats"]]
+                # Caveat union: required (blocking/major) template caveats
+                # are ALWAYS retained; model caveats are appended, deduped.
+                caveats = required_caveats(uncertainties)
+                for c in data["caveats"]:
+                    if str(c) not in caveats:
+                        caveats.append(str(c))
         except Exception as exc:
             # keep deterministic summary; audit + log note the fallback
             log.warning("LLM summary failed, using template: %r", exc)

@@ -10,7 +10,7 @@ from __future__ import annotations
 import httpx
 
 from ..core.types import Evidence, StructuredClaim
-from . import register
+from . import as_provider_error, register
 
 BASE_URL = "https://api.openalex.org"
 TIMEOUT_S = 20.0
@@ -27,10 +27,18 @@ def search_works(query: str, per_page: int = 5) -> list[dict]:
         ),
         "mailto": MAILTO,
     }
-    with httpx.Client(timeout=TIMEOUT_S, follow_redirects=True) as client:
-        resp = client.get(f"{BASE_URL}/works", params=params)
-        resp.raise_for_status()
-        data = resp.json()
+    try:
+        with httpx.Client(timeout=TIMEOUT_S, follow_redirects=True) as client:
+            resp = client.get(f"{BASE_URL}/works", params=params)
+            resp.raise_for_status()
+            data = resp.json()
+    except (httpx.HTTPError, ValueError) as exc:
+        raise as_provider_error(exc, f"openalex {query!r}") from exc
+    if not isinstance(data, dict):
+        raise as_provider_error(
+            ValueError(f"unexpected payload type {type(data).__name__}"),
+            f"openalex {query!r}",
+        )
     return data.get("results", [])
 
 
@@ -52,15 +60,17 @@ def venue(work: dict) -> str:
 class OpenAlexConnector:
     name = "openalex"
     domains = ("science", "general")
+    last_query: str | None = None
 
     def retrieve(self, claim: StructuredClaim, limit: int = 5) -> list[Evidence]:
         query = claim.subject or claim.raw_text
         if len(query) > 300:
             query = query[:300]
+        self.last_query = query
         try:
             works = search_works(query, per_page=limit)
-        except (httpx.HTTPError, ValueError):
-            return []
+        except (httpx.HTTPError, ValueError) as exc:
+            raise as_provider_error(exc, f"openalex {query!r}") from exc
         evidences: list[Evidence] = []
         for work in works:
             doi = work.get("doi", "")
@@ -89,6 +99,7 @@ class OpenAlexConnector:
                         "authors": author_names(work),
                         "venue": venue(work),
                         "type": work.get("type"),
+                        "query": query,
                     },
                 )
             )

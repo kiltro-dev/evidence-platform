@@ -9,17 +9,35 @@
          --acc:#6cb2ff; --ok:#4cc38a; --bad:#e5636f; --warn:#e5a763; --na:#8a93a8; }
   * { box-sizing:border-box; } body { margin:0; background:var(--bg); color:var(--txt);
     font:16px/1.55 -apple-system,"Segoe UI",Roboto,sans-serif; }
+  :focus-visible { outline:2px solid var(--acc); outline-offset:2px; border-radius:4px; }
   header { padding:28px 24px 8px; max-width:1060px; margin:auto; }
   header h1 { margin:0; font-size:26px; } header h1 span { color:var(--acc); }
   header p { color:var(--mut); margin:6px 0 0; max-width:70ch; }
+  .banner { margin-top:12px; padding:10px 14px; border-radius:8px; font-size:14px;
+    border:1px solid var(--line); background:#141b2c; }
+  .banner.ok { border-color:var(--ok); background:#12271e; color:#bfe8d2; }
+  .banner.warn { border-color:var(--warn); background:#2c2111; color:#f0d3a8; }
+  .banner.down { border-color:var(--bad); background:#2c1418; color:#f2b8bd; }
+  .how { margin:12px 0 0; padding-left:20px; color:var(--mut); font-size:14px; max-width:75ch; }
+  .how li { margin:4px 0; }
   main { max-width:1060px; margin:auto; padding:16px 24px 60px; }
   .card { background:var(--panel); border:1px solid var(--line); border-radius:12px;
     padding:18px 20px; margin:14px 0; }
+  .card h2 { margin:0 0 10px; font-size:18px; }
+  label.lbl { display:block; font-weight:600; margin:8px 0 6px; }
   textarea { width:100%; min-height:84px; background:#0d1220; color:var(--txt);
     border:1px solid var(--line); border-radius:8px; padding:12px; font-size:15px; resize:vertical; }
+  .row { display:flex; gap:16px; align-items:center; flex-wrap:wrap; margin-top:8px; }
+  #counter { font-size:13px; color:var(--mut); font-variant-numeric:tabular-nums; }
+  #counter.over { color:var(--bad); font-weight:700; }
+  select { background:#0d1220; color:var(--txt); border:1px solid var(--line);
+    border-radius:8px; padding:8px 10px; font-size:14px; }
   button { background:var(--acc); color:#0b1020; border:0; border-radius:8px;
     padding:10px 22px; font-size:15px; font-weight:700; cursor:pointer; }
-  button:disabled { opacity:.5; cursor:wait; }
+  button:disabled { opacity:.5; cursor:not-allowed; }
+  button.ghost { background:#0d1220; color:var(--acc); border:1px solid var(--line);
+    font-weight:600; }
+  button.small { padding:5px 12px; font-size:13px; font-weight:600; }
   .examples { margin-top:10px; display:flex; gap:8px; flex-wrap:wrap; }
   .examples button { background:#0d1220; color:var(--acc); border:1px solid var(--line);
     font-weight:400; font-size:13px; padding:6px 12px; }
@@ -27,129 +45,766 @@
     border-radius:20px; margin-right:6px; vertical-align:middle; }
   .b-code { background:#12325a; color:var(--acc); } .b-model { background:#4a2b12; color:var(--warn); }
   .b-heur { background:#2c3a2a; color:#9ed69b; }
-  .stance { font-size:18px; font-weight:800; text-transform:uppercase; letter-spacing:.5px; }
-  .s-supported{color:var(--ok);} .s-contradicted{color:var(--bad);}
-  .s-partially_supported{color:var(--warn);} .s-unverifiable{color:var(--na);}
-  table { width:100%; border-collapse:collapse; margin-top:8px; font-size:14px; }
+  .stance { display:inline-block; font-size:17px; font-weight:800; padding:4px 14px;
+    border-radius:20px; border:1px solid var(--line); }
+  .s-supported{color:var(--ok);border-color:var(--ok);} .s-contradicted{color:var(--bad);border-color:var(--bad);}
+  .s-partially_supported{color:var(--warn);border-color:var(--warn);} .s-unverifiable{color:var(--na);border-color:var(--na);}
+  .s-not_assessable{color:#c9b8ff;border-color:#c9b8ff;}
+  .sticky { position:sticky; top:0; z-index:5; box-shadow:0 6px 18px rgba(0,0,0,.45); }
+  .pillbtn { background:#0d1220; color:var(--txt); border:1px solid var(--line);
+    font-weight:600; font-size:13px; padding:4px 12px; margin:2px 4px 2px 0; }
+  .pillbtn.sup { border-color:var(--ok); color:var(--ok); }
+  .pillbtn.con { border-color:var(--bad); color:var(--bad); }
+  .tblwrap { overflow-x:auto; margin:0 -4px; padding:0 4px; }
+  table { width:100%; border-collapse:collapse; margin-top:8px; font-size:14px; min-width:640px; }
   th,td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
   th { color:var(--mut); font-weight:600; }
   .v-consistent{color:var(--ok);font-weight:700;} .v-contradicts{color:var(--bad);font-weight:700;}
-  .v-inconclusive{color:var(--warn);} .v-not_comparable{color:var(--na);}
-  .ev { border-left:3px solid var(--acc); padding:6px 12px; margin:10px 0; background:#0d1220;
+  .v-inconclusive{color:var(--warn);font-weight:700;} .v-not_comparable{color:var(--na);font-weight:700;}
+  .ev { border-left:3px solid var(--acc); padding:8px 12px; margin:10px 0; background:#0d1220;
     border-radius:0 8px 8px 0; font-size:14px; }
   .ev a { color:var(--acc); } .mut { color:var(--mut); } .small { font-size:13px; }
-  .grid { display:grid; grid-template-columns:1fr 1fr; gap:0 24px; }
-  @media(max-width:760px){ .grid{grid-template-columns:1fr;} }
+  .enum { display:inline-block; min-width:34px; text-align:center; font-weight:800; font-size:12px;
+    background:#12325a; color:var(--acc); border-radius:6px; padding:2px 6px; margin-right:6px; }
+  .cnum { display:inline-block; font-weight:800; font-size:12px; color:var(--acc);
+    border:1px solid var(--acc); border-radius:6px; padding:1px 7px; margin-right:6px; }
+  .tier { display:inline-block; font-size:11px; font-weight:700; padding:2px 9px;
+    border-radius:12px; margin-left:6px; vertical-align:middle; }
+  .t-off { background:#0f3a2a; color:var(--ok); } .t-acad { background:#12325a; color:var(--acc); }
+  .t-other { background:#2a2f3d; color:var(--mut); }
+  .flash { animation:flash 2s ease-out 1; border-radius:8px; }
+  @keyframes flash { 0% { box-shadow:0 0 0 3px var(--acc); } 100% { box-shadow:none; } }
+  tr.flash td { animation:rowflash 2s ease-out 1; }
+  @keyframes rowflash { 0% { background:#1c3d63; } 100% { background:transparent; } }
+  .stages { list-style:none; padding:0; margin:10px 0; display:flex; gap:10px; flex-wrap:wrap; }
+  .stages li { padding:6px 14px; border:1px solid var(--line); border-radius:20px;
+    font-size:13px; color:var(--mut); }
+  .stages li.on { border-color:var(--acc); color:var(--acc); font-weight:700; }
+  .stages li.done { border-color:var(--ok); color:var(--ok); }
+  .skelbar { height:12px; border-radius:6px; margin:8px 0;
+    background:linear-gradient(90deg,#141b2c 25%,#22304d 50%,#141b2c 75%);
+    background-size:200% 100%; animation:sh 1.4s linear infinite; }
+  @keyframes sh { to { background-position:-200% 0; } }
+  .sev { display:inline-block; font-size:11px; font-weight:800; padding:2px 9px;
+    border-radius:12px; margin-right:8px; }
+  .sev-h { background:#3a1420; color:var(--bad); } .sev-m { background:#3a2c10; color:var(--warn); }
+  .sev-l { background:#1c2a3a; color:var(--acc); }
+  .why { display:inline-block; font-size:12px; color:var(--mut); border:1px dotted var(--mut);
+    border-radius:10px; padding:0 8px; margin-left:8px; cursor:help; }
+  .limbox { border:1px dashed var(--warn); border-radius:8px; padding:10px 14px; margin-top:12px;
+    background:#1d1810; }
+  .limbox h3 { margin:0 0 6px; font-size:14px; color:var(--warn); }
+  details { margin:14px 0; background:var(--panel); border:1px solid var(--line);
+    border-radius:12px; padding:12px 20px; }
+  details summary { cursor:pointer; font-weight:700; font-size:16px; }
+  details table { min-width:0; }
   #status { font-size:13px; color:var(--mut); }
-  .err { color:var(--bad); } footer { max-width:1060px; margin:auto; padding:0 24px 30px;
-    color:var(--mut); font-size:13px; }
+  .err { color:var(--bad); } .grid { display:grid; grid-template-columns:1fr 1fr; gap:0 24px; }
+  @media(max-width:760px){ .grid{grid-template-columns:1fr;} }
+  .hist { display:flex; gap:8px; align-items:center; border:1px solid var(--line);
+    border-radius:8px; padding:8px 10px; margin:6px 0; background:#0d1220; font-size:13px; }
+  .hist button.linklike { background:none; border:0; padding:0; color:var(--txt); font-weight:400;
+    font-size:13px; text-align:left; flex:1; cursor:pointer; display:flex; gap:10px;
+    align-items:baseline; flex-wrap:wrap; }
+  .hist .snip { flex:1; min-width:200px; color:var(--txt); }
+  footer { max-width:1060px; margin:auto; padding:0 24px 30px; color:var(--mut); font-size:13px; }
   code { background:#0d1220; padding:1px 6px; border-radius:4px; font-size:13px; }
+  .meta-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
+    gap:4px 20px; font-size:13px; }
 </style>
 </head>
 <body>
 <header>
   <h1>Evidence <span>Atlas</span></h1>
   <p>Traceable claim analysis: structuring, real sources, deterministic checks.
-  Every conclusion links to its evidence — and every step shows whether a model or code produced it.
-  An analysis aid, not an arbiter of truth.</p>
-  <p id="status">checking service status…</p>
+  Every conclusion links to its evidence. An analysis aid, not an arbiter of truth.</p>
+  <div id="modeBanner" class="banner" role="status">Checking service status…</div>
+  <h2 class="small" style="margin:14px 0 0">How it works</h2>
+  <ul class="how">
+    <li><b>Paste a factual claim</b> — a statistic, a study result, a jobs or price figure — and pick a domain (or leave it on auto).</li>
+    <li><b>Atlas structures it</b>, pulls real records from World Bank Open Data and OpenAlex, and runs deterministic checks in code.</li>
+    <li><b>You get a traceable verdict</b> — every number links to its source, and gaps are disclosed, never papered over.</li>
+  </ul>
 </header>
 <main>
-  <div class="card">
-    <textarea id="claim" placeholder="Enter a factual claim, e.g. The GDP of the United States was $27.36 trillion in 2023."></textarea>
-    <p><button id="run">Analyze claim</button> <span id="busy" class="mut"></span></p>
-    <div class="examples">
-      <button data-ex="The GDP of the United States was $27.36 trillion in 2023.">GDP example</button>
-      <button data-ex="The population of Japan was 500 million in 2020.">Population example</button>
-      <button data-ex="A 2021 study found that global average temperature rose sharply.">Science example</button>
-      <button data-ex="Unemployment in Germany was 3.1% in 2023.">Unemployment example</button>
+  <section class="card" aria-labelledby="inputH">
+    <h2 id="inputH">Check a claim</h2>
+    <label class="lbl" for="claim">Claim text</label>
+    <textarea id="claim" rows="4" aria-describedby="counter svcNote"
+      placeholder="Enter a factual claim, e.g. The GDP of the United States was $27.36 trillion in 2023."></textarea>
+    <div class="row">
+      <span id="counter" aria-live="off">0 / 4000</span>
+      <label for="domain" class="small mut">Domain</label>
+      <select id="domain">
+        <option value="auto" selected>Auto-detect</option>
+        <option value="economy">Economy</option>
+        <option value="science">Science</option>
+        <option value="general">General</option>
+      </select>
     </div>
-  </div>
-  <div id="out"></div>
+    <p>
+      <button id="run">Analyze claim</button>
+      <button id="retryTop" class="ghost" hidden>Retry</button>
+      <span id="busy" class="mut" role="status"></span>
+    </p>
+    <p id="formErr" class="err small" hidden></p>
+    <p id="svcNote" class="err small" hidden></p>
+    <p class="mut small">Tip: press Cmd+Enter (Mac) or Ctrl+Enter to run. One-click examples fill the box and run immediately:</p>
+    <div class="examples">
+      <button data-ex="The GDP of the United States was $27.36 trillion in 2023.">True stat: US GDP 2023</button>
+      <button data-ex="The population of Japan was 500 million in 2020.">False stat: Japan population</button>
+      <button data-ex="A recent study suggests green tea may improve memory.">Vague science: green tea</button>
+      <button data-ex="Unemployment in Germany was 3.1% in 2023.">Jobs stat: German unemployment</button>
+    </div>
+  </section>
+  <section class="card" aria-labelledby="recentH">
+    <h2 id="recentH">Recent analyses</h2>
+    <div id="recent"><p class="mut">Loading recent analyses…</p></div>
+  </section>
+  <div id="out" aria-live="polite"></div>
 </main>
 <footer>
   Sources: World Bank Open Data · OpenAlex · Model (when configured): Muse Spark via Meta Model API.
   Deterministic checks always run in code and cannot be skipped by the model.
+  <span id="footReport"></span>
 </footer>
 <script>
+"use strict";
 const $ = id => document.getElementById(id);
-const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const MAXLEN = 4000, TIMEOUT_MS = 45000;
+let serviceDown = false, aborter = null, elapsedTimer = null, lastRun = null;
 
-async function refreshStatus() {
-  try {
-    const s = await (await fetch("/api/status")).json();
-    $("status").textContent = `mode: ${s.mode} · connectors: ${s.connectors.join(", ")}`;
-  } catch { $("status").textContent = "service unreachable"; }
+/* ---------- text helpers: everything rendered is escaped + humanized ---------- */
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c =>
+  ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const human = s => String(s ?? "").replace(/_/g, " ").trim();
+const cap = s => { s = human(s); return s ? s.charAt(0).toUpperCase() + s.slice(1) : "—"; };
+const isNum = v => typeof v === "number" && Number.isFinite(v);
+/* Flatten anything (incl. FastAPI validation arrays) to a message; never "[object Object]". */
+function safeMsg(v) {
+  if (v == null) return "";
+  if (typeof v === "string") return v;
+  if (typeof v === "number" || typeof v === "boolean") return String(v);
+  if (Array.isArray(v)) return v.map(safeMsg).filter(Boolean).join("; ");
+  if (typeof v === "object") {
+    const parts = [v.msg, v.message].filter(x => typeof x === "string" && x);
+    if (parts.length) return parts.join(" ");
+    if (Array.isArray(v.detail)) return v.detail.map(safeMsg).filter(Boolean).join("; ");
+    if (typeof v.detail === "string") return v.detail;
+    try { return JSON.stringify(v); } catch { return "Unexpected response shape."; }
+  }
+  return String(v);
 }
-refreshStatus();
 
-document.querySelectorAll(".examples button").forEach(b =>
-  b.onclick = () => { $("claim").value = b.dataset.ex; });
-
-$("run").onclick = async () => {
-  const text = $("claim").value.trim();
-  if (!text) return;
-  $("run").disabled = true; $("busy").textContent = "analyzing…"; $("out").innerHTML = "";
-  try {
-    const r = await fetch("/api/analyze", {method:"POST",
-      headers:{"Content-Type":"application/json"}, body:JSON.stringify({text})});
-    if (!r.ok) throw new Error((await r.json()).detail || r.statusText);
-    render(await r.json());
-  } catch (e) { $("out").innerHTML = `<div class="card err">Error: ${esc(e.message)}</div>`; }
-  $("run").disabled = false; $("busy").textContent = "";
-};
-
+/* ---------- label maps (icon + text, never color-only; no snake_case in UI) ---------- */
+function stanceInfo(st) {
+  switch (String(st || "")) {
+    case "supported": return {icon:"✓", label:"Supported",
+      def:"The evidence agrees with the claim as stated."};
+    case "contradicted": return {icon:"✕", label:"Contradicted",
+      def:"The evidence disagrees with the claim as stated."};
+    case "partially_supported": return {icon:"◐", label:"Partially supported",
+      def:"Some parts check out, but other parts could not be verified."};
+    case "unverifiable": return {icon:"?", label:"Unverifiable",
+      def:"Sources were searched, but not enough reliable evidence was found."};
+    case "not_assessable": return {icon:"⊘", label:"Not assessable",
+      def:"This text cannot be fact-checked as stated (opinion, too vague, or not a factual claim)."};
+    default: return {icon:"?", label:cap(st) || "Unknown", def:"No verdict explanation available."};
+  }
+}
+function verdictInfo(v) {
+  switch (String(v || "")) {
+    case "consistent": return {icon:"✓", label:"Consistent"};
+    case "contradicts": return {icon:"✕", label:"Contradicts"};
+    case "inconclusive": return {icon:"?", label:"Inconclusive"};
+    case "not_comparable": return {icon:"=", label:"Not comparable"};
+    default: return {icon:"?", label:cap(v) || "Unknown"};
+  }
+}
+function sevInfo(s) {
+  s = String(s || "").toLowerCase();
+  if (s === "blocking" || s === "high") return {t:"HIGH", c:"sev-h", d:"This blocks a firm conclusion."};
+  if (s === "major" || s === "medium" || s === "med") return {t:"MED", c:"sev-m", d:"This weakens confidence."};
+  return {t:"LOW", c:"sev-l", d:"A minor caveat to keep in mind."};
+}
+function connectorName(c) {
+  const k = String(c || "").toLowerCase();
+  if (k === "worldbank" || k === "world_bank") return "World Bank";
+  if (k === "openalex" || k === "open_alex") return "OpenAlex";
+  return cap(c) || "Unknown source";
+}
+function tierOf(e) {
+  const hay = (String(e.source_name || "") + " " + String(e.connector || "")).toLowerCase();
+  if (hay.includes("world bank") || hay.includes("worldbank")) return {t:"Official source", c:"t-off"};
+  if (hay.includes("openalex") || hay.includes("open alex")) return {t:"Academic source", c:"t-acad"};
+  return {t:"Other source", c:"t-other"};
+}
 function actorBadge(a) {
-  if (a.startsWith("model")) return `<span class="badge b-model">MODEL</span>`;
-  if (a.startsWith("heuristic")) return `<span class="badge b-heur">HEURISTIC</span>`;
-  return `<span class="badge b-code">CODE</span>`;
+  a = String(a || "code").toLowerCase();
+  if (a.startsWith("model")) return '<span class="badge b-model">MODEL</span>';
+  if (a.startsWith("heuristic")) return '<span class="badge b-heur">HEURISTIC</span>';
+  return '<span class="badge b-code">CODE</span>';
+}
+function fmtDate(iso) {
+  if (!iso) return "";
+  try { const d = new Date(iso); return isNaN(d) ? String(iso) : d.toLocaleString(); }
+  catch { return String(iso); }
+}
+function fmtDur(ms) {
+  if (!isNum(ms)) return "";
+  return ms >= 1000 ? (ms / 1000).toFixed(1) + "s" : Math.round(ms) + "ms";
 }
 
-function render(r) {
-  const c = r.claim, k = r.conclusion;
-  const q = (c.quantities||[]).map(x =>
-    `<code>${esc(x.raw_text||x.value)} → ${x.value} [${esc(x.normalized_unit||"?")}]</code>`).join(" ") || "—";
-  const t = (c.time_refs||[]).map(x=>`<code>${esc(x.raw)}</code>`).join(" ") || "—";
-  const g = (c.geo_refs||[]).map(x=>`<code>${esc(x.name||x.raw)}${x.iso3?" ("+x.iso3+")":""}</code>`).join(" ") || "—";
-  const evs = (r.evidences||[]).map(e => `<div class="ev">
-      <b>${esc(e.source_name)}</b> <span class="mut">· ${esc(e.source_kind)} source · ${esc(e.evidence_kind)} evidence · ${esc(e.connector)}</span><br>
-      ${esc(e.excerpt)}<br><span class="small mut">${esc(e.locator)}</span>
-      ${e.source_url?`<br><a href="${esc(e.source_url)}" target="_blank" rel="noopener">${esc(e.source_url)}</a>`:""}
-    </div>`).join("") || "<p>No evidence retrieved.</p>";
-  const cmps = (r.comparisons||[]).map(x => `<tr>
-      <td>${actorBadge(x.actor)}<br><span class="small mut">${esc(x.metric)}</span></td>
-      <td class="small">${esc(x.claim_value)}</td><td class="small">${esc(x.evidence_value)}</td>
-      <td>${x.rel_diff_pct!=null?x.rel_diff_pct.toFixed(2)+"%":"—"}</td>
-      <td class="v-${x.verdict}">${x.verdict}</td><td class="small">${esc(x.notes)}<br>
-      <span class="mut">${esc(x.tolerance_rule)}</span></td></tr>`).join("");
-  const uncs = (r.uncertainties||[]).map(u =>
-    `<li><b>[${esc(u.severity)}]</b> ${esc(u.description)} <span class="mut">${esc(u.code)}</span></li>`).join("")
-    || "<li>None recorded.</li>";
-  const audit = (r.audit||[]).map(a =>
-    `<tr><td>${esc(a.step)}</td><td>${actorBadge(a.actor)} <span class="small">${esc(a.actor)}</span></td>
-     <td class="small">${esc(a.detail)}</td></tr>`).join("");
-  $("out").innerHTML = `
-    <div class="card"><span class="stance s-${k.stance}">${k.stance.replaceAll("_"," ")}</span>
-      ${actorBadge(k.actor)}
-      <p>${esc(k.summary)}</p>
-      <p class="small mut">report <code>${r.report_id}</code> · supports: ${(k.support_comparison_ids||[]).join(", ")||"—"} ·
-      contradicts: ${(k.contradict_comparison_ids||[]).join(", ")||"—"}</p></div>
-    <div class="card"><h3>Structured claim</h3>
-      <div class="grid"><div>
-        <p><b>Domain:</b> ${c.domain} · <b>Type:</b> ${c.claim_type}</p>
-        <p><b>Subject:</b> ${esc(c.subject)}</p>
-        <p><b>Quantities:</b> ${q}</p></div><div>
-        <p><b>Time:</b> ${t}</p><p><b>Geo:</b> ${g}</p>
-        <p><b>Conditions:</b> ${esc((c.conditions||[]).join("; ")||"—")}</p></div></div>
-      <p class="small mut">extracted by ${actorBadge(c.extraction_actor+":")} ${esc(c.extraction_model||"heuristic rules")}</p></div>
-    <div class="card"><h3>Evidence (${(r.evidences||[]).length})</h3>${evs}</div>
-    <div class="card"><h3>Comparisons (${(r.comparisons||[]).length})</h3>
-      <table><tr><th>Check</th><th>Claim</th><th>Evidence</th><th>Δ%</th><th>Verdict</th><th>Notes</th></tr>${cmps}</table></div>
-    <div class="card"><h3>Uncertainties &amp; limitations</h3><ul>${uncs}</ul>
-      <p class="small mut">${(r.limitations||[]).map(esc).join(" ")}</p></div>
-    <div class="card"><h3>Audit trail</h3>
-      <table><tr><th>Step</th><th>Actor</th><th>Detail</th></tr>${audit}</table></div>`;
+/* ---------- mode banner + service status ---------- */
+async function refreshStatus() {
+  const b = $("modeBanner");
+  try {
+    const res = await fetch("/api/status");
+    if (!res.ok) throw new Error("status " + res.status);
+    const s = await res.json();
+    serviceDown = false;
+    $("run").disabled = false;
+    $("run").title = "";
+    $("svcNote").hidden = true;
+    const conns = Array.isArray(s.connectors) ? s.connectors.map(connectorName).join(" · ") : "";
+    if (s.llm_available) {
+      b.className = "banner ok";
+      b.textContent = "● Full mode — model plus deterministic checks." + (conns ? " Sources: " + conns + "." : "");
+    } else {
+      b.className = "banner warn";
+      b.textContent = "● Degraded mode — deterministic checks only, no model. " +
+        "Structuring may be weaker; gaps will be disclosed." + (conns ? " Sources: " + conns + "." : "");
+    }
+  } catch (e) {
+    serviceDown = true;
+    b.className = "banner down";
+    b.textContent = "● Service unreachable — analysis is unavailable. Check that the server is running, then reload.";
+    $("run").disabled = true;
+    $("run").title = "Disabled: service unreachable";
+    $("svcNote").textContent = "Analyze is disabled because the service is unreachable.";
+    $("svcNote").hidden = false;
+  }
 }
+
+/* ---------- input card: counter, validation, shortcuts, examples ---------- */
+function updateCounter() {
+  const n = $("claim").value.length;
+  const c = $("counter");
+  c.textContent = n + " / " + MAXLEN;
+  c.classList.toggle("over", n > 3800);
+  return n;
+}
+function showFormErr(msg) {
+  const p = $("formErr");
+  if (!msg) { p.hidden = true; p.textContent = ""; return; }
+  p.textContent = msg;
+  p.hidden = false;
+}
+$("claim").addEventListener("input", () => { updateCounter(); showFormErr(""); });
+$("claim").addEventListener("keydown", ev => {
+  if ((ev.metaKey || ev.ctrlKey) && ev.key === "Enter") { ev.preventDefault(); submitClaim(); }
+});
+$("run").addEventListener("click", submitClaim);
+$("retryTop").addEventListener("click", () => {
+  if (lastRun) doAnalyze(lastRun.text, lastRun.domain);
+});
+document.querySelectorAll(".examples button").forEach(btn =>
+  btn.addEventListener("click", () => {
+    $("claim").value = btn.dataset.ex || "";
+    updateCounter();
+    showFormErr("");
+    submitClaim();
+  }));
+function submitClaim() {
+  if (serviceDown) { showFormErr("Analysis is unavailable: the service is unreachable."); return; }
+  const text = $("claim").value.trim();
+  if (!text) { showFormErr("Enter a claim to analyze — the box is empty."); $("claim").focus(); return; }
+  if (text.length > MAXLEN) {
+    showFormErr("That claim is " + text.length + " characters; the limit is " + MAXLEN + ". Shorten it and try again.");
+    return;
+  }
+  showFormErr("");
+  $("retryTop").hidden = true;
+  doAnalyze(text, $("domain").value);
+}
+
+/* ---------- run states: staged skeleton, abort + 45s timeout, typed errors ---------- */
+function showSkeleton() {
+  $("out").innerHTML =
+    '<div class="card" role="status" aria-label="Analysis in progress">' +
+    '<h2>Analyzing… <span id="elapsed" class="mut small">0.0s</span></h2>' +
+    '<ol class="stages"><li id="st1" class="on">Structuring the claim</li>' +
+    '<li id="st2">Retrieving sources</li><li id="st3">Comparing values</li></ol>' +
+    '<div class="skelbar" style="width:92%"></div><div class="skelbar" style="width:78%"></div>' +
+    '<div class="skelbar" style="width:64%"></div>' +
+    '<p class="mut small">One request, three stages — the highlight advances on elapsed time. ' +
+    'Automatically stops after 45s. <button id="cancelBtn" class="ghost small">Cancel</button></p></div>';
+  $("cancelBtn").addEventListener("click", () => { if (aborter) aborter.abort("cancelled"); });
+}
+function startElapsed() {
+  const t0 = performance.now();
+  clearInterval(elapsedTimer);
+  elapsedTimer = setInterval(() => {
+    const s = (performance.now() - t0) / 1000;
+    const el = $("elapsed");
+    if (!el) { clearInterval(elapsedTimer); return; }
+    el.textContent = s.toFixed(1) + "s";
+    const s1 = $("st1"), s2 = $("st2"), s3 = $("st3");
+    if (!s1 || !s2 || !s3) return;
+    const stage = s < 6 ? 1 : s < 20 ? 2 : 3;
+    [[s1, 1], [s2, 2], [s3, 3]].forEach(([li, n]) => {
+      li.classList.toggle("on", n === stage);
+      li.classList.toggle("done", n < stage);
+    });
+  }, 100);
+}
+function stopElapsed() { clearInterval(elapsedTimer); elapsedTimer = null; }
+async function parseErrBody(res) {
+  /* PRD envelope {error:{code,message}} with legacy {detail} fallback. */
+  let code = "", message = "";
+  try {
+    const b = await res.json();
+    if (b && typeof b === "object" && b.error && typeof b.error === "object") {
+      code = typeof b.error.code === "string" ? b.error.code : "";
+      message = safeMsg(b.error.message);
+    } else if (b && typeof b === "object" && "detail" in b) {
+      message = safeMsg(b.detail);
+    } else {
+      message = safeMsg(b);
+    }
+  } catch { message = ""; }
+  return {status: res.status, code, message};
+}
+function errorCard(title, detail, code, retryable) {
+  const codeBit = code ? ' <span class="mut small">(code: ' + esc(human(code)) + ")</span>" : "";
+  $("out").innerHTML =
+    '<div class="card" role="alert"><h2>' + esc(title) + "</h2><p>" + esc(detail) + codeBit + "</p>" +
+    (retryable ? '<p><button id="retryBtn">Retry</button> ' +
+      '<span class="mut small">Your claim text is kept above.</span></p>'
+      : '<p class="mut small">Your claim text is kept above — edit it and run again.</p>') + "</div>";
+  const rb = $("retryBtn");
+  if (rb) rb.addEventListener("click", () => {
+    if (lastRun) { $("claim").value = lastRun.text; updateCounter(); doAnalyze(lastRun.text, lastRun.domain); }
+  });
+  $("retryTop").hidden = !retryable;
+}
+async function doAnalyze(text, domain) {
+  if (aborter) { try { aborter.abort("superseded"); } catch {} }
+  lastRun = {text, domain};
+  aborter = new AbortController();
+  showSkeleton();
+  startElapsed();
+  $("run").disabled = true;
+  $("busy").textContent = "Analyzing…";
+  const timer = setTimeout(() => { try { aborter.abort("timeout"); } catch {} }, TIMEOUT_MS);
+  try {
+    const res = await fetch("/api/analyze", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({text, limit: 5, domain, persist: true}),
+      signal: aborter.signal
+    });
+    clearTimeout(timer);
+    stopElapsed();
+    if (!res.ok) {
+      const e = await parseErrBody(res);
+      const detail = e.message || ("The server answered with status " + e.status + ".");
+      if (e.status === 400 || e.status === 404 || e.status === 422) {
+        errorCard("Please check your claim", detail, e.code, false);
+      } else {
+        errorCard("Service issue — please retry", detail, e.code, true);
+      }
+      return;
+    }
+    const report = await res.json();
+    $("retryTop").hidden = true;
+    render(report);
+    afterReport(report);
+  } catch (e) {
+    clearTimeout(timer);
+    stopElapsed();
+    if (e && e.name === "AbortError") {
+      errorCard("Analysis stopped", "The request was stopped after 45 seconds without an answer. " +
+        "The server may be busy — retry, or try a shorter claim.", "timeout", true);
+    } else {
+      errorCard("Service issue — please retry",
+        "Could not reach the analysis service (" + safeMsg(e && e.message) + "). " +
+        "Check your connection and retry.", "network", true);
+    }
+  } finally {
+    clearTimeout(timer);
+    stopElapsed();
+    aborter = null;
+    if (!serviceDown) $("run").disabled = false;
+    $("busy").textContent = "";
+  }
+}
+
+/* ---------- traceability numbering: Cn from comparison_id order, En for evidence ---------- */
+function buildNums(report) {
+  const cmps = Array.isArray(report.comparisons) ? report.comparisons : [];
+  const evs = Array.isArray(report.evidences) ? report.evidences : [];
+  const sorted = [...cmps].sort((a, b) =>
+    String(a.comparison_id || "").localeCompare(String(b.comparison_id || "")));
+  const cNum = {};
+  sorted.forEach((c, i) => { cNum[c.comparison_id] = "C" + (i + 1); });
+  const eNum = {};
+  evs.forEach((e, i) => { eNum[e.evidence_id] = "E" + (i + 1); });
+  return {cNum, eNum};
+}
+function jumpTo(id) {
+  const t = document.getElementById(id);
+  if (!t) return;
+  t.scrollIntoView({behavior: "smooth", block: "center"});
+  t.classList.remove("flash");
+  void t.offsetWidth;
+  t.classList.add("flash");
+  setTimeout(() => t.classList.remove("flash"), 2100);
+}
+function srcLink(url) {
+  /* http(s) allowlist only; anything else renders as plain text. */
+  const u = String(url || "");
+  if (/^https?:\/\//i.test(u)) {
+    let host = "";
+    try { host = new URL(u).host; } catch { host = ""; }
+    return '<a href="' + esc(u) + '" target="_blank" rel="noopener">View source' +
+      (host ? " · " + esc(host) : "") + "</a>";
+  }
+  return u ? '<span class="mut">' + esc(u) + "</span>" : '<span class="mut">No link provided</span>';
+}
+
+/* ---------- result rendering (IA order per spec) ---------- */
+function verdictHTML(report, nums) {
+  const k = report.conclusion || {};
+  const st = stanceInfo(k.stance);
+  const nSrc = Array.isArray(report.evidences) ? report.evidences.length : 0;
+  const nCmp = Array.isArray(report.comparisons) ? report.comparisons.length : 0;
+  const sup = (Array.isArray(k.support_comparison_ids) ? k.support_comparison_ids : [])
+    .map(id => ({id, n: nums.cNum[id] || String(id)}));
+  const con = (Array.isArray(k.contradict_comparison_ids) ? k.contradict_comparison_ids : [])
+    .map(id => ({id, n: nums.cNum[id] || String(id)}));
+  const pills = list => list.length
+    ? list.map(x => '<button class="pillbtn" data-cmp="' + esc(x.n) + '">' + esc(x.n) + "</button>").join("")
+    : '<span class="mut small">none</span>';
+  const elapsed = isNum(report.elapsed_ms) ? fmtDur(report.elapsed_ms)
+    : (isNum(report.elapsedMs) ? fmtDur(report.elapsedMs) : "");
+  return '<section class="card sticky" aria-labelledby="verdictH">' +
+    '<h2 id="verdictH" tabindex="-1"><span class="stance s-' + esc(String(k.stance || "unverifiable")) +
+    '">' + esc(st.icon) + " " + esc(st.label) + "</span> " + actorBadge(k.actor) + "</h2>" +
+    "<p>" + esc(st.def) + "</p>" +
+    (k.summary ? "<p>" + esc(k.summary) + "</p>" : "") +
+    '<p class="small">Based on <b>' + nSrc + "</b> source" + (nSrc === 1 ? "" : "s") +
+    " and <b>" + nCmp + "</b> check" + (nCmp === 1 ? "" : "s") +
+    (elapsed ? " · analyzed in " + esc(elapsed) : "") + "</p>" +
+    '<p class="small mut">Who produced what: <span class="badge b-code">CODE</span> deterministic checks · ' +
+    '<span class="badge b-model">MODEL</span> model output · ' +
+    '<span class="badge b-heur">HEURISTIC</span> rule-based fallback</p>' +
+    '<p class="small">Supports: ' + pills(sup) + "<br>Contradicts: " + pills(con) + "</p></section>";
+}
+function evidenceHTML(report, nums) {
+  const evs = Array.isArray(report.evidences) ? report.evidences : [];
+  if (!evs.length) {
+    return '<section class="card" aria-labelledby="evH"><h2 id="evH">Key evidence (0)</h2>' +
+      "<p>No evidence was retrieved for this claim — see uncertainties below for why.</p></section>";
+  }
+  const cards = evs.map((e, i) => {
+    const en = nums.eNum[e.evidence_id] || ("E" + (i + 1));
+    const tier = tierOf(e);
+    const full = String(e.excerpt || "");
+    const cut = full.length > 280;
+    const bits = [cap(e.source_kind), cap(e.evidence_kind), connectorName(e.connector)]
+      .filter(x => x && x !== "—");
+    const dt = fmtDate(e.retrieved_at || e.retrievedAt);
+    return '<article class="ev" id="ev-' + esc(en) + '"' + (i >= 3 ? ' data-extra="1" hidden' : "") + ">" +
+      '<div><span class="enum">' + esc(en) + "</span><b>" + esc(e.source_name || "Unnamed source") +
+      '</b><span class="tier ' + tier.c + '">' + esc(tier.t) + "</span><br>" +
+      '<span class="small mut">' + esc(bits.join(" · ")) + "</span></div>" +
+      '<p><span id="ex-' + esc(en) + '">' + esc(cut ? full.slice(0, 280) + "…" : (full || "No excerpt provided.")) +
+      "</span>" + (cut ? ' <button class="ghost small" data-exbtn="' + esc(en) + '" data-full="' +
+        esc(full) + '" data-cut="' + esc(full.slice(0, 280) + "…") + '">Expand</button>' : "") + "</p>" +
+      (e.locator ? '<p class="small mut">' + esc(e.locator) + "</p>" : "") +
+      (dt ? '<p class="small mut">Retrieved: ' + esc(dt) + "</p>" : "") +
+      "<p>" + srcLink(e.source_url) + "</p></article>";
+  }).join("");
+  const more = evs.length > 3
+    ? '<p><button id="evMore" class="ghost small">Show all ' + evs.length + " sources</button></p>" : "";
+  return '<section class="card" aria-labelledby="evH"><h2 id="evH">Key evidence (' + evs.length +
+    ")</h2>" + cards + more + "</section>";
+}
+function deltaText(x) {
+  if (isNum(x.rel_diff_pct)) return x.rel_diff_pct.toFixed(2) + "%";
+  if (isNum(x.relDiffPct)) return x.relDiffPct.toFixed(2) + "%";
+  if (isNum(x.abs_diff)) return "Δ " + x.abs_diff;
+  if (isNum(x.absDiff)) return "Δ " + x.absDiff;
+  return "—";
+}
+function comparisonsHTML(report, nums) {
+  const cmps = Array.isArray(report.comparisons) ? report.comparisons : [];
+  if (!cmps.length) {
+    return '<section class="card" aria-labelledby="cmpH"><h2 id="cmpH">Comparisons (0)</h2>' +
+      "<p>No direct comparisons could be made — there was nothing measurable to check " +
+      "against the sources. See uncertainties below.</p></section>";
+  }
+  const rows = cmps.map((x, i) => {
+    const cn = nums.cNum[x.comparison_id] || ("C" + (i + 1));
+    const v = verdictInfo(x.verdict);
+    const en = x.evidence_id && nums.eNum[x.evidence_id] ? nums.eNum[x.evidence_id] : "";
+    const whyBits = [x.notes ? "Notes: " + x.notes : "",
+      x.tolerance_rule ? "Tolerance: " + x.tolerance_rule : ""].filter(Boolean).join(" ");
+    return '<tr id="cmp-' + esc(cn) + '"' + (i >= 5 ? ' data-extra="1" hidden' : "") + ">" +
+      '<td><span class="cnum">' + esc(cn) + "</span>" + actorBadge(x.actor) + "<br>" +
+      '<span class="small">' + esc(cap(x.metric)) + "</span></td>" +
+      '<td class="small">' + esc(x.claim_value != null && x.claim_value !== "" ? x.claim_value : "—") + "</td>" +
+      '<td class="small">' + esc(x.evidence_value != null && x.evidence_value !== "" ? x.evidence_value : "—") + "</td>" +
+      "<td>" + esc(deltaText(x)) + "</td>" +
+      '<td class="v-' + esc(String(x.verdict || "inconclusive")) + '">' + esc(v.icon) + " " + esc(v.label) + "</td>" +
+      '<td class="small">' + (whyBits ? '<details style="margin:0;padding:6px 10px">' +
+        "<summary>Why</summary>" + esc(whyBits) + "</details>" : '<span class="mut">—</span>') + "</td>" +
+      "<td>" + (en ? '<button class="pillbtn" data-ev="' + esc(en) + '">' + esc(en) + "</button>"
+        : '<span class="mut small">—</span>') + "</td></tr>";
+  }).join("");
+  const more = cmps.length > 5
+    ? '<p><button id="cmpMore" class="ghost small">Show all ' + cmps.length + " checks</button></p>" : "";
+  return '<section class="card" aria-labelledby="cmpH"><h2 id="cmpH">Comparisons (' + cmps.length + ")</h2>" +
+    '<div class="tblwrap"><table><caption class="small mut" style="text-align:left">' +
+    "Each check compares a claimed value with a sourced value.</caption>" +
+    "<tr><th>Check</th><th>Claim</th><th>Evidence</th><th>Difference</th><th>Verdict</th><th>Why</th><th>Source</th></tr>" +
+    rows + "</table></div>" + more + "</section>";
+}
+function uncertaintiesHTML(report) {
+  const uncs = Array.isArray(report.uncertainties) ? report.uncertainties : [];
+  const lims = Array.isArray(report.limitations) ? report.limitations : [];
+  const items = uncs.length ? "<ul>" + uncs.map(u => {
+    const s = sevInfo(u.severity);
+    return "<li><span class=\"sev " + s.c + "\">" + esc(s.t) + "</span>" +
+      esc(u.description || "Undisclosed gap.") + ' <span class="small mut">' + esc(s.d) + "</span>" +
+      (u.code ? ' <span class="why" title="Diagnostic code: ' + esc(human(u.code)) + '">Why</span>' : "") + "</li>";
+  }).join("") + "</ul>" : "<p>None recorded.</p>";
+  const limBox = '<div class="limbox"><h3>Method and limits</h3>' +
+    (lims.length ? "<ul>" + lims.map(l => "<li>" + esc(safeMsg(l)) + "</li>").join("") + "</ul>"
+      : "<p class=\"small\">No method limits were recorded for this report.</p>") + "</div>";
+  return '<section class="card" aria-labelledby="uncH"><h2 id="uncH">Uncertainties (' + uncs.length +
+    ")</h2>" + items + limBox + "</section>";
+}
+function claimHTML(report) {
+  const c = report.claim || {};
+  /* Backend contract: effective domain is claim.domain (the route audit
+     step records any user override as domain_override=a->b). */
+  let domLine = esc(cap(c.domain));
+  const q = (Array.isArray(c.quantities) ? c.quantities : []).map(x =>
+    "<code>" + esc(x.raw_text || x.rawText || x.value) + " → " + esc(x.value) +
+    (x.normalized_unit || x.normalizedUnit ? " [" + esc(x.normalized_unit || x.normalizedUnit) + "]" : "") +
+    "</code>").join(" ") || "—";
+  const t = (Array.isArray(c.time_refs) ? c.time_refs : []).map(x =>
+    "<code>" + esc(x.raw || x.year || human(x.period_type)) + "</code>").join(" ") || "—";
+  const g = (Array.isArray(c.geo_refs) ? c.geo_refs : []).map(x =>
+    "<code>" + esc(x.name || x.raw || "—") + (x.iso3 ? " (" + esc(x.iso3) + ")" : "") + "</code>").join(" ") || "—";
+  const conds = (Array.isArray(c.conditions) ? c.conditions : []).map(esc).join("; ") || "—";
+  return "<details><summary>Claim as understood</summary>" +
+    '<div class="grid"><div><p><b>Domain:</b> ' + domLine + " · <b>Type:</b> " + esc(cap(c.claim_type)) + "</p>" +
+    "<p><b>Subject:</b> " + esc(c.subject || "—") + "</p><p><b>Quantities:</b> " + q + "</p></div><div>" +
+    "<p><b>Time:</b> " + t + "</p><p><b>Place:</b> " + g + "</p><p><b>Conditions:</b> " + conds + "</p></div></div>" +
+    '<p class="small mut">Extracted by ' + actorBadge(c.extraction_actor) + " " +
+    esc(c.extraction_model || "heuristic rules") + "</p>" +
+    (c.raw_text ? '<p class="small mut">Original text: “' + esc(c.raw_text) + "”</p>" : "") + "</details>";
+}
+function auditHTML(report) {
+  const steps = Array.isArray(report.audit) ? report.audit : [];
+  const rows = steps.map(a => {
+    const dur = isNum(a.duration_ms) ? fmtDur(a.duration_ms)
+      : (isNum(a.durationMs) ? fmtDur(a.durationMs) : "—");
+    return "<tr><td>" + esc(cap(a.step)) + "</td><td>" + actorBadge(a.actor) +
+      ' <span class="small">' + esc(human(a.actor)) + "</span></td>" +
+      "<td class=\"small\">" + esc(a.detail || "—") + "</td><td>" + esc(dur) + "</td></tr>";
+  }).join("");
+  const m = report.meta && typeof report.meta === "object" ? report.meta : null;
+  const metaKeys = ["app_version", "model", "temperature", "max_tokens", "tolerance",
+    "prompt_version", "input_sha256", "usage"];
+  let meta = "";
+  if (m) {
+    const cells = metaKeys.filter(k => m[k] != null && m[k] !== "").map(k =>
+      "<div><b>" + esc(cap(k)) + ":</b> " + esc(safeMsg(m[k])) + "</div>").join("");
+    meta = cells ? '<h3 class="small">Run metadata</h3><div class="meta-grid">' + cells + "</div>"
+      : '<p class="small mut">No run metadata recorded.</p>';
+  }
+  return "<details><summary>Audit trail" + (steps.length ? " (" + steps.length + " steps)" : "") + "</summary>" +
+    (rows ? '<div class="tblwrap"><table><tr><th>Step</th><th>Actor</th><th>Detail</th><th>Duration</th></tr>' +
+      rows + "</table></div>" : "<p>No audit steps recorded.</p>") + meta + "</details>";
+}
+function footHTML(report) {
+  return '<div class="card small"><span class="mut">Report </span><code id="repId">' +
+    esc(report.report_id || "unknown") + "</code> " +
+    '<button id="copyLink" class="ghost small">Copy link</button> ' +
+    '<span id="copyMsg" class="mut"></span></div>';
+}
+function render(report) {
+  const nums = buildNums(report);
+  $("out").innerHTML = verdictHTML(report, nums) + evidenceHTML(report, nums) +
+    comparisonsHTML(report, nums) + uncertaintiesHTML(report) +
+    claimHTML(report) + auditHTML(report) + footHTML(report);
+  /* wire traceability pills + expanders + copy link */
+  document.querySelectorAll("#out [data-cmp]").forEach(b =>
+    b.addEventListener("click", () => jumpTo("cmp-" + b.dataset.cmp)));
+  document.querySelectorAll("#out [data-ev]").forEach(b =>
+    b.addEventListener("click", () => jumpTo("ev-" + b.dataset.ev)));
+  document.querySelectorAll("#out [data-exbtn]").forEach(b =>
+    b.addEventListener("click", () => {
+      const span = $("ex-" + b.dataset.exbtn);
+      const open = b.textContent === "Expand";
+      span.textContent = open ? b.dataset.full : b.dataset.cut;
+      b.textContent = open ? "Collapse" : "Expand";
+    }));
+  const evMore = $("evMore");
+  if (evMore) evMore.addEventListener("click", () => {
+    const show = document.querySelectorAll('.ev[data-extra="1"][hidden]').length > 0;
+    document.querySelectorAll('.ev[data-extra="1"]').forEach(el => { el.hidden = !show; });
+    evMore.textContent = show ? "Show fewer sources" : "Show all " +
+      (Array.isArray(report.evidences) ? report.evidences.length : 0) + " sources";
+  });
+  const cmpMore = $("cmpMore");
+  if (cmpMore) cmpMore.addEventListener("click", () => {
+    const show = document.querySelectorAll('tr[data-extra="1"][hidden]').length > 0;
+    document.querySelectorAll('tr[data-extra="1"]').forEach(el => { el.hidden = !show; });
+    cmpMore.textContent = show ? "Show fewer checks" : "Show all " +
+      (Array.isArray(report.comparisons) ? report.comparisons.length : 0) + " checks";
+  });
+  $("copyLink").addEventListener("click", () => copyLink(report.report_id));
+  const vh = $("verdictH");
+  if (vh) vh.focus({preventScroll: true});
+}
+function copyLink(id) {
+  const msg = $("copyMsg");
+  const url = location.origin + location.pathname + "?report=" + encodeURIComponent(id || "");
+  const done = ok => { msg.textContent = ok ? "Link copied." : "Copy failed — copy the URL manually."; };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(url).then(() => done(true), () => done(false));
+  } else {
+    try {
+      const ta = document.createElement("textarea");
+      ta.value = url;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+      done(true);
+    } catch { done(false); }
+  }
+}
+function afterReport(report) {
+  if (report && report.report_id) {
+    try { history.replaceState(null, "", "?report=" + encodeURIComponent(report.report_id)); } catch {}
+    $("footReport").textContent = " Report " + report.report_id + ".";
+  }
+  loadRecent();
+}
+
+/* ---------- history: recent strip, deep link, delete ---------- */
+async function loadRecent() {
+  const box = $("recent");
+  try {
+    const res = await fetch("/api/reports?limit=10");
+    if (!res.ok) throw new Error("status " + res.status);
+    const body = await res.json();
+    const list = Array.isArray(body) ? body : (Array.isArray(body.reports) ? body.reports : []);
+    renderRecent(list.slice(0, 10));
+  } catch (e) {
+    box.innerHTML = '<p class="mut small">Could not load recent analyses (' +
+      esc(safeMsg(e && e.message)) + ").</p>";
+  }
+}
+function renderRecent(list) {
+  const box = $("recent");
+  if (!list.length) {
+    box.innerHTML = "<p class=\"mut\">No analyses yet — run your first claim above.</p>";
+    return;
+  }
+  box.innerHTML = list.map(r => {
+    const st = stanceInfo(r.stance);
+    const snip = String(r.claim_text || r.claimText || "").slice(0, 90);
+    return '<div class="hist" id="hist-' + esc(r.report_id) + '">' +
+      '<button class="linklike" data-load="' + esc(r.report_id) + '">' +
+      '<span class="stance s-' + esc(String(r.stance || "unverifiable")) + '" style="font-size:12px">' +
+      esc(st.icon) + " " + esc(st.label) + "</span>" +
+      '<span class="snip">' + esc(snip || "(no text)") + "</span>" +
+      '<span class="mut small">' + esc(fmtDate(r.created_at || r.createdAt)) + "</span></button>" +
+      '<button class="ghost small" data-del="' + esc(r.report_id) + '">Delete</button></div>';
+  }).join("");
+  box.querySelectorAll("[data-load]").forEach(b =>
+    b.addEventListener("click", () => loadReport(b.dataset.load)));
+  box.querySelectorAll("[data-del]").forEach(b =>
+    b.addEventListener("click", () => confirmDelete(b.dataset.del)));
+}
+function confirmDelete(id) {
+  const row = $("hist-" + id);
+  if (!row) return;
+  row.innerHTML = '<span class="small">Delete this report?</span> ' +
+    '<button class="small" data-yes="1">Yes, delete</button> ' +
+    '<button class="ghost small" data-no="1">Keep</button> ' +
+    '<span class="err small" data-delerr=""></span>';
+  row.querySelector("[data-no]").addEventListener("click", () => loadRecent());
+  row.querySelector("[data-yes]").addEventListener("click", async () => {
+    const err = row.querySelector("[data-delerr]");
+    try {
+      const res = await fetch("/api/reports/" + encodeURIComponent(id), {method: "DELETE"});
+      if (!res.ok) {
+        const e = await parseErrBody(res);
+        err.textContent = "Delete failed: " + (e.message || ("status " + e.status));
+        return;
+      }
+      row.remove();
+      if (!$("recent").querySelector(".hist")) {
+        $("recent").innerHTML = "<p class=\"mut\">No analyses yet — run your first claim above.</p>";
+      }
+      try {
+        const q = new URLSearchParams(location.search);
+        if (q.get("report") === id) history.replaceState(null, "", location.pathname);
+      } catch {}
+    } catch (e) {
+      err.textContent = "Delete failed: " + safeMsg(e && e.message);
+    }
+  });
+}
+async function loadReport(id) {
+  if (!id) return;
+  $("busy").textContent = "Loading report…";
+  try {
+    const res = await fetch("/api/reports/" + encodeURIComponent(id));
+    if (!res.ok) {
+      const e = await parseErrBody(res);
+      errorCard("Report not found",
+        e.message || "No saved report with that id.", e.code || "report_not_found", false);
+      $("retryTop").hidden = true;
+      return;
+    }
+    const report = await res.json();
+    render(report);
+    afterReport(report);
+    jumpTo("verdictH");
+  } catch (e) {
+    errorCard("Service issue — please retry",
+      "Could not load that report (" + safeMsg(e && e.message) + ").", "network", false);
+    $("retryTop").hidden = true;
+  } finally {
+    $("busy").textContent = "";
+  }
+}
+
+/* ---------- init ---------- */
+updateCounter();
+refreshStatus();
+loadRecent();
+try {
+  const q = new URLSearchParams(location.search);
+  const deep = q.get("report");
+  if (deep) loadReport(deep);
+} catch {}
 </script>
 </body>
 </html>
+
+
+
+
+
+
+

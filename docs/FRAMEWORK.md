@@ -29,7 +29,7 @@ Single-number benchmarks hide exactly this distinction.
 
 | Criterion | Question | MVP operationalization |
 |---|---|---|
-| Consistency | Same input → same verdict? | deterministic core; temperature-0 model calls; 10/10 repeatable eval |
+| Consistency | Same input → same verdict? | deterministic core; temperature-0 model calls; 7/7 repeatable offline eval |
 | Correctness | Are the checks right? | unit tests on comparison/stance rules; strict comparability |
 | Traceability | Does every conclusion resolve to evidence? | `traceability` eval check (must be 1.0) |
 | Disclosure | Are model/code roles and limits explicit? | audit trail badges; limitations block; no hidden scores |
@@ -48,11 +48,12 @@ Single-number benchmarks hide exactly this distinction.
 
 - E: strong for economy (direct values, stable URLs); weak-by-design for
   science (metadata only — disclosed, capped at `partially_supported`).
-- V: strong on traceability (1.0, enforced), consistency (deterministic),
-  disclosure (badges + limitations); narrow on correctness coverage
-  (10 cases, degraded mode only).
+- V: strong on traceability (1.0, enforced; prose citations checked too),
+  consistency (deterministic), disclosure (badges + limitations); narrow
+  on correctness coverage (24 hand-picked cases).
 - Known gaps: no full-text science verification, no retrieval-relevance
-  scoring beyond year/indicator matching, no adversarial phrasing tests.
+  scoring beyond year/indicator matching, only two pinned adversarial
+  phrasing cases (authority invocation, prompt injection).
 
 ## Limitations of the proposal
 

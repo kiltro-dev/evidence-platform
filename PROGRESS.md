@@ -62,9 +62,43 @@ Persistent record for the autonomous build. Latest entry last.
   `max_tokens=4000` on both calls. Offline suite still 28/28.
 - Server restarted on :8765 in full mode. Details: docs/LIVE_MODEL.md.
 
+## 2026-11-01 — v2 implementation (0.2.0) + docs wave D
+
+- v2 implementation complete and verified: 179 unit+e2e offline green,
+  smoke 29 PASS, degraded eval 7/7, live full-mode spot checks
+  (EN GDP → supported, ES unemployment → supported, opinion →
+  not_assessable).
+- v2 features: unified error envelope (7 codes), 5th stance
+  `not_assessable`, domain override, DELETE reports, 60/min/IP rate
+  limit, 128-entry 1h cache, ISO3 allowlist, model-output sanitization
+  (unit allowlist, finite floats, 20-item caps), citation validation,
+  caveat union, ES support (keywords, decimal commas, long-scale billón),
+  trace pills + history/delete UI, 24-case eval (modes degraded/full/both).
+- Docs wave D: README rewritten (real clone URL, uv+pip paths, ops
+  notes), ARCHITECTURE with C4 + sequences + data model, new API.md,
+  DEVELOPER_GUIDE.md, SECURITY_OPS.md, EVAL_REPORT.md, openapi.json
+  export (byte-verified), ADRs 0006 (grounding) + 0007 (fifth stance),
+  refreshed AGENTS/EVAL/DEMO/STUDY_GUIDE/FRAMEWORK/LIVE_MODEL.
+  No screenshots: no browser in the build env (noted in README).
+
+## 2026-11-01 — Mission v2 (engineering department)
+
+- 4 parallel audits → PRD + frozen contracts + backlog.
+- 7 implementation agents (A1 API, A2a pipeline honesty, A2b providers,
+  A3 Spanish, B1 UI rebuild, C1 benchmark v2, C2 smoke+lock) + docs wave.
+- Lead integration: meta/elapsed/duration_ms fields, domain override,
+  single APP_VERSION, 429/5xx transient, uncertainty dedupe, one retry
+  on transient source errors, cache×persist fix, bad_request code.
+- Reconciliation: not_assessable narrowed (whitespace-only),
+  expected_full overlays, domain-preference prompt, PROMPT_VERSION 2.
+- Verified: 185/185 offline, smoke 29 PASS, full eval 24/24 stance 1.00,
+  EN+ES+opinion live, reviewer SIGN OFF. Server :8765 full mode.
+
 ## Open risks / not done
 
 - Submit-portal fields and video specs unverifiable without login; demo
   video recording itself is a human task (script ready in docs/).
 - No per-report token accounting yet; truncation fallback possible
   under load (handled by degradation).
+- Deferred per PRD §2: full compound split, async jobs, grounding
+  integration, retention TTL, gateway rate limits, charts/export/i18n.
