@@ -543,8 +543,10 @@ def test_forced_final_after_four_tool_rounds(tmp_path):
     llm = FakeLLM([dict(RURITANIA_PLAN)] + [dict(tool_step)] * 4
                   + [dict(forced)])
     bus, tracker = _bus_tracker()
+    # F2-9: pin the full 4-round path (default-on abort would close it).
     config = SwarmConfig(llm=llm, search_fn=make_search_fn(hits),
-                         fetch_fn=make_fetch_fn(bodies, str(tmp_path)))
+                         fetch_fn=make_fetch_fn(bodies, str(tmp_path)),
+                         early_abort_enabled=False)
     result = asyncio.run(
         run_claim(bus, tracker, "c-ff", RURITANIA_TEXT, config))
     assert len(result.packages) == 1
@@ -638,9 +640,10 @@ def test_deadline_aborts_with_new_defaults(tmp_path):
     final = {"thought": "late", "tool_calls": [],
              "final": {"findings": []}}
     llm = FakeLLM([dict(RURITANIA_PLAN), dict(tool_step), dict(final)])
+    # F2-9: pin the deadline path (default-on abort would close it first).
     config = SwarmConfig(llm=llm, search_fn=_sleepy_search,
                          fetch_fn=make_fetch_fn(bodies, str(tmp_path)),
-                         claim_deadline_s=0.05)
+                         claim_deadline_s=0.05, early_abort_enabled=False)
     bus, tracker = _bus_tracker()
     result = asyncio.run(
         run_claim(bus, tracker, "c-dl2", RURITANIA_TEXT, config))

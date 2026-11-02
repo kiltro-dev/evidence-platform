@@ -22,6 +22,13 @@ units/scale/year checks) also closes rounds early; grounding queries run
 in parallel (cap 4); redteam is deferred (the 4->2 round cut was
 reverted after a B1 falso-C); claims that do not fast-path emit
 ``claim.no_exit`` with the general cause (see ``no_exit_reason``).
+
+F2-9 p95: a recuperador round that adds no packages and no new documents
+(sterile re-search, measured on the deadline-70 tail) aborts the
+remaining rounds (``claim.early_abort``; kill-switch
+``SwarmConfig.early_abort_enabled``). Deciders are untouched: a round
+that returns final, adds a package, or fetches a new document never
+aborts.
 """
 
 from __future__ import annotations
@@ -627,6 +634,8 @@ class SwarmConfig:
     code_refutation_enabled: bool = True  # WB refute fast-path
     ground_parallel: bool = True  # parallel grounding queries (cap 4)
     redteam_enabled: bool = False  # True restores the blocking 2nd round
+    # F2-9 kill-switch (default: on). False restores the full 4-round loop.
+    early_abort_enabled: bool = True  # abort sterile no-progress rounds
 
 
 @dataclass
@@ -1533,6 +1542,24 @@ def no_exit_reason(packages: list[dict] | None, text: str,
         return "no_exit_unknown"
 
 
+def early_abort_reason(n_packages: int, docs_added: int) -> str | None:
+    """Reason to abort the remaining rounds, or None (F2-9, pure).
+
+    Fires when completed round(s) produced nothing new: 0 packages in
+    hand AND 0 documents added since grounding ended (sterile
+    re-search: same queries, already-known or unfetchable hits). The
+    counts are general (never claim-, figure- or URL-specific). A round
+    that returns final, adds a package, or fetches any new document
+    never aborts, so deciders keep their full loop. Never raises.
+    """
+    try:
+        if int(n_packages) == 0 and int(docs_added) == 0:
+            return "no packages and no new documents since grounding"
+    except (TypeError, ValueError):
+        return None
+    return None
+
+
 # ---------------------------------------------------------------------------
 # per-claim pipeline
 # ---------------------------------------------------------------------------
@@ -1549,6 +1576,8 @@ class _ClaimCtx:
         self._seen_quotes: set[tuple[str, str]] = set()
         # F2-7: grounding exit taxonomy (exit_*/no_exit_*; "" when no plan).
         self.exit_taxonomy: str = ""
+        # F2-9: set when a sterile round aborts the loop (None otherwise).
+        self.early_abort: str | None = None
         # F2-3: monotonic per-claim budget; rounds abort gracefully when
         # it lapses (wait_for in run_claim stays as the hard backstop).
         self._deadline_mono = (
@@ -1671,6 +1700,9 @@ async def _recuperador_loop(ctx: _ClaimCtx, seed_user: str,
                             source_year: int | None) -> None:
     """RECUPERADOR tool loop: model calls tools until final/rounds out."""
     transcript = seed_user
+    # F2-9: doc baseline at loop entry (== end of grounding); a round that
+    # adds no package and no document is sterile (see early_abort_reason).
+    base_docs = len(ctx.docs.all())
     for _ in range(max(1, max_rounds)):
         if ctx.expired():  # F2-3: graceful round abort (packages kept)
             return
@@ -1710,6 +1742,12 @@ async def _recuperador_loop(ctx: _ClaimCtx, seed_user: str,
             f"fetched documents so far:\n{ctx.docs.render()[:9000]}\n\n"
             "Continue: more tool_calls, or final with findings."
         )
+        if ctx.config.early_abort_enabled:  # F2-9: sterile round -> stop
+            reason = early_abort_reason(
+                len(ctx.packages), len(ctx.docs.all()) - base_docs)
+            if reason is not None:
+                ctx.early_abort = reason
+                return
     # Rounds exhausted without final: one last forced-final call.
     if ctx.expired():  # F2-3: no forced call on a lapsed budget
         return
@@ -1861,6 +1899,8 @@ async def _run_claim_inner(ctx: _ClaimCtx) -> str:
         return "budget exhausted at recuperador"
     except Exception as exc:
         log.warning("recuperador failed for %s: %r", ctx.claim_id, exc)
+    if ctx.early_abort is not None:  # F2-9: sterile round, rest skipped
+        return f"early-abort(recuperador): {ctx.early_abort}"
     if ctx.expired():  # F2-3: graceful abort (packages kept, honest note)
         return _expired_note(ctx, "recuperador")
 
@@ -1950,9 +1990,11 @@ async def run_claim(bus: Any, tracker: Any, claim_id: str, text: str,
                                       timeout=hard_timeout)
         degraded = note.startswith(
             ("budget exhausted", "estructurador failed",
-             "claim deadline"))
+             "claim deadline", "early-abort"))
         if note.startswith("early-exit"):  # F2-3: latency telemetry event
             await _publish_early_exit(bus, ctx, note)
+        if note.startswith("early-abort"):  # F2-9: sterile-loop telemetry
+            await _publish_early_abort(bus, ctx, note)
         if ctx.exit_taxonomy.startswith("no_exit"):  # F2-7: why not fast
             await _publish_no_exit(bus, ctx, ctx.exit_taxonomy)
         return await _finish(bus, ctx, degraded=degraded, note=note)
@@ -1980,6 +2022,22 @@ async def _publish_early_exit(bus: Any, ctx: _ClaimCtx,
         })
     except Exception as exc:
         log.warning("claim.early_exit publish failed: %r", exc)
+
+
+async def _publish_early_abort(bus: Any, ctx: _ClaimCtx,
+                             note: str) -> None:
+    """Emit ``claim.early_abort`` telemetry (F2-9; never breaks the run)."""
+    if bus is None:
+        return
+    try:
+        await bus.publish({
+            "type": "claim.early_abort",
+            "claim_id": ctx.claim_id,
+            "reason": note,
+            "n_packages": len(ctx.packages),
+        })
+    except Exception as exc:
+        log.warning("claim.early_abort publish failed: %r", exc)
 
 
 async def _publish_no_exit(bus: Any, ctx: _ClaimCtx, reason: str) -> None:
@@ -2092,6 +2150,7 @@ __all__ = [
     "build_search_queries",
     "code_refutation_reason",
     "doc_excerpts",
+    "early_abort_reason",
     "early_exit_reason",
     "no_exit_reason",
     "numbers_from_quote",

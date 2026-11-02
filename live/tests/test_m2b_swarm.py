@@ -448,8 +448,11 @@ def test_recuperador_tool_loop_calls_web_search(tmp_path):
                  {"url": "https://en.wikipedia.org/wiki/World_population",
                   "quote": WIKI_QUOTE}]}}
     llm = FakeLLM([ESTRUCT_PLAN, tool_step, final, REDTEAM_SKIP])
+    # F2-9: pin the 2-round search path (default-on abort would close it:
+    # the re-search adds no new doc).
     config = SwarmConfig(llm=llm, search_fn=search,
-                         fetch_fn=make_fetch_fn(bodies, str(tmp_path)))
+                         fetch_fn=make_fetch_fn(bodies, str(tmp_path)),
+                         early_abort_enabled=False)
     bus, tracker = _bus_tracker()
     result = asyncio.run(run_claim(bus, tracker, "c-tools",
                                    "We are 8.14 billion people.", config))
