@@ -579,9 +579,11 @@ def test_link_pipeline_materializes_then_reuses_run_live(monkeypatch,
                                                          tmp_path):
     import live.server.app as appmod
     from live import run_live
+    from live.ingest import hlsfetch as H
 
     calls: dict = {}
-    monkeypatch.setattr(R, "download_media",
+    # V6-1: dispatch moved to hlsfetch.materialize_media; patch its seam.
+    monkeypatch.setattr(H, "download_media",
                         lambda url, dest, **kw: calls.update(
                             downloaded=url, dest=dest) or
                         {"path": str(tmp_path / "local.media"),
@@ -605,14 +607,36 @@ def test_link_pipeline_materializes_then_reuses_run_live(monkeypatch,
     assert runs["r1"]["local_path"] == str(tmp_path / "local.media")
 
 
-def test_link_pipeline_refuses_playlists():
+def test_link_pipeline_hls_materializes_dash_refused(monkeypatch, tmp_path):
+    # V6-1: hls is materialized in Python (no https to ffmpeg); only
+    # dash stays refused.
     import live.server.app as appmod
+    from live import run_live
+    from live.ingest import hlsfetch as H
 
+    monkeypatch.setattr(
+        H, "fetch_hls_local",
+        lambda url, dest, **kw: {"path": str(tmp_path / "win.media"),
+                                 "bytes": 10, "segments": 1,
+                                 "variant": url, "live": True,
+                                 "truncated": False})
+
+    async def _fake_amain(args):
+        return {"summary_path": "s.json"}
+
+    monkeypatch.setattr(run_live, "amain", _fake_amain)
+    monkeypatch.chdir(tmp_path)
     runs = {"r1": {"status": "started"}}
     appmod._run_link_pipeline("r1", "https://cdn.example.com/s.m3u8",
                               "hls", "vivo", runs, "link-r1.jsonl")
-    assert runs["r1"]["status"] == "error"
-    assert "hls" in runs["r1"]["error"]
+    assert runs["r1"]["status"] == "done"
+    assert runs["r1"]["local_path"] == str(tmp_path / "win.media")
+
+    runs = {"r2": {"status": "started"}}
+    appmod._run_link_pipeline("r2", "https://cdn.example.com/s.mpd",
+                              "dash", "vivo", runs, "link-r2.jsonl")
+    assert runs["r2"]["status"] == "error"
+    assert "dash" in runs["r2"]["error"].lower()
 
 
 def test_ui_has_ingest_controls():

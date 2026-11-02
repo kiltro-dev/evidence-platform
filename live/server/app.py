@@ -339,30 +339,31 @@ def _run_link_pipeline(run_id: str, media_url: str, media_kind: str,
     path). File media (mp4/audio) is downloaded SSRF-guarded to
     ``data/cache/`` first — the imageio static ffmpeg segfaults
     (rc=-11) on ANY https input — and the pipeline ingests the local
-    path. HLS/DASH playlists cannot be single-file materialized and
-    are refused here with a clear error until a TLS-capable ffmpeg
-    lands. Runs headless (``--no-server`` semantics): the bus log +
-    summary land next to the normal runs; status is mirrored in
-    ``runs[run_id]`` for ``GET /ingest/{run_id}``.
+    path. HLS playlists are materialized window-by-window in Python
+    (``live.ingest.hlsfetch``) for the same reason; DASH stays
+    refused with a clear error. Runs headless (``--no-server``
+    semantics): the bus log + summary land next to the normal runs;
+    status is mirrored in ``runs[run_id]`` for ``GET /ingest/{id}``.
     """
     import argparse
 
     try:
         from live import run_live
-        from live.ingest.resolve import LinkError, download_media
+        from live.ingest.hlsfetch import materialize_media
 
         video = media_url
-        if media_kind in LOCAL_FILE_KINDS:
+        if media_kind in LOCAL_FILE_KINDS | {"hls"}:
             cache_dir = Path("data") / "cache"
             cache_dir.mkdir(parents=True, exist_ok=True)
-            dest = str(cache_dir / f"link-{run_id}.media")
-            info = download_media(media_url, dest)
+            info = materialize_media(media_url, media_kind, str(cache_dir),
+                                     prefix=f"link-{run_id}")
             video = info["path"]
             runs[run_id]["local_path"] = video
-            runs[run_id]["bytes"] = info["size"]
-        elif media_kind in ("hls", "dash"):
-            raise LinkError(f"playlists {media_kind} aún no soportadas: "
-                            f"el ffmpeg estático no lee https")
+            runs[run_id]["bytes"] = info.get("size", info.get("bytes"))
+        elif media_kind == "dash":
+            from live.ingest.resolve import LinkError
+            raise LinkError("playlists dash aún no soportadas: sin "
+                            "segmentador DASH en esta build")
         args = argparse.Namespace(
             video=video, detector="heuristic", no_server=True,
             log=log_path, port=8765, duration=None, chunk_ms=80,

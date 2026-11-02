@@ -71,6 +71,13 @@ def probe_streams(path: str) -> dict[str, bool]:
         text=True,
         timeout=60,
     )
+    if proc.returncode == -11:
+        # V6-1: the static build segfaults on TS/https input; fail
+        # loudly instead of reporting "no streams" (TS windows must
+        # go through tsdemux.remux_to_mkv first).
+        raise RuntimeError(
+            f"ffmpeg segfault probing {path!r}: este binario no lee "
+            f"TS ni https (usa tsdemux.remux_to_mkv para ventanas HLS)")
     err = proc.stderr or ""
     return {
         "audio": " Audio:" in err,
