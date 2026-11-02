@@ -484,7 +484,8 @@ def test_ingest_launches_pipeline_thread(monkeypatch):
     monkeypatch.setattr(R, "resolve_link", lambda url, **kw: _fake_media())
     launched: dict = {}
     monkeypatch.setattr(appmod, "_launch_link_run",
-                        lambda rid, url, kind, mode, runs, log: launched.update(
+                        lambda rid, url, kind, mode, runs, log, **kw:
+                        launched.update(
                             run_id=rid, url=url, kind=kind, mode=mode))
     client = _client()
     res = client.post("/ingest", json={"url": "https://example.com/p",

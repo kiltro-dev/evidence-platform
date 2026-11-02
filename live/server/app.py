@@ -33,6 +33,8 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import re
+import tempfile
 import threading
 import time
 import uuid
@@ -59,6 +61,9 @@ log = logging.getLogger(__name__)
 UI_PATH = Path(__file__).resolve().parent.parent / "ui" / "index.html"
 MEDIA_DIR = Path(__file__).resolve().parent.parent.parent / "data" / "keynote"
 MEDIA_ALLOW = {"keynote_en.mp4", "keynote_es.mp4"}
+# V6-2: link-ingest cache served to the player (strict shape, no traversal).
+CACHE_DIR = Path(__file__).resolve().parent.parent.parent / "data" / "cache"
+_LINK_MEDIA_RE = re.compile(r"link-[A-Za-z0-9]+\.(mkv|media|mp4|m4a|mp3)\Z")
 
 # Cap on turns per /run so a bad upload cannot wedge the demo server.
 MAX_RUN_TURNS = 500
@@ -158,15 +163,59 @@ def create_app(
         info["max_gap_s"] = DEFAULT_MAX_GAP_S
         return JSONResponse(info)
 
+    @app.get("/report/{run}", response_model=None)
+    async def report(run: str, format: str = "json"):
+        """V6-2 exported report for any replayable run (json|html)."""
+        from live.replay.player import resolve_run
+        from live.report import export as report_export
+
+        if format not in ("json", "html"):
+            return JSONResponse({"error": "format debe ser json|html"},
+                                status_code=400)
+        log_path = resolve_run(run)
+        if log_path is None:
+            return JSONResponse({"error": f"unknown run {run!r}"},
+                                status_code=404)
+        try:
+            report_data = report_export.load_run(log_path)
+        except Exception as exc:
+            return JSONResponse({"error": f"no se pudo leer {run!r}: {exc}"},
+                                status_code=500)
+        # link-* runs ingest real remote media; the rest are demo corpus.
+        source = ("real" if str(run).startswith("link-") else "synthetic")
+        if format == "html":
+            out = Path(tempfile.mkdtemp(prefix="atlas-report-")) / "r.html"
+            report_export.export_html(report_data, out, source=source)
+            return HTMLResponse(out.read_text(encoding="utf-8"))
+        out = Path(tempfile.mkdtemp(prefix="atlas-report-")) / "r.json"
+        payload = report_export.export_json(report_data, out, source=source)
+        return JSONResponse(payload)
+
     @app.get("/media/{name}", response_model=None)
     async def media(name: str):
-        """Serve keynote demo videos for the <video> player (allowlist)."""
-        if name not in MEDIA_ALLOW:
-            return JSONResponse({"error": f"unknown media {name!r}"}, status_code=404)
-        path = MEDIA_DIR / name
-        if not path.is_file():
-            return JSONResponse({"error": f"missing media {name!r}"}, status_code=404)
-        return FileResponse(path, media_type="video/mp4", filename=name)
+        """Serve player video: keynote allowlist + link-ingest cache.
+
+        Link cache names match ``link-<runid>.<ext>`` only; anything
+        else 404s (no traversal: the regex admits no separators).
+        """
+        if name in MEDIA_ALLOW:
+            path = MEDIA_DIR / name
+            if not path.is_file():
+                return JSONResponse({"error": f"missing media {name!r}"},
+                                    status_code=404)
+            return FileResponse(path, media_type="video/mp4", filename=name)
+        if _LINK_MEDIA_RE.fullmatch(name or ""):
+            path = CACHE_DIR / name
+            if not path.is_file():
+                return JSONResponse({"error": f"missing media {name!r}"},
+                                    status_code=404)
+            suffix = path.suffix.lower()
+            mime = ("video/mp4" if suffix in (".mp4", ".media")
+                    else "video/x-matroska" if suffix == ".mkv"
+                    else "audio/mpeg")
+            return FileResponse(path, media_type=mime, filename=name)
+        return JSONResponse({"error": f"unknown media {name!r}"},
+                            status_code=404)
 
     @app.websocket("/ws")
     async def ws_feed(
@@ -281,10 +330,23 @@ def create_app(
             "status": "started",
         }
         app.state.ingest_runs[run_id] = record
+        duration = payload.get("duration")
+        if duration is not None:
+            try:
+                duration = float(duration)
+            except (TypeError, ValueError):
+                return JSONResponse(
+                    {"error": "duration debe ser segundos (número)"},
+                    status_code=400)
+            if not 0 < duration <= 3600:
+                return JSONResponse(
+                    {"error": "duration fuera de rango (0, 3600]s"},
+                    status_code=400)
         if payload.get("launch", True):
             log_path = str(Path("data") / "runs" / f"link-{run_id}.jsonl")
             _launch_link_run(run_id, media.url, media.kind, mode,
-                             app.state.ingest_runs, log_path)
+                             app.state.ingest_runs, log_path,
+                             duration=duration)
         else:
             record["status"] = "resolved"
         return JSONResponse(
@@ -309,8 +371,8 @@ def create_app(
 
 
 def _launch_link_run(run_id: str, media_url: str, media_kind: str,
-                     mode: str, runs: dict,
-                     log_path: str) -> threading.Thread:
+                     mode: str, runs: dict, log_path: str,
+                     duration: float | None = None) -> threading.Thread:
     """Start the ``live.run_live`` pipeline for a resolved link (thread).
 
     Module-level seam so tests can monkeypatch the launch; the thread
@@ -318,7 +380,8 @@ def _launch_link_run(run_id: str, media_url: str, media_kind: str,
     """
     thread = threading.Thread(
         target=_run_link_pipeline,
-        args=(run_id, media_url, media_kind, mode, runs, log_path),
+        args=(run_id, media_url, media_kind, mode, runs, log_path,
+              duration),
         name=f"ingest-{run_id}",
         daemon=True,
     )
@@ -332,7 +395,8 @@ LOCAL_FILE_KINDS = frozenset({"mp4", "audio"})
 
 
 def _run_link_pipeline(run_id: str, media_url: str, media_kind: str,
-                       mode: str, runs: dict, log_path: str) -> None:
+                       mode: str, runs: dict, log_path: str,
+                       duration: float | None = None) -> None:
     """Thread body: reuse ``live.run_live.amain`` on the resolved media.
 
     Lazy import (``live.run_live`` imports this module for the server
@@ -366,9 +430,9 @@ def _run_link_pipeline(run_id: str, media_url: str, media_kind: str,
                             "segmentador DASH en esta build")
         args = argparse.Namespace(
             video=video, detector="heuristic", no_server=True,
-            log=log_path, port=8765, duration=None, chunk_ms=80,
+            log=log_path, port=8765, duration=duration, chunk_ms=80,
             keywords="", language_bias="", api_key="", record=None,
-            mode=mode,
+            mode=mode, source=f"link-{media_kind}",
         )
         summary = asyncio.run(run_live.amain(args))
         runs[run_id]["status"] = "done"
@@ -387,6 +451,13 @@ def _video_for_run(run: str) -> str | None:
         name = "keynote_en.mp4"
         if (MEDIA_DIR / name).is_file():
             return f"/media/{name}"
+    # V6-2: link-<runid> replays pin their own materialized media.
+    if run.startswith("link-"):
+        rid = run[len("link-"):]
+        if rid and all(c.isalnum() for c in rid):
+            for ext in (".mkv", ".media", ".mp4"):
+                if (CACHE_DIR / f"link-{rid}{ext}").is_file():
+                    return f"/media/link-{rid}{ext}"
     return None
 
 

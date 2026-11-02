@@ -336,12 +336,15 @@ class FifoStream:
         chunk_ms: int = 80,
         duration: float | None = None,
         mode: str = "vivo",
+        source_label: str = SOURCE_LABEL,
     ) -> None:
         self.video = video
         self.chunk_bytes = int(24000 * 2 * chunk_ms / 1000)
         self.duration = duration
         self.mode = check_mode(mode)  # V5-G1: vivo (paced) | turbo (no -re)
-        self.source_label = SOURCE_LABEL
+        # V6-2: origin label (link-hls/link-mp4/... for link ingest);
+        # the restream mechanism below is still simstream-paced.
+        self.source_label = source_label or SOURCE_LABEL
         self.t0_wall: float | None = None
         self.restream_extra: tuple[str, ...] = (
             "-y",
@@ -395,7 +398,7 @@ class FifoStream:
         self._sim, label = restream_for_mode(
             self.video, self._fifo, self.mode, extra_args=self.restream_extra
         )
-        assert label == SOURCE_LABEL == self.source_label
+        assert label == SOURCE_LABEL  # mechanism tag; origin is source_label
         self._proc = subprocess.Popen(
             self.demux_argv_for(self._fifo),
             stdout=subprocess.PIPE,
@@ -620,6 +623,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--mode", choices=("vivo", "turbo"), default="vivo",
                         help="ingest governor: vivo = realtime -re pacing "
                         "(default), turbo = ingest sin pacing (V5-G1)")
+    parser.add_argument("--source", default=SOURCE_LABEL,
+                        help="origin label for run.mode/summary "
+                        "(V6-2: link-hls/link-mp4/... for link ingest)")
     return parser
 
 
@@ -667,9 +673,11 @@ async def amain(args: argparse.Namespace) -> dict:
         server, server_task = await serve_in_background(app, args.port)
         sub_task = asyncio.create_task(ws_subscriber(args.port, arrivals, stop))
 
-    await bus.publish(mode_event(mode))  # V5-G1 run.mode (governor tag)
+    source = getattr(args, "source", SOURCE_LABEL) or SOURCE_LABEL
+    await bus.publish(mode_event(mode, source))  # run.mode (governor+origin)
     demux = FifoStream(args.video, chunk_ms=args.chunk_ms,
-                       duration=args.duration, mode=mode).start()
+                       duration=args.duration, mode=mode,
+                       source_label=source).start()
     print(f"[m1e] source={demux.source_label} video={args.video} "
           f"detector={args.detector} server={'on' if with_server else 'off'} "
           f"mode={mode} log={log_path}", flush=True)

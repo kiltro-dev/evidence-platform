@@ -54,6 +54,24 @@ def fast_paths_for_mode(mode: str) -> dict[str, bool]:
     }
 
 
+def run_label(mode: str, source: str) -> str:
+    """Human run label (ES): Vivo / Turbo / archivo / directo simulado.
+
+    Link origins (``link-hls`` / ``link-mp4`` / ``link-audio``) always
+    show the link origin; the file/sim/microphone origins show how the
+    bytes were paced. The UI badge and the exported report use this.
+    """
+    clean = check_mode(mode)
+    src = (source or "").strip().lower()
+    if src.startswith("link-"):
+        return "Turbo por enlace" if clean == "turbo" else "Vivo por enlace"
+    if src == "live-microphone":
+        return "Micrófono en vivo"
+    if src == SOURCE_LABEL:
+        return "Directo simulado" if clean == "vivo" else "Turbo simulado"
+    return "Turbo de archivo" if clean == "turbo" else "Archivo en tiempo real"
+
+
 def mode_event(mode: str, source: str = SOURCE_LABEL) -> dict:
     """``run.mode`` bus event: which governor this run uses."""
     clean = check_mode(mode)
@@ -64,6 +82,7 @@ def mode_event(mode: str, source: str = SOURCE_LABEL) -> dict:
         "pacing": "realtime" if clean == "vivo" else "turbo",
         "concurrency": concurrency_for_mode(clean),
         "source": source,
+        "label": run_label(clean, source),
     }
 
 

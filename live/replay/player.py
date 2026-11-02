@@ -32,9 +32,10 @@ _SAFE_RUN_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.~-]*")
 DEFAULT_MAX_GAP_S = 10.0
 
 #: Globs for replayable run logs (excludes *.asr.jsonl partial logs).
-#: run-* = listen/detect runs, verify-* = investigation/verdict runs.
+#: run-* = listen/detect runs, verify-* = investigation/verdict runs,
+#: link-* = V6-2 link-ingest runs (POST /ingest bus logs).
 _RUN_GLOB = "run-*.jsonl"
-_RUN_GLOBS = ("run-*.jsonl", "verify-*.jsonl")
+_RUN_GLOBS = ("run-*.jsonl", "verify-*.jsonl", "link-*.jsonl")
 
 
 def is_safe_run_name(run: str) -> bool:
