@@ -442,7 +442,9 @@ def tables_from_html(html: str) -> list[list[list[str]]]:
     return list(parser.tables)
 
 
-def doc_excerpts(text: str, limit: int = DOC_EXCERPT_CHARS) -> str:
+def doc_excerpts(text: str, limit: int = DOC_EXCERPT_CHARS,
+                 needles: "list[str] | tuple[str, ...] | None" = None,
+                 ) -> str:
     """Readable excerpt where every line is a verbatim snapshot substring.
 
     HTML is split on tags (never reflowed): each surviving segment is a
@@ -453,13 +455,17 @@ def doc_excerpts(text: str, limit: int = DOC_EXCERPT_CHARS) -> str:
     F2-2: HTML data tables are appended as ``TABLE i row j: ...`` reading
     aids (same budget). These joined lines are NOT verbatim (cells are
     joined with " | "); single figures inside them still occur raw.
+
+    V5-EN: ``needles`` (claim-derived tokens/figures, see
+    :func:`excerpt_needles_for_claim`) reorders surviving segments so the
+    ones mentioning the claim's figures/entities come first (stable:
+    ties keep document order). Segments are never edited, so the
+    verbatim pact holds exactly as before. ``None``/empty keeps the
+    historical document order byte-for-byte.
     """
     clean = _SCRIPT_STYLE_RE.sub(" ", text or "")
-    out: list[str] = []
-    budget = limit
+    kept: list[str] = []
     for raw in _TAG_SPLIT_RE.split(clean):
-        if budget <= 0:
-            break
         seg = _WS_RE.sub(" ", raw).strip()
         # Sentences carry quotable claims; tiny fragments are nav/TOC.
         # (Figure-dense API bodies are one big segment: unaffected.)
@@ -469,6 +475,13 @@ def doc_excerpts(text: str, limit: int = DOC_EXCERPT_CHARS) -> str:
             continue
         if not seg or _is_junk_segment(seg):
             continue
+        kept.append(seg)
+    ranked = _rank_segments(kept, needles) if needles else kept
+    out: list[str] = []
+    budget = limit
+    for seg in ranked:
+        if budget <= 0:
+            break
         out.append(seg[:budget])
         budget -= len(out[-1]) + 1
     if budget > 0:
@@ -486,6 +499,80 @@ def doc_excerpts(text: str, limit: int = DOC_EXCERPT_CHARS) -> str:
                 if budget <= 0:
                     break
     return "\n".join(out)
+
+
+# V5-EN: claim tokens worth ranking excerpt segments by. Digit runs
+# (figures and years alike — ranking only decides reading order, never
+# verdicts) plus alpha words of 4+ chars (entity/indicator/unit words;
+# short words are stopword-grade noise in every language).
+_NEEDLE_DIGIT_RE = re.compile(r"\d[\d.,]*")
+_NEEDLE_WORD_RE = re.compile(r"[A-Za-zÀ-ÿ]{4,}")
+_MAX_NEEDLES = 32
+
+
+def excerpt_needles_for_claim(text: str) -> list[str]:
+    """Claim-derived excerpt needles (V5-EN, pure).
+
+    Digit runs (with a commas-stripped variant so "299,792,458" also
+    matches "299792458") plus lowercase alpha words of 4+ chars,
+    de-duplicated, capped at 32. General token shaping over the claim
+    TEXT only — never claim ids, entities, or languages.
+    """
+    needles: list[str] = []
+    seen: set[str] = set()
+
+    def _add(raw: str) -> None:
+        clean = (raw or "").strip().lower()
+        if len(clean) >= 2 and clean not in seen:
+            seen.add(clean)
+            needles.append(clean)
+
+    try:
+        doc = text or ""
+    except Exception:
+        return []
+    try:
+        for match in _NEEDLE_DIGIT_RE.finditer(doc):
+            token = match.group(0).strip(".,")
+            if not token or not any(ch.isdigit() for ch in token):
+                continue
+            _add(token)
+            _add(token.replace(",", ""))
+        for match in _NEEDLE_WORD_RE.finditer(doc):
+            _add(match.group(0))
+    except Exception:
+        return list(needles)
+    return needles[:_MAX_NEEDLES]
+
+
+def _rank_segments(segments: list[str],
+                   needles: "list[str] | tuple[str, ...] | None",
+                   ) -> list[str]:
+    """Stable claim-first segment order (V5-EN, pure).
+
+    Segments score distinct-needle hits (case-insensitive, commas
+    ignored so grouped/ungrouped figures match); higher scores first,
+    ties keep document order. Segments are never edited. Empty needles
+    return the input order untouched. Never raises.
+    """
+    try:
+        pins = [str(n).strip().lower().replace(",", "")
+                for n in (needles or [])]
+        pins = [p for p in pins if len(p) >= 2]
+    except Exception:
+        return list(segments)
+    if not pins:
+        return list(segments)
+    scored: list[tuple[int, int, str]] = []
+    for idx, seg in enumerate(segments or []):
+        try:
+            hay = str(seg).lower().replace(",", "")
+        except Exception:
+            hay = ""
+        hits = sum(1 for p in pins if p in hay)
+        scored.append((-hits, idx, seg))
+    scored.sort(key=lambda t: (t[0], t[1]))
+    return [seg for _, _, seg in scored]
 
 
 _JUNK_SEGMENT_MARKERS = (
@@ -797,6 +884,9 @@ class _Tools:
     def __init__(self, config: SwarmConfig, docs: _DocStore) -> None:
         self._config = config
         self._docs = docs
+        # V5-EN: claim-derived excerpt needles (set by _ClaimCtx; None
+        # keeps the historical document-order excerpts byte-for-byte).
+        self.excerpt_needles: list[str] | None = None
 
     def _fetch(self, url: str) -> FetchResult:
         fn = self._config.fetch_fn or fetch_url
@@ -823,7 +913,13 @@ class _Tools:
             fetched = self._fetch(str(url or ""))
         except Exception as exc:
             return {"ok": False, "url": url, "error": f"{type(exc).__name__}"}
-        doc = self._docs.add(fetched)
+        needles = self.excerpt_needles
+        if needles:
+            excerpt_fn = (lambda t, _n=tuple(needles):
+                          doc_excerpts(t, needles=_n))
+        else:
+            excerpt_fn = None
+        doc = self._docs.add(fetched, excerpt_fn=excerpt_fn)
         return {"ok": True, "url": doc.url, "title": doc.title,
                 "text": doc.excerpt}
 
@@ -1109,6 +1205,41 @@ def _curated_total_indicators() -> tuple[str, ...]:
     return _CURATED_TOTALS_MIRROR
 
 
+_WB_ROW_DATE_RE = re.compile(r'"date"\s*:\s*"((?:19|20|21)\d{2})"')
+
+
+def row_year_for_quote(quote: str, url: str) -> int | None:
+    """Year of the cited World Bank API row, or None (V5-EN, pure).
+
+    A package's ``source_year`` must date the CITED row, not the plan:
+    derivation claims (pct_change across 2023+2024) cite two rows from
+    two years while the plan carries one, and stamping the plan year on
+    both collapses the pair the V5-P0 derivation needs to order old/new
+    (EN bench: K1-08/K1-11/P1-06/P1-11/P1-12 abstained on 2024/2024
+    stamps over 2024+2023 rows). Returns the year only when the quote
+    carries EXACTLY ONE distinct WB row date and the URL is a World
+    Bank API snapshot; anything else (prose, CSV, multi-row spans)
+    returns None so the caller keeps its year. Never raises.
+    """
+    try:
+        host = (urllib.parse.urlsplit(url or "").hostname or "").lower()
+    except Exception:
+        return None
+    if host != "api.worldbank.org":
+        return None
+    try:
+        years = set(_WB_ROW_DATE_RE.findall(quote or ""))
+    except Exception:
+        return None
+    if len(years) != 1:
+        return None
+    try:
+        year = int(next(iter(years)))
+    except (TypeError, ValueError):
+        return None
+    return year if 1960 <= year <= 2100 else None
+
+
 def wb_row_quote_for(snapshot_text: str, year: int) -> str | None:
     """Verbatim ``"date":"YYYY","value":N`` row span, or None (F2-2, pure).
 
@@ -1216,6 +1347,12 @@ def build_package(claim_id: str, url: str, quote: str, doc: Doc,
 
     F2-2: ``extractor="code"`` marks deterministic grounding packages
     (WB row rescue); the default "model" preserves every old call site.
+
+    V5-EN: ``source_year`` resolves to the CITED WB row's date when the
+    quote carries exactly one (see :func:`row_year_for_quote`); the
+    caller-passed plan year stays the fallback for prose/CSV/multi-row
+    quotes. Code-built WB packages quote the plan year's own row, so
+    they resolve identically.
     """
     if not isinstance(quote, str) or not quote.strip():
         return None
@@ -1225,6 +1362,11 @@ def build_package(claim_id: str, url: str, quote: str, doc: Doc,
         return None
     end = start + len(quote)
     sha = doc.fetch.sha256
+    try:
+        row_year = row_year_for_quote(quote, doc.url)
+    except Exception:
+        row_year = None
+    resolved_year = row_year if row_year is not None else source_year
     # M2d: structured-source metadata (WB API JSON -> indicator/unit) so
     # the verifier can resolve unitless JSON quotes. Derived from the
     # snapshot bytes, never from the model; None for prose/CSV/unknown.
@@ -1249,7 +1391,7 @@ def build_package(claim_id: str, url: str, quote: str, doc: Doc,
         "source_type": source_type_for_url(doc.url),
         "numbers": numbers_from_quote(quote),
         "extractor": extractor if extractor in ("model", "code") else "model",
-        "source_year": source_year,
+        "source_year": resolved_year,
         "source_meta": meta,
     }
     try:
@@ -1571,6 +1713,12 @@ class _ClaimCtx:
         self.config = config
         self.docs = _DocStore()
         self.tools = _Tools(config, self.docs)
+        # V5-EN: claim-aware excerpt ranking for generic fetches (the
+        # WB/extra tools keep their own needle excerpts; None-safe).
+        try:
+            self.tools.excerpt_needles = excerpt_needles_for_claim(text)
+        except Exception:
+            self.tools.excerpt_needles = None
         self.usage = _Usage()
         self.packages: list[dict] = []
         self._seen_quotes: set[tuple[str, str]] = set()
@@ -2152,9 +2300,11 @@ __all__ = [
     "doc_excerpts",
     "early_abort_reason",
     "early_exit_reason",
+    "excerpt_needles_for_claim",
     "no_exit_reason",
     "numbers_from_quote",
     "rank_hits_primary_first",
+    "row_year_for_quote",
     "run_claim",
     "run_swarm",
     "source_type_for_url",
