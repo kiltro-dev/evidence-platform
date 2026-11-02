@@ -18,6 +18,9 @@ Routes:
   ends with ``replay.done``. Plain ``/ws`` is unchanged (live bus).
 - ``GET /media/{name}`` (M4) — keynote demo mp4s for the player
   (strict allowlist; the 4.4–5.7 MB repo-local files).
+- ``GET /hls/{name}`` (S3) — simulive HLS playlist + segments
+  (strict allowlist; playlist served with X-ATLAS-SIMULIVE metadata).
+- ``GET /hls-status`` (S3) — simulive window state (seq, uptime).
 
 Latency measured here is pipeline latency: ``transcript.final``
 publish -> ``claim.detected`` publish per claim, in ms of wall
@@ -47,6 +50,7 @@ from live.replay.player import (
     load_events,
     run_info,
 )
+from live.simulive.serve import mount_simulive
 
 log = logging.getLogger(__name__)
 
@@ -232,6 +236,10 @@ def create_app(
                 "latency_ms": latency_summary(app.state.latencies),
             }
         )
+
+    # S3 simulive: additive routes only (/hls/*, /hls-status);
+    # M1b/M4 routes, WS contract and /run behavior untouched.
+    mount_simulive(app)
 
     return app
 

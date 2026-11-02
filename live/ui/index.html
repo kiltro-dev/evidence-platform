@@ -24,6 +24,15 @@
     border:1px solid var(--line); color:var(--mut); }
   #conn.live { color:var(--ok); border-color:var(--ok); }
   #conn.down { color:var(--bad); border-color:var(--bad); }
+  #simuliveBadge { font-size:12px; font-weight:800; padding:2px 12px; border-radius:14px;
+    border:1px solid var(--bad); color:var(--bad); margin-left:8px; vertical-align:middle; }
+  #simuliveBadge[hidden] { display:none; }
+  #corpusBadge { position:fixed; right:12px; bottom:12px; z-index:50;
+    font-size:12px; font-weight:800; padding:4px 14px; border-radius:14px;
+    border:1px solid var(--warn); color:var(--warn); background:rgba(15,20,32,.92); }
+  #corpusBadge[hidden] { display:none; }
+  .srchead { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .srchead h2 { margin:0 0 10px; font-size:16px; flex:1 1 auto; }
   #modeBanner { max-width:1200px; margin:8px auto 0; padding:0 20px; }
   #modeBanner .in { border-radius:10px; padding:8px 14px; font-size:14px; font-weight:800;
     letter-spacing:.4px; border:1px solid var(--line); background:var(--panel); }
@@ -132,7 +141,17 @@
 <main>
   <div>
     <section class="card" aria-labelledby="videoH">
-      <h2 id="videoH" data-es="Señal en vivo" data-en="Live feed">Señal en vivo</h2>
+      <div class="srchead">
+        <h2 id="videoH" data-es="Señal en vivo" data-en="Live feed">Señal en vivo</h2>
+        <span id="simuliveBadge" role="status" hidden></span>
+      </div>
+      <div class="row" style="margin:0 0 10px">
+        <label for="srcSel" data-es="Fuente:" data-en="Source:">Fuente:</label>
+        <select id="srcSel" aria-label="Source / Fuente">
+          <option value="file" data-es="Archivo" data-en="File">Archivo</option>
+          <option value="hls" data-es="Directo simulado" data-en="Simulated live">Directo simulado</option>
+        </select>
+      </div>
       <div class="videowrap">
         <video id="player" controls playsinline preload="metadata"
           aria-label="Live video"></video>
@@ -187,8 +206,9 @@
     </section>
   </div>
 </main>
+<div id="corpusBadge" role="note" hidden>Synthetic demo · Simulación sintética</div>
 <footer>
-  Atlas Live M1b+M4 · transcript.final → claim.detected → claim.state (+claim.evidence / claim.verdict) ·
+  Atlas Live M1b+M4+S3 · transcript.final → claim.detected → claim.state (+claim.evidence / claim.verdict) ·
   <span id="lat"></span>
 </footer>
 <script>
@@ -198,6 +218,8 @@
   var qs = new URLSearchParams(location.search);
   var REPLAY = qs.get("replay") || "";
   var RATE = parseFloat(qs.get("rate") || "4") || 4;
+  var SOURCE = qs.get("source") || "file";  // file | hls (S3 directo-simulado)
+  var CORPUS = qs.get("corpus") === "1";    // per-run flag: synthetic corpus
   var STR = {
     es: { live:"EN VIVO", down:"DESCONECTADO", conn:"conectando…",
       heard:"escuchada", inv:"investigando", verd:"veredicto",
@@ -208,7 +230,8 @@
       reasons:"motivos", done:"replay terminado", seeking:"vídeo →",
       demoOnlyLive:"demo disponible solo en modo en vivo",
       prov:"provisional", corrected:"corrección: provisional → final",
-      srcs:"fuentes", quotes:"citas", early:"salida temprana" },
+      srcs:"fuentes", quotes:"citas", early:"salida temprana",
+      simulive:"● DIRECTO SIMULADO" },
     en: { live:"LIVE", down:"OFFLINE", conn:"connecting…",
       heard:"heard", inv:"investigating", verd:"verdict",
       res:"resolved:", demoOf:"demo", turnOf:"turn",
@@ -218,7 +241,8 @@
       reasons:"reasons", done:"replay finished", seeking:"video →",
       demoOnlyLive:"demo available in live mode only",
       prov:"provisional", corrected:"correction: provisional → final",
-      srcs:"sources", quotes:"quotes", early:"early exit" }
+      srcs:"sources", quotes:"quotes", early:"early exit",
+      simulive:"● SIMULATED LIVE" },
   };
   var subsEl = document.getElementById("subs");
   var claimsEl = document.getElementById("claims");
@@ -234,6 +258,29 @@
   var tlEl = document.getElementById("timeline");
   var tlEnd = document.getElementById("tlEnd");
   var replayStatus = document.getElementById("replayStatus");
+  var srcSel = document.getElementById("srcSel");
+  var simuliveBadge = document.getElementById("simuliveBadge");
+  var corpusBadge = document.getElementById("corpusBadge");
+  // S3: source=hls shows the "Directo simulado" badge and feeds the
+  // player from the HLS loop; corpus badge is per-run (?corpus=1) or
+  // implicit for HLS (the loop source is always synthetic corpus).
+  function paintSource(){
+    var hls = srcSel.value === "hls";
+    simuliveBadge.hidden = !hls;
+    if (hls) simuliveBadge.textContent = STR[lang].simulive;
+    corpusBadge.hidden = !(CORPUS || hls);
+  }
+  srcSel.value = (SOURCE === "hls") ? "hls" : "file";
+  srcSel.onchange = function(){
+    var hls = srcSel.value === "hls";
+    if (hls && !REPLAY) {
+      player.src = "/hls/stream.m3u8";
+    } else if (!hls && player.src && player.src.indexOf("/hls/") >= 0) {
+      player.removeAttribute("src");
+      player.load();
+    }
+    paintSource();
+  };
   var cards = {};
   var subs = [];
   var tlDots = {};
@@ -248,6 +295,7 @@
     document.getElementById("langEs").classList.toggle("on", l === "es");
     document.getElementById("langEn").classList.toggle("on", l === "en");
     paintBanner();
+    paintSource();
     Object.keys(cards).forEach(paintBadge);
     renderTheater();
   }
@@ -593,6 +641,8 @@
     };
   }
   paintBanner();
+  paintSource();
+  if (srcSel.value === "hls" && !REPLAY) player.src = "/hls/stream.m3u8";
   connect();
 
   fetch("/replay").then(function(r){ return r.json(); }).then(function(j){
