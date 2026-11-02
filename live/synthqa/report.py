@@ -1,11 +1,13 @@
 """S4 report: manifest + benchmark informe (Atlas Live).
 
-- ``data/synth/manifest.json``: pieces, sha256 of mp4/srt/truth, voices,
-  licenses, durations, clean WER.
+- ``data/synth/manifest.json``: pieces, sha256 of mp4/srt/truth,
+  voices, licenses, durations, clean WER (S4-exact rows) + a top-level
+  S5 ``noise`` section (wav hashes + per-level WER/recall).
 - ``data/synth/bench/report.json``: world accuracy/recall/falsos/Wilson
   GLOBAL + slices (category a-f, language, speaker count, piece), the
   E1 internal-coherence panels, the WER-by-noise table (builder
-  wer.json aggregation — never a full re-transcription), and USD.
+  wer.json aggregation — never a full re-transcription), the S5 full
+  noise grid section, and USD.
 
 Offline except the optional 1-file ``--spot`` transcription.
 """
@@ -32,6 +34,8 @@ QA_PATH = os.path.join(REPO_ROOT, "data", "synth", "qa", "review.json")
 RESULTS_PATH = os.path.join(BENCH_DIR, "results.json")
 REPORT_PATH = os.path.join(BENCH_DIR, "report.json")
 SPOT_PATH = os.path.join(BENCH_DIR, "spot_wer.json")
+NOISE_GRID_PATH = os.path.join(REPO_ROOT, "data", "synth", "qa",
+                               "noise_grid.json")
 
 ASR_USD_PER_HOUR = 0.18
 
@@ -95,11 +99,28 @@ def wav_paths(piece: dict, repo_root: str = REPO_ROOT) -> dict[str, str]:
 
 
 def build_manifest(repo_root: str = REPO_ROOT,
-                   qa_path: str = QA_PATH) -> dict:
-    """Manifest rows: files, hashes, voices, licenses, gates, WER."""
+                   qa_path: str = QA_PATH,
+                   grid_path: str | None = None) -> dict:
+    """Manifest rows: files, hashes, voices, licenses, gates, WER.
+
+    S5 adds ONLY a top-level ``noise`` section (grid pointer + wav
+    hashes + per-level WER/recall from ``noise_grid.json``); per-piece
+    rows keep the exact S4 schema. Missing grid -> empty noise cells
+    (never an error).
+    """
     qa = load_json(qa_path, {})
     qa_by_piece = {r.get("piece"): r for r in qa.get("results", [])}
+    if grid_path is None:
+        grid_path = os.path.join(repo_root, "data", "synth", "qa",
+                                 "noise_grid.json")
+    grid = load_json(grid_path, {}) or {}
+    noise_cells: dict[str, dict] = {}
+    for cell in grid.get("cells", []):
+        noise_cells.setdefault(cell.get("piece"), {})[cell.get("level")] = {
+            "wer": cell.get("wer"), "recall": cell.get("recall"),
+            "snr_db": cell.get("snr_db")}
     pieces = []
+    wav_hashes: dict[str, dict] = {}
     for piece in PIECES:
         paths = media_paths(piece, repo_root)
         wavs = wav_paths(piece, repo_root)
@@ -129,8 +150,20 @@ def build_manifest(repo_root: str = REPO_ROOT,
             "wer_clean": wer.get("wer"), "recall_clean": wer.get("recall"),
             "wer_usd": wer.get("usd"),
         })
+        wav_hashes[piece["id"]] = {k: sha256_file(v)
+                                   for k, v in wavs.items()}
+    try:
+        grid_rel = os.path.relpath(grid_path, repo_root)
+    except ValueError:
+        grid_rel = grid_path
+    noise_usd = round(sum(c.get("usd", 0.0)
+                          for c in grid.get("cells", [])), 4)
     return {"generated_utc": datetime.now(timezone.utc).isoformat(),
-            "n_pieces": len(pieces), "pieces": pieces}
+            "n_pieces": len(pieces), "pieces": pieces,
+            "noise": {"grid": grid_rel, "n_cells": len(grid.get("cells", [])),
+                      "usd": noise_usd,
+                      "generated_utc": grid.get("generated_utc"),
+                      "wav_sha256": wav_hashes, "cells": noise_cells}}
 
 
 def write_manifest(path: str = MANIFEST_PATH,
@@ -340,6 +373,62 @@ def spot_check(piece_id: str, snr_db: int, api_key: str,
 
 
 # ---------------------------------------------------------------------------
+# S5 noise grid section (full 12x4 WER/recall + E2E propagation)
+# ---------------------------------------------------------------------------
+
+def noise_table(repo_root: str = REPO_ROOT,
+                grid_path: str = NOISE_GRID_PATH,
+                spot_path: str = SPOT_PATH) -> dict:
+    """S5 grid aggregation per language x level + spot comparability.
+
+    WER is micro-averaged per slice; recall carries a Wilson 95%
+    interval over claims (see :func:`live.synthqa.noise.aggregate`).
+    Each S4 spot-check cell is labeled comparable ONLY when the grid
+    holds the same (piece, SNR) cell transcribed under the same ASR
+    config (keywords on/off) — the S4 spot ran WITHOUT keywords, the
+    S5 grid WITH builder keywords, so that spot is honestly marked
+    not comparable.
+    """
+    from live.synthqa import noise as _noise  # lazy: noise imports report
+
+    grid = load_json(grid_path, {}) or {}
+    spot = load_json(spot_path, {}) or {}
+    by_cell = {(c.get("piece"), c.get("level")): c
+               for c in grid.get("cells", [])}
+    comparison = []
+    for cell in spot.get("cells", []):
+        key = (cell.get("piece"), f"snr{cell.get('snr_db')}")
+        grid_cell = by_cell.get(key, {})
+        same_config = bool(grid_cell) and \
+            bool(cell.get("keywords")) == bool(grid_cell.get("keywords"))
+        if not grid_cell:
+            reason = "grid has no matching (piece, SNR) cell"
+        elif same_config:
+            reason = "same wav, scorer, and ASR keyword config"
+        else:
+            reason = ("different ASR config: spot keywords="
+                      f"{bool(cell.get('keywords'))}, grid keywords="
+                      f"{bool(grid_cell.get('keywords'))}")
+        comparison.append({
+            "piece": cell.get("piece"), "snr_db": cell.get("snr_db"),
+            "spot_wer": cell.get("wer"), "spot_recall": cell.get("recall"),
+            "spot_keywords": bool(cell.get("keywords")),
+            "grid_wer": grid_cell.get("wer"),
+            "grid_recall": grid_cell.get("recall"),
+            "grid_keywords": grid_cell.get("keywords")
+            if grid_cell else None,
+            "comparable": same_config, "reason": reason})
+    return {"note": "S5 full grid (builder bias+keywords, comparable to "
+            "builder clean); WER micro-averaged, recall Wilson 95% "
+            "over claims",
+            "n_cells": len(grid.get("cells", [])),
+            "by_lang_level": _noise.aggregate(grid),
+            "spot_comparison": comparison,
+            "e2e": grid.get("e2e", []),
+            "usd": _noise.grid_usd(grid)}
+
+
+# ---------------------------------------------------------------------------
 # Report assembly + CLI
 # ---------------------------------------------------------------------------
 
@@ -357,10 +446,12 @@ def build_report(repo_root: str = REPO_ROOT,
     spot = load_json(SPOT_PATH, {}) or {}
     spot_usd = round(sum(c.get("usd", 0.0) for c in spot.get("cells", [])),
                      4)
-    total_usd = round(world["usd"] + qa_usd + spot_usd, 4)
+    noise = noise_table(repo_root)
+    total_usd = round(world["usd"] + qa_usd + spot_usd + noise["usd"], 4)
     return {"generated_utc": datetime.now(timezone.utc).isoformat(),
             "manifest": manifest, "world": world,
             "wer_by_noise": wer_table(repo_root),
+            "noise": noise,
             "qa": {"n_pass": sum(1 for r in qa.get("results", [])
                                 if r.get("pass")),
                    "n": len(qa.get("results", [])), "usd": qa_usd},

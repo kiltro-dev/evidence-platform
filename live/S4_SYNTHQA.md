@@ -220,3 +220,16 @@ en el informe (corridas `smoke*.jsonl` aparte).
 .venv/bin/python live/synthqa/report.py                      # manifest + informe
 .venv/bin/python live/synthqa/report.py --spot k1_econ@10    # 1 celda SNR
 ```
+
+## 10. Addendum S5: grid de ruido completo (2026-11-02)
+
+Detalle: `live/S5_NOISE.md`. Las 48 celdas (12 piezas × clean+SNR,
+bias+keywords de builders) cierran el "no medido" de §6: curva plana
+(EN WER 0,053→0,053 a 0 dB; ES 0,039→0,046 a 5 dB; recalls en bandas
+Wilson solapadas, n=240/slice) — el corpus no estresa el ASR. El spot
+§6 (k1_econ@10dB, WER 0,0408, SIN keywords) queda mecánicamente
+marcado **no comparable** con su celda grid (WER 0,0533, CON 92
+keywords) en `report.json → noise.spot_comparison`: mismo wav y
+scorer, distinta config ASR; no se fusionan. Coste S5: $0,5246
+(§7 pasa a $4,86 acumulado). Manifest regenerado vía report.py con
+sección top-level `noise` (hashes wav + celdas); filas S4 intactas.
