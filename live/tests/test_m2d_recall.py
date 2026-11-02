@@ -309,8 +309,13 @@ def test_source_meta_rejects_mixed_and_unknown_indicators():
         ' {"indicator": {"id": "NY.GDP.MKTP.CD"}, "date": "2024", "value": 2}]]'
     )
     assert source_meta_for_snapshot(WB_URL, mixed) is None  # must agree
-    growth = _wb_body("SP.POP.GROW", "2024", 0.97)  # deliberately unmapped
-    assert source_meta_for_snapshot(WB_URL, growth) is None
+    # V5-2B policy revision (contract change, see live/V5_2B.md §2):
+    # SP.POP.GROW ("Population growth (annual %)") now maps to percent —
+    # percent-denominated rates are directly comparable to single-year
+    # percent claims. The deliberately-unmapped exemplar moves to PPP
+    # dollars ("current international $" is not USD).
+    ppp = _wb_body("NY.GDP.MKTP.PP.CD", "2024", 41259823532528)
+    assert source_meta_for_snapshot(WB_URL, ppp) is None
     assert source_meta_for_snapshot("not a url", WB_POP_BODY) is None
 
 
