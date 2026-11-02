@@ -10,7 +10,8 @@ raise :class:`FetchBlocked`); nothing is ever snapshotted on failure.
 The snapshot is the evidence root: every quote the swarm emits must be
 a verbatim substring of these bytes (see ``coordinator``). JSON API
 responses (World Bank, OWID/FRED CSVs, SPARQL) are snapshotted through
-this same path so their quotes grep too.
+this same path so their quotes grep too. V5-CATB adds ``fetch_post``:
+the same policy for POST-only JSON APIs (BLS ``publicAPI``).
 """
 
 from __future__ import annotations
@@ -516,6 +517,100 @@ def _materialize_snapshot(raw: bytes, sha: str,
         tmp.write_bytes(raw)
         tmp.replace(snap_path)  # atomic publish
     return snap_path
+
+
+def fetch_post(
+    url: str,
+    payload: dict | list | bytes | str,
+    *,
+    snapshot_dir: str | Path | None = None,
+    timeout_s: float = TIMEOUT_S,
+    max_bytes: int = MAX_BYTES,
+    content_type: str = "application/json",
+) -> FetchResult:
+    """POST ``payload`` to ``url`` under the same policy as fetch_url.
+
+    V5-CATB: the sanctioned seam for documented keyless JSON APIs (BLS
+    ``publicAPI``). Same contract: http(s) only, robots.txt honored
+    (checked BEFORE anything is sent), 15 s timeout, 2 MB cap,
+    401/402/403/429 refused, success snapshotted content-addressed.
+    Differences from GET: no response cache (POST bodies are
+    vintage-sensitive and callers budget them) and no in-page
+    paywall-marker scan (API JSON bodies). Raises :class:`FetchBlocked`
+    on robots/paywall refusal, :class:`FetchError` otherwise.
+    """
+    if isinstance(payload, (dict, list)):
+        body = json.dumps(payload).encode("utf-8")
+    elif isinstance(payload, str):
+        body = payload.encode("utf-8")
+    else:
+        try:
+            body = bytes(payload)
+        except Exception as exc:
+            raise FetchError(f"bad POST payload for {url!r}: {exc}") from exc
+    try:
+        parts = urlsplit(url.strip())
+    except ValueError as exc:
+        raise FetchError(f"bad URL {url!r}: {exc}") from exc
+    if parts.scheme not in ("http", "https"):
+        raise FetchError(f"refusing non-http(s) URL {url!r}")
+    if not parts.hostname:
+        raise FetchError(f"refusing URL without host {url!r}")
+
+    origin = f"{parts.scheme}://{parts.hostname}"
+    if parts.port:
+        origin += f":{parts.port}"
+    parser = _robots_parser(origin)
+    if parser is not None and not parser.can_fetch(USER_AGENT, url):
+        raise FetchBlocked(f"robots.txt disallows {url!r}")
+
+    req = Request(  # noqa: S310
+        url, data=body,
+        headers={"User-Agent": USER_AGENT, "Content-Type": content_type},
+        method="POST",
+    )
+    try:
+        with urlopen(req, timeout=timeout_s) as resp:  # noqa: S310
+            status = getattr(resp, "status", 200)
+            if status in REFUSED_STATUSES:
+                raise FetchBlocked(f"HTTP {status} (paywall/login) for {url!r}")
+            resp_content_type = resp.headers.get("Content-Type", "")
+            raw_parts = bytearray()
+            while True:
+                chunk = resp.read(CHUNK_BYTES)
+                if not chunk:
+                    break
+                raw_parts += chunk
+                if len(raw_parts) > max_bytes:
+                    raise FetchError(
+                        f"body exceeds {max_bytes} bytes for {url!r}"
+                    )
+            final_url = resp.geturl()
+    except FetchError:
+        raise
+    except HTTPError as exc:
+        if exc.code in REFUSED_STATUSES:
+            raise FetchBlocked(
+                f"HTTP {exc.code} (paywall/login) for {url!r}"
+            ) from exc
+        raise FetchError(f"HTTP {exc.code} for {url!r}") from exc
+    except (URLError, TimeoutError, ValueError, OSError) as exc:
+        raise FetchError(f"fetch failed for {url!r}: {exc}") from exc
+
+    raw = bytes(raw_parts)
+    sha = hashlib.sha256(raw).hexdigest()
+    snap_path = _materialize_snapshot(raw, sha, snapshot_dir)
+    return FetchResult(
+        url=url,
+        final_url=final_url,
+        status=status,
+        content_type=resp_content_type,
+        size=len(raw),
+        sha256=sha,
+        snapshot_path=str(snap_path),
+        captured_at=_utcnow_iso(),
+        text=_decode_body(raw, resp_content_type),
+    )
 
 
 async def fetch_url_async(

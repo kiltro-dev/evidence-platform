@@ -48,7 +48,7 @@ from html.parser import HTMLParser
 from pathlib import Path
 from typing import Any, Callable
 
-from .fetch import FetchResult, fetch_url
+from .fetch import FetchResult, fetch_post, fetch_url
 from .roles import (
     ESTRUCTURADOR_SCHEMA,
     ESTRUCTURADOR_SYSTEM,
@@ -709,6 +709,9 @@ class SwarmConfig:
     llm: Any = None  # complete_json(system, user, max_tokens, ...) client
     search_fn: Callable[[str, int], list[dict]] | None = None
     fetch_fn: Callable[..., FetchResult] | None = None
+    # V5-CATB: POST seam for altroutes (default: fetch_post). Doubles
+    # take (url, payload_dict, snapshot_dir=...).
+    post_fn: Callable[..., FetchResult] | None = None
     snapshot_dir: str | Path | None = None
     max_concurrency: int = MAX_CONCURRENCY
     claim_deadline_s: float = CLAIM_DEADLINE_S
@@ -1082,6 +1085,51 @@ class _Tools:
         return {"ok": True, "url": doc.url, "title": doc.title,
                 "text": doc.excerpt}
 
+    # -- alt_lookup (V5-CATB deterministic altroutes, grounding-called) -
+    def alt_lookup(self, text: str) -> dict:
+        """Deterministic b-like attempt via live.swarm.altroutes.
+
+        Code-only (zero model cost), at most 2 network calls (the
+        altroutes budget). NOT a RECUPERADOR tool: ``roles.py`` is
+        untouched, so the model never calls this; grounding invokes it
+        once per claim when no package exists yet. Candidates carry
+        their snapshots as added docs; the caller builds packages.
+        Never raises: import/transport failures return ok False.
+        """
+        try:
+            attempt = _try_import("live.swarm.altroutes",
+                                  "attempt_altroutes")
+            if not callable(attempt):
+                return {"ok": False, "error": "altroutes unavailable"}
+            post = self._config.post_fn or fetch_post
+            tried = attempt(
+                str(text or ""), post,
+                snapshot_dir=self._config.snapshot_dir)
+        except Exception as exc:
+            log.warning("alt_lookup failed: %r", exc)
+            return {"ok": False, "error": f"{type(exc).__name__}"}
+        out: list[dict] = []
+        try:
+            for cand in tried.candidates:
+                doc = self._docs.add(
+                    cand.fetch_result,
+                    title=(f"altroutes "
+                           f"{(cand.source_meta or {}).get('indicator', '?')}"
+                           f" {cand.vintage or ''}".rstrip()),
+                    excerpt_fn=(lambda q: (lambda t: windows_around(t, [q]))
+                                )(cand.quote),
+                )
+                out.append({"url": doc.url, "quote": cand.quote,
+                            "source_meta": cand.source_meta,
+                            "source_year": cand.source_year,
+                            "vintage": cand.vintage})
+            return {"ok": True, "candidates": out,
+                    "calls": tried.calls_made,
+                    "routes_tried": tried.routes_tried}
+        except Exception as exc:
+            log.warning("alt_lookup packaging failed: %r", exc)
+            return {"ok": False, "error": f"{type(exc).__name__}"}
+
 
 # ---------------------------------------------------------------------------
 # plan helpers (model plan first, deterministic code fallbacks)
@@ -1332,13 +1380,57 @@ def _maybe_add_wb_fallback(ctx: "_ClaimCtx", plan: dict) -> None:
                     getattr(ctx, "claim_id", "?"), exc)
 
 
+def _maybe_add_altroutes(ctx: "_ClaimCtx") -> None:
+    """Grounding-time deterministic altroute packages (V5-CATB).
+
+    Last grounding step before the model loop: when the claim is
+    b-like (IMF/BLS-topic, matched on TEXT, never ids) and grounding
+    shipped zero packages, try the altroutes registry (max 2 network
+    calls, code-only, zero model cost) and ship verbatim candidates
+    as ``extractor="code"`` packages. Non-b-like claims return
+    immediately (0 calls, byte-identical behavior). Never raises.
+    """
+    try:
+        if ctx.packages:
+            return
+        res = ctx.tools.alt_lookup(ctx.text)
+        if not isinstance(res, dict) or not res.get("ok"):
+            return
+        for cand in res.get("candidates") or []:
+            if not isinstance(cand, dict):
+                continue
+            url = cand.get("url")
+            quote = cand.get("quote")
+            if not isinstance(url, str) or not isinstance(quote, str):
+                continue
+            doc = ctx.docs.find(url)
+            if doc is None:
+                continue
+            pkg = build_package(
+                ctx.claim_id, url, quote, doc, cand.get("source_year"),
+                len(ctx.packages), extractor="code",
+                source_meta_override=cand.get("source_meta")
+                if isinstance(cand.get("source_meta"), dict) else None)
+            if pkg is None:
+                continue
+            key = (doc.fetch.sha256, quote)
+            if key not in ctx._seen_quotes:
+                ctx._seen_quotes.add(key)
+                ctx.packages.append(pkg)
+    except Exception as exc:
+        log.warning("altroutes fallback failed for %s: %r",
+                    getattr(ctx, "claim_id", "?"), exc)
+
+
 # ---------------------------------------------------------------------------
 # package builder (strict verbatim validation)
 # ---------------------------------------------------------------------------
 
 def build_package(claim_id: str, url: str, quote: str, doc: Doc,
                   source_year: int | None, index: int,
-                  extractor: str = "model") -> dict | None:
+                  extractor: str = "model",
+                  source_meta_override: dict | None = None,
+                  ) -> dict | None:
     """Validate a finding and build an M2a-compatible package dict.
 
     Returns None (never raises on model-shaped input) when the quote
@@ -1353,6 +1445,12 @@ def build_package(claim_id: str, url: str, quote: str, doc: Doc,
     caller-passed plan year stays the fallback for prose/CSV/multi-row
     quotes. Code-built WB packages quote the plan year's own row, so
     they resolve identically.
+
+    V5-CATB: ``source_meta_override`` (``{indicator, unit, scale}``)
+    replaces the snapshot-derived meta for non-WB structured routes
+    (BLS API rows); None (default) keeps the historical derivation
+    byte-for-byte. M2a still validates the final dict, so a
+    malformed override degrades to None (no package), never a crash.
     """
     if not isinstance(quote, str) or not quote.strip():
         return None
@@ -1379,6 +1477,8 @@ def build_package(claim_id: str, url: str, quote: str, doc: Doc,
                      "scale": found.scale} if found is not None else None)
         except Exception:
             meta = None
+    if isinstance(source_meta_override, dict):  # V5-CATB (default None)
+        meta = source_meta_override
     pkg = {
         "package_id": f"m2b-{claim_id}-{sha[:12]}-{index}",
         "claim_id": claim_id,
@@ -1970,6 +2070,8 @@ async def _ground_claim(ctx: _ClaimCtx, plan: dict) -> None:
             url = str(hit.get("url", ""))
             if url and ctx.docs.find(url) is None:
                 ctx.tools.fetch_url(url)
+        if not ctx.packages:  # V5-CATB: one bounded altroute attempt
+            _maybe_add_altroutes(ctx)
 
     await asyncio.to_thread(_ground_sync)
 
