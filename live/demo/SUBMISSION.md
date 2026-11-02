@@ -113,17 +113,20 @@ vanilla JS newsroom UI (no framework), pytest (206+ offline tests).
   contradicts in both; decided accuracy 22/22 + 12/12 = 1.000.
   Source: `data/runs/f2recall-fix-report.json` + `live/F2_RECALL.md`
   addendum (retention; `retention.json` never opened).
-- Verdict latency p50 80.3 s / p95 115.7 s per claim (invest→verdict);
-  wall for 36 claims 372.4 s (−52% vs 779.5 s); early-exit lane 9 claims
-  at 4.0 s median. Honest miss: the median still sits on the full path
-  (~80 s) and the tail ROSE 90 → 115.7 s on the wider 120 s budget.
-  Source: `data/runs/f2lat-atlas-report.json`, `live/F2_LATENCY.md`.
+- Verdict latency (F2-7) p50 4.3/4.5 s per claim (invest→verdict),
+  down from 80.3 s (18×); wall for 36 claims ~108 s (−71% vs 372.4 s);
+  $0.0080/0.0086 per claim; 20/36 claims exit via the ~4 s fast lane.
+  Honest miss: p95 at 79.1/73.3 s MISSES the ≤60 s goal — the 7-claim
+  deadline-70 queue (70–81 s) sets the tail. Same 22/36 verdicts as
+  F2-3, claim by claim. Source: `data/runs/f2lat2-final-report.json`,
+  `live/F2_LAT2.md` §4.
 - DEV-b abstains 0/6 (IMF/BLS primaries return 403; only secondaries,
   out of budget) and DEV-d abstains 0/6 (multi-source arithmetic by
   design: `arithmetic_needs_computation` guard). Source: `live/F2_RECALL.md`.
-- Zero false `contradicted` held across F2-2 (44/44 pooled) and F2-3
-  (22/22); the F2-1 D5 false-C is eliminated by construction (F6 guard).
-  Source: `live/F2_RECALL.md`, `live/F2_LATENCY.md`.
+- Zero false `contradicted` held across F2-2 (44/44 pooled), F2-3
+  (22/22), and F2-7 (44/44 pooled, both runs); the F2-1 D5 false-C is
+  eliminated by construction (F6 guard).
+  Source: `live/F2_RECALL.md`, `live/F2_LATENCY.md`, `live/F2_LAT2.md`.
 - Physics/geo units (`meters`, `kilometers`, `degrees`, `square
   kilometers`) are outside the unit parser → those claims abstain by
   design; numberless claims abstain by design. Source: `live/M2D.md`.
@@ -135,7 +138,7 @@ vanilla JS newsroom UI (no framework), pytest (206+ offline tests).
   70/72 = 0.972 [0.904,0.992] (run1 35/36, run2 35/36, consistency
   36/36) and retention 18/18 [0.824,1.000]. The baseline wins recall —
   stated plainly. Where it matches us: verdicts (70/72) and speed
-  (p50 ~5–10 s vs ~80 s). Where it fails: citation fidelity pooled
+  (p50 ~5–10 s vs Atlas F2-7 ~4 s). Where it fails: citation fidelity pooled
   9/63 = 0.143 [0.077,0.250] (r1 5/31, r2 4/32; quote_not_found 34,
   unit_mismatch 13, numeric_mismatch 7; 72/72 urls model-stated,
   0 browsed), 2 false contradicts (D3×2), and zero offline proof.

@@ -14,7 +14,7 @@ Mismo truco en dos slides: un eje truncado que convierte un cinco por ciento en 
 
 El benchmark justo, versión dos: treinta y seis claims de desarrollo y dieciocho de retención sellada. Atlas decide el sesenta y uno por ciento en desarrollo y el sesenta y siete en retención, con cero falsos contradicted en ambas.
 
-Y ahora es más rápido: el tiempo total cayó cincuenta y dos por ciento, y la vía temprana decide en cuatro segundos. Lo honesto: la mediana sigue en ochenta segundos, y la cola sube a ciento dieciséis por el presupuesto ampliado.
+Y ahora es mucho más rápido: la mediana cayó de ochenta segundos a cuatro, a ocho décimas de centavo por claim. Lo honesto: la cola queda en setenta y tres a setenta y nueve segundos y no cumple la meta de sesenta: la fija el deadline de setenta segundos.
 
 El baseline, tal cual: setenta de setenta y dos en desarrollo y dieciocho de dieciocho en retención; nos gana en recall. Pero solo el catorce por ciento de sus citas son fieles a la fuente, y no exporta ninguna prueba re-ejecutable.
 

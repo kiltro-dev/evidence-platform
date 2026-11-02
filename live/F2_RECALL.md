@@ -221,3 +221,7 @@ Atribución de los +14 decididos/corrida:
 Atlas 12/18 (0.667) 12/12 [0.757,1.000], 0 falsos-C/S, p50/p95 82.8/90.1s, $0.0189/claim.
 Baseline 18/18 [0.824,1.000], p50/p95 9.7/33.8s, $0.031/claim.
 Dev 0.611 → retención 0.667: generaliza. Reporte: `data/runs/f2retention-report.json`.
+
+## Retención final con código F2-7 (integrador, 2026-11-01, atlas 1×)
+12/18 (0.667) 12/12 [0.757,1.000], 0 falsos-C/S, p50/p95 3.4/82.0s, $0.0121/claim ($0.22 total).
+Reporte: `data/runs/f2ret2-report.json`. Confirma generalización post-sprint.

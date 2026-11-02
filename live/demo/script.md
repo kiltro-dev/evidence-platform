@@ -1,11 +1,11 @@
-# Atlas Live — guion de video demo (2:30 + colchón 20 s, cap 2:50)
+# Atlas Live — guion de video demo (2:33 + colchón 17 s, cap 2:50)
 
 ES neutro (voz nativa carlfm) + marcas EN. Todas las cifras salen de
 reportes ejecutados (`data/runs/*.json`, `data/keynote_es/wer_report.json`)
 o del addendum de `live/F2_RECALL.md` (retención, única fuente permitida).
 
 Formato por bloque: TIEMPO — SE VE / SE DICE. Tiempos medidos del build
-F2-6 (`live/demo/build_video.py`, TTS carlfm): total 2:29.7.
+F2-6b (re-render parcial F2-7, TTS carlfm): total 2:32.7 (F2-6: 2:29.7).
 
 ---
 
@@ -105,8 +105,8 @@ Fuente: M3 (F5 + F11 `visual.misleading_axis`; frames ES, mismos datos).
 ## 1:37–1:51 — Recall F2 que generaliza
 
 SE VE: panel DEV 22/36 = 0.611 (Wilson [0.851, 1.000], 0 falsos) +
-retención 12/18 = 0.667 (Wilson [0.757, 1.000], 0 falsos). Categorías
-a–f y consistencia r1–r2 36/36.
+retención 12/18 = 0.667 (Wilson [0.757, 1.000], 0 falsos, p50 3.4 s
+con código F2-7). Categorías a–f y consistencia r1–r2 36/36.
 
 SE DICE: «El benchmark justo, versión dos: treinta y seis claims de
 desarrollo y dieciocho de retención sellada. Atlas decide el sesenta y
@@ -116,21 +116,23 @@ cero falsos contradicted en ambas.»
 Fuente: `f2recall-fix-report.json` (DEV ambas 22/22) + addendum
 F2_RECALL (retención; `retention.json` jamás abierta).
 
-## 1:51–2:04 — Latencia honesta
+## 1:51–2:06 — Latencia honesta (F2-7)
 
-SE VE: tabla antes→después: wall 779.5 s → 372.4 s (−52%), p50 80.3 s,
-p95 115.7 s (SUBE, en ámbar). Grupos: early-exit 9×4.0 s, path
-completo 20×82.2 s, budget 7×114.1 s.
+SE VE: tabla antes→después: p50 80.3 s → 4.3/4.5 s, p95 115.7 s →
+79.1/73.3 s (MISS vs meta 60, en ámbar), wall 372.4 s → ~108 s (−71%),
+$/claim 0.0227 → 0.0080/0.0086. Grupos r1/r2: early-exit apoyo 9×,
+refuta 11× (~4 s), lento ok 9/8× (~25 s), deadline-70 7× (~76 s).
 
-SE DICE: «Y ahora es más rápido: el tiempo total cayó cincuenta y dos
-por ciento, y la vía temprana decide en cuatro segundos. Lo honesto: la
-mediana sigue en ochenta segundos, y la cola sube a ciento dieciséis
-por el presupuesto ampliado.»
+SE DICE: «Y ahora es mucho más rápido: la mediana cayó de ochenta
+segundos a cuatro, a ocho décimas de centavo por claim. Lo honesto: la
+cola queda en setenta y tres a setenta y nueve segundos y no cumple la
+meta de sesenta: la fija el deadline de setenta segundos.»
 
-Fuente: `f2lat-atlas-report.json` (wall 372.4, p50 80.3, p95 115.7) +
-`live/F2_LATENCY.md` §4 (grupos medidos, nearest-rank).
+Fuente: `f2lat2-final-report.json` (p50 4.3/4.5, p95 79.1/73.3,
+wall 216.1/2, $0.0080/0.0086) + runs r1/r2 (grupos, nearest-rank) +
+`live/F2_LAT2.md` §4.
 
-## 2:04–2:19 — El baseline, tal cual
+## 2:07–2:21 — El baseline, tal cual
 
 SE VE: dos tarjetas: donde acierta igual (DEV 70/72 = 0.972, retención
 18/18, «Nos gana en recall. Punto.») y donde falla (fidelidad pooled
@@ -145,10 +147,11 @@ ninguna prueba re-ejecutable.»
 Fuente: `eval2-20261101-225539-report.json` (70/72) + fidelity JSONs
 r1/r2 (5/31, 4/32) + addendum F2_RECALL (ret 18/18).
 
-## 2:19–2:30 — Cierre: números F2 + wedge
+## 2:22–2:33 — Cierre: números F2 + wedge
 
 SE VE: tabla Atlas F2 vs baseline (recall, exactitud, citas, falsos,
-prueba offline, dicho-vs-mostrado, latencia, ASR ES). Banner «el
+prueba offline, dicho-vs-mostrado, latencia F2-7: p50 4.3 s / ~108 s
+con p95 73–79 s MISS vs 60, ASR ES). Banner «el
 baseline gana en recall» + banner wedge.
 
 SE DICE: «Modelo propone, código dispone. Nuestro wedge: prueba
@@ -162,7 +165,9 @@ arriba).
 
 ## Notas de producción (no narrar)
 
-- Duración objetivo: ≤2:50; build F2-6: 2:29.7 (margen 20 s).
+- Duración objetivo: ≤2:50; build F2-6b: 2:32.7 (margen 17 s).
+  Re-render parcial: re-TTS bloque 8 + re-record segs 7–10 (paneles
+  recall/latencia/baseline/cierre); segs 0–6 reutilizados.
 - Capturas: UI en `?replay=run-es-native` (log live ES, 48 eventos),
   terminal con `verify_bundle.py` (salida real), slides ES 6/7/10
   (frames t=87.5/102.0/157.5 s del mp4 nativo).

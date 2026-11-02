@@ -63,26 +63,26 @@ The fair benchmark, v2: 36 dev claims and 18 sealed retention claims.
 Atlas decides 61% on dev and 67% on retention, with zero false contradicts in both.
 
 17
-00:01:50,964 --> 00:01:57,122
-And now it's faster: total wall time down 52%, and the early-exit lane decides in 4 seconds.
+00:01:50,964 --> 00:01:58,603
+And now it's much faster: median down from 80 seconds to 4, at eight tenths of a cent per claim.
 
 18
-00:01:57,122 --> 00:02:03,012
-Honestly: the median stays at 80 seconds, and the tail rises to 116 on the wider budget.
+00:01:58,603 --> 00:02:06,004
+Honestly: the tail at 73 to 79 seconds misses our 60-second goal — set by the deadline queue.
 
 19
-00:02:03,812 --> 00:02:10,552
+00:02:06,804 --> 00:02:13,543
 The baseline, as is: 70 of 72 on dev and 18 of 18 on retention — it beats us on recall.
 
 20
-00:02:10,552 --> 00:02:17,988
+00:02:13,543 --> 00:02:20,980
 But only 14% of its citations are faithful to the source, and it exports zero re-runnable proof.
 
 21
-00:02:18,788 --> 00:02:24,837
+00:02:21,780 --> 00:02:27,829
 Model proposes, code disposes. Our wedge: re-verifiable proof, zero false contradicts,
 
 22
-00:02:24,837 --> 00:02:28,916
+00:02:27,829 --> 00:02:31,908
 and said-vs-shown. All measured, all reproducible: try it.
 
