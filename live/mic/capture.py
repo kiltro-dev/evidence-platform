@@ -262,6 +262,51 @@ def file_test_input(path: str, binary: str | None = None) -> MicInput:
     )
 
 
+DRIVER_STUBBED_LABEL = "driver-stubbed-file-fed"
+
+
+def custom_ffmpeg_input(
+    ffmpeg_input_args: tuple[str, ...] | list[str],
+    device: str,
+    label: str,
+    binary: str | None = None,
+    kind: str = "custom",
+) -> MicInput:
+    """Explicit ARBITRARY ffmpeg input (labeled, never returned by autodetect).
+
+    ``ffmpeg_input_args`` are placed verbatim before the PCM output flags
+    in :meth:`MicCapture.argv`, so any source ffmpeg understands works:
+    ``("-re", "-i", path)`` for paced file replay, ``("-f", "lavfi", "-i",
+    src)``, stream URLs, etc. Always ``real=False``: callers must pick a
+    label that says what was stubbed.
+    """
+    return MicInput(
+        kind=kind,
+        ffmpeg_input_args=tuple(ffmpeg_input_args),
+        device=device,
+        binary=binary or ffmpeg_exe(),
+        label=label,
+        real=False,
+    )
+
+
+def driver_stubbed_file_input(path: str, binary: str | None = None) -> MicInput:
+    """Paced file feed for live E2E (``-re``): everything live but the driver.
+
+    Labeled ``"driver-stubbed-file-fed"``: ffmpeg demux + PCM 24 kHz +
+    ``iter_audio``/``chunks`` + realtime pacing are the real path; only the
+    kernel capture driver (impossible on mic-less hosts, see live/F2_MIC2.md)
+    is stubbed by a file. Never returned by autodetect.
+    """
+    return custom_ffmpeg_input(
+        ("-re", "-i", path),
+        device=path,
+        label=DRIVER_STUBBED_LABEL,
+        binary=binary,
+        kind="file",
+    )
+
+
 class MicCapture:
     """Live microphone -> PCM chunks (async, t_media clock).
 
@@ -307,6 +352,21 @@ class MicCapture:
     ) -> "MicCapture":
         """Offline double: replay a media file as the PCM source."""
         return cls(file_test_input(path), chunk_ms=chunk_ms, duration=duration)
+
+    @classmethod
+    def for_custom_input(
+        cls, mic_input: MicInput, chunk_ms: int = 80,
+        duration: float | None = None,
+    ) -> "MicCapture":
+        """Capture from an explicit arbitrary ffmpeg input (never autodetect).
+
+        Pair with :func:`custom_ffmpeg_input` /
+        :func:`driver_stubbed_file_input`; the capture inherits the input's
+        honest (non-real) label in :attr:`source_label`.
+        """
+        if mic_input.real:
+            raise ValueError("for_custom_input needs an explicit double input")
+        return cls(mic_input, chunk_ms=chunk_ms, duration=duration)
 
     @property
     def argv(self) -> list[str]:
