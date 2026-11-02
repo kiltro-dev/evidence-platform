@@ -1,0 +1,842 @@
+[
+  {
+    "id": "C2A1",
+    "claim": "C2A1",
+    "lang": "es",
+    "piece": "C2",
+    "slide": 1,
+    "text": "Estados Unidos produjo 29,3 billones de dólares en 2024.",
+    "t_aprox": 0.0,
+    "category": "a",
+    "expected": "true",
+    "ref": "WB NY.GDP.MKTP.CD USA 2024 = 29,298,013,000,000",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/USA/indicator/NY.GDP.MKTP.CD?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "29,298T; dice 29,3T -> TRUE",
+    "calculation": null
+  },
+  {
+    "id": "C2A2",
+    "claim": "C2A2",
+    "lang": "es",
+    "piece": "C2",
+    "slide": 1,
+    "text": "China produjo 21,7 billones de dólares en 2024.",
+    "t_aprox": 0.0,
+    "category": "a",
+    "expected": "false",
+    "ref": "WB CHN 2024 = 18,729,668,435,848 (18,73T, no 21,7T)",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/CHN/indicator/NY.GDP.MKTP.CD?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "18,73T; dice 21,7T -> FALSE",
+    "calculation": null
+  },
+  {
+    "id": "C2F1",
+    "claim": "C2F1",
+    "lang": "es",
+    "piece": "C2",
+    "slide": 1,
+    "text": "Japón generó 4,19 billones de dólares en 2024.",
+    "t_aprox": 0.0,
+    "category": "f",
+    "expected": "true",
+    "ref": "WB NY.GDP.MKTP.CD JPN 2024 = 4,190,008,188,359",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/JPN/indicator/NY.GDP.MKTP.CD?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "4,190T; dice 4,19T -> TRUE",
+    "calculation": null
+  },
+  {
+    "id": "C2C1",
+    "claim": "C2C1",
+    "lang": "es",
+    "piece": "C2",
+    "slide": 1,
+    "text": "El PIB de Japón se duplicó hasta 8,4 billones en 2024.",
+    "t_aprox": 0.0,
+    "category": "c",
+    "expected": "false",
+    "ref": "WB JPN 2024 = 4,19T; 8,4T es el doble inventado",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/JPN/indicator/NY.GDP.MKTP.CD?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "4,19T; dice 8,4T, inventado -> FALSE",
+    "calculation": null
+  },
+  {
+    "id": "C2D1",
+    "claim": "C2D1",
+    "lang": "es",
+    "piece": "C2",
+    "slide": 2,
+    "text": "El PIB de EE. UU. creció un 5,3 por ciento entre 2023 y 2024.",
+    "t_aprox": 18.09,
+    "category": "d",
+    "expected": "true",
+    "ref": "WB USA 27,811,517,000,000 -> 29,298,013,000,000: +5,345 %",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/USA/indicator/NY.GDP.MKTP.CD?format=json&date=2023:2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "+5,345 %; dice 5,3 % -> TRUE",
+    "calculation": "(29298013-27811517)/27811517 = 0,05345 = 5,345 %"
+  },
+  {
+    "id": "C2D2",
+    "claim": "C2D2",
+    "lang": "es",
+    "piece": "C2",
+    "slide": 2,
+    "text": "El PIB indio creció un 12,4 por ciento entre 2023 y 2024.",
+    "t_aprox": 18.09,
+    "category": "d",
+    "expected": "false",
+    "ref": "WB IND: +7,424 %, no 12,4 %",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/IND/indicator/NY.GDP.MKTP.CD?format=json&date=2023:2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "+7,424 %; dice 12,4 % -> FALSE",
+    "calculation": "(3760813-3500906)/3500906 = 0,07424 = 7,424 %"
+  },
+  {
+    "id": "C2D3",
+    "claim": "C2D3",
+    "lang": "es",
+    "piece": "C2",
+    "slide": 2,
+    "text": "El PIB español creció un 6,6 por ciento entre 2023 y 2024.",
+    "t_aprox": 18.09,
+    "category": "d",
+    "expected": "true",
+    "ref": "WB ESP 1,619,481,980,720 -> 1,725,671,652,742: +6,557 %",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/ESP/indicator/NY.GDP.MKTP.CD?format=json&date=2023:2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "+6,557 %; dice 6,6 % -> TRUE",
+    "calculation": "(1725672-1619482)/1619482 = 0,06557 = 6,557 %"
+  },
+  {
+    "id": "C2D4",
+    "claim": "C2D4",
+    "lang": "es",
+    "piece": "C2",
+    "slide": 2,
+    "text": "El PIB japonés creció un 3,1 por ciento entre 2023 y 2024.",
+    "t_aprox": 18.09,
+    "category": "d",
+    "expected": "false",
+    "ref": "WB JPN: -4,444 % (cayó); dice +3,1 %",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/JPN/indicator/NY.GDP.MKTP.CD?format=json&date=2023:2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "-4,444 %; dice +3,1 % -> FALSE",
+    "calculation": "(4190008-4384854)/4384854 = -0,04444 = -4,444 %"
+  },
+  {
+    "id": "C2D5",
+    "claim": "C2D5",
+    "lang": "es",
+    "piece": "C2",
+    "slide": 3,
+    "text": "El PIB japonés cayó un 4,4 por ciento entre 2023 y 2024.",
+    "t_aprox": 41.22,
+    "category": "d",
+    "expected": "true",
+    "ref": "WB JPN 4,384,854,269,962 -> 4,190,008,188,359: -4,444 %",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/JPN/indicator/NY.GDP.MKTP.CD?format=json&date=2023:2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "-4,444 %; dice cayó 4,4 % -> TRUE",
+    "calculation": "(4190008-4384854)/4384854 = -0,04444 = -4,444 %"
+  },
+  {
+    "id": "C2D6",
+    "claim": "C2D6",
+    "lang": "es",
+    "piece": "C2",
+    "slide": 3,
+    "text": "El PIB brasileño creció un 5,2 por ciento entre 2023 y 2024.",
+    "t_aprox": 41.22,
+    "category": "d",
+    "expected": "false",
+    "ref": "WB BRA 2,191,131,765,685 -> 2,185,821,610,689: -0,242 %; dice +5,2 %",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/BRA/indicator/NY.GDP.MKTP.CD?format=json&date=2023:2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "-0,242 %; dice +5,2 % -> FALSE",
+    "calculation": "(2185822-2191132)/2191132 = -0,00242 = -0,242 %"
+  },
+  {
+    "id": "C2D7",
+    "claim": "C2D7",
+    "lang": "es",
+    "piece": "C2",
+    "slide": 3,
+    "text": "El PIB mexicano creció un 2,0 por ciento entre 2023 y 2024.",
+    "t_aprox": 41.22,
+    "category": "d",
+    "expected": "true",
+    "ref": "WB MEX 1,794,410,347,718 -> 1,830,489,311,089: +2,011 %",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/MEX/indicator/NY.GDP.MKTP.CD?format=json&date=2023:2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "+2,011 %; dice 2,0 % -> TRUE",
+    "calculation": "(1830489-1794410)/1794410 = 0,02011 = 2,011 %"
+  },
+  {
+    "id": "C2A3",
+    "claim": "C2A3",
+    "lang": "es",
+    "piece": "C2",
+    "slide": 3,
+    "text": "Brasil generó 2,19 billones de dólares en 2024.",
+    "t_aprox": 41.22,
+    "category": "a",
+    "expected": "true",
+    "ref": "WB NY.GDP.MKTP.CD BRA 2024 = 2,185,821,610,689",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/BRA/indicator/NY.GDP.MKTP.CD?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "2,186T; dice 2,19T -> TRUE",
+    "calculation": null
+  },
+  {
+    "id": "C2D8",
+    "claim": "C2D8",
+    "lang": "es",
+    "piece": "C2",
+    "slide": 4,
+    "text": "El PIB de EE. UU. fue el 779 por ciento del de la India en 2024.",
+    "t_aprox": 62.38,
+    "category": "d",
+    "expected": "true",
+    "ref": "WB 2024: USA 29,298,013,000,000 / IND 3,760,813,470,501 = 779,03 %",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/USA;IND/indicator/NY.GDP.MKTP.CD?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "779,03 %; dice 779 % -> TRUE",
+    "calculation": "29298013/3760813 = 7,7903 = 779,03 %"
+  },
+  {
+    "id": "C2D9",
+    "claim": "C2D9",
+    "lang": "es",
+    "piece": "C2",
+    "slide": 4,
+    "text": "El PIB alemán fue el 175 por ciento del británico en 2024.",
+    "t_aprox": 62.38,
+    "category": "d",
+    "expected": "false",
+    "ref": "WB 2024: DEU / GBR = 126,79 %, no 175 %",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/DEU;GBR/indicator/NY.GDP.MKTP.CD?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "126,79 %; dice 175 % -> FALSE",
+    "calculation": "4685593/3695540 = 1,2679 = 126,79 %"
+  },
+  {
+    "id": "C2D10",
+    "claim": "C2D10",
+    "lang": "es",
+    "piece": "C2",
+    "slide": 4,
+    "text": "El PIB chino fue el 63,9 por ciento del de EE. UU. en 2024.",
+    "t_aprox": 62.38,
+    "category": "d",
+    "expected": "true",
+    "ref": "WB 2024: CHN 18,729,668,435,848 / USA 29,298,013,000,000 = 63,93 %",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/CHN;USA/indicator/NY.GDP.MKTP.CD?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "63,93 %; dice 63,9 % -> TRUE",
+    "calculation": "18729668/29298013 = 0,6393 = 63,93 %"
+  },
+  {
+    "id": "C2A4",
+    "claim": "C2A4",
+    "lang": "es",
+    "piece": "C2",
+    "slide": 4,
+    "text": "El PIB alemán sumó 5,69 billones de dólares en 2024.",
+    "t_aprox": 62.38,
+    "category": "a",
+    "expected": "false",
+    "ref": "WB DEU 2024 = 4,685,592,577,805 (4,69T, no 5,69T)",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/DEU/indicator/NY.GDP.MKTP.CD?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "4,69T; dice 5,69T -> FALSE",
+    "calculation": null
+  },
+  {
+    "id": "C2D11",
+    "claim": "C2D11",
+    "lang": "es",
+    "piece": "C2",
+    "slide": 5,
+    "text": "El PIB medio de España e Italia en 2024 fue de 2,05 billones.",
+    "t_aprox": 83.6,
+    "category": "d",
+    "expected": "true",
+    "ref": "WB 2024: (ESP 1,725,671,652,742 + ITA 2,383,435,562,458) / 2 = 2,0546T",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/ESP;ITA/indicator/NY.GDP.MKTP.CD?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "2,0546T; dice 2,05T -> TRUE",
+    "calculation": "(1725672+2383436)/2 = 2054554M = 2,0546T"
+  },
+  {
+    "id": "C2D12",
+    "claim": "C2D12",
+    "lang": "es",
+    "piece": "C2",
+    "slide": 5,
+    "text": "El PIB medio de Corea del Sur y Canadá fue de 2,57 billones.",
+    "t_aprox": 83.6,
+    "category": "d",
+    "expected": "false",
+    "ref": "WB 2024: (KOR 1,875,388,209,407 + CAN 2,270,076,189,683) / 2 = 2,07T",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/KOR;CAN/indicator/NY.GDP.MKTP.CD?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "2,07T; dice 2,57T -> FALSE",
+    "calculation": "(1875388+2270076)/2 = 2072732M = 2,0727T"
+  },
+  {
+    "id": "C2A5",
+    "claim": "C2A5",
+    "lang": "es",
+    "piece": "C2",
+    "slide": 5,
+    "text": "Corea del Sur produjo 1,88 billones de dólares en 2024.",
+    "t_aprox": 83.6,
+    "category": "a",
+    "expected": "true",
+    "ref": "WB NY.GDP.MKTP.CD KOR 2024 = 1,875,388,209,407",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/KOR/indicator/NY.GDP.MKTP.CD?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "1,875T; dice 1,88T -> TRUE",
+    "calculation": null
+  },
+  {
+    "id": "C2A6",
+    "claim": "C2A6",
+    "lang": "es",
+    "piece": "C2",
+    "slide": 5,
+    "text": "El PIB canadiense sumó 3,27 billones de dólares en 2024.",
+    "t_aprox": 83.6,
+    "category": "a",
+    "expected": "false",
+    "ref": "WB CAN 2024 = 2,270,076,189,683 (2,27T, no 3,27T)",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/CAN/indicator/NY.GDP.MKTP.CD?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "2,27T; dice 3,27T -> FALSE",
+    "calculation": null
+  },
+  {
+    "id": "C2C2",
+    "claim": "C2C2",
+    "lang": "es",
+    "piece": "C2",
+    "slide": 6,
+    "text": "Como muestra el gráfico, la economía española se duplicó.",
+    "t_aprox": 103.1,
+    "category": "c",
+    "expected": "false",
+    "ref": "WB ESP 1,62T -> 1,73T (+6,6 %, no x2); eje truncado",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/ESP/indicator/NY.GDP.MKTP.CD?format=json&date=2023:2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "+6,6 %; dice duplicado con eje truncado -> FALSE",
+    "calculation": null
+  },
+  {
+    "id": "C2E1",
+    "claim": "C2E1",
+    "lang": "es",
+    "piece": "C2",
+    "slide": 6,
+    "text": "España produjo 1,73 billones de dólares en 2024.",
+    "t_aprox": 103.1,
+    "category": "e",
+    "expected": "true",
+    "ref": "WB NY.GDP.MKTP.CD ESP 2024 = 1,725,671,652,742",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/ESP/indicator/NY.GDP.MKTP.CD?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "1,726T; dice 1,73T, escala correcta -> TRUE",
+    "calculation": null
+  },
+  {
+    "id": "C2E4",
+    "claim": "C2E4",
+    "lang": "es",
+    "piece": "C2",
+    "slide": 6,
+    "text": "España produjo 173000 millones de dólares en 2024.",
+    "t_aprox": 103.1,
+    "category": "e",
+    "expected": "false",
+    "ref": "WB ESP 2024 = 1,73 BILLONES; 173000M es x10 menos",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/ESP/indicator/NY.GDP.MKTP.CD?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "1,73T; dice 173000M (x10) -> FALSE",
+    "calculation": null
+  },
+  {
+    "id": "C2F2",
+    "claim": "C2F2",
+    "lang": "es",
+    "piece": "C2",
+    "slide": 6,
+    "text": "España superó a Italia en PIB en 2024.",
+    "t_aprox": 103.1,
+    "category": "f",
+    "expected": "false",
+    "ref": "WB 2024: ESP 1,73T < ITA 2,38T; no superó a Italia",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/ESP;ITA/indicator/NY.GDP.MKTP.CD?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "1,73 < 2,38; el sorpasso no ocurrió -> FALSE",
+    "calculation": null
+  },
+  {
+    "id": "C2E2",
+    "claim": "C2E2",
+    "lang": "es",
+    "piece": "C2",
+    "slide": 7,
+    "text": "México generó 1,83 billones de dólares en 2024.",
+    "t_aprox": 118.99,
+    "category": "e",
+    "expected": "true",
+    "ref": "WB NY.GDP.MKTP.CD MEX 2024 = 1,830,489,311,089",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/MEX/indicator/NY.GDP.MKTP.CD?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "1,830T; dice 1,83T, escala correcta -> TRUE",
+    "calculation": null
+  },
+  {
+    "id": "C2E5",
+    "claim": "C2E5",
+    "lang": "es",
+    "piece": "C2",
+    "slide": 7,
+    "text": "La economía mexicana produjo apenas 1830 millones de dólares.",
+    "t_aprox": 118.99,
+    "category": "e",
+    "expected": "false",
+    "ref": "WB MEX 2024 = 1,83 BILLONES; 1830M es x1000 menos",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/MEX/indicator/NY.GDP.MKTP.CD?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "1,83T; dice 1830M (x1000) -> FALSE",
+    "calculation": null
+  },
+  {
+    "id": "C2E3",
+    "claim": "C2E3",
+    "lang": "es",
+    "piece": "C2",
+    "slide": 7,
+    "text": "Indonesia generó 1,40 billones de dólares en 2024.",
+    "t_aprox": 118.99,
+    "category": "e",
+    "expected": "true",
+    "ref": "WB NY.GDP.MKTP.CD IDN 2024 = 1,396,301,788,462",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/IDN/indicator/NY.GDP.MKTP.CD?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "1,396T; dice 1,40T, escala correcta -> TRUE",
+    "calculation": null
+  },
+  {
+    "id": "C2E6",
+    "claim": "C2E6",
+    "lang": "es",
+    "piece": "C2",
+    "slide": 7,
+    "text": "Indonesia generó 14000 millones de dólares en 2024.",
+    "t_aprox": 118.99,
+    "category": "e",
+    "expected": "false",
+    "ref": "WB IDN 2024 = 1,40 BILLONES; 14000M es x100 menos",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/IDN/indicator/NY.GDP.MKTP.CD?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "1,40T; dice 14000M (x100) -> FALSE",
+    "calculation": null
+  },
+  {
+    "id": "C2E7",
+    "claim": "C2E7",
+    "lang": "es",
+    "piece": "C2",
+    "slide": 8,
+    "text": "Canadá produjo 2,27 billones de dólares en 2024.",
+    "t_aprox": 136.23,
+    "category": "e",
+    "expected": "true",
+    "ref": "WB NY.GDP.MKTP.CD CAN 2024 = 2,270,076,189,683",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/CAN/indicator/NY.GDP.MKTP.CD?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "2,270T USD; unidad correcta -> TRUE",
+    "calculation": null
+  },
+  {
+    "id": "C2E8",
+    "claim": "C2E8",
+    "lang": "es",
+    "piece": "C2",
+    "slide": 8,
+    "text": "El PIB canadiense fue de 2,27 billones de euros en 2024.",
+    "t_aprox": 136.23,
+    "category": "e",
+    "expected": "false",
+    "ref": "WB CAN serie en USD; euros != dólares",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/CAN/indicator/NY.GDP.MKTP.CD?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "2,27T USD; dice euros (unidad errónea) -> FALSE",
+    "calculation": null
+  },
+  {
+    "id": "C2C3",
+    "claim": "C2C3",
+    "lang": "es",
+    "piece": "C2",
+    "slide": 8,
+    "text": "El PIB argentino llegó a 1,28 billones de dólares en 2024.",
+    "t_aprox": 136.23,
+    "category": "c",
+    "expected": "false",
+    "ref": "WB ARG 2024 = 638,365,455,340 (0,64T); 1,28T inventado",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/ARG/indicator/NY.GDP.MKTP.CD?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "0,64T; dice 1,28T, inventado -> FALSE",
+    "calculation": null
+  },
+  {
+    "id": "C2C4",
+    "claim": "C2C4",
+    "lang": "es",
+    "piece": "C2",
+    "slide": 8,
+    "text": "El PIB de Nigeria alcanzó 500000 millones de dólares en 2024.",
+    "t_aprox": 136.23,
+    "category": "c",
+    "expected": "false",
+    "ref": "WB NGA 2024 = 252,261,880,140 (252B y cayendo); 500B inventado",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/NGA/indicator/NY.GDP.MKTP.CD?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "252B a la baja; dice 500B -> FALSE",
+    "calculation": null
+  },
+  {
+    "id": "C2B1",
+    "claim": "C2B1",
+    "lang": "es",
+    "piece": "C2",
+    "slide": 9,
+    "text": "El FMI anticipa un crecimiento mundial del 3,1 por ciento en 2026.",
+    "t_aprox": 154.78,
+    "category": "b",
+    "expected": "true",
+    "ref": "IMF WEO oct-2026: crecimiento mundial 3,1 % en 2026",
+    "sources": [
+      {
+        "url": "https://www.imf.org/en/publications/weo/issues/2026/10/13/world-economic-outlook-october-2026",
+        "accessed": "2026-11-02",
+        "note": "primario: WEO oct-2026; ground truth de dev.json F2D-B1"
+      }
+    ],
+    "ground_truth": "3,1 % mundial 2026 -> TRUE",
+    "calculation": null
+  },
+  {
+    "id": "C2B2",
+    "claim": "C2B2",
+    "lang": "es",
+    "piece": "C2",
+    "slide": 9,
+    "text": "En sep-2026 EE. UU. tenía 8,1 millones de desempleados.",
+    "t_aprox": 154.78,
+    "category": "b",
+    "expected": "false",
+    "ref": "BLS empsit sep-2026: 7,1M, no 8,1M",
+    "sources": [
+      {
+        "url": "https://www.bls.gov/news.release/pdf/empsit.pdf",
+        "accessed": "2026-11-02",
+        "note": "primario, mismo boletín; refuta (7,1M frente a 8,1M)"
+      }
+    ],
+    "ground_truth": "7,1M; dice 8,1M -> FALSE",
+    "calculation": null
+  },
+  {
+    "id": "C2F3",
+    "claim": "C2F3",
+    "lang": "es",
+    "piece": "C2",
+    "slide": 9,
+    "text": "Francia produjo 3,16 billones de dólares en 2024.",
+    "t_aprox": 154.78,
+    "category": "f",
+    "expected": "true",
+    "ref": "WB NY.GDP.MKTP.CD FRA 2024 = 3,160,442,622,465",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/FRA/indicator/NY.GDP.MKTP.CD?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "3,160T; dice 3,16T -> TRUE",
+    "calculation": null
+  },
+  {
+    "id": "C2F4",
+    "claim": "C2F4",
+    "lang": "es",
+    "piece": "C2",
+    "slide": 9,
+    "text": "Francia superó a Alemania en PIB en 2024.",
+    "t_aprox": 154.78,
+    "category": "f",
+    "expected": "false",
+    "ref": "WB 2024: FRA 3,16T < DEU 4,69T; no superó a Alemania",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/FRA;DEU/indicator/NY.GDP.MKTP.CD?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "3,16 < 4,69; el sorpasso no ocurrió -> FALSE",
+    "calculation": null
+  },
+  {
+    "id": "C2C5",
+    "claim": "C2C5",
+    "lang": "es",
+    "piece": "C2",
+    "slide": 10,
+    "text": "El PIB de Colombia se duplicó hasta 840000 millones de dólares.",
+    "t_aprox": 172.04,
+    "category": "c",
+    "expected": "false",
+    "ref": "WB COL 2024 = 420,504,033,143 (420B); 840B es 2x inventado",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/COL/indicator/NY.GDP.MKTP.CD?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "420B; dice 840B, inventado -> FALSE",
+    "calculation": null
+  },
+  {
+    "id": "C2C6",
+    "claim": "C2C6",
+    "lang": "es",
+    "piece": "C2",
+    "slide": 10,
+    "text": "El Reino Unido produjo 4,70 billones, superando a Alemania.",
+    "t_aprox": 172.04,
+    "category": "c",
+    "expected": "false",
+    "ref": "WB 2024: GBR 3,70T < DEU 4,69T; 4,70T y sorpasso inventados",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/GBR;DEU/indicator/NY.GDP.MKTP.CD?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "3,70 < 4,69; cifra y sorpasso inventados -> FALSE",
+    "calculation": null
+  },
+  {
+    "id": "C2F5",
+    "claim": "C2F5",
+    "lang": "es",
+    "piece": "C2",
+    "slide": 10,
+    "text": "Alemania produjo 4,69 billones de dólares en 2024.",
+    "t_aprox": 172.04,
+    "category": "f",
+    "expected": "true",
+    "ref": "WB NY.GDP.MKTP.CD DEU 2024 = 4,685,592,577,805",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/DEU/indicator/NY.GDP.MKTP.CD?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "4,686T; dice 4,69T -> TRUE",
+    "calculation": null
+  },
+  {
+    "id": "C2F6",
+    "claim": "C2F6",
+    "lang": "es",
+    "piece": "C2",
+    "slide": 10,
+    "text": "Italia superó a Francia en PIB en 2024.",
+    "t_aprox": 172.04,
+    "category": "f",
+    "expected": "false",
+    "ref": "WB 2024: ITA 2,38T < FRA 3,16T; no superó a Francia",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/ITA;FRA/indicator/NY.GDP.MKTP.CD?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "2,38 < 3,16; el sorpasso no ocurrió -> FALSE",
+    "calculation": null
+  }
+]

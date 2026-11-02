@@ -1,0 +1,794 @@
+[
+  {
+    "id": "K2A1",
+    "claim": "K2A1",
+    "lang": "es",
+    "piece": "K2",
+    "slide": 1,
+    "text": "La esperanza de vida en España fue de 83,9 años en 2024.",
+    "t_aprox": 0.0,
+    "category": "a",
+    "expected": "true",
+    "ref": "WB SP.DYN.LE00.IN ESP 2024 = 83,888",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/ESP/indicator/SP.DYN.LE00.IN?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "83,888; dice 83,9 -> TRUE",
+    "calculation": null
+  },
+  {
+    "id": "K2A2",
+    "claim": "K2A2",
+    "lang": "es",
+    "piece": "K2",
+    "slide": 1,
+    "text": "En Japón la esperanza de vida llegó a 84,0 años en 2024.",
+    "t_aprox": 0.0,
+    "category": "a",
+    "expected": "true",
+    "ref": "WB SP.DYN.LE00.IN JPN 2024 = 84,036",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/JPN/indicator/SP.DYN.LE00.IN?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "84,036; dice 84,0 -> TRUE",
+    "calculation": null
+  },
+  {
+    "id": "K2A3",
+    "claim": "K2A3",
+    "lang": "es",
+    "piece": "K2",
+    "slide": 1,
+    "text": "La esperanza de vida en Estados Unidos superó los 84 años en 2024.",
+    "t_aprox": 0.0,
+    "category": "a",
+    "expected": "false",
+    "ref": "WB USA 2024 = 78,890 (no supera los 84)",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/USA/indicator/SP.DYN.LE00.IN?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "78,9; dice más de 84 -> FALSE",
+    "calculation": null
+  },
+  {
+    "id": "K2F1",
+    "claim": "K2F1",
+    "lang": "es",
+    "piece": "K2",
+    "slide": 1,
+    "text": "Nigeria tenía 232,7 millones de habitantes en 2024.",
+    "t_aprox": 0.0,
+    "category": "f",
+    "expected": "true",
+    "ref": "WB SP.POP.TOTL NGA 2024 = 232,679,478",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/NGA/indicator/SP.POP.TOTL?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "232,68M; dice 232,7M -> TRUE",
+    "calculation": null
+  },
+  {
+    "id": "K2A4",
+    "claim": "K2A4",
+    "lang": "es",
+    "piece": "K2",
+    "slide": 2,
+    "text": "En Japón morían 2,4 de cada 1000 niños antes de los 5 años.",
+    "t_aprox": 19.8,
+    "category": "a",
+    "expected": "true",
+    "ref": "WB SH.DYN.MORT JPN 2024 = 2,4",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/JPN/indicator/SH.DYN.MORT?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "2,4 por 1000 -> TRUE",
+    "calculation": null
+  },
+  {
+    "id": "K2A5",
+    "claim": "K2A5",
+    "lang": "es",
+    "piece": "K2",
+    "slide": 2,
+    "text": "En Nigeria morían 115,6 de cada 1000 niños antes de los 5 años.",
+    "t_aprox": 19.8,
+    "category": "a",
+    "expected": "true",
+    "ref": "WB SH.DYN.MORT NGA 2024 = 115,6",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/NGA/indicator/SH.DYN.MORT?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "115,6 por 1000 -> TRUE",
+    "calculation": null
+  },
+  {
+    "id": "K2A6",
+    "claim": "K2A6",
+    "lang": "es",
+    "piece": "K2",
+    "slide": 2,
+    "text": "La mortalidad infantil mundial bajó a 17,4 por cada 1000 en 2024.",
+    "t_aprox": 19.8,
+    "category": "a",
+    "expected": "false",
+    "ref": "WB WLD 2024 = 37,4 por 1000 (no 17,4)",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/WLD/indicator/SH.DYN.MORT?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "37,4; dice 17,4 -> FALSE",
+    "calculation": null
+  },
+  {
+    "id": "K2F2",
+    "claim": "K2F2",
+    "lang": "es",
+    "piece": "K2",
+    "slide": 2,
+    "text": "Japón tenía 104 millones de habitantes en 2024.",
+    "t_aprox": 19.8,
+    "category": "f",
+    "expected": "false",
+    "ref": "WB JPN 2024 = 123,975,371 (124,0M, no 104M)",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/JPN/indicator/SP.POP.TOTL?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "124,0M; dice 104M, dif 16 % -> FALSE",
+    "calculation": null
+  },
+  {
+    "id": "K2A7",
+    "claim": "K2A7",
+    "lang": "es",
+    "piece": "K2",
+    "slide": 3,
+    "text": "La luz viaja a exactamente 299792458 metros por segundo.",
+    "t_aprox": 37.62,
+    "category": "a",
+    "expected": "true",
+    "ref": "Constante definitoria SI (BIPM): c exacta",
+    "sources": [],
+    "ground_truth": "299792458 m/s exactos -> TRUE",
+    "calculation": null
+  },
+  {
+    "id": "K2A8",
+    "claim": "K2A8",
+    "lang": "es",
+    "piece": "K2",
+    "slide": 3,
+    "text": "El sonido viaja a 343 metros por segundo en aire seco a 20 grados.",
+    "t_aprox": 37.62,
+    "category": "a",
+    "expected": "true",
+    "ref": "Física estándar: 331,3 + 0,606 x 20 = 343,4 m/s",
+    "sources": [],
+    "ground_truth": "343,4; dice 343, dif 0,1 % -> TRUE",
+    "calculation": null
+  },
+  {
+    "id": "K2E1",
+    "claim": "K2E1",
+    "lang": "es",
+    "piece": "K2",
+    "slide": 3,
+    "text": "El agua hierve a 100 grados Celsius al nivel del mar.",
+    "t_aprox": 37.62,
+    "category": "e",
+    "expected": "true",
+    "ref": "Física estándar: 100 C a 1 atm; escala correcta",
+    "sources": [],
+    "ground_truth": "100 C; escala correcta -> TRUE",
+    "calculation": null
+  },
+  {
+    "id": "K2E4",
+    "claim": "K2E4",
+    "lang": "es",
+    "piece": "K2",
+    "slide": 3,
+    "text": "En una olla potente el agua puede hervir a 1000 grados.",
+    "t_aprox": 37.62,
+    "category": "e",
+    "expected": "false",
+    "ref": "Hierve a 100 C a 1 atm; 1000 es x10",
+    "sources": [],
+    "ground_truth": "100; dice 1000 (x10) -> FALSE",
+    "calculation": null
+  },
+  {
+    "id": "K2A9",
+    "claim": "K2A9",
+    "lang": "es",
+    "piece": "K2",
+    "slide": 4,
+    "text": "El Everest se eleva 8849 metros sobre el nivel del mar.",
+    "t_aprox": 56.79,
+    "category": "a",
+    "expected": "true",
+    "ref": "8848,86 m (medición conjunta China-Nepal, 2020)",
+    "sources": [],
+    "ground_truth": "8848,86; dice 8849 -> TRUE",
+    "calculation": null
+  },
+  {
+    "id": "K2A10",
+    "claim": "K2A10",
+    "lang": "es",
+    "piece": "K2",
+    "slide": 4,
+    "text": "El Sáhara cubre unos modestos 920000 kilómetros cuadrados.",
+    "t_aprox": 56.79,
+    "category": "a",
+    "expected": "false",
+    "ref": "~9,2M km2 (Britannica); 920000 es x10 menos",
+    "sources": [],
+    "ground_truth": "9,2M; dice 920000 -> FALSE",
+    "calculation": null
+  },
+  {
+    "id": "K2F3",
+    "claim": "K2F3",
+    "lang": "es",
+    "piece": "K2",
+    "slide": 4,
+    "text": "Japón tenía 124,0 millones de habitantes en 2024.",
+    "t_aprox": 56.79,
+    "category": "f",
+    "expected": "true",
+    "ref": "WB SP.POP.TOTL JPN 2024 = 123,975,371",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/JPN/indicator/SP.POP.TOTL?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "123,98M; dice 124,0M -> TRUE",
+    "calculation": null
+  },
+  {
+    "id": "K2E2",
+    "claim": "K2E2",
+    "lang": "es",
+    "piece": "K2",
+    "slide": 4,
+    "text": "La Tierra mide 40075 kilómetros de circunferencia en el ecuador.",
+    "t_aprox": 56.79,
+    "category": "e",
+    "expected": "true",
+    "ref": "NASA: circunferencia ecuatorial ~40075 km; escala correcta",
+    "sources": [],
+    "ground_truth": "40075 km; escala correcta -> TRUE",
+    "calculation": null
+  },
+  {
+    "id": "K2D1",
+    "claim": "K2D1",
+    "lang": "es",
+    "piece": "K2",
+    "slide": 5,
+    "text": "Japón superó a Estados Unidos en 5,1 años de vida en 2024.",
+    "t_aprox": 75.23,
+    "category": "d",
+    "expected": "true",
+    "ref": "WB 2024: JPN 84,036 - USA 78,890 = 5,146",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/JPN;USA/indicator/SP.DYN.LE00.IN?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "5,146; dice 5,1 -> TRUE",
+    "calculation": "84,036 - 78,890 = 5,146"
+  },
+  {
+    "id": "K2D2",
+    "claim": "K2D2",
+    "lang": "es",
+    "piece": "K2",
+    "slide": 5,
+    "text": "La esperanza de vida en España superó a la de Suiza en 2024.",
+    "t_aprox": 75.23,
+    "category": "d",
+    "expected": "false",
+    "ref": "WB 2024: ESP 83,888 < CHE 84,407; no superó a Suiza",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/ESP;CHE/indicator/SP.DYN.LE00.IN?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "83,9 < 84,4; el sorpasso no ocurrió -> FALSE",
+    "calculation": "83,888 frente a 84,407"
+  },
+  {
+    "id": "K2E5",
+    "claim": "K2E5",
+    "lang": "es",
+    "piece": "K2",
+    "slide": 5,
+    "text": "España tenía 4,9 millones de habitantes en 2024.",
+    "t_aprox": 75.23,
+    "category": "e",
+    "expected": "false",
+    "ref": "WB ESP 2024 = 48,848,840 (48,8M); 4,9M es x10 menos",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/ESP/indicator/SP.POP.TOTL?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "48,8M; dice 4,9M (x10) -> FALSE",
+    "calculation": null
+  },
+  {
+    "id": "K2C1",
+    "claim": "K2C1",
+    "lang": "es",
+    "piece": "K2",
+    "slide": 5,
+    "text": "La esperanza de vida en Nigeria superó los 70 años en 2024.",
+    "t_aprox": 75.23,
+    "category": "c",
+    "expected": "false",
+    "ref": "WB NGA 2024 = 54,635 (no 70)",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/NGA/indicator/SP.DYN.LE00.IN?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "54,6; dice más de 70, inventado -> FALSE",
+    "calculation": null
+  },
+  {
+    "id": "K2C2",
+    "claim": "K2C2",
+    "lang": "es",
+    "piece": "K2",
+    "slide": 6,
+    "text": "Como muestra el gráfico, la vida media en Nigeria se duplicó.",
+    "t_aprox": 92.44,
+    "category": "c",
+    "expected": "false",
+    "ref": "WB NGA 54,079 -> 54,635 (+1 %, no x2); eje truncado",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/NGA/indicator/SP.DYN.LE00.IN?format=json&date=2022:2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "+1 %; dice duplicado con eje truncado -> FALSE",
+    "calculation": null
+  },
+  {
+    "id": "K2F4",
+    "claim": "K2F4",
+    "lang": "es",
+    "piece": "K2",
+    "slide": 6,
+    "text": "La esperanza de vida en Suiza fue de 84,4 años en 2024.",
+    "t_aprox": 92.44,
+    "category": "f",
+    "expected": "true",
+    "ref": "WB SP.DYN.LE00.IN CHE 2024 = 84,407",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/CHE/indicator/SP.DYN.LE00.IN?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "84,407; dice 84,4 -> TRUE",
+    "calculation": null
+  },
+  {
+    "id": "K2F5",
+    "claim": "K2F5",
+    "lang": "es",
+    "piece": "K2",
+    "slide": 6,
+    "text": "China superó a Estados Unidos en esperanza de vida en 2024.",
+    "t_aprox": 92.44,
+    "category": "f",
+    "expected": "false",
+    "ref": "WB 2024: CHN 78,017 < USA 78,890; no superó a EE. UU.",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/CHN;USA/indicator/SP.DYN.LE00.IN?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "78,0 < 78,9; el sorpasso no ocurrió -> FALSE",
+    "calculation": null
+  },
+  {
+    "id": "K2E3",
+    "claim": "K2E3",
+    "lang": "es",
+    "piece": "K2",
+    "slide": 6,
+    "text": "Corea del Sur tenía 51,8 millones de habitantes en 2024.",
+    "t_aprox": 92.44,
+    "category": "e",
+    "expected": "true",
+    "ref": "WB SP.POP.TOTL KOR 2024 = 51,751,065",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/KOR/indicator/SP.POP.TOTL?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "51,75M; dice 51,8M, escala correcta -> TRUE",
+    "calculation": null
+  },
+  {
+    "id": "K2D3",
+    "claim": "K2D3",
+    "lang": "es",
+    "piece": "K2",
+    "slide": 7,
+    "text": "La mortalidad infantil de Nigeria fue 48 veces la de Japón.",
+    "t_aprox": 110.18,
+    "category": "d",
+    "expected": "true",
+    "ref": "WB 2024: NGA 115,6 / JPN 2,4 = 48,17",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/NGA;JPN/indicator/SH.DYN.MORT?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "48,17x; dice 48 veces -> TRUE",
+    "calculation": "115,6 / 2,4 = 48,17"
+  },
+  {
+    "id": "K2D4",
+    "claim": "K2D4",
+    "lang": "es",
+    "piece": "K2",
+    "slide": 7,
+    "text": "La mortalidad infantil mundial duplicó a la de Nigeria en 2024.",
+    "t_aprox": 110.18,
+    "category": "d",
+    "expected": "false",
+    "ref": "WB 2024: WLD 37,4 frente a NGA 115,6 (3x menor, no doble)",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/WLD;NGA/indicator/SH.DYN.MORT?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "37,4 < 115,6; no es el doble -> FALSE",
+    "calculation": "37,4 frente a 115,6"
+  },
+  {
+    "id": "K2C3",
+    "claim": "K2C3",
+    "lang": "es",
+    "piece": "K2",
+    "slide": 7,
+    "text": "La mortalidad infantil mundial cayó a 3,7 por cada 1000 en 2024.",
+    "t_aprox": 110.18,
+    "category": "c",
+    "expected": "false",
+    "ref": "WB WLD 2024 = 37,4 (el slide muestra 37,4); 3,7 es x10 menos",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/WLD/indicator/SH.DYN.MORT?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "37,4; dice 3,7 contra su propio slide -> FALSE",
+    "calculation": null
+  },
+  {
+    "id": "K2E6",
+    "claim": "K2E6",
+    "lang": "es",
+    "piece": "K2",
+    "slide": 7,
+    "text": "El PIB de Japón fue de 4,19 billones de euros en 2024.",
+    "t_aprox": 110.18,
+    "category": "e",
+    "expected": "false",
+    "ref": "WB JPN 2024 = 4,190,008,188,359 USD; euros != dólares",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/JPN/indicator/NY.GDP.MKTP.CD?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "4,19T USD; dice euros (unidad errónea) -> FALSE",
+    "calculation": null
+  },
+  {
+    "id": "K2B1",
+    "claim": "K2B1",
+    "lang": "es",
+    "piece": "K2",
+    "slide": 8,
+    "text": "El FMI prevé que las avanzadas crezcan un 2,1 por ciento en 2026.",
+    "t_aprox": 129.0,
+    "category": "b",
+    "expected": "true",
+    "ref": "IMF WEO oct-2026: avanzadas 2,1 % en 2026",
+    "sources": [
+      {
+        "url": "https://www.imf.org/en/publications/weo/issues/2026/10/13/world-economic-outlook-october-2026",
+        "accessed": "2026-11-02",
+        "note": "primario: WEO oct-2026; cifra de avanzadas citada en dev.json F2D-B2"
+      }
+    ],
+    "ground_truth": "2,1 % avanzadas 2026 -> TRUE",
+    "calculation": null
+  },
+  {
+    "id": "K2B2",
+    "claim": "K2B2",
+    "lang": "es",
+    "piece": "K2",
+    "slide": 8,
+    "text": "El FMI prevé un crecimiento mundial del 3,4 por ciento en 2026.",
+    "t_aprox": 129.0,
+    "category": "b",
+    "expected": "false",
+    "ref": "Mismo WEO: 3,4 % es 2027, no 2026 (año cambiado)",
+    "sources": [
+      {
+        "url": "https://www.imf.org/en/publications/weo/issues/2026/10/13/world-economic-outlook-october-2026",
+        "accessed": "2026-11-02",
+        "note": "primario, mismo WEO; refuta (3,4 % es de 2027)"
+      }
+    ],
+    "ground_truth": "3,1 % en 2026; dice 3,4 % -> FALSE",
+    "calculation": null
+  },
+  {
+    "id": "K2F6",
+    "claim": "K2F6",
+    "lang": "es",
+    "piece": "K2",
+    "slide": 8,
+    "text": "Estados Unidos tenía 340 millones de habitantes en 2024.",
+    "t_aprox": 129.0,
+    "category": "f",
+    "expected": "true",
+    "ref": "WB SP.POP.TOTL USA 2024 = 340,003,797",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/USA/indicator/SP.POP.TOTL?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "340,00M; dice 340M -> TRUE",
+    "calculation": null
+  },
+  {
+    "id": "K2F7",
+    "claim": "K2F7",
+    "lang": "es",
+    "piece": "K2",
+    "slide": 8,
+    "text": "Canadá superó los 50 millones de habitantes en 2024.",
+    "t_aprox": 129.0,
+    "category": "f",
+    "expected": "false",
+    "ref": "WB CAN 2024 = 41,262,329 (no 50M)",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/CAN/indicator/SP.POP.TOTL?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "41,3M; dice más de 50M -> FALSE",
+    "calculation": null
+  },
+  {
+    "id": "K2B3",
+    "claim": "K2B3",
+    "lang": "es",
+    "piece": "K2",
+    "slide": 9,
+    "text": "El FMI proyecta un crecimiento mundial del 3,4 por ciento en 2027.",
+    "t_aprox": 147.94,
+    "category": "b",
+    "expected": "true",
+    "ref": "IMF WEO oct-2026: crecimiento mundial 3,4 % en 2027",
+    "sources": [
+      {
+        "url": "https://www.imf.org/en/publications/weo/issues/2026/10/13/world-economic-outlook-october-2026",
+        "accessed": "2026-11-02",
+        "note": "primario: WEO oct-2026; cifra 2027 citada en dev.json F2D-B1"
+      }
+    ],
+    "ground_truth": "3,4 % mundial 2027 -> TRUE",
+    "calculation": null
+  },
+  {
+    "id": "K2B4",
+    "claim": "K2B4",
+    "lang": "es",
+    "piece": "K2",
+    "slide": 9,
+    "text": "El paro en Estados Unidos cayó al 3,2 por ciento en sep-2026.",
+    "t_aprox": 147.94,
+    "category": "b",
+    "expected": "false",
+    "ref": "BLS empsit sep-2026: 4,2 % (no 3,2 %)",
+    "sources": [
+      {
+        "url": "https://www.bls.gov/news.release/pdf/empsit.pdf",
+        "accessed": "2026-11-02",
+        "note": "primario, mismo boletín; refuta (4,2 % frente a 3,2 %)"
+      }
+    ],
+    "ground_truth": "4,2 %; dice 3,2 % -> FALSE",
+    "calculation": null
+  },
+  {
+    "id": "K2C4",
+    "claim": "K2C4",
+    "lang": "es",
+    "piece": "K2",
+    "slide": 9,
+    "text": "El Everest está íntegramente dentro de las fronteras de Nepal.",
+    "t_aprox": 147.94,
+    "category": "c",
+    "expected": "false",
+    "ref": "La cima está en la frontera Nepal-CHINA, no solo en Nepal",
+    "sources": [],
+    "ground_truth": "Frontera compartida; dice solo Nepal -> FALSE",
+    "calculation": null
+  },
+  {
+    "id": "K2C5",
+    "claim": "K2C5",
+    "lang": "es",
+    "piece": "K2",
+    "slide": 9,
+    "text": "La población de China cayó a solo 141 millones de personas.",
+    "t_aprox": 147.94,
+    "category": "c",
+    "expected": "false",
+    "ref": "WB CHN 2024 = 1,408,975,000 (1409M); 141M es x10 menos",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/CHN/indicator/SP.POP.TOTL?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "1409M; dice 141M, inventado -> FALSE",
+    "calculation": null
+  },
+  {
+    "id": "K2D5",
+    "claim": "K2D5",
+    "lang": "es",
+    "piece": "K2",
+    "slide": 10,
+    "text": "La media de Alemania y Francia en 2024 fue de 76,0 millones.",
+    "t_aprox": 166.66,
+    "category": "d",
+    "expected": "true",
+    "ref": "WB 2024: (DEU 83,516,593 + FRA 68,551,653) / 2 = 76,03M",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/DEU;FRA/indicator/SP.POP.TOTL?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "76,03M; dice 76,0M -> TRUE",
+    "calculation": "(83516593+68551653)/2 = 76034123"
+  },
+  {
+    "id": "K2D6",
+    "claim": "K2D6",
+    "lang": "es",
+    "piece": "K2",
+    "slide": 10,
+    "text": "El PIB medio de Corea del Sur y Canadá fue de 2,57 billones.",
+    "t_aprox": 166.66,
+    "category": "d",
+    "expected": "false",
+    "ref": "WB 2024: (KOR 1,875,388,209,407 + CAN 2,270,076,189,683) / 2 = 2,07T",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/KOR;CAN/indicator/NY.GDP.MKTP.CD?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "2,07T; dice 2,57T -> FALSE",
+    "calculation": "(1875388+2270076)/2 = 2072732M = 2,0727T"
+  },
+  {
+    "id": "K2F8",
+    "claim": "K2F8",
+    "lang": "es",
+    "piece": "K2",
+    "slide": 10,
+    "text": "México tenía 130,9 millones de habitantes en 2024.",
+    "t_aprox": 166.66,
+    "category": "f",
+    "expected": "true",
+    "ref": "WB SP.POP.TOTL MEX 2024 = 130,861,007",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/MEX/indicator/SP.POP.TOTL?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "130,86M; dice 130,9M -> TRUE",
+    "calculation": null
+  },
+  {
+    "id": "K2C6",
+    "claim": "K2C6",
+    "lang": "es",
+    "piece": "K2",
+    "slide": 10,
+    "text": "La población mundial superó los 9000 millones en 2024.",
+    "t_aprox": 166.66,
+    "category": "c",
+    "expected": "false",
+    "ref": "WB WLD 2024 = 8,140,897,523 (8141M, no 9000M)",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/WLD/indicator/SP.POP.TOTL?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "8141M; dice 9000M, inventado -> FALSE",
+    "calculation": null
+  }
+]

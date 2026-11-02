@@ -1,0 +1,842 @@
+[
+  {
+    "id": "C1A1",
+    "claim": "C1A1",
+    "lang": "es",
+    "piece": "C1",
+    "slide": 1,
+    "text": "En 2024 éramos 8141 millones de personas en el planeta.",
+    "t_aprox": 0.0,
+    "category": "a",
+    "expected": "true",
+    "ref": "WB SP.POP.TOTL WLD 2024 = 8,140,897,523",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/WLD/indicator/SP.POP.TOTL?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "8140,90M; dice 8141M -> TRUE",
+    "calculation": null
+  },
+  {
+    "id": "C1A2",
+    "claim": "C1A2",
+    "lang": "es",
+    "piece": "C1",
+    "slide": 1,
+    "text": "China rozaba los 1409 millones de habitantes en 2024.",
+    "t_aprox": 0.0,
+    "category": "a",
+    "expected": "true",
+    "ref": "WB SP.POP.TOTL CHN 2024 = 1,408,975,000",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/CHN/indicator/SP.POP.TOTL?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "1408,98M; dice 1409M -> TRUE",
+    "calculation": null
+  },
+  {
+    "id": "C1F1",
+    "claim": "C1F1",
+    "lang": "es",
+    "piece": "C1",
+    "slide": 1,
+    "text": "La población estadounidense llegó a 340 millones de personas.",
+    "t_aprox": 0.0,
+    "category": "f",
+    "expected": "true",
+    "ref": "WB SP.POP.TOTL USA 2024 = 340,003,797",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/USA/indicator/SP.POP.TOTL?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "340,00M; dice 340M -> TRUE",
+    "calculation": null
+  },
+  {
+    "id": "C1C1",
+    "claim": "C1C1",
+    "lang": "es",
+    "piece": "C1",
+    "slide": 1,
+    "text": "La población mundial cayó por debajo de 8000 millones en 2024.",
+    "t_aprox": 0.0,
+    "category": "c",
+    "expected": "false",
+    "ref": "WB WLD 2024 = 8141M y subiendo; ni cayó ni bajó de 8000M",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/WLD/indicator/SP.POP.TOTL?format=json&date=2023:2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "8141M al alza; dice caída bajo 8000M -> FALSE",
+    "calculation": null
+  },
+  {
+    "id": "C1A3",
+    "claim": "C1A3",
+    "lang": "es",
+    "piece": "C1",
+    "slide": 2,
+    "text": "Indonesia tenía 283,5 millones de habitantes en 2024.",
+    "t_aprox": 18.22,
+    "category": "a",
+    "expected": "true",
+    "ref": "WB SP.POP.TOTL IDN 2024 = 283,487,931",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/IDN/indicator/SP.POP.TOTL?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "283,49M; dice 283,5M -> TRUE",
+    "calculation": null
+  },
+  {
+    "id": "C1A4",
+    "claim": "C1A4",
+    "lang": "es",
+    "piece": "C1",
+    "slide": 2,
+    "text": "Japón tenía 144 millones de habitantes en 2024.",
+    "t_aprox": 18.22,
+    "category": "a",
+    "expected": "false",
+    "ref": "WB JPN 2024 = 123,975,371 (124,0M, no 144M)",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/JPN/indicator/SP.POP.TOTL?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "124,0M; dice 144M, dif 16 % -> FALSE",
+    "calculation": null
+  },
+  {
+    "id": "C1F2",
+    "claim": "C1F2",
+    "lang": "es",
+    "piece": "C1",
+    "slide": 2,
+    "text": "Brasil rozaba los 212 millones de personas en 2024.",
+    "t_aprox": 18.22,
+    "category": "f",
+    "expected": "true",
+    "ref": "WB SP.POP.TOTL BRA 2024 = 211,998,573",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/BRA/indicator/SP.POP.TOTL?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "212,00M; dice 212M -> TRUE",
+    "calculation": null
+  },
+  {
+    "id": "C1C2",
+    "claim": "C1C2",
+    "lang": "es",
+    "piece": "C1",
+    "slide": 2,
+    "text": "China perdió 100 millones de habitantes en un solo año.",
+    "t_aprox": 18.22,
+    "category": "c",
+    "expected": "false",
+    "ref": "WB CHN 1410,71M -> 1408,98M (-1,7M, no -100M)",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/CHN/indicator/SP.POP.TOTL?format=json&date=2023:2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "-1,7M; dice -100M, inventado -> FALSE",
+    "calculation": null
+  },
+  {
+    "id": "C1A5",
+    "claim": "C1A5",
+    "lang": "es",
+    "piece": "C1",
+    "slide": 3,
+    "text": "Nigeria reunía 232,7 millones de habitantes en 2024.",
+    "t_aprox": 35.7,
+    "category": "a",
+    "expected": "true",
+    "ref": "WB SP.POP.TOTL NGA 2024 = 232,679,478",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/NGA/indicator/SP.POP.TOTL?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "232,68M; dice 232,7M -> TRUE",
+    "calculation": null
+  },
+  {
+    "id": "C1A6",
+    "claim": "C1A6",
+    "lang": "es",
+    "piece": "C1",
+    "slide": 3,
+    "text": "México sumaba 130,9 millones de habitantes en 2024.",
+    "t_aprox": 35.7,
+    "category": "a",
+    "expected": "true",
+    "ref": "WB SP.POP.TOTL MEX 2024 = 130,861,007",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/MEX/indicator/SP.POP.TOTL?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "130,86M; dice 130,9M -> TRUE",
+    "calculation": null
+  },
+  {
+    "id": "C1F3",
+    "claim": "C1F3",
+    "lang": "es",
+    "piece": "C1",
+    "slide": 3,
+    "text": "Nigeria superó a Estados Unidos en población en 2024.",
+    "t_aprox": 35.7,
+    "category": "f",
+    "expected": "false",
+    "ref": "WB 2024: NGA 232,7M < USA 340,0M; no superó a EE. UU.",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/NGA;USA/indicator/SP.POP.TOTL?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "232,7 < 340,0; el sorpasso no ocurrió -> FALSE",
+    "calculation": null
+  },
+  {
+    "id": "C1C3",
+    "claim": "C1C3",
+    "lang": "es",
+    "piece": "C1",
+    "slide": 3,
+    "text": "México duplicó su población hasta 260 millones en 2024.",
+    "t_aprox": 35.7,
+    "category": "c",
+    "expected": "false",
+    "ref": "WB MEX 2024 = 130,861,007 (130,9M); 260M inventado",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/MEX/indicator/SP.POP.TOTL?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "130,9M; dice 260M, inventado -> FALSE",
+    "calculation": null
+  },
+  {
+    "id": "C1A7",
+    "claim": "C1A7",
+    "lang": "es",
+    "piece": "C1",
+    "slide": 4,
+    "text": "Alemania tenía 83,5 millones de habitantes en 2024.",
+    "t_aprox": 54.1,
+    "category": "a",
+    "expected": "true",
+    "ref": "WB SP.POP.TOTL DEU 2024 = 83,516,593",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/DEU/indicator/SP.POP.TOTL?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "83,52M; dice 83,5M -> TRUE",
+    "calculation": null
+  },
+  {
+    "id": "C1A8",
+    "claim": "C1A8",
+    "lang": "es",
+    "piece": "C1",
+    "slide": 4,
+    "text": "Francia superó los 80 millones de habitantes en 2024.",
+    "t_aprox": 54.1,
+    "category": "a",
+    "expected": "false",
+    "ref": "WB FRA 2024 = 68,551,653 (68,6M, no 80M)",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/FRA/indicator/SP.POP.TOTL?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "68,6M; dice más de 80M -> FALSE",
+    "calculation": null
+  },
+  {
+    "id": "C1F4",
+    "claim": "C1F4",
+    "lang": "es",
+    "piece": "C1",
+    "slide": 4,
+    "text": "En España vivían 48,8 millones de personas en 2024.",
+    "t_aprox": 54.1,
+    "category": "f",
+    "expected": "true",
+    "ref": "WB SP.POP.TOTL ESP 2024 = 48,848,840",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/ESP/indicator/SP.POP.TOTL?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "48,85M; dice 48,8M -> TRUE",
+    "calculation": null
+  },
+  {
+    "id": "C1E1",
+    "claim": "C1E1",
+    "lang": "es",
+    "piece": "C1",
+    "slide": 4,
+    "text": "Italia tenía 59,0 millones de habitantes en 2024.",
+    "t_aprox": 54.1,
+    "category": "e",
+    "expected": "true",
+    "ref": "WB SP.POP.TOTL ITA 2024 = 58,952,704",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/ITA/indicator/SP.POP.TOTL?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "58,95M; dice 59,0M, escala correcta -> TRUE",
+    "calculation": null
+  },
+  {
+    "id": "C1D1",
+    "claim": "C1D1",
+    "lang": "es",
+    "piece": "C1",
+    "slide": 5,
+    "text": "La población mundial creció un 1,0 por ciento entre 2023 y 2024.",
+    "t_aprox": 72.37,
+    "category": "d",
+    "expected": "true",
+    "ref": "WB WLD 8,062,923,417 -> 8,140,897,523: +0,967 %",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/WLD/indicator/SP.POP.TOTL?format=json&date=2023:2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "+0,967 %; dice 1,0 % (1 decimal) -> TRUE",
+    "calculation": "(8140898-8062923)/8062923 = 0,00967 = 0,967 %"
+  },
+  {
+    "id": "C1D2",
+    "claim": "C1D2",
+    "lang": "es",
+    "piece": "C1",
+    "slide": 5,
+    "text": "La población mundial creció un 9,7 por ciento entre 2023 y 2024.",
+    "t_aprox": 72.37,
+    "category": "d",
+    "expected": "false",
+    "ref": "WB WLD: +0,967 %, no 9,7 % (x10)",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/WLD/indicator/SP.POP.TOTL?format=json&date=2023:2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "+0,967 %; dice 9,7 % -> FALSE",
+    "calculation": "(8140898-8062923)/8062923 = 0,00967 = 0,967 %"
+  },
+  {
+    "id": "C1D3",
+    "claim": "C1D3",
+    "lang": "es",
+    "piece": "C1",
+    "slide": 5,
+    "text": "China perdió 1,7 millones de habitantes entre 2023 y 2024.",
+    "t_aprox": 72.37,
+    "category": "d",
+    "expected": "true",
+    "ref": "WB CHN 1,410,710,000 -> 1,408,975,000: -1,735M",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/CHN/indicator/SP.POP.TOTL?format=json&date=2023:2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "-1,735M; dice 1,7M -> TRUE",
+    "calculation": "1408975-1410710 = -1735 miles"
+  },
+  {
+    "id": "C1D4",
+    "claim": "C1D4",
+    "lang": "es",
+    "piece": "C1",
+    "slide": 5,
+    "text": "La India perdió población entre 2023 y 2024.",
+    "t_aprox": 72.37,
+    "category": "d",
+    "expected": "false",
+    "ref": "WB IND 1,438,069,596 -> 1,450,935,791 (+12,9M); no perdió",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/IND/indicator/SP.POP.TOTL?format=json&date=2023:2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "+12,9M; dice que perdió -> FALSE",
+    "calculation": "1450936-1438070 = +12866 miles"
+  },
+  {
+    "id": "C1C4",
+    "claim": "C1C4",
+    "lang": "es",
+    "piece": "C1",
+    "slide": 6,
+    "text": "Como muestra el gráfico, la población argentina se duplicó.",
+    "t_aprox": 92.86,
+    "category": "c",
+    "expected": "false",
+    "ref": "WB ARG 45,538,401 -> 45,696,159 (+0,3 %, no x2); eje truncado",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/ARG/indicator/SP.POP.TOTL?format=json&date=2023:2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "+0,3 %; dice duplicado con eje truncado -> FALSE",
+    "calculation": null
+  },
+  {
+    "id": "C1A9",
+    "claim": "C1A9",
+    "lang": "es",
+    "piece": "C1",
+    "slide": 6,
+    "text": "Argentina tenía 45,7 millones de habitantes en 2024.",
+    "t_aprox": 92.86,
+    "category": "a",
+    "expected": "true",
+    "ref": "WB SP.POP.TOTL ARG 2024 = 45,696,159",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/ARG/indicator/SP.POP.TOTL?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "45,70M; dice 45,7M -> TRUE",
+    "calculation": null
+  },
+  {
+    "id": "C1E4",
+    "claim": "C1E4",
+    "lang": "es",
+    "piece": "C1",
+    "slide": 6,
+    "text": "Argentina tenía 4,6 millones de habitantes en 2024.",
+    "t_aprox": 92.86,
+    "category": "e",
+    "expected": "false",
+    "ref": "WB ARG 2024 = 45,696,159 (45,7M); 4,6M es x10 menos",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/ARG/indicator/SP.POP.TOTL?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "45,7M; dice 4,6M (x10) -> FALSE",
+    "calculation": null
+  },
+  {
+    "id": "C1F5",
+    "claim": "C1F5",
+    "lang": "es",
+    "piece": "C1",
+    "slide": 6,
+    "text": "Canadá contaba con 41,3 millones de habitantes en 2024.",
+    "t_aprox": 92.86,
+    "category": "f",
+    "expected": "true",
+    "ref": "WB SP.POP.TOTL CAN 2024 = 41,262,329",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/CAN/indicator/SP.POP.TOTL?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "41,26M; dice 41,3M -> TRUE",
+    "calculation": null
+  },
+  {
+    "id": "C1D5",
+    "claim": "C1D5",
+    "lang": "es",
+    "piece": "C1",
+    "slide": 7,
+    "text": "La India superó a China en 42,0 millones de habitantes en 2024.",
+    "t_aprox": 109.98,
+    "category": "d",
+    "expected": "true",
+    "ref": "WB 2024: IND 1,450,935,791 - CHN 1,408,975,000 = 41,96M",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/IND;CHN/indicator/SP.POP.TOTL?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "41,96M; dice 42,0M -> TRUE",
+    "calculation": "1450935791-1408975000 = 41960791"
+  },
+  {
+    "id": "C1D6",
+    "claim": "C1D6",
+    "lang": "es",
+    "piece": "C1",
+    "slide": 7,
+    "text": "China superó a la India en 100 millones de habitantes en 2024.",
+    "t_aprox": 109.98,
+    "category": "d",
+    "expected": "false",
+    "ref": "WB 2024: CHN 1409M < IND 1451M; China no superó a India",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/IND;CHN/indicator/SP.POP.TOTL?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "1409 < 1451; dice China +100M -> FALSE",
+    "calculation": "1408975 frente a 1450936 miles"
+  },
+  {
+    "id": "C1D7",
+    "claim": "C1D7",
+    "lang": "es",
+    "piece": "C1",
+    "slide": 7,
+    "text": "México superó a Colombia en 78,0 millones de habitantes en 2024.",
+    "t_aprox": 109.98,
+    "category": "d",
+    "expected": "true",
+    "ref": "WB 2024: MEX 130,861,007 - COL 52,886,363 = 77,97M",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/MEX;COL/indicator/SP.POP.TOTL?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "77,97M; dice 78,0M -> TRUE",
+    "calculation": "130861007-52886363 = 77974644"
+  },
+  {
+    "id": "C1D8",
+    "claim": "C1D8",
+    "lang": "es",
+    "piece": "C1",
+    "slide": 7,
+    "text": "La media de Alemania y Francia en 2024 fue de 86 millones.",
+    "t_aprox": 109.98,
+    "category": "d",
+    "expected": "false",
+    "ref": "WB 2024: (DEU 83,516,593 + FRA 68,551,653) / 2 = 76,03M, no 86M",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/DEU;FRA/indicator/SP.POP.TOTL?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "76,03M; dice 86M -> FALSE",
+    "calculation": "(83516593+68551653)/2 = 76034123"
+  },
+  {
+    "id": "C1E2",
+    "claim": "C1E2",
+    "lang": "es",
+    "piece": "C1",
+    "slide": 8,
+    "text": "Perú tenía 34,2 millones de habitantes en 2024.",
+    "t_aprox": 128.18,
+    "category": "e",
+    "expected": "true",
+    "ref": "WB SP.POP.TOTL PER 2024 = 34,217,848",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/PER/indicator/SP.POP.TOTL?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "34,22M; dice 34,2M, escala correcta -> TRUE",
+    "calculation": null
+  },
+  {
+    "id": "C1E5",
+    "claim": "C1E5",
+    "lang": "es",
+    "piece": "C1",
+    "slide": 8,
+    "text": "Perú tenía 342 millones de habitantes en 2024.",
+    "t_aprox": 128.18,
+    "category": "e",
+    "expected": "false",
+    "ref": "WB PER 2024 = 34,217,848 (34,2M); 342M es x10",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/PER/indicator/SP.POP.TOTL?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "34,2M; dice 342M (x10) -> FALSE",
+    "calculation": null
+  },
+  {
+    "id": "C1E3",
+    "claim": "C1E3",
+    "lang": "es",
+    "piece": "C1",
+    "slide": 8,
+    "text": "Colombia reunía 52,9 millones de habitantes en 2024.",
+    "t_aprox": 128.18,
+    "category": "e",
+    "expected": "true",
+    "ref": "WB SP.POP.TOTL COL 2024 = 52,886,363",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/COL/indicator/SP.POP.TOTL?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "52,89M; dice 52,9M, escala correcta -> TRUE",
+    "calculation": null
+  },
+  {
+    "id": "C1E6",
+    "claim": "C1E6",
+    "lang": "es",
+    "piece": "C1",
+    "slide": 8,
+    "text": "Colombia tenía 529 millones de habitantes en 2024.",
+    "t_aprox": 128.18,
+    "category": "e",
+    "expected": "false",
+    "ref": "WB COL 2024 = 52,886,363 (52,9M); 529M es x10",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/COL/indicator/SP.POP.TOTL?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "52,9M; dice 529M (x10) -> FALSE",
+    "calculation": null
+  },
+  {
+    "id": "C1B1",
+    "claim": "C1B1",
+    "lang": "es",
+    "piece": "C1",
+    "slide": 9,
+    "text": "El FMI espera un crecimiento mundial del 3,1 por ciento en 2026.",
+    "t_aprox": 146.42,
+    "category": "b",
+    "expected": "true",
+    "ref": "IMF WEO oct-2026: crecimiento mundial 3,1 % en 2026",
+    "sources": [
+      {
+        "url": "https://www.imf.org/en/publications/weo/issues/2026/10/13/world-economic-outlook-october-2026",
+        "accessed": "2026-11-02",
+        "note": "primario: WEO oct-2026; ground truth de dev.json F2D-B1"
+      }
+    ],
+    "ground_truth": "3,1 % mundial 2026 -> TRUE",
+    "calculation": null
+  },
+  {
+    "id": "C1B2",
+    "claim": "C1B2",
+    "lang": "es",
+    "piece": "C1",
+    "slide": 9,
+    "text": "El paro en EE. UU. bajó al 3,2 por ciento en sep-2026.",
+    "t_aprox": 146.42,
+    "category": "b",
+    "expected": "false",
+    "ref": "BLS empsit sep-2026: 4,2 % (no 3,2 %)",
+    "sources": [
+      {
+        "url": "https://www.bls.gov/news.release/pdf/empsit.pdf",
+        "accessed": "2026-11-02",
+        "note": "primario, mismo boletín; refuta (4,2 % frente a 3,2 %)"
+      }
+    ],
+    "ground_truth": "4,2 %; dice 3,2 % -> FALSE",
+    "calculation": null
+  },
+  {
+    "id": "C1F6",
+    "claim": "C1F6",
+    "lang": "es",
+    "piece": "C1",
+    "slide": 9,
+    "text": "Japón tenía 124,0 millones de habitantes en 2024.",
+    "t_aprox": 146.42,
+    "category": "f",
+    "expected": "true",
+    "ref": "WB SP.POP.TOTL JPN 2024 = 123,975,371",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/JPN/indicator/SP.POP.TOTL?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "123,98M; dice 124,0M -> TRUE",
+    "calculation": null
+  },
+  {
+    "id": "C1F7",
+    "claim": "C1F7",
+    "lang": "es",
+    "piece": "C1",
+    "slide": 9,
+    "text": "Alemania superó los 100 millones de habitantes en 2024.",
+    "t_aprox": 146.42,
+    "category": "f",
+    "expected": "false",
+    "ref": "WB DEU 2024 = 83,516,593 (83,5M, no 100M)",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/DEU/indicator/SP.POP.TOTL?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "83,5M; dice más de 100M -> FALSE",
+    "calculation": null
+  },
+  {
+    "id": "C1A10",
+    "claim": "C1A10",
+    "lang": "es",
+    "piece": "C1",
+    "slide": 10,
+    "text": "El Reino Unido tenía 79,3 millones de habitantes en 2024.",
+    "t_aprox": 163.74,
+    "category": "a",
+    "expected": "false",
+    "ref": "WB GBR 2024 = 69,281,000 (69,3M, no 79,3M)",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/GBR/indicator/SP.POP.TOTL?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "69,3M; dice 79,3M -> FALSE",
+    "calculation": null
+  },
+  {
+    "id": "C1C5",
+    "claim": "C1C5",
+    "lang": "es",
+    "piece": "C1",
+    "slide": 10,
+    "text": "El Reino Unido superó a Alemania en población en 2024.",
+    "t_aprox": 163.74,
+    "category": "c",
+    "expected": "false",
+    "ref": "WB 2024: GBR 69,3M < DEU 83,5M; no superó a Alemania",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/GBR;DEU/indicator/SP.POP.TOTL?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "69,3 < 83,5; el sorpasso no ocurrió -> FALSE",
+    "calculation": null
+  },
+  {
+    "id": "C1C6",
+    "claim": "C1C6",
+    "lang": "es",
+    "piece": "C1",
+    "slide": 10,
+    "text": "Italia alcanzó 68,6 millones de habitantes en 2024.",
+    "t_aprox": 163.74,
+    "category": "c",
+    "expected": "false",
+    "ref": "WB ITA 2024 = 58,952,704 (59,0M); 68,6M es FRANCIA (swap)",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/ITA;FRA/indicator/SP.POP.TOTL?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "59,0M; dice 68,6M de Francia -> FALSE",
+    "calculation": null
+  },
+  {
+    "id": "C1F8",
+    "claim": "C1F8",
+    "lang": "es",
+    "piece": "C1",
+    "slide": 10,
+    "text": "El Reino Unido contaba con 69,3 millones de personas en 2024.",
+    "t_aprox": 163.74,
+    "category": "f",
+    "expected": "true",
+    "ref": "WB SP.POP.TOTL GBR 2024 = 69,281,000",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/GBR/indicator/SP.POP.TOTL?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "69,28M; dice 69,3M -> TRUE",
+    "calculation": null
+  }
+]

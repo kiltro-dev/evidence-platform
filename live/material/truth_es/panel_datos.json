@@ -1,0 +1,882 @@
+[
+  {
+    "id": "P1F1",
+    "claim": "P1F1",
+    "lang": "es",
+    "piece": "P1",
+    "slide": 1,
+    "text": "Moderadora: Estados Unidos produjo 29,3 billones de dólares en 2024.",
+    "t_aprox": 0.0,
+    "category": "f",
+    "expected": "true",
+    "ref": "WB NY.GDP.MKTP.CD USA 2024 = 29,298,013,000,000",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/USA/indicator/NY.GDP.MKTP.CD?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "29,298T; dice 29,3T -> TRUE",
+    "calculation": null,
+    "voice": "A"
+  },
+  {
+    "id": "P1F2",
+    "claim": "P1F2",
+    "lang": "es",
+    "piece": "P1",
+    "slide": 1,
+    "text": "Invitado: y China tiene 1409 millones de habitantes.",
+    "t_aprox": 0.0,
+    "category": "f",
+    "expected": "true",
+    "ref": "WB SP.POP.TOTL CHN 2024 = 1,408,975,000",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/CHN/indicator/SP.POP.TOTL?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "1408,98M; dice 1409M -> TRUE",
+    "calculation": null,
+    "voice": "B"
+  },
+  {
+    "id": "P1A1",
+    "claim": "P1A1",
+    "lang": "es",
+    "piece": "P1",
+    "slide": 1,
+    "text": "Moderadora: La India tenía 1451 millones de habitantes en 2024.",
+    "t_aprox": 0.0,
+    "category": "a",
+    "expected": "true",
+    "ref": "WB SP.POP.TOTL IND 2024 = 1,450,935,791",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/IND/indicator/SP.POP.TOTL?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "1450,94M; dice 1451M -> TRUE",
+    "calculation": null,
+    "voice": "A"
+  },
+  {
+    "id": "P1C1",
+    "claim": "P1C1",
+    "lang": "es",
+    "piece": "P1",
+    "slide": 1,
+    "text": "Invitado: España superó a Francia con 3,3 billones en 2024.",
+    "t_aprox": 0.0,
+    "category": "c",
+    "expected": "false",
+    "ref": "WB 2024: ESP 1,73T < FRA 3,16T; 3,3T inventado",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/ESP;FRA/indicator/NY.GDP.MKTP.CD?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "1,73T < 3,16T; cifra y sorpasso inventados -> FALSE",
+    "calculation": null,
+    "voice": "B"
+  },
+  {
+    "id": "P1A2",
+    "claim": "P1A2",
+    "lang": "es",
+    "piece": "P1",
+    "slide": 2,
+    "text": "Moderadora: Japón generó 4,19 billones de dólares en 2024.",
+    "t_aprox": 24.79,
+    "category": "a",
+    "expected": "true",
+    "ref": "WB NY.GDP.MKTP.CD JPN 2024 = 4,190,008,188,359",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/JPN/indicator/NY.GDP.MKTP.CD?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "4,190T; dice 4,19T -> TRUE",
+    "calculation": null,
+    "voice": "A"
+  },
+  {
+    "id": "P1F3",
+    "claim": "P1F3",
+    "lang": "es",
+    "piece": "P1",
+    "slide": 2,
+    "text": "Invitado: Indonesia superó a Brasil en PIB en 2024.",
+    "t_aprox": 24.79,
+    "category": "f",
+    "expected": "false",
+    "ref": "WB 2024: IDN 1,40T < BRA 2,19T; no superó a Brasil",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/IDN;BRA/indicator/NY.GDP.MKTP.CD?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "1,40 < 2,19; el sorpasso no ocurrió -> FALSE",
+    "calculation": null,
+    "voice": "B"
+  },
+  {
+    "id": "P1D1",
+    "claim": "P1D1",
+    "lang": "es",
+    "piece": "P1",
+    "slide": 2,
+    "text": "Moderadora: El PIB chino creció un 2,5 por ciento entre 2023 y 2024.",
+    "t_aprox": 24.79,
+    "category": "d",
+    "expected": "true",
+    "ref": "WB CHN 18,270,356,654,533 -> 18,729,668,435,848: +2,514 %",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/CHN/indicator/NY.GDP.MKTP.CD?format=json&date=2023:2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "+2,514 %; dice 2,5 % -> TRUE",
+    "calculation": "(18729668-18270357)/18270357 = 0,02514 = 2,514 %",
+    "voice": "A"
+  },
+  {
+    "id": "P1C2",
+    "claim": "P1C2",
+    "lang": "es",
+    "piece": "P1",
+    "slide": 2,
+    "text": "Invitado: Indonesia superó los 350 millones de habitantes en 2024.",
+    "t_aprox": 24.79,
+    "category": "c",
+    "expected": "false",
+    "ref": "WB IDN 2024 = 283,487,931 (283,5M, no 350M)",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/IDN/indicator/SP.POP.TOTL?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "283,5M; dice 350M, inventado -> FALSE",
+    "calculation": null,
+    "voice": "B"
+  },
+  {
+    "id": "P1A3",
+    "claim": "P1A3",
+    "lang": "es",
+    "piece": "P1",
+    "slide": 3,
+    "text": "Moderadora: Francia tenía 68,6 millones de habitantes en 2024.",
+    "t_aprox": 50.78,
+    "category": "a",
+    "expected": "true",
+    "ref": "WB SP.POP.TOTL FRA 2024 = 68,551,653",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/FRA/indicator/SP.POP.TOTL?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "68,55M; dice 68,6M -> TRUE",
+    "calculation": null,
+    "voice": "A"
+  },
+  {
+    "id": "P1A4",
+    "claim": "P1A4",
+    "lang": "es",
+    "piece": "P1",
+    "slide": 3,
+    "text": "Invitado: Alemania produjo 5,69 billones de dólares en 2024.",
+    "t_aprox": 50.78,
+    "category": "a",
+    "expected": "false",
+    "ref": "WB DEU 2024 = 4,685,592,577,805 (4,69T, no 5,69T)",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/DEU/indicator/NY.GDP.MKTP.CD?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "4,69T; dice 5,69T, dif 21 % -> FALSE",
+    "calculation": null,
+    "voice": "B"
+  },
+  {
+    "id": "P1E1",
+    "claim": "P1E1",
+    "lang": "es",
+    "piece": "P1",
+    "slide": 3,
+    "text": "Moderadora: Italia produjo 2,38 billones de dólares en 2024.",
+    "t_aprox": 50.78,
+    "category": "e",
+    "expected": "true",
+    "ref": "WB NY.GDP.MKTP.CD ITA 2024 = 2,383,435,562,458",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/ITA/indicator/NY.GDP.MKTP.CD?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "2,383T; dice 2,38T, escala correcta -> TRUE",
+    "calculation": null,
+    "voice": "A"
+  },
+  {
+    "id": "P1E4",
+    "claim": "P1E4",
+    "lang": "es",
+    "piece": "P1",
+    "slide": 3,
+    "text": "Invitado: El PIB italiano fue de 2380 millones de dólares en 2024.",
+    "t_aprox": 50.78,
+    "category": "e",
+    "expected": "false",
+    "ref": "WB ITA 2024 = 2,38 BILLONES; 2380M es x1000 menos",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/ITA/indicator/NY.GDP.MKTP.CD?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "2,38T; dice 2380M (x1000) -> FALSE",
+    "calculation": null,
+    "voice": "B"
+  },
+  {
+    "id": "P1F4",
+    "claim": "P1F4",
+    "lang": "es",
+    "piece": "P1",
+    "slide": 4,
+    "text": "Moderadora: Brasil tenía 212 millones de habitantes en 2024.",
+    "t_aprox": 77.28,
+    "category": "f",
+    "expected": "true",
+    "ref": "WB SP.POP.TOTL BRA 2024 = 211,998,573",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/BRA/indicator/SP.POP.TOTL?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "212,00M; dice 212M -> TRUE",
+    "calculation": null,
+    "voice": "A"
+  },
+  {
+    "id": "P1A5",
+    "claim": "P1A5",
+    "lang": "es",
+    "piece": "P1",
+    "slide": 4,
+    "text": "Invitado: México generó 1,83 billones de dólares en 2024.",
+    "t_aprox": 77.28,
+    "category": "a",
+    "expected": "true",
+    "ref": "WB NY.GDP.MKTP.CD MEX 2024 = 1,830,489,311,089",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/MEX/indicator/NY.GDP.MKTP.CD?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "1,830T; dice 1,83T -> TRUE",
+    "calculation": null,
+    "voice": "B"
+  },
+  {
+    "id": "P1C3",
+    "claim": "P1C3",
+    "lang": "es",
+    "piece": "P1",
+    "slide": 4,
+    "text": "Moderadora: El PIB de México se duplicó hasta 3,66 billones.",
+    "t_aprox": 77.28,
+    "category": "c",
+    "expected": "false",
+    "ref": "WB MEX 2024 = 1,83T; 3,66T es el doble inventado",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/MEX/indicator/NY.GDP.MKTP.CD?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "1,83T; dice 3,66T, inventado -> FALSE",
+    "calculation": null,
+    "voice": "A"
+  },
+  {
+    "id": "P1F5",
+    "claim": "P1F5",
+    "lang": "es",
+    "piece": "P1",
+    "slide": 4,
+    "text": "Invitado: Colombia superó a México en PIB en 2024.",
+    "t_aprox": 77.28,
+    "category": "f",
+    "expected": "false",
+    "ref": "WB 2024: COL 420B < MEX 1830B; no superó a México",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/COL;MEX/indicator/NY.GDP.MKTP.CD?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "420B < 1830B; el sorpasso no ocurrió -> FALSE",
+    "calculation": null,
+    "voice": "B"
+  },
+  {
+    "id": "P1D2",
+    "claim": "P1D2",
+    "lang": "es",
+    "piece": "P1",
+    "slide": 5,
+    "text": "Moderadora: El PIB alemán creció un 12,7 por ciento entre 2023 y 2024.",
+    "t_aprox": 100.95,
+    "category": "d",
+    "expected": "false",
+    "ref": "WB DEU 4,562,207,532,490 -> 4,685,592,577,805: +2,705 %, no 12,7 %",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/DEU/indicator/NY.GDP.MKTP.CD?format=json&date=2023:2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "+2,705 %; dice 12,7 % -> FALSE",
+    "calculation": "(4685593-4562208)/4562208 = 0,02705 = 2,705 %",
+    "voice": "A"
+  },
+  {
+    "id": "P1D3",
+    "claim": "P1D3",
+    "lang": "es",
+    "piece": "P1",
+    "slide": 5,
+    "text": "Invitado: El PIB mexicano creció un 2,0 por ciento entre 2023 y 2024.",
+    "t_aprox": 100.95,
+    "category": "d",
+    "expected": "true",
+    "ref": "WB MEX 1,794,410,347,718 -> 1,830,489,311,089: +2,011 %",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/MEX/indicator/NY.GDP.MKTP.CD?format=json&date=2023:2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "+2,011 %; dice 2,0 % -> TRUE",
+    "calculation": "(1830489-1794410)/1794410 = 0,02011 = 2,011 %",
+    "voice": "B"
+  },
+  {
+    "id": "P1A6",
+    "claim": "P1A6",
+    "lang": "es",
+    "piece": "P1",
+    "slide": 5,
+    "text": "Moderadora: Canadá produjo 3,27 billones de dólares en 2024.",
+    "t_aprox": 100.95,
+    "category": "a",
+    "expected": "false",
+    "ref": "WB CAN 2024 = 2,270,076,189,683 (2,27T, no 3,27T)",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/CAN/indicator/NY.GDP.MKTP.CD?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "2,27T; dice 3,27T, dif 44 % -> FALSE",
+    "calculation": null,
+    "voice": "A"
+  },
+  {
+    "id": "P1F6",
+    "claim": "P1F6",
+    "lang": "es",
+    "piece": "P1",
+    "slide": 5,
+    "text": "Invitado: Canadá tenía 41,3 millones de habitantes en 2024.",
+    "t_aprox": 100.95,
+    "category": "f",
+    "expected": "true",
+    "ref": "WB SP.POP.TOTL CAN 2024 = 41,262,329",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/CAN/indicator/SP.POP.TOTL?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "41,26M; dice 41,3M -> TRUE",
+    "calculation": null,
+    "voice": "B"
+  },
+  {
+    "id": "P1C4",
+    "claim": "P1C4",
+    "lang": "es",
+    "piece": "P1",
+    "slide": 6,
+    "text": "Moderadora: Como ven, la economía mexicana se duplicó en un año.",
+    "t_aprox": 128.58,
+    "category": "c",
+    "expected": "false",
+    "ref": "WB MEX 1,79T -> 1,83T (+2 %, no x2); eje truncado",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/MEX/indicator/NY.GDP.MKTP.CD?format=json&date=2023:2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "+2 %; dice duplicado con eje truncado -> FALSE",
+    "calculation": null,
+    "voice": "A"
+  },
+  {
+    "id": "P1A7",
+    "claim": "P1A7",
+    "lang": "es",
+    "piece": "P1",
+    "slide": 6,
+    "text": "Invitado: En 2023 el PIB de México fue de 1,79 billones de dólares.",
+    "t_aprox": 128.58,
+    "category": "a",
+    "expected": "true",
+    "ref": "WB NY.GDP.MKTP.CD MEX 2023 = 1,794,410,347,718",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/MEX/indicator/NY.GDP.MKTP.CD?format=json&date=2023:2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "1,794T; dice 1,79T -> TRUE",
+    "calculation": null,
+    "voice": "B"
+  },
+  {
+    "id": "P1E2",
+    "claim": "P1E2",
+    "lang": "es",
+    "piece": "P1",
+    "slide": 6,
+    "text": "Moderadora: España tenía 48,8 millones de habitantes en 2024.",
+    "t_aprox": 128.58,
+    "category": "e",
+    "expected": "true",
+    "ref": "WB SP.POP.TOTL ESP 2024 = 48,848,840",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/ESP/indicator/SP.POP.TOTL?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "48,85M; dice 48,8M, escala correcta -> TRUE",
+    "calculation": null,
+    "voice": "A"
+  },
+  {
+    "id": "P1E5",
+    "claim": "P1E5",
+    "lang": "es",
+    "piece": "P1",
+    "slide": 6,
+    "text": "Invitado: España tenía 488 millones de habitantes en 2024.",
+    "t_aprox": 128.58,
+    "category": "e",
+    "expected": "false",
+    "ref": "WB ESP 2024 = 48,848,840 (48,8M); 488M es x10",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/ESP/indicator/SP.POP.TOTL?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "48,8M; dice 488M (x10) -> FALSE",
+    "calculation": null,
+    "voice": "B"
+  },
+  {
+    "id": "P1D4",
+    "claim": "P1D4",
+    "lang": "es",
+    "piece": "P1",
+    "slide": 7,
+    "text": "Moderadora: En 2024 el PIB chino fue el 63,9 por ciento del de EE. UU.",
+    "t_aprox": 154.22,
+    "category": "d",
+    "expected": "true",
+    "ref": "WB 2024: CHN 18,729,668,435,848 / USA 29,298,013,000,000 = 63,93 %",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/CHN;USA/indicator/NY.GDP.MKTP.CD?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "63,93 %; dice 63,9 % -> TRUE",
+    "calculation": "18729668/29298013 = 0,6393 = 63,93 %",
+    "voice": "A"
+  },
+  {
+    "id": "P1D5",
+    "claim": "P1D5",
+    "lang": "es",
+    "piece": "P1",
+    "slide": 7,
+    "text": "Invitado: El PIB japonés fue el 110 por ciento del alemán en 2024.",
+    "t_aprox": 154.22,
+    "category": "d",
+    "expected": "false",
+    "ref": "WB 2024: JPN 4,190,008,188,359 / DEU 4,685,592,577,805 = 89,42 %",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/JPN;DEU/indicator/NY.GDP.MKTP.CD?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "89,42 %; dice 110 % -> FALSE",
+    "calculation": "4190008/4685593 = 0,8942 = 89,42 %",
+    "voice": "B"
+  },
+  {
+    "id": "P1F7",
+    "claim": "P1F7",
+    "lang": "es",
+    "piece": "P1",
+    "slide": 7,
+    "text": "Moderadora: Perú generó 292000 millones de dólares en 2024.",
+    "t_aprox": 154.22,
+    "category": "f",
+    "expected": "true",
+    "ref": "WB NY.GDP.MKTP.CD PER 2024 = 291,751,523,019",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/PER/indicator/NY.GDP.MKTP.CD?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "291,75B; dice 292000M -> TRUE",
+    "calculation": null,
+    "voice": "A"
+  },
+  {
+    "id": "P1C5",
+    "claim": "P1C5",
+    "lang": "es",
+    "piece": "P1",
+    "slide": 7,
+    "text": "Invitado: El PIB peruano superó el billón de dólares en 2024.",
+    "t_aprox": 154.22,
+    "category": "c",
+    "expected": "false",
+    "ref": "WB PER 2024 = 291,751,523,019 (0,29T, no 1T)",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/PER/indicator/NY.GDP.MKTP.CD?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "0,29T; dice más de 1T, inventado -> FALSE",
+    "calculation": null,
+    "voice": "B"
+  },
+  {
+    "id": "P1B1",
+    "claim": "P1B1",
+    "lang": "es",
+    "piece": "P1",
+    "slide": 8,
+    "text": "Moderadora: El FMI ve un crecimiento mundial del 3,1 por ciento en 2026.",
+    "t_aprox": 180.0,
+    "category": "b",
+    "expected": "true",
+    "ref": "IMF WEO oct-2026: crecimiento mundial 3,1 % en 2026",
+    "sources": [
+      {
+        "url": "https://www.imf.org/en/publications/weo/issues/2026/10/13/world-economic-outlook-october-2026",
+        "accessed": "2026-11-02",
+        "note": "primario: WEO oct-2026; ground truth de dev.json F2D-B1"
+      }
+    ],
+    "ground_truth": "3,1 % mundial 2026 -> TRUE",
+    "calculation": null,
+    "voice": "A"
+  },
+  {
+    "id": "P1B2",
+    "claim": "P1B2",
+    "lang": "es",
+    "piece": "P1",
+    "slide": 8,
+    "text": "Invitado: El FMI ve un crecimiento mundial del 2,1 por ciento en 2026.",
+    "t_aprox": 180.0,
+    "category": "b",
+    "expected": "false",
+    "ref": "Mismo WEO: 3,1 % mundial; 2,1 % es solo avanzadas",
+    "sources": [
+      {
+        "url": "https://www.imf.org/en/publications/weo/issues/2026/10/13/world-economic-outlook-october-2026",
+        "accessed": "2026-11-02",
+        "note": "primario, mismo WEO; refuta (3,1 % frente a 2,1 %)"
+      }
+    ],
+    "ground_truth": "3,1 %; dice 2,1 % -> FALSE",
+    "calculation": null,
+    "voice": "B"
+  },
+  {
+    "id": "P1B3",
+    "claim": "P1B3",
+    "lang": "es",
+    "piece": "P1",
+    "slide": 8,
+    "text": "Moderadora: El desempleo en EE. UU. fue del 4,2 por ciento en sep-2026.",
+    "t_aprox": 180.0,
+    "category": "b",
+    "expected": "true",
+    "ref": "BLS empsit sep-2026: paro 4,2 %",
+    "sources": [
+      {
+        "url": "https://www.bls.gov/news.release/pdf/empsit.pdf",
+        "accessed": "2026-11-02",
+        "note": "primario: Employment Situation sep-2026; ground truth de dev.json F2D-B3"
+      }
+    ],
+    "ground_truth": "4,2 % -> TRUE",
+    "calculation": null,
+    "voice": "A"
+  },
+  {
+    "id": "P1B4",
+    "claim": "P1B4",
+    "lang": "es",
+    "piece": "P1",
+    "slide": 8,
+    "text": "Invitado: En sep-2026 había 8,1 millones de desempleados en EE. UU.",
+    "t_aprox": 180.0,
+    "category": "b",
+    "expected": "false",
+    "ref": "BLS empsit sep-2026: 7,1M, no 8,1M",
+    "sources": [
+      {
+        "url": "https://www.bls.gov/news.release/pdf/empsit.pdf",
+        "accessed": "2026-11-02",
+        "note": "primario, mismo boletín; refuta (7,1M frente a 8,1M)"
+      }
+    ],
+    "ground_truth": "7,1M; dice 8,1M -> FALSE",
+    "calculation": null,
+    "voice": "B"
+  },
+  {
+    "id": "P1B5",
+    "claim": "P1B5",
+    "lang": "es",
+    "piece": "P1",
+    "slide": 9,
+    "text": "Moderadora: En sep-2026 había 7,1 millones de desempleados en EE. UU.",
+    "t_aprox": 207.07,
+    "category": "b",
+    "expected": "true",
+    "ref": "BLS empsit sep-2026: 7,1 millones de desempleados",
+    "sources": [
+      {
+        "url": "https://www.bls.gov/news.release/pdf/empsit.pdf",
+        "accessed": "2026-11-02",
+        "note": "primario, mismo boletín; ground truth de dev.json F2D-B5"
+      }
+    ],
+    "ground_truth": "7,1M -> TRUE",
+    "calculation": null,
+    "voice": "A"
+  },
+  {
+    "id": "P1B6",
+    "claim": "P1B6",
+    "lang": "es",
+    "piece": "P1",
+    "slide": 9,
+    "text": "Invitado: El FMI ve un crecimiento mundial del 3,4 por ciento en 2026.",
+    "t_aprox": 207.07,
+    "category": "b",
+    "expected": "false",
+    "ref": "Mismo WEO: 3,4 % es 2027, no 2026",
+    "sources": [
+      {
+        "url": "https://www.imf.org/en/publications/weo/issues/2026/10/13/world-economic-outlook-october-2026",
+        "accessed": "2026-11-02",
+        "note": "primario, mismo WEO; refuta (3,4 % es de 2027)"
+      }
+    ],
+    "ground_truth": "3,1 % en 2026; dice 3,4 % -> FALSE",
+    "calculation": null,
+    "voice": "B"
+  },
+  {
+    "id": "P1E3",
+    "claim": "P1E3",
+    "lang": "es",
+    "piece": "P1",
+    "slide": 9,
+    "text": "Moderadora: Chile tenía 19,8 millones de habitantes en 2024.",
+    "t_aprox": 207.07,
+    "category": "e",
+    "expected": "true",
+    "ref": "WB SP.POP.TOTL CHL 2024 = 19,764,771",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/CHL/indicator/SP.POP.TOTL?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "19,76M; dice 19,8M, escala correcta -> TRUE",
+    "calculation": null,
+    "voice": "A"
+  },
+  {
+    "id": "P1E6",
+    "claim": "P1E6",
+    "lang": "es",
+    "piece": "P1",
+    "slide": 9,
+    "text": "Invitado: El PIB chileno fue de 329000 millones de euros en 2024.",
+    "t_aprox": 207.07,
+    "category": "e",
+    "expected": "false",
+    "ref": "WB CHL 2024 = 329,260,633,699 USD; euros != dólares",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/CHL/indicator/NY.GDP.MKTP.CD?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "329B USD; dice euros (unidad errónea) -> FALSE",
+    "calculation": null,
+    "voice": "B"
+  },
+  {
+    "id": "P1A8",
+    "claim": "P1A8",
+    "lang": "es",
+    "piece": "P1",
+    "slide": 10,
+    "text": "Moderadora: Colombia tenía 52,9 millones de habitantes en 2024.",
+    "t_aprox": 234.97,
+    "category": "a",
+    "expected": "true",
+    "ref": "WB SP.POP.TOTL COL 2024 = 52,886,363",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/COL/indicator/SP.POP.TOTL?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "52,89M; dice 52,9M -> TRUE",
+    "calculation": null,
+    "voice": "A"
+  },
+  {
+    "id": "P1D6",
+    "claim": "P1D6",
+    "lang": "es",
+    "piece": "P1",
+    "slide": 10,
+    "text": "Invitado: La brecha entre EE. UU. y China fue de 10,57 billones.",
+    "t_aprox": 234.97,
+    "category": "d",
+    "expected": "true",
+    "ref": "WB 2024: USA 29,298,013,000,000 - CHN 18,729,668,435,848 = 10,568T",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/USA;CHN/indicator/NY.GDP.MKTP.CD?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "10,568T; dice 10,57T -> TRUE",
+    "calculation": "29298013-18729668 = 10568345M = 10,568T",
+    "voice": "B"
+  },
+  {
+    "id": "P1F8",
+    "claim": "P1F8",
+    "lang": "es",
+    "piece": "P1",
+    "slide": 10,
+    "text": "Moderadora: Nigeria superó a Brasil en PIB en 2024.",
+    "t_aprox": 234.97,
+    "category": "f",
+    "expected": "false",
+    "ref": "WB 2024: NGA 252B < BRA 2186B; no superó a Brasil",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/NGA;BRA/indicator/NY.GDP.MKTP.CD?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "252B < 2186B; el sorpasso no ocurrió -> FALSE",
+    "calculation": null,
+    "voice": "A"
+  },
+  {
+    "id": "P1C6",
+    "claim": "P1C6",
+    "lang": "es",
+    "piece": "P1",
+    "slide": 10,
+    "text": "Invitado: Nigeria superó los 300 millones de habitantes en 2024.",
+    "t_aprox": 234.97,
+    "category": "c",
+    "expected": "false",
+    "ref": "WB NGA 2024 = 232,679,478 (232,7M, no 300M)",
+    "sources": [
+      {
+        "url": "https://api.worldbank.org/v2/country/NGA/indicator/SP.POP.TOTL?format=json&date=2024",
+        "accessed": "2026-11-02",
+        "note": "primario: API Banco Mundial, snapshot en data/synth/es/snap/"
+      }
+    ],
+    "ground_truth": "232,7M; dice 300M, inventado -> FALSE",
+    "calculation": null,
+    "voice": "B"
+  }
+]
