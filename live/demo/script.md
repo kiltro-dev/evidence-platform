@@ -105,9 +105,9 @@ Fuente: M3 (F5 + F11 `visual.misleading_axis`; frames ES, mismos datos).
 
 ## 1:37–1:51 — Recall F2 que generaliza
 
-SE VE: panel DEV 22/36 = 0.611 (Wilson [0.851, 1.000], 0 falsos) +
-retención 12/18 = 0.667 (Wilson [0.757, 1.000], 0 falsos, p50 4.8 s
-/ p95 40.8 s con código F2-9). Categorías a–f y consistencia r1–r2 36/36.
+SE VE: panel DEV 26/36 = 0.722 (Wilson [0.871, 1.000], 0 falsos) +
+retención 14/18 = 0.778 (Wilson [0.785, 1.000], 0 falsos, p50 ~5 s
+/ p95 ~40 s con código F2-9). Categorías a–f y consistencia r1–r2 36/36.
 
 SE DICE: «El benchmark justo, versión dos: treinta y seis claims de
 desarrollo y dieciocho de retención sellada. Atlas decide el sesenta y
@@ -180,6 +180,6 @@ arriba).
   `live/F2_VIDEO.md`.
 - M8/M9b (EN, baseline 31/31) quedan como precedente histórico; el arco
   actual es F2 baseline-honesto (el baseline gana recall 1.000 vs
-  0.722/0.667; Atlas conserva prueba + 0 falsos-C en benchmark v2 +
+  0.722/0.778; Atlas conserva prueba + 0 falsos-C en benchmark v2 +
   dicho-vs-mostrado). Corpus: 3 falsos-C diferencia CORREGIDOS (V5-1),
   1 abierto retrieval (P1-17).

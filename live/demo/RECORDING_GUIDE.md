@@ -22,7 +22,14 @@ on screen. Work in English UI (toggle EN, top-right).
 - SAY: "This is Atlas Live. It watches video and checks every number
   while it plays — with proof you can re-verify yourself."
 
-### 0:20–0:55 — False claim caught live
+### 0:20–0:55 — False claim caught live (or: real link ingest)
+
+Option A (replay, no key needed): below. Option B (live, needs
+MODEL_API_KEY + network): paste `https://images-assets.nasa.gov/
+video/A1Launch/A1Launch~preview.mp4` in Link ingest, Vivo, Ingest;
+when done, Watch replay + Report. Use B only if it works first try —
+otherwise record A.
+
 - DO: let subtitles + cards run. Pause on the CONTRADICTED card
   (China population). Click the card → show quote + snapshot hash.
 - SAY: "The speaker says China has 141 million people. Agents open
@@ -44,10 +51,10 @@ on screen. Work in English UI (toggle EN, top-right).
 
 ### 1:55–2:20 — Honest numbers
 - DO: show the metrics panel (or `live/F2_P95.md` summary):
-  retention 12/18, zero false verdicts on benchmark v2,
+  retention 14/18, zero false verdicts on benchmark v2,
   p50 ~5 seconds, Muse-only baseline wins recall but only
   14% of its quotes exist.
-- SAY: "On sealed ground truth: twelve of eighteen, zero false
+- SAY: "On sealed ground truth: fourteen of eighteen, zero false
   verdicts, five-second median. The raw model answers more — but
   only fourteen percent of its quotes are real. We abstain instead
   of guessing."

@@ -67,9 +67,9 @@ see [docs/AGENTS.md](docs/AGENTS.md).
 
 Measured on preregistered ground truth (dev 36 + sealed retention 18,
 [`live/eval2/prereg.md`](live/eval2/prereg.md)): Atlas decides
-26/36 dev (recall 0.722) and 12/18 retention (0.667), 26/26 and 12/12
+26/36 dev (recall 0.722) and 14/18 retention (0.778), 26/26 and 14/14
 correct with **0 false verdicts on these two sets** (Wilson 95% [0.871,1.000]
-dev, [0.757,1.000] retention); latency p50 ~5 s / p95 ~40 s per claim
+dev, [0.785,1.000] retention); latency p50 ~5 s / p95 ~40 s per claim
 at ~$0.007/claim ([`live/F2_P95.md`](live/F2_P95.md)). The Muse-only
 baseline scores higher on verdicts (18/18 retention) — but only 14% of
 its literal quotes exist on the cited URL (citation-fidelity audit,

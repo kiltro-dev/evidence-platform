@@ -47,8 +47,8 @@ of a bare true/false label.
 ## Impact
 
 On the fair benchmark v2 (36 DEV claims + 18 sealed retention claims,
-preregistered), Atlas Live decides 26/36 = 0.722 on DEV and 12/18 = 0.667
-on retention with zero false verdicts on either set (26/26 + 12/12 decided
+preregistered), Atlas Live decides 26/36 = 0.722 on DEV and 14/18 = 0.778
+on retention with zero false verdicts on either set (26/26 + 14/14 decided
 accuracy; coverage and precision always reported together), caught a planted
 speaker self-contradiction (China 1.41B vs
 141M, ~59 s apart in the native-ES keynote) and a said-vs-shown chart
@@ -110,10 +110,12 @@ vanilla JS newsroom UI (no framework), pytest (206+ offline tests).
 ## Honest limits
 
 - Recall 26/36 = 0.722 on DEV (a 5/6, b 0/6, c 6/6, d 4/6, e 5/6, f 6/6;
-  10 abstentions) and 12/18 = 0.667 on sealed retention, 0 false
-  verdicts on either set; decided accuracy 26/26 + 12/12 = 1.000.
-  Source: `data/runs/v5p0-dev-atlas-run1.json` + `live/F2_RECALL.md`
-  addendum (retention; `retention.json` never opened).
+  10 abstentions) and 14/18 = 0.778 on sealed retention, 0 false
+  verdicts on either set; decided accuracy 26/26 + 14/14 = 1.000.
+  Source: `data/runs/v5p0-dev-atlas-run1.json` + V6 validation
+  (`data/runs/v6ret-atlas-run1.json`; seal 5278ba4c intact, retention
+  re-run read-only — the V5-1 arithmetic guard generalizes to 2/3
+  unseen d-claims with no tuning).
 - Corpus false contradicts (declared): 3 systematic difference-claim
   errors found in S4 (C1D3/D5/D7) — FIXED by the V5-1 arithmetic guard
   (s1 false-C list empty on re-run); 1 open retrieval-variance case on
