@@ -34,6 +34,7 @@ from live.evidence.package import (
     sha256_of_text,
     source_meta_for_snapshot,
 )
+from live.verifier.arithmetic import compute_verdict, needs_computation
 
 # Atlas core (deterministic). ``src.`` prefix when the repo root is on
 # sys.path (live convention, see live/run_live.py); plain ``atlas``
@@ -215,6 +216,14 @@ def _check_package(pkg: EvidencePackage, claim: ClaimInput,
         if is_multi_source_arithmetic(claim.text or "") and not (
                 is_multi_source_arithmetic(pkg.quote or "")):
             return None, "arithmetic_needs_computation", detail
+        # V5-P0: broader EN/ES guard (difference/ratio/sum + Spanish).
+        # A claim needing computation never contradicts on component
+        # evidence: without a verified derivation the mismatch is not a
+        # sound refutation (C1D3/C1D5/C1D7 class). A quote that itself
+        # states a computed figure still engages directly (sound).
+        if needs_computation(claim.text or "") is not None and (
+                needs_computation(pkg.quote or "") is None):
+            return None, "arithmetic_not_computed", detail
         return "contradict", "numeric_mismatch", detail
     # 4) temporal alignment (claim year vs source year, when both known).
     if (claim.claim_year is not None and pkg.source_year is not None
@@ -228,6 +237,20 @@ def _check_package(pkg: EvidencePackage, claim: ClaimInput,
 def verify_claim(claim: ClaimInput, packages: list[EvidencePackage],
                  loader: SnapshotLoader) -> Verdict:
     """Verify one claim against its evidence packages (deterministic)."""
+    # V5-P0: computation claims try the deterministic derive-and-compare
+    # first (arithmetic.compute_verdict over verified endpoint values).
+    # A derived verdict carries its receipt; when the derivation is not
+    # possible the claim falls through to the per-package path, where
+    # the guard above demotes component mismatches (never contradicted).
+    op = needs_computation(claim.text or "")
+    if op is not None:
+        outcome = compute_verdict(claim, packages or [], loader, op)
+        if outcome is not None:
+            return Verdict(claim_id=claim.claim_id,
+                           verdict=outcome.kind,
+                           reasons=list(outcome.reasons),
+                           package_ids=list(outcome.package_ids),
+                           details=dict(outcome.details))
     usable: list[tuple[EvidencePackage, str, str, dict[str, Any]]] = []
     unusable_reasons: list[str] = []
     details: dict[str, Any] = {}
