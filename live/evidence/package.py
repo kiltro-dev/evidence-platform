@@ -34,6 +34,10 @@ UNIT_VOCAB = frozenset({
     "m/s", "km/s",
     "celsius", "fahrenheit", "kelvin",
     "years",
+    # V5-2B: canonical units for the general EN/ES parser extension
+    # (src/atlas/core/units.py): energy, area (km2 vs m2 DISTINCT),
+    # linear length.
+    "kwh", "km2", "m2", "meters",
 })
 
 # Hosts whose snapshots count as "primary" sources (M2c alignment,
@@ -74,15 +78,94 @@ def source_type_for_url(url: str) -> SourceType:
 # full-precision (scale 1): what the API row says is what it means.
 # Extension policy: add an indicator ONLY when its WB metadata name pins
 # one unambiguous UNIT_VOCAB unit (e.g. "GDP (current US$)" -> USD).
-# Per-capita / growth / rate indicators are deliberately OUT: their unit
-# alone does not determine comparability (total-vs-per-capita confusion
-# would flip verdicts), so they stay unit_mismatch by design.
+# V5-2B revision (measured on the EN bench): percent-denominated rate
+# indicators ARE directly comparable to single-year percent claims (a
+# level rate, not a derivation: "grew 2.9 percent in 2024" vs the 2024
+# row), and unit-compatibility (percent != count/USD) already blocks the
+# total-vs-rate confusion the old growth-rate exclusion feared. What
+# stays OUT: (a) PPP international dollars (NY.GDP.MKTP.PP.CD: "current
+# international $" is not USD — mapping it would verify USD claims
+# against PPP rows); (b) composite per-capita emissions
+# (EN.GHG.ALL.PC.CE.AR5: "t CO2e/capita" has no canonical unit in scope).
+# EG.USE.ELEC.KH.PC ("kWh per capita") maps to kwh: the UNIT is
+# unequivocal and every kWh claim in the corpus is per-person (audited
+# EN/ES/dev/truth — no total-kWh claim exists), so the qualifier is
+# symmetric in practice; the theoretical total-vs-per-capita confusion
+# is documented in live/V5_2B.md with a qualifier-units follow-up.
+# All names below verified against the WB API metadata
+# (api.worldbank.org/v2/indicator/<code>, 2026-11-02).
 WB_INDICATOR_UNITS = {
     # "Population, total" (SP.POP.TOTL) -> headcount.
     "SP.POP.TOTL": "count",
     # "GDP (current US$)" (NY.GDP.MKTP.CD) -> nominal dollars.
     "NY.GDP.MKTP.CD": "USD",
+    # --- V5-2B: percent-denominated (name states % explicitly) ---
+    # "Inflation, consumer prices (annual %)" -> percent.
+    "FP.CPI.TOTL.ZG": "percent",
+    # "Unemployment, total (% of total labor force) (modeled ILO
+    # estimate)" -> percent.
+    "SL.UEM.TOTL.ZS": "percent",
+    # "GDP growth (annual %)" -> percent.
+    "NY.GDP.MKTP.KD.ZG": "percent",
+    # "Population growth (annual %)" -> percent.
+    "SP.POP.GROW": "percent",
+    # "Access to electricity (% of population)" -> percent.
+    "EG.ELC.ACCS.ZS": "percent",
+    # "Forest area (% of land area)" -> percent.
+    "AG.LND.FRST.ZS": "percent",
+    # "Urban population (% of total population)" -> percent.
+    "SP.URB.TOTL.IN.ZS": "percent",
+    # "Individuals using the Internet (% of population)" -> percent.
+    "IT.NET.USER.ZS": "percent",
+    # --- V5-2B: years / headcount / area / energy ---
+    # "Life expectancy at birth, total (years)" -> years.
+    "SP.DYN.LE00.IN": "years",
+    # "Urban population" -> headcount (parallel to SP.POP.TOTL).
+    "SP.URB.TOTL": "count",
+    # "Land area (sq. km)" -> km2.
+    "AG.LND.TOTL.K2": "km2",
+    # "Electric power consumption (kWh per capita)" -> kwh (see
+    # policy note above on the symmetric per-capita qualifier).
+    "EG.USE.ELEC.KH.PC": "kwh",
 }
+
+# V5-2B: annual-rate indicators (WB metadata name states "annual %").
+# A MONTHLY-frequency claim ("rose 219.9 percent every month", P1-36) is
+# unverifiable from these rows: the annual figure never engages the
+# monthly figure, so the verifier abstains (frequency_mismatch) instead
+# of supporting on a coincidental numeric match. General: indicator
+# codes + claim-text pattern, never claim ids.
+WB_ANNUAL_RATE_INDICATORS = frozenset({
+    "FP.CPI.TOTL.ZG",
+    "NY.GDP.MKTP.KD.ZG",
+    "SP.POP.GROW",
+})
+
+_MONTHLY_FREQUENCY_RES = (
+    re.compile(
+        r"\b(every month|per month|each month|that month|this month"
+        r"|monthly)\b",
+        re.IGNORECASE),
+    re.compile(
+        r"\b(mensual(?:es)?|cada mes|por mes|al mes)\b",
+        re.IGNORECASE),
+)
+
+
+def claim_has_monthly_frequency(text: str) -> bool:
+    """True when the claim asserts a MONTHLY-frequency figure (V5-2B).
+
+    General EN/ES pattern over the claim TEXT only — never claim ids.
+    Pure, never raises (non-string input reads as no frequency).
+    """
+    try:
+        doc = text or ""
+    except Exception:
+        return False
+    try:
+        return any(rx.search(doc) for rx in _MONTHLY_FREQUENCY_RES)
+    except Exception:
+        return False
 
 # Level assertions ("doubled/grew/fell TO x") state the entity's own level and
 # ARE directly comparable to a same-indicator row. Everything else matching
@@ -349,10 +432,12 @@ __all__ = [
     "Extractor",
     "NumberMention",
     "PRIMARY_HOSTS",
+    "claim_has_monthly_frequency",
     "is_multi_source_arithmetic",
     "UNIT_VOCAB",
     "SourceMeta",
     "SourceType",
+    "WB_ANNUAL_RATE_INDICATORS",
     "WB_INDICATOR_UNITS",
     "sha256_of_bytes",
     "sha256_of_text",

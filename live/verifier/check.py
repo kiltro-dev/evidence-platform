@@ -29,12 +29,19 @@ from typing import Any, Callable, Literal
 
 from live.evidence.package import (
     EvidencePackage,
+    WB_ANNUAL_RATE_INDICATORS,
+    claim_has_monthly_frequency,
     is_multi_source_arithmetic,
     sha256_of_bytes,
     sha256_of_text,
     source_meta_for_snapshot,
 )
-from live.verifier.arithmetic import compute_verdict, needs_computation
+from live.verifier.arithmetic import (
+    claim_quantum,
+    compute_verdict,
+    needs_computation,
+    round_to_quantum,
+)
 
 # Atlas core (deterministic). ``src.`` prefix when the repo root is on
 # sys.path (live convention, see live/run_live.py); plain ``atlas``
@@ -191,11 +198,20 @@ def _check_package(pkg: EvidencePackage, claim: ClaimInput,
         if (rederived is not None
                 and rederived.indicator == pkg.source_meta.indicator
                 and units_compatible(claim.unit, rederived.unit)):
-            compat = list(cands)
-            scale = float(rederived.scale)
-            meta_unit = rederived.unit
-            detail["unit_from"] = "source_meta"
-            detail["source_indicator"] = rederived.indicator
+            # V5-2B: monthly-frequency claims are unverifiable from
+            # annual-rate rows (P1-36 class: a 219.9% MONTHLY rise never
+            # engages a 219.9% ANNUAL row). Skip the meta unit so the
+            # package abstains with unit_mismatch instead of supporting
+            # on a coincidental numeric match.
+            if (rederived.indicator in WB_ANNUAL_RATE_INDICATORS
+                    and claim_has_monthly_frequency(claim.text or "")):
+                detail["frequency_mismatch"] = True
+            else:
+                compat = list(cands)
+                scale = float(rederived.scale)
+                meta_unit = rederived.unit
+                detail["unit_from"] = "source_meta"
+                detail["source_indicator"] = rederived.indicator
     if not compat:
         return None, "unit_mismatch", detail
     best = min(compat, key=lambda q: abs(claim.value - q.value * scale)
@@ -207,6 +223,22 @@ def _check_package(pkg: EvidencePackage, claim: ClaimInput,
     rel = abs(claim.value - evidence_value) / denom
     detail["rel_diff"] = rel
     if rel > claim.tolerance:
+        # V5-2B: exact-rounding agreement (P1-35 class). When the evidence
+        # rounds EXACTLY to the claim at its stated precision ("0.2" vs a
+        # 0.218 row), the mismatch is not a sound refutation: the row
+        # agrees with the claim as stated. Abstain instead of
+        # contradicting. Support semantics are untouched (strict 2% still
+        # owns every support) and the 100-vs-102.1 contradiction pins
+        # still hold (102 != 100). Ambiguous precision (quantum None)
+        # keeps the strict path.
+        quantum = claim_quantum(claim.raw or "", claim.value)
+        rounded = (round_to_quantum(evidence_value, quantum)
+                   if quantum is not None else None)
+        if (rounded is not None and abs(rounded - claim.value)
+                <= 1e-9 * max(1.0, abs(claim.value))):
+            detail["rounding_quantum"] = quantum
+            detail["rounded_evidence"] = rounded
+            return None, "rounded_match", detail
         # F2-2: a computed figure (average/percent-change/share-of) never
         # lives in one component row, so a component mismatch is not a
         # sound refutation (D5 class). Abstain — UNLESS the quote itself

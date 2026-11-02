@@ -34,6 +34,8 @@ from typing import Any, Callable, Literal, Sequence
 
 from live.evidence.package import (
     EvidencePackage,
+    WB_ANNUAL_RATE_INDICATORS,
+    claim_has_monthly_frequency,
     sha256_of_bytes,
     sha256_of_text,
     source_meta_for_snapshot,
@@ -499,7 +501,7 @@ def _quote_validated(pkg: EvidencePackage, claim_id: str,
 
 
 def extract_operands(claim_id: str, packages: Sequence[EvidencePackage],
-                     loader: SnapshotLoader,
+                     loader: SnapshotLoader, claim_text: str = "",
                      ) -> tuple[list[Operand], list[str]]:
     """Verified operand values, de-duplicated (never raises).
 
@@ -511,6 +513,8 @@ def extract_operands(claim_id: str, packages: Sequence[EvidencePackage],
     (indicator must agree with the package declaration). Identical
     values quoted twice (same endpoint, two packages) collapse to ONE
     operand — the first package keeps provenance, the rest are noted.
+    V5-2B: ``claim_text`` feeds the monthly-frequency guard (annual-rate
+    rows never supply operands for monthly claims); "" disables it.
     """
     operands: list[Operand] = []
     notes: list[str] = []
@@ -555,6 +559,13 @@ def extract_operands(claim_id: str, packages: Sequence[EvidencePackage],
                     break
             if (rederived is not None
                     and rederived.indicator == pkg.source_meta.indicator):
+                # V5-2B: monthly-frequency guard (mirror of check.py):
+                # annual-rate rows never supply operands for monthly
+                # claims — the derivation would compare frequencies.
+                if (rederived.indicator in WB_ANNUAL_RATE_INDICATORS
+                        and claim_has_monthly_frequency(claim_text or "")):
+                    notes.append(f"{pkg.package_id}:frequency_mismatch")
+                    continue
                 unit = rederived.unit
                 scale = float(rederived.scale)
         if unit is None:
@@ -679,7 +690,8 @@ def _compute_verdict(claim: Any, packages: Sequence[EvidencePackage],
         return None
     claim_id = str(getattr(claim, "claim_id", ""))
 
-    operands, notes = extract_operands(claim_id, packages, loader)
+    operands, notes = extract_operands(
+        claim_id, packages, loader, claim_text)
     arity = 2 if op in ("diff", "ratio", "pct_change") else None
     if arity is not None and len(operands) != arity:
         return None

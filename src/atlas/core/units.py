@@ -104,6 +104,70 @@ UNIT_ALIASES: dict[str, str] = {
     "meters per second": "m/s",
     "metres per second": "m/s",
     "km/s": "km/s",
+    # --- V5-2B: energy / area / length / ES mirrors (general EN/ES) ---
+    # kWh family. Megawatt forms ALSO normalize here, but parse_quantities
+    # additionally scales their value x1000 (see _MEGAWATT_UNIT_RE): the
+    # canonical unit is kwh in both cases ("140 megawatt hours" reads as
+    # 140,000 kwh, never 140 kwh).
+    "kilowatt hour": "kwh",
+    "kilowatt hours": "kwh",
+    "kilowatt-hour": "kwh",
+    "kilowatt-hours": "kwh",
+    "kwh": "kwh",
+    "megawatt hour": "kwh",
+    "megawatt hours": "kwh",
+    "megawatt-hour": "kwh",
+    "megawatt-hours": "kwh",
+    "mwh": "kwh",
+    # Area. Square kilometers and square METERS are DELIBERATELY distinct
+    # canonical units (km2 vs m2): conflating them would verify a false
+    # "97,600 square meters" land claim against a 97,600 sq-km row (S2-12).
+    "square kilometer": "km2",
+    "square kilometers": "km2",
+    "square kilometre": "km2",
+    "square kilometres": "km2",
+    "sq km": "km2",
+    "sq. km": "km2",
+    "km2": "km2",
+    "km²": "km2",
+    "kilómetro cuadrado": "km2",
+    "kilómetros cuadrados": "km2",
+    "kilometro cuadrado": "km2",
+    "kilometros cuadrados": "km2",
+    "square meter": "m2",
+    "square meters": "m2",
+    "square metre": "m2",
+    "square metres": "m2",
+    "sq m": "m2",
+    "sq. m": "m2",
+    "m2": "m2",
+    "m²": "m2",
+    "metro cuadrado": "m2",
+    "metros cuadrados": "m2",
+    # Linear length. Bare "m" (lowercase, spaced: "8849 m") is meters by
+    # SI convention — the documented intent of the scale-guard comment
+    # below ("100 m" = 100 meters, never 100 million); uppercase "M"
+    # stays unitless (conservative: million-abbreviation collision).
+    "meter": "meters",
+    "meters": "meters",
+    "metre": "meters",
+    "metres": "meters",
+    "metro": "meters",
+    "metros": "meters",
+    "m": "meters",
+    # ES counts mirror ("7,1 millones de desempleados").
+    "desempleado": "count",
+    "desempleados": "count",
+    "desempleada": "count",
+    "desempleadas": "count",
+    # ES speed mirror ("299792458 metros por segundo").
+    "metro por segundo": "m/s",
+    "metros por segundo": "m/s",
+    # Spaced EN speed ("29,979 kilometers per second", S1-04 class).
+    "kilometer per second": "km/s",
+    "kilometers per second": "km/s",
+    "kilometre per second": "km/s",
+    "kilometres per second": "km/s",
     "celsius": "celsius",
     "c": "celsius",
     "°c": "celsius",
@@ -176,14 +240,29 @@ _QUANTITY_RE = re.compile(
 # must precede "percent" (regex alternation is ordered, and the prefix
 # would otherwise win). Bare "pp" needs a trailing guard so "2 ppm"
 # (parts per million) does not read as percentage points.
+# V5-2B: energy (kwh/mwh), area (km2 vs m2 kept DISTINCT — see aliases),
+# linear length (meters + bare lowercase "m" per the SI convention noted
+# in the scale guard above), ES counts (desempleados) and ES/spaced speed
+# mirrors. Same longest-first rule: "metros cuadrados" and "metros por
+# segundo" precede "metros"; bare "(?-i:m)" is last and case-sensitive so
+# spaced uppercase "M" (million abbreviation) stays unitless.
 _UNIT_AFTER_RE = re.compile(
     r"^\s*(?:de\s+)?(usd|us\$|dollars?|dólares|dolares|dólar|dolar|euros?|eur|gbp|pounds?|pesos?|libras?|jpy|yen|"
     r"percentage points?|percent|pp(?![a-zA-Z])|por ciento|puntos? porcentuales?|"
-    r"people|personas?|inhabitants|habitantes?|deaths|muertes?|cases|casos?|"
-    r"m/s|meters per second|metres per second|km/s|"
+    r"people|personas?|inhabitants|habitantes?|deaths|muertes?|cases|casos?|desemplead[oa]s?|"
+    r"kilowatt-hours?|kilowatt hours?|megawatt-hours?|megawatt hours?|kwh|mwh|"
+    r"square kilometers?|square kilometres?|kil[oó]metros? cuadrados?|sq\.?\s*km|km2(?![a-zA-Z])|km²|"
+    r"square meters?|square metres?|metros? cuadrados?|sq\.?\s*m(?![a-zA-Z/])|m2(?![a-zA-Z])|m²|"
+    r"m/s|meters per second|metres per second|km/s|kilometers? per second|kilometres? per second|metros? por segundo|"
+    r"meters?|metres?|metros?|(?-i:m)(?![a-zA-Z/])|"
     r"celsius|fahrenheit|kelvin|°c|°f|years?|años?|anos?)",
     re.IGNORECASE,
 )
+
+# V5-2B: megawatt-denominated quantities read in the canonical kwh unit
+# scaled x1000 ("140 megawatt hours" -> 140,000 kwh). Matched against the
+# raw unit text captured by _UNIT_AFTER_RE (case-insensitive).
+_MEGAWATT_UNIT_RE = re.compile(r"^megawatt[-\s]?hours?$|^mwh$", re.IGNORECASE)
 
 
 def normalize_unit(raw: str | None) -> str | None:
@@ -224,6 +303,10 @@ def parse_quantities(text: str, label: str = "") -> list[Quantity]:
             after = text[m.end() : m.end() + 28]
             um = _UNIT_AFTER_RE.match(after)
             unit = um.group(1).strip() if um else None
+        if unit is not None and _MEGAWATT_UNIT_RE.match(unit):
+            # V5-2B: canonical energy unit is kwh — megawatt readings
+            # scale x1000 ("140 megawatt hours" -> 140,000 kwh).
+            scale = scale * 1000.0
         if _THOUSAND_DOT_MULTI_RE.fullmatch(raw_num):
             num = float(raw_num.replace(".", ""))
         elif _THOUSAND_DOT_COMMA_RE.fullmatch(raw_num):
