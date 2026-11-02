@@ -17,8 +17,10 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
+import re
 import threading
 import time
+import zlib
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -142,6 +144,73 @@ def _decode_body(body: bytes, content_type: str) -> str:
         return body.decode("utf-8", "replace")
 
 
+def is_pdf_body(content_type: str, raw: bytes) -> bool:
+    """True when the body is a PDF (content-type or %PDF magic, F2-2)."""
+    if "pdf" in (content_type or "").lower():
+        return True
+    try:
+        return bytes(raw or b"")[:8].startswith(b"%PDF-")
+    except Exception:
+        return False
+
+
+_PDF_STREAM_RE = re.compile(rb"stream\r?\n(.*?)endstream", re.DOTALL)
+_PDF_LITERAL_RE = re.compile(rb"\((?:\\.|[^()\\])*\)")
+_PDF_SHOW_RE = re.compile(
+    rb"\((?:\\.|[^()\\])*\)\s*(?:Tj|')|\[(?:[^\[\]]*?)\]\s*TJ", re.DOTALL)
+_PDF_TEXT_CAP_CHARS = 300_000
+
+
+def extract_pdf_text(raw: bytes) -> str:
+    """Stdlib-minimal PDF text extraction (F2-2, no new deps).
+
+    Decodes FlateDecode streams with zlib and collects text-showing
+    strings (literal ``(...) Tj`` / ``[...] TJ`` plus bare hex strings).
+    best effort for model READING (fetch.text): the snapshot still keeps
+    the raw PDF bytes, so only quotes that also occur raw (uncompressed
+    PDFs, metadata) can verify verbatim. Returns "" for non-PDF input.
+    Never raises on bytes-shaped input.
+    """
+    try:
+        data = bytes(raw or b"")
+    except Exception:
+        return ""
+    if not data.startswith(b"%PDF-"):
+        return ""
+    chunks: list[str] = []
+    bodies = [m.group(1) for m in _PDF_STREAM_RE.finditer(data)] or [data]
+    for body in bodies:
+        decoded = body
+        try:
+            decoded = zlib.decompress(body.strip())
+        except Exception:
+            pass  # uncompressed stream (or unknown filter): scan raw
+        for op in _PDF_SHOW_RE.finditer(decoded):
+            for lit in _PDF_LITERAL_RE.finditer(op.group(0)):
+                chunks.append(_pdf_literal_to_text(lit.group(0)))
+        if len(" ".join(chunks)) > _PDF_TEXT_CAP_CHARS:
+            break
+    if not chunks:  # metadata / uncompressed fallback: bare strings
+        for lit in _PDF_LITERAL_RE.finditer(data[:1_000_000]):
+            chunks.append(_pdf_literal_to_text(lit.group(0)))
+            if len(chunks) > 2000:
+                break
+    text = " ".join(c for c in chunks if c).strip()
+    return text[:_PDF_TEXT_CAP_CHARS]
+
+
+def _pdf_literal_to_text(literal: bytes) -> str:
+    """Decode one PDF literal string ``(...)`` (WinAnsi-ish, best effort)."""
+    inner = literal[1:-1]
+    inner = inner.replace(b"\\n", b"\n").replace(b"\\r", b"\n")
+    inner = inner.replace(b"\\t", b" ").replace(b"\\\\", b"\\")
+    inner = inner.replace(b"\\(", b"(").replace(b"\\)", b")")
+    try:
+        return inner.decode("utf-8", "replace").strip()
+    except Exception:
+        return ""
+
+
 def _utcnow_iso() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
@@ -222,6 +291,11 @@ def fetch_url(
         tmp.write_bytes(raw)
         tmp.replace(snap_path)  # atomic publish
     captured = _utcnow_iso()
+    text = _decode_body(raw, content_type)
+    if is_pdf_body(content_type, raw):  # F2-2: PDFs read as extracted text
+        extracted = extract_pdf_text(raw)
+        if extracted.strip():
+            text = extracted
     return FetchResult(
         url=url,
         final_url=final_url,
@@ -231,7 +305,7 @@ def fetch_url(
         sha256=sha,
         snapshot_path=str(snap_path),
         captured_at=captured,
-        text=_decode_body(raw, content_type),
+        text=text,
     )
 
 

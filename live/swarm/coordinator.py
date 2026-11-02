@@ -25,6 +25,7 @@ import urllib.parse
 import urllib.request
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+from html.parser import HTMLParser
 from pathlib import Path
 from typing import Any, Callable
 
@@ -57,6 +58,13 @@ TOKEN_BUDGET_PER_CLAIM = 20000
 DOC_EXCERPT_CHARS = 6000
 SEARCH_TOP_K = 3
 FETCH_TOP_K = 2
+# F2-2: grounding fetches across the multi-query hit pool (primary-first).
+GROUND_FETCH_K = 4
+# F2-2: nudge the model to cite grounded docs instead of re-searching.
+_PREFER_FETCHED_NUDGE = (
+    "Prefer citing the already-fetched documents below; call tools only "
+    "when none contains the needed figure."
+)
 
 # Fallback Muse Spark prices (USD per 1M tokens) when the agent loop
 # helper is not importable; same values as src/atlas/agent/loop.py.
@@ -246,9 +254,164 @@ def web_search(query: str, top_k: int = SEARCH_TOP_K) -> list[dict]:
     return out
 
 
+def build_search_queries(plan: dict | None, text: str,
+                         limit: int = 3) -> list[str]:
+    """Diverse grounding queries from the merged plan (F2-2, pure).
+
+    Always returns >= ``limit`` unique non-empty queries (<=300 chars):
+    the plan web query, an entity+year authority query, an entity+figure
+    query, an indicator-code query, then claim-text fallbacks. Facets come
+    from plan fields only — never from any concrete claim.
+    """
+    plan = plan if isinstance(plan, dict) else {}
+    queries: list[str] = []
+
+    def _add(candidate: Any) -> None:
+        clean = _WS_RE.sub(" ", str(candidate or "")).strip()[:300]
+        if clean and clean not in queries:
+            queries.append(clean)
+
+    _add(plan.get("web_query"))
+    ents = [str(e).strip() for e in (plan.get("entities") or [])
+            if str(e).strip()][:2]
+    year = plan.get("year")
+    year_s = str(year) if isinstance(year, int) else ""
+    nums = [str(n).strip() for n in (plan.get("numbers_in_claim") or [])
+            if str(n).strip()][:1]
+    ind = str(plan.get("indicator") or "").strip().upper()
+    iso3 = str(plan.get("iso3") or "").strip().upper()
+    base = _WS_RE.sub(" ", " ".join(ents + ([year_s] if year_s else [])))
+    base = base.strip()
+    if base:
+        _add(f"{base} official statistics")
+    if ents and nums:
+        _add(f"{ents[0]} {nums[0]}")
+    if ind and iso3:
+        _add(f"{ind} {iso3} {year_s}".strip())
+    if text:
+        _add(text[:300])
+    if base:
+        _add(f"{base} data")
+    # Degenerate-plan top-up: generic authority queries keep the >=3 pact.
+    for fallback in ("official statistics figures",
+                     "indicator data latest values",
+                     "statistics office data"):
+        _add(fallback)
+    want = max(int(limit or 3), 3)
+    return queries[:want] if len(queries) > want else queries
+
+
+def rank_hits_primary_first(hits: list[dict]) -> list[dict]:
+    """Stable hit ranking: official-statistics hosts first (F2-2, pure).
+
+    Uses the canonical primary/secondary criterion; input order wins
+    within each tier. Never raises on search-shaped input.
+    """
+    def _key(hit: Any) -> int:
+        url = hit.get("url", "") if isinstance(hit, dict) else ""
+        try:
+            return 0 if source_type_for_url(str(url)) == "primary" else 1
+        except Exception:
+            return 1
+
+    return sorted(list(hits or []), key=_key)
+
+
 # ---------------------------------------------------------------------------
 # model-read excerpts that keep quotes verbatim
 # ---------------------------------------------------------------------------
+
+class _TableParser(HTMLParser):
+    """Stdlib HTML table reader (F2-2, no pandas).
+
+    Collects tables -> rows -> cell texts (td/th, entities resolved).
+    Never raises on markup-shaped input; truncated markup yields a
+    best-effort partial table.
+    """
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.tables: list[list[list[str]]] = []
+        self._stack: list[list[list[str]]] = []
+        self._row: list[str] | None = None
+        self._cell: list[str] | None = None
+
+    def handle_starttag(self, tag: str, attrs: list) -> None:
+        name = (tag or "").lower()
+        if name == "table":
+            self._stack.append([])
+            self._row = None
+            self._cell = None
+        elif name == "tr":
+            if self._stack:
+                self._row = []
+                self._cell = None
+        elif name in ("td", "th", "caption"):
+            if self._stack and self._row is not None:
+                self._cell = []
+        elif name == "br" and self._cell is not None:
+            self._cell.append(" ")
+
+    def handle_data(self, data: str) -> None:
+        if self._cell is not None:
+            self._cell.append(data or "")
+
+    def handle_endtag(self, tag: str) -> None:
+        name = (tag or "").lower()
+        if name in ("td", "th", "caption"):
+            if self._cell is not None and self._row is not None:
+                cell = _WS_RE.sub(" ", "".join(self._cell)).strip()
+                if cell:
+                    self._row.append(cell)
+            self._cell = None
+        elif name == "tr":
+            if self._stack and self._row:
+                self._stack[-1].append(self._row)
+            self._row = None
+            self._cell = None
+        elif name == "table":
+            if self._stack:
+                done = self._stack.pop()
+                if done:
+                    self.tables.append(done)
+            self._row = None
+            self._cell = None
+
+    def close(self) -> None:
+        try:
+            super().close()
+        except Exception:
+            pass
+        if self._cell is not None and self._row is not None:
+            cell = _WS_RE.sub(" ", "".join(self._cell)).strip()
+            if cell:
+                self._row.append(cell)
+        if self._row:
+            if self._stack:
+                self._stack[-1].append(self._row)
+            else:
+                self.tables.append([self._row])
+        for pending in self._stack:
+            if pending:
+                self.tables.append(pending)
+        self._stack = []
+        self._row = None
+        self._cell = None
+
+
+def tables_from_html(html: str) -> list[list[list[str]]]:
+    """Parse HTML tables into tables -> rows -> cells (F2-2, stdlib).
+
+    Pure helper; returns [] for markup without tables. Never raises.
+    """
+    parser = _TableParser()
+    try:
+        parser.feed(html or "")
+        parser.close()
+    except Exception:
+        return list(parser.tables)
+    return list(parser.tables)
+
 
 def doc_excerpts(text: str, limit: int = DOC_EXCERPT_CHARS) -> str:
     """Readable excerpt where every line is a verbatim snapshot substring.
@@ -257,6 +420,10 @@ def doc_excerpts(text: str, limit: int = DOC_EXCERPT_CHARS) -> str:
     contiguous slice of the snapshot, so a quote copied from ONE segment
     greps exactly. Document order is kept (article leads come first);
     markup/data junk (chart JSON, template blobs, CSS) is dropped.
+
+    F2-2: HTML data tables are appended as ``TABLE i row j: ...`` reading
+    aids (same budget). These joined lines are NOT verbatim (cells are
+    joined with " | "); single figures inside them still occur raw.
     """
     clean = _SCRIPT_STYLE_RE.sub(" ", text or "")
     out: list[str] = []
@@ -275,6 +442,20 @@ def doc_excerpts(text: str, limit: int = DOC_EXCERPT_CHARS) -> str:
             continue
         out.append(seg[:budget])
         budget -= len(out[-1]) + 1
+    if budget > 0:
+        try:
+            tables = tables_from_html(text or "")
+        except Exception:
+            tables = []
+        for ti, rows in enumerate(tables[:5], 1):
+            if budget <= 0:
+                break
+            for ri, row in enumerate(rows[:30], 1):
+                line = f"TABLE {ti} row {ri}: {' | '.join(row)}"
+                out.append(line[:budget])
+                budget -= len(out[-1]) + 1
+                if budget <= 0:
+                    break
     return "\n".join(out)
 
 
@@ -831,16 +1012,170 @@ def _merge_plan(model_plan: dict | None, text: str) -> dict:
 
 
 # ---------------------------------------------------------------------------
+# F2-2 deterministic World Bank row rescue (structured-unit rescue)
+# ---------------------------------------------------------------------------
+
+_WB_ROW_RE = re.compile(
+    r'"date"\s*:\s*"(?P<date>\d{4})"\s*,\s*"value"\s*:\s*'
+    r"(?P<val>-?\d+(?:\.\d+)?)"
+)
+
+# Standalone mirror of live.evidence.package.WB_INDICATOR_UNITS keys (same
+# delegation pattern as _PRIMARY_HOSTS): the canonical map wins whenever
+# M2a is importable; totals-only by construction.
+_CURATED_TOTALS_MIRROR = ("SP.POP.TOTL", "NY.GDP.MKTP.CD")
+
+# Standalone mirror of live.evidence.package.is_multi_source_arithmetic
+# (level-exception first, then computed-figure cues). Used only when the
+# canonical helper is not importable.
+_ARITH_LEVEL_MIRROR_RE = re.compile(
+    r"\b(doubled|tripled|quadrupled|grew|grown|growing|rose|risen|fell"
+    r"|fallen|dropped|declined|decline|reached|climbed|surged|jumped)\s+to\b",
+    re.IGNORECASE,
+)
+_ARITH_COMPUTED_MIRROR_RES = (
+    re.compile(r"\baverag(?:e|ed|es|ing)\b|\bmean\b|\bmedian\b",
+               re.IGNORECASE),
+    re.compile(r"\bpercent\s+of\b", re.IGNORECASE),
+    re.compile(r"\b(grew|growth|increased|increase|decreased|decrease|rose"
+               r"|fell|declined|decline|change[sd]?)\b[^.?!]{0,60}\bpercent\b",
+               re.IGNORECASE),
+    re.compile(r"\bfrom\s+(19|20|21)\d{2}\s+to\s+(19|20|21)\d{2}\b",
+               re.IGNORECASE),
+)
+
+
+def _is_arithmetic_claim(text: str) -> bool:
+    """Canonical multi-source-arithmetic test, mirrored standalone."""
+    fn = _try_import("live.evidence.package", "is_multi_source_arithmetic")
+    if callable(fn):
+        try:
+            return bool(fn(text))
+        except Exception:
+            pass
+    doc = text or ""
+    if _ARITH_LEVEL_MIRROR_RE.search(doc):
+        return False
+    return any(rx.search(doc) for rx in _ARITH_COMPUTED_MIRROR_RES)
+
+
+def _curated_total_indicators() -> tuple[str, ...]:
+    mod = _try_import("live.evidence.package", "WB_INDICATOR_UNITS")
+    if isinstance(mod, dict) and mod:
+        try:
+            return tuple(sorted(str(k).upper() for k in mod))
+        except Exception:
+            pass
+    return _CURATED_TOTALS_MIRROR
+
+
+def wb_row_quote_for(snapshot_text: str, year: int) -> str | None:
+    """Verbatim ``"date":"YYYY","value":N`` row span, or None (F2-2, pure).
+
+    The quote is a regex span of the real snapshot text (compact and
+    pretty JSON separators both match), so it verifies verbatim by
+    construction. None when the year row is missing, null, or the body
+    is not WB-shaped. Never raises.
+    """
+    if not isinstance(year, int):
+        return None
+    try:
+        body = snapshot_text or ""
+    except Exception:
+        return None
+    want = str(year)
+    try:
+        for match in _WB_ROW_RE.finditer(body):
+            if match.group("date") == want:
+                return match.group(0)
+    except Exception:
+        return None
+    return None
+
+
+def wb_fallback_eligible(text: str, plan: dict | None) -> bool:
+    """True when a deterministic WB row package is sound (F2-2, pure).
+
+    Guards (all general): curated total indicator only (per-capita /
+    growth rows would corrupt verdicts); exact claim year present;
+    non-arithmetic claims only (component rows cannot decide averages /
+    ratios / percent changes); merged iso3 agrees with the deterministic
+    country resolver (a wrong-country row would contradict TRUE claims).
+    """
+    plan = plan if isinstance(plan, dict) else {}
+    ind = str(plan.get("indicator") or "").strip().upper()
+    iso3 = str(plan.get("iso3") or "").strip().upper()
+    year = plan.get("year")
+    if ind not in _curated_total_indicators():
+        return False
+    if not _ISO3_RE.match(iso3):
+        return False
+    if not (isinstance(year, int) and 1960 <= year <= 2100):
+        return False
+    if _is_arithmetic_claim(text or ""):
+        return False
+    try:
+        code_iso3 = _code_plan(text or "").get("iso3")
+    except Exception:
+        return False
+    return code_iso3 == iso3
+
+
+def _maybe_add_wb_fallback(ctx: "_ClaimCtx", plan: dict) -> None:
+    """Grounding-time deterministic primary package (F2-2).
+
+    When eligible, quotes the exact ``"date","value"`` row span from the
+    already-fetched World Bank API doc (verbatim by construction) and
+    ships it as an ``extractor="code"`` package — including when the
+    model loop later returns [] or exhausts budget/deadline (grounding
+    packages persist: the FALSE-claim recall class). First matching doc
+    only; never raises.
+    """
+    try:
+        if not wb_fallback_eligible(ctx.text, plan):
+            return
+        ind = str(plan.get("indicator")).strip().upper()
+        iso3 = str(plan.get("iso3")).strip().upper()
+        year = plan.get("year")
+        needle = f"/{iso3}/indicator/{ind}".lower()
+        for doc in ctx.docs.all():
+            url = doc.url or ""
+            if "api.worldbank.org" not in url:
+                continue
+            if needle not in url.lower():
+                continue
+            quote = wb_row_quote_for(doc.fetch.text or "", year)
+            if quote is None:
+                return
+            pkg = build_package(ctx.claim_id, url, quote, doc, year,
+                                len(ctx.packages), extractor="code")
+            if pkg is None:
+                return
+            key = (doc.fetch.sha256, quote)
+            if key not in ctx._seen_quotes:
+                ctx._seen_quotes.add(key)
+                ctx.packages.append(pkg)
+            return
+    except Exception as exc:
+        log.warning("wb fallback failed for %s: %r",
+                    getattr(ctx, "claim_id", "?"), exc)
+
+
+# ---------------------------------------------------------------------------
 # package builder (strict verbatim validation)
 # ---------------------------------------------------------------------------
 
 def build_package(claim_id: str, url: str, quote: str, doc: Doc,
-                  source_year: int | None, index: int) -> dict | None:
+                  source_year: int | None, index: int,
+                  extractor: str = "model") -> dict | None:
     """Validate a finding and build an M2a-compatible package dict.
 
     Returns None (never raises on model-shaped input) when the quote
     is not a verbatim substring of the snapshot text, the URL does not
     match the fetched doc, or M2a validation rejects the dict.
+
+    F2-2: ``extractor="code"`` marks deterministic grounding packages
+    (WB row rescue); the default "model" preserves every old call site.
     """
     if not isinstance(quote, str) or not quote.strip():
         return None
@@ -873,7 +1208,7 @@ def build_package(claim_id: str, url: str, quote: str, doc: Doc,
         "offsets": [start, end],
         "source_type": source_type_for_url(doc.url),
         "numbers": numbers_from_quote(quote),
-        "extractor": "model",
+        "extractor": extractor if extractor in ("model", "code") else "model",
         "source_year": source_year,
         "source_meta": meta,
     }
@@ -1030,14 +1365,16 @@ async def _recuperador_loop(ctx: _ClaimCtx, seed_user: str,
             ]
         )
         # Auto-fetch top web_search hits so the model reads snapshots,
-        # not just result lists (bounded: first 2 unseen hits).
+        # not just result lists (bounded: first 2 unseen hits, F2-2
+        # primary-first so official statistics win the fetch slots).
         for entry in tool_results:
             if entry["name"] != "web_search":
                 continue
             result = entry["result"]
             if not isinstance(result, dict):
                 continue
-            for hit in (result.get("results") or [])[:FETCH_TOP_K]:
+            ranked = rank_hits_primary_first(result.get("results") or [])
+            for hit in ranked[:FETCH_TOP_K]:
                 if not isinstance(hit, dict):
                     continue
                 url = str(hit.get("url", ""))
@@ -1064,18 +1401,31 @@ async def _recuperador_loop(ctx: _ClaimCtx, seed_user: str,
 
 
 async def _ground_claim(ctx: _ClaimCtx, plan: dict) -> None:
-    """Deterministic grounding before the model loop: WB + web."""
+    """Deterministic grounding before the model loop: WB + multi-query web.
+
+    F2-2: a deterministic WB row package first (FALSE-claim recall), then
+    >=3 diverse queries whose pooled hits are fetched primary-first.
+    """
 
     def _ground_sync() -> None:
         if plan.get("indicator") and plan.get("iso3"):
             ctx.tools.wb_lookup(plan["indicator"], plan["iso3"],
                                 plan.get("year"))
-        hits = ctx.tools.web_search(
-            str(plan.get("web_query", "")), SEARCH_TOP_K)
-        results = hits.get("results", []) if isinstance(hits, dict) else []
-        for hit in (results or [])[:FETCH_TOP_K]:
-            if not isinstance(hit, dict):
-                continue
+            _maybe_add_wb_fallback(ctx, plan)
+        pooled: list[dict] = []
+        seen: set[str] = set()
+        for query in build_search_queries(plan, ctx.text):
+            res = ctx.tools.web_search(query, SEARCH_TOP_K)
+            results = res.get("results", []) if isinstance(res, dict) else []
+            for hit in results or []:
+                if not isinstance(hit, dict):
+                    continue
+                url = str(hit.get("url", ""))
+                if not url or url in seen:
+                    continue
+                seen.add(url)
+                pooled.append(hit)
+        for hit in rank_hits_primary_first(pooled)[:GROUND_FETCH_K]:
             url = str(hit.get("url", ""))
             if url and ctx.docs.find(url) is None:
                 ctx.tools.fetch_url(url)
@@ -1108,6 +1458,7 @@ async def _run_claim_inner(ctx: _ClaimCtx) -> str:
     seed = (
         f"claim_id: {ctx.claim_id}\nclaim: {ctx.text}\n"
         f"plan: {json.dumps(plan, ensure_ascii=False)}\n\n"
+        f"{_PREFER_FETCHED_NUDGE}\n\n"
         f"fetched documents:\n{ctx.docs.render()[:9000] or '(none yet — use your tools)'}"
     )
     try:
@@ -1147,6 +1498,7 @@ async def _run_claim_inner(ctx: _ClaimCtx) -> str:
         seed2 = (
             f"claim_id: {ctx.claim_id}\nclaim: {ctx.text}\n"
             f"REDTEAM counter-query was: {counter.strip()[:300]}\n"
+            f"{_PREFER_FETCHED_NUDGE}\n\n"
             f"fetched documents:\n{ctx.docs.render()[:9000]}"
         )
         await _recuperador_loop(ctx, seed2, 2, plan.get("year"))
@@ -1268,18 +1620,24 @@ async def run_swarm(bus: Any, tracker: Any,
 
 __all__ = [
     "CLAIM_DEADLINE_S",
+    "GROUND_FETCH_K",
     "MAX_CONCURRENCY",
     "TOKEN_BUDGET_PER_CLAIM",
     "SwarmConfig",
     "ClaimResult",
     "SwarmReport",
     "build_package",
+    "build_search_queries",
     "doc_excerpts",
     "numbers_from_quote",
+    "rank_hits_primary_first",
     "run_claim",
     "run_swarm",
     "source_type_for_url",
+    "tables_from_html",
     "validate_package_dict",
+    "wb_fallback_eligible",
+    "wb_row_quote_for",
     "web_search",
     "windows_around",
 ]

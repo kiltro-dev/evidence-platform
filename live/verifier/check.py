@@ -29,6 +29,7 @@ from typing import Any, Callable, Literal
 
 from live.evidence.package import (
     EvidencePackage,
+    is_multi_source_arithmetic,
     sha256_of_bytes,
     sha256_of_text,
     source_meta_for_snapshot,
@@ -205,6 +206,15 @@ def _check_package(pkg: EvidencePackage, claim: ClaimInput,
     rel = abs(claim.value - evidence_value) / denom
     detail["rel_diff"] = rel
     if rel > claim.tolerance:
+        # F2-2: a computed figure (average/percent-change/share-of) never
+        # lives in one component row, so a component mismatch is not a
+        # sound refutation (D5 class). Abstain — UNLESS the quote itself
+        # states computed language (then it directly engages the claim and
+        # a mismatch is a genuine refutation). Tolerance/scale/hierarchy
+        # untouched: this only narrows contradict -> unverifiable.
+        if is_multi_source_arithmetic(claim.text or "") and not (
+                is_multi_source_arithmetic(pkg.quote or "")):
+            return None, "arithmetic_needs_computation", detail
         return "contradict", "numeric_mismatch", detail
     # 4) temporal alignment (claim year vs source year, when both known).
     if (claim.claim_year is not None and pkg.source_year is not None

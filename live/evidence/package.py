@@ -84,6 +84,49 @@ WB_INDICATOR_UNITS = {
     "NY.GDP.MKTP.CD": "USD",
 }
 
+# Level assertions ("doubled/grew/fell TO x") state the entity's own level and
+# ARE directly comparable to a same-indicator row. Everything else matching
+# _COMPUTED_FIGURE_RES states a figure computed across rows/years (average,
+# percent change, share-of) that no single API row can confirm or refute.
+_LEVEL_ASSERTION_RE = re.compile(
+    r"\b(doubled|tripled|quadrupled|grew|grown|growing|rose|risen|fell"
+    r"|fallen|dropped|declined|decline|reached|climbed|surged|jumped)\s+to\b",
+    re.IGNORECASE,
+)
+
+_COMPUTED_FIGURE_RES = (
+    re.compile(r"\baverag(?:e|ed|es|ing)\b|\bmean\b|\bmedian\b",
+               re.IGNORECASE),
+    re.compile(r"\bpercent\s+of\b", re.IGNORECASE),
+    re.compile(
+        r"\b(grew|growth|grown|increased|increase|decreased|decrease|rose"
+        r"|risen|fell|fallen|declined|decline|change[sd]?)\b"
+        r"[^.?!]{0,60}\bpercent\b",
+        re.IGNORECASE),
+    re.compile(r"\bfrom\s+(19|20|21)\d{2}\s+to\s+(19|20|21)\d{2}\b",
+               re.IGNORECASE),
+)
+
+
+def is_multi_source_arithmetic(text: str) -> bool:
+    """True when the claim figure is computed across rows/years (F2-2).
+
+    Average/mean/median, percent change, share-of ("N percent of"), or an
+    explicit from-year-to-year span: no single snapshot row holds the
+    figure, so a single-quote numeric mismatch is not a sound refutation
+    (the verifier must abstain, never contradict, on component evidence).
+    Level assertions ("doubled/grew/fell TO x") return False: x is the
+    entity's own level and stays directly comparable. Pure, never raises.
+    """
+    try:
+        doc = text or ""
+    except Exception:
+        return False
+    if _LEVEL_ASSERTION_RE.search(doc):
+        return False
+    return any(rx.search(doc) for rx in _COMPUTED_FIGURE_RES)
+
+
 _WB_API_HOSTS = ("api.worldbank.org",)
 
 
@@ -306,6 +349,7 @@ __all__ = [
     "Extractor",
     "NumberMention",
     "PRIMARY_HOSTS",
+    "is_multi_source_arithmetic",
     "UNIT_VOCAB",
     "SourceMeta",
     "SourceType",
