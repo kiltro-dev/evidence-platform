@@ -23,6 +23,7 @@ from __future__ import annotations
 import asyncio
 import glob
 import os
+import re
 import shutil
 import subprocess
 import threading
@@ -72,17 +73,30 @@ def candidate_binaries() -> list[str]:
 
 
 def _has_demuxer(binary: str, name: str) -> bool:
-    """True when ``binary`` ships the ``name`` input demuxer."""
+    """True when ``binary`` can demux the ``name`` input device.
+
+    Parsed from ``ffmpeg -devices`` (the device line must carry a ``D``
+    flag). ``-h demuxer=<name>`` always exits 0 — even for unknown
+    formats — so its exit code cannot be used (F2-8 fix: it wrongly
+    reported ``pulse`` as present in the static build).
+    """
     try:
         proc = subprocess.run(
-            [binary, "-hide_banner", "-h", f"demuxer={name}"],
-            stdout=subprocess.DEVNULL,
+            [binary, "-hide_banner", "-devices"],
+            stdout=subprocess.PIPE,
             stderr=subprocess.DEVNULL,
+            text=True,
             timeout=15,
         )
     except (OSError, subprocess.TimeoutExpired):
         return False
-    return proc.returncode == 0
+    if proc.returncode != 0:
+        return False
+    for line in (proc.stdout or "").splitlines():
+        m = re.match(r"\s*([.DE]{1,2})\s+([A-Za-z0-9_,]+)", line)
+        if m and "D" in m.group(1) and name in m.group(2).split(","):
+            return True
+    return False
 
 
 def _alsa_capture_nodes() -> list[str]:

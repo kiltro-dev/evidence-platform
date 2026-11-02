@@ -33,6 +33,12 @@ demuxer `pulse`; ALSA sin nodos de captura en `/dev/snd`, solo `timer`;
 hay socket PulseServer de WSLg pero ningún binario puede hablarle).
 Ver `live/F2_MIC_CLIP.md`.
 
+F2-8: captura virtual también imposible aquí (kernel WSL2
+6.6.114.1 con `# CONFIG_SND_ALOOP is not set`: `modprobe snd-aloop`
+falla aunque hubiera root; `hw:Loopback`/`default` no abren).
+Además, fix: `_has_demuxer` devolvía siempre-True y ahora parsea
+`ffmpeg -devices` exigiendo flag `D`. Detalle en `live/F2_MIC2.md`.
+
 ## Wiring propuesto en `live/run_live.py` (NO implementado aquí)
 
 Añadir flag `--mic` que sustituya el `FifoStream` (simstream) por

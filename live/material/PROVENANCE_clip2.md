@@ -123,15 +123,57 @@ Time-box búsqueda: ~55 min (dentro del máx. 60 min).
   espejo de la licencia en `live/material/` sí se versionan.
 - Coste: 1 transcribe file de 108,7 s → floor(108)/3600×$0,18 = **$0,0054**.
 
+## Addendum F2-8 — derivado solo-narración: sin derivado (2026-11-02)
+
+Veredicto: **sin derivado**. Ningún segmento continuo ≥ 20 s sin
+insertos de terceros existe en este clip, bajo el criterio
+narración = presentadora en estudio. No se produjo
+`data/clips/VOA_narration_only.mp4`; se conserva el mixto documentado,
+bit-idéntico (hash `4d5713…84c8f` reverificado).
+
+Método (solo ffmpeg, sin escucha): rejilla de 27 fotogramas cada 4 s
+(t=0–104, `fps=1/4,scale=320:-1`) clasificados por contenido, más
+detección de cortes (`select='gt(scene,0.35)',showinfo`), bordes a 1 s
+(t=50/51/52 y 73/74/75) y cola (t=107). Un tramo de presentadora ≥ 8 s
+tocaría ≥ 2 fotogramas de la rejilla; se observaron cero: no hay
+presentadora en estudio en los 108,71 s.
+
+Línea de tiempo verificada (video):
+
+| t (s) | contenido | clase |
+|---|---|---|
+| 0–~37 | Pistachios, barco/ballena, Kia, Avocados from Mexico | inserto |
+| ~37–43 | entrevista James Cooper (Adweek) | VOA/entrevista ~6 s |
+| ~43–51,4 | cocina, body-spray | inserto |
+| 51,4–74,3 | entrevista Tony Case (Adweek), cortes en 51,36/74,32 | VOA/entrevista ~22,9 s |
+| 74,3–107 | vestidor, living, Anheuser-Busch "Born the Hard Way" | inserto |
+| 107–108,7 | cortinilla VOA Learning English | VOA ~1,7 s |
+
+Por qué no hay derivado PD-puro válido:
+
+1. El t≈24–38 s propuesto en Unresolved es exactamente el inserto
+   (video: secta de los Avocados con bug `AVOCADOS FROM MEXICO`;
+   audio: diálogo del anuncio — "Can we lose the masks? … secret
+   society" en la transcripción de referencia). Refutado con frames.
+2. El único tramo no-anuncio ≥ 20 s (Case, 51,4–74,3) es entrevista,
+   no narración; no contiene cifras verificables y su producción
+   exclusiva por VOA no es certificable desde el fichero (locación de
+   terceros + monitores de fondo con contenido no identificado).
+3. La narración VOA en audio siempre pisa video de anuncios; un corte
+   `-ss/-t` con re-encode no puede dar un .mp4 PD-puro.
+
+ASR-recall del derivado: N/A (sin derivado, sin llamada live).
+Coste F2-8: $0,00.
+
 ## Unresolved
 
 - Estatus PD mixto (ver Caveat): los extractos de anuncios de terceros
   impiden certificar PD puro. Para un clip 100 % PD haría falta una
   producción íntegramente gubernamental sin insertos (p. ej. pieza de
   estudio VOA/NASA sin imágenes de terceros) — no encontrada en el
-  time-box. Opción quirúrgica (no aplicada, para no alterar el hash):
-  escindir los ~10 s de audio del anuncio (t≈24–38 s) y documentar un
-  derivado solo-narración.
+  time-box. Opción quirúrgica evaluada en F2-8 (addendum): ningún
+  segmento limpio ≥ 20 s existe; el t≈24–38 s propuesto era el propio
+  inserto. Sin derivado, mixto conservado bit-idéntico.
 - No se visionó el mp4 fotograma a fotograma (3 frames revisados).
 - La transcripción de referencia es del endpoint file (artefactos de
   duplicación conocidos); el path WS es el primario en producción.
