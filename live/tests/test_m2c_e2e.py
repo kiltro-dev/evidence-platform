@@ -170,19 +170,28 @@ def test_e2e_supported_offline(tmp_path):
         bus, tracker, store, claims, stats, snapshot_resolver=resolve))
     llm = FakeLLM([dict(ESTRUCT_PLAN), _final(WIKI_URL, WIKI_QUOTE),
                    dict(REDTEAM_SKIP)])
+    # F2-3: pin the full model+code chain (default-on exit would close it).
     config = SwarmConfig(llm=llm, search_fn=make_search_fn(hits),
-                         fetch_fn=make_fetch_fn(bodies, snap_dir))
+                         fetch_fn=make_fetch_fn(bodies, snap_dir),
+                         early_exit_enabled=False)
 
     result = asyncio.run(run_claim(bus, tracker, claim_id, text, config))
 
-    assert len(result.packages) == 1
-    pkg = result.packages[0]
+    # F2-2: the model wiki package plus one deterministic WB code package
+    # (row rescue); both support, so the verdict pins below are unchanged.
+    assert len(result.packages) == 2
+    pkg = next(p for p in result.packages
+               if p["url"] == WIKI_URL)
     assert pkg["source_type"] == "secondary"  # Wikipedia: not primary
+    code_pkg = next(p for p in result.packages if p["extractor"] == "code")
+    assert code_pkg["source_type"] == "primary"
     assert stats.get("source_type_mismatch", 0) == 0
     assert stats.get("invalid_packages", 0) == 0
     # stored + re-verifiable from the store
     stored = store.packages_for_claim(claim_id)
-    assert len(stored) == 1 and stored[0].package_id == pkg["package_id"]
+    assert len(stored) == 2
+    assert {p.package_id for p in stored} == {p["package_id"]
+                                              for p in result.packages}
     assert store.get_snapshot_bytes(pkg["sha256"]) is not None
     # exactly one verdict, supported, tracker closed the loop
     verdicts = bus.history("claim.verdict")
@@ -218,7 +227,11 @@ def test_e2e_contradicted_offline(tmp_path):
 
 
 def test_e2e_invented_quote_is_unverifiable(tmp_path):
-    bodies = {"worldbank": WB_BODY, "wikipedia": WIKI_BODY}
+    # F2-2: no WB body in this fixture — the deterministic row rescue would
+    # otherwise verify the claim from the primary doc. With model-only
+    # evidence, an invented quote still yields zero packages (all pins
+    # below unchanged).
+    bodies = {"wikipedia": WIKI_BODY}
     hits = [{"url": WIKI_URL, "title": "W", "snippet": ""}]
     bus, tracker, store, snap_dir, stats, resolve = _wired_chain(
         tmp_path, bodies, hits)

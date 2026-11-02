@@ -115,11 +115,142 @@ def collect_usage(llm, acc: dict) -> dict:
     if not usage or not seq or seq == acc.get("seq"):
         return acc
     acc["seq"] = seq
-    for key in ("prompt_tokens", "completion_tokens"):
+    # F2-3: cached_tokens folded too (prompt-cache accounting; 0/absent
+    # when the provider omits it — same int guard as the other keys).
+    for key in ("prompt_tokens", "completion_tokens", "cached_tokens"):
         value = usage.get(key)
         if isinstance(value, int):
             acc[key] = acc.get(key, 0) + value
     return acc
+
+
+# --------------------------------------------------------------------------
+# F2-3 (e): prefetch from PROVISIONAL transcripts (cache warmup, no verdicts)
+# --------------------------------------------------------------------------
+
+PREFETCH_MIN_CHARS = 40
+PREFETCH_THROTTLE_S = 2.0
+PREFETCH_TOP_K = 2
+
+
+class PrefetchManager:
+    """Warm the fetch cache from ``transcript.partial`` turns.
+
+    A partial never decides anything (no detector, no bus events, no
+    verdicts): it only searches + fetches the top hits so the later
+    ``transcript.final`` investigation finds warm cache entries. A final
+    CONFIRMS its turn (warming already banked) and CANCELS prefetches
+    still pending for older turns. All failures are swallowed: prefetch
+    can only save time, never break the live path.
+    """
+
+    def __init__(self, search_fn=None, fetch_fn=None,
+                 min_chars: int = PREFETCH_MIN_CHARS,
+                 throttle_s: float = PREFETCH_THROTTLE_S,
+                 top_k: int = PREFETCH_TOP_K) -> None:
+        self._search_fn = search_fn
+        self._fetch_fn = fetch_fn
+        self._min_chars = min_chars
+        self._throttle_s = throttle_s
+        self._top_k = top_k
+        self._last_launch: dict = {}
+        self._pending: dict = {}  # turn -> asyncio.Task
+        self.stats = {"partials": 0, "launched": 0, "urls_warmed": 0,
+                      "confirmed": 0, "cancelled": 0}
+
+    def _search(self, query: str, top_k: int) -> list:
+        if self._search_fn is not None:
+            return self._search_fn(query, top_k)
+        from live.swarm.coordinator import web_search
+
+        return web_search(query, top_k)
+
+    def _fetch(self, url: str) -> None:
+        if self._fetch_fn is not None:
+            self._fetch_fn(url)
+            return
+        from live.swarm.fetch import fetch_url
+
+        fetch_url(url)
+
+    def _warm_sync(self, text: str) -> list[str]:
+        """Search + fetch top hits (blocking; runs in a worker thread)."""
+        try:
+            hits = self._search(text[:300], self._top_k) or []
+        except Exception:
+            return []
+        warmed: list[str] = []
+        for hit in hits[:self._top_k]:
+            if not isinstance(hit, dict):
+                continue
+            url = str(hit.get("url", ""))
+            if not url.startswith(("http://", "https://")):
+                continue
+            try:
+                self._fetch(url)
+            except Exception:
+                continue
+            warmed.append(url)
+        return warmed
+
+    async def on_partial(self, turn, text: str) -> None:
+        """Maybe launch a warmup task for a provisional turn."""
+        self.stats["partials"] += 1
+        clean = str(text or "")
+        if len(clean.strip()) < self._min_chars:
+            return
+        now = time.monotonic()
+        if now - self._last_launch.get(turn, 0.0) < self._throttle_s:
+            return
+        self._last_launch[turn] = now
+        old = self._pending.pop(turn, None)
+        if old is not None and not old.done():
+            old.cancel()
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            return
+
+        async def _run() -> None:
+            try:
+                warmed = await loop.run_in_executor(None, self._warm_sync,
+                                                    clean)
+            except asyncio.CancelledError:
+                raise
+            except Exception:
+                return
+            self.stats["urls_warmed"] += len(warmed)
+
+        try:
+            self._pending[turn] = loop.create_task(_run())
+        except RuntimeError:
+            return
+        self.stats["launched"] += 1
+        self._pending[turn].add_done_callback(
+            lambda task, key=turn: self._pending.pop(key, None)
+            if self._pending.get(key) is task else None)
+
+    def on_final(self, turn) -> None:
+        """Confirm ``turn``; cancel prefetches still pending for others."""
+        self.stats["confirmed"] += 1
+        for key in [k for k in self._pending if k != turn]:
+            task = self._pending.pop(key)
+            if not task.done():
+                task.cancel()
+                self.stats["cancelled"] += 1
+
+    async def close(self) -> None:
+        """Cancel every pending warmup (idempotent)."""
+        pending = list(self._pending.values())
+        self._pending.clear()
+        for task in pending:
+            if not task.done():
+                task.cancel()
+        for task in pending:
+            try:
+                await task
+            except (asyncio.CancelledError, Exception):
+                pass
 
 
 async def process_final(
@@ -538,16 +669,30 @@ async def amain(args: argparse.Namespace) -> dict:
         "lat_bus_ms": [], "claim_t_end": {}, "claim_bus_ts": {},
         "usage": {},
     }
+    prefetch = PrefetchManager()
 
     async def on_asr_event(ev: dict) -> None:
         etype = ev.get("type")
         if etype == "transcript.partial":
             state["partials"] += 1
+            # F2-3 (e): provisional text warms the fetch cache; the
+            # final below confirms/cancels. Never raises into ASR.
+            try:
+                payload = ev.get("payload", ev)
+                if isinstance(payload, dict):
+                    await prefetch.on_partial(
+                        payload.get("turn"), payload.get("text", ""))
+            except Exception:
+                pass
             return
         turn = flatten_final(ev)
         if turn is None:
             return
         state["finals"] += 1
+        try:
+            prefetch.on_final(turn.get("turn"))
+        except Exception:
+            pass
         print(f"[m1e] final turn={turn.get('turn')} "
               f"t=[{turn.get('t_start')},{turn.get('t_end')}] "
               f"{str(turn.get('text'))[:90]}", flush=True)
@@ -582,6 +727,10 @@ async def amain(args: argparse.Namespace) -> dict:
     finally:
         sim_code, demux_code = await asyncio.to_thread(demux.wait)
         await asyncio.sleep(2.5 if with_server else 0.0)  # drain WS fan-out
+        try:
+            await prefetch.close()
+        except Exception:
+            pass
         stop.set()
         if sub_task is not None:
             await sub_task
@@ -635,6 +784,8 @@ async def amain(args: argparse.Namespace) -> dict:
         "asr_usd": round(asr_usd, 4),
         "model_prompt_tokens": prompt_tokens,
         "model_completion_tokens": completion_tokens,
+        "model_cached_tokens": state["usage"].get("cached_tokens", 0),
+        "prefetch": dict(prefetch.stats),
         "model_usd": round(model_usd, 4),
         "total_usd": round(asr_usd + model_usd, 4),
         "truth": truth_counts(),

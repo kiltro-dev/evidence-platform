@@ -216,3 +216,8 @@ Atribución de los +14 decididos/corrida:
 - `live/tests/test_f2_recall.py`: NUEVO (43 tests).
 - `live/tests/test_m2b_swarm.py`, `live/tests/test_m2c_e2e.py`: ajustes
   §3.
+
+## Retención (medida por integrador, 2026-11-01, 1× por brazo, sin abrir claims para ajustar)
+Atlas 12/18 (0.667) 12/12 [0.757,1.000], 0 falsos-C/S, p50/p95 82.8/90.1s, $0.0189/claim.
+Baseline 18/18 [0.824,1.000], p50/p95 9.7/33.8s, $0.031/claim.
+Dev 0.611 → retención 0.667: generaliza. Reporte: `data/runs/f2retention-report.json`.

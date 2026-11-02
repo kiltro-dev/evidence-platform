@@ -143,8 +143,9 @@ def test_offline_pipeline_model_double():
         assert len(detected) == 2
         assert detected[0]["resolved"] == detected[0]["text"]
         assert detected[1]["resolved"] is None
+        # F2-3: collect_usage also folds cached_tokens (0 here).
         assert usage == {"seq": 3, "prompt_tokens": 300,
-                         "completion_tokens": 60}
+                         "completion_tokens": 60, "cached_tokens": 0}
         assert len(bus.history("claim.state")) == 2
 
 

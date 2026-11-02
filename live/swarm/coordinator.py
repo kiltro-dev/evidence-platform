@@ -6,10 +6,16 @@ API URL + web_search) -> responsible fetch + snapshots -> RECUPERADOR
 second retrieval round -> ``claim.evidence`` with EvidencePackage-compat
 dicts (M2a ``live/evidence/package.py`` validates the final schema).
 
-Resilience: semaphore-limited parallelism (4), 90 s deadline per claim,
+Resilience: semaphore-limited parallelism (8), 120 s deadline per claim,
 per-claim token budget, graceful degradation (no network/model ->
 zero packages, never invented quotes). All blocking I/O (model, fetch,
 search) runs in worker threads; the event loop only orchestrates.
+
+F2-3 latency: the deadline is enforced per ROUND (graceful abort keeps
+packages + an honest note; ``asyncio.wait_for`` stays as the backstop),
+and a primary verbatim quote whose figure matches the claim within the
+(untouched) verifier tolerance closes the extra rounds early
+(``claim.early_exit``; kill-switch ``SwarmConfig.early_exit_enabled``).
 """
 
 from __future__ import annotations
@@ -43,8 +49,11 @@ from .roles import (
 
 log = logging.getLogger(__name__)
 
-CLAIM_DEADLINE_S = 90.0
-MAX_CONCURRENCY = 4
+CLAIM_DEADLINE_S = 120.0
+# F2-3: hard backstop = soft budget + slack. Rounds abort gracefully at
+# the soft budget; only a single hanging call can reach the backstop.
+CLAIM_DEADLINE_SLACK_S = 30.0
+MAX_CONCURRENCY = 8
 MAX_TOOL_ROUNDS = 4
 MODEL_MAX_TOKENS = 1500
 MODEL_REASONING_EFFORT = "low"
@@ -600,6 +609,7 @@ class SwarmConfig:
     max_tool_rounds: int = MAX_TOOL_ROUNDS
     model_max_tokens: int = MODEL_MAX_TOKENS
     reasoning_effort: str | None = MODEL_REASONING_EFFORT
+    early_exit_enabled: bool = True  # F2-3 kill-switch (default: on)
 
 
 @dataclass
@@ -619,6 +629,10 @@ class SwarmReport:
     total_usage: dict = field(default_factory=dict)
     started_at: str = ""
     finished_at: str = ""
+    # F2-3 contention telemetry (additive; 0 when run_swarm was not used).
+    max_concurrency: int = 0
+    peak_inflight: int = 0  # max simultaneous run_claim bodies
+    sem_wait_s_max: float = 0.0  # worst semaphore acquisition wait
 
 
 class _Usage:
@@ -1222,6 +1236,80 @@ def build_package(claim_id: str, url: str, quote: str, doc: Doc,
 
 
 # ---------------------------------------------------------------------------
+# F2-3 early exit (primary verbatim quote + numeric match closes rounds)
+# ---------------------------------------------------------------------------
+
+def _default_rel_tolerance() -> float:
+    """Verifier tolerance, READ-ONLY (F2-3 reuses, never changes it)."""
+    for path in ("src.atlas.core.compare", "atlas.core.compare"):
+        value = _try_import(path, "DEFAULT_REL_TOLERANCE")
+        if isinstance(value, (int, float)) and value > 0:
+            return float(value)
+    return 0.02
+
+
+def _is_year_value(num: dict) -> bool:
+    """True for bare 4-digit years (never a figure match)."""
+    try:
+        value = float(num.get("value", 0.0))
+        scale_raw = str(num.get("scale_raw") or "")
+    except (TypeError, ValueError):
+        return True
+    return (
+        not scale_raw
+        and value == int(value)
+        and 1960 <= int(value) <= 2100
+    )
+
+
+def early_exit_reason(packages: list[dict] | None, text: str) -> str | None:
+    """Reason to close extra rounds, or None (F2-3, pure).
+
+    Fires when some PRIMARY package carries a verbatim quote (every
+    shipped package is verbatim by construction) with a figure within
+    the verifier tolerance of a claim figure. Years never match.
+    The verifier still decides the verdict from the kept packages;
+    this only skips further ROUNDS (model loop / redteam).
+    """
+    try:
+        claim_nums = [n for n in numbers_from_quote(text or "")
+                      if not _is_year_value(n)]
+    except Exception:
+        return None
+    if not claim_nums:
+        return None
+    tol = _default_rel_tolerance()
+    for pkg in packages or []:
+        if not isinstance(pkg, dict):
+            continue
+        if pkg.get("source_type") != "primary":
+            continue
+        quote = pkg.get("quote")
+        if not isinstance(quote, str) or not quote.strip():
+            continue
+        try:
+            quote_nums = [n for n in numbers_from_quote(quote)
+                          if not _is_year_value(n)]
+        except Exception:
+            continue
+        for qn in quote_nums:
+            for cn in claim_nums:
+                try:
+                    denom = max(abs(float(cn["value"])),
+                                abs(float(qn["value"])), 1e-12)
+                    rel = abs(float(cn["value"]) - float(qn["value"])) / denom
+                except (TypeError, ValueError):
+                    continue
+                if rel <= tol:
+                    url = pkg.get("url", "")
+                    return (
+                        f"primary {url} quotes a figure within "
+                        f"{tol:.0%} of the claim"
+                    )
+    return None
+
+
+# ---------------------------------------------------------------------------
 # per-claim pipeline
 # ---------------------------------------------------------------------------
 
@@ -1235,6 +1323,14 @@ class _ClaimCtx:
         self.usage = _Usage()
         self.packages: list[dict] = []
         self._seen_quotes: set[tuple[str, str]] = set()
+        # F2-3: monotonic per-claim budget; rounds abort gracefully when
+        # it lapses (wait_for in run_claim stays as the hard backstop).
+        self._deadline_mono = (
+            time.monotonic() + float(config.claim_deadline_s or 0.0))
+
+    def expired(self) -> bool:
+        """True when the per-claim time budget has lapsed."""
+        return time.monotonic() >= self._deadline_mono
 
     async def complete(self, system: str, user: str,
                        schema: dict | None) -> dict:
@@ -1350,6 +1446,8 @@ async def _recuperador_loop(ctx: _ClaimCtx, seed_user: str,
     """RECUPERADOR tool loop: model calls tools until final/rounds out."""
     transcript = seed_user
     for _ in range(max(1, max_rounds)):
+        if ctx.expired():  # F2-3: graceful round abort (packages kept)
+            return
         step = await ctx.complete(
             RECUPERADOR_SYSTEM, transcript, RECUPERADOR_SCHEMA)
         calls, final = parse_tool_step(step)
@@ -1387,6 +1485,8 @@ async def _recuperador_loop(ctx: _ClaimCtx, seed_user: str,
             "Continue: more tool_calls, or final with findings."
         )
     # Rounds exhausted without final: one last forced-final call.
+    if ctx.expired():  # F2-3: no forced call on a lapsed budget
+        return
     try:
         step = await ctx.complete(
             RECUPERADOR_SYSTEM,
@@ -1412,6 +1512,9 @@ async def _ground_claim(ctx: _ClaimCtx, plan: dict) -> None:
             ctx.tools.wb_lookup(plan["indicator"], plan["iso3"],
                                 plan.get("year"))
             _maybe_add_wb_fallback(ctx, plan)
+        if (ctx.config.early_exit_enabled
+                and early_exit_reason(ctx.packages, ctx.text) is not None):
+            return  # F2-3: primary match in hand; skip the web pool
         pooled: list[dict] = []
         seen: set[str] = set()
         for query in build_search_queries(plan, ctx.text):
@@ -1431,6 +1534,17 @@ async def _ground_claim(ctx: _ClaimCtx, plan: dict) -> None:
                 ctx.tools.fetch_url(url)
 
     await asyncio.to_thread(_ground_sync)
+
+
+def _expired_note(ctx: _ClaimCtx, stage: str) -> str:
+    """Honest degraded note for a lapsed per-claim budget (F2-3)."""
+    try:
+        budget = float(ctx.config.claim_deadline_s)
+    except (TypeError, ValueError):
+        budget = CLAIM_DEADLINE_S
+    kept = len(ctx.packages)
+    return (f"claim deadline {budget:g}s exceeded at {stage} "
+            f"({kept} packages kept)")
 
 
 async def _run_claim_inner(ctx: _ClaimCtx) -> str:
@@ -1454,6 +1568,13 @@ async def _run_claim_inner(ctx: _ClaimCtx) -> str:
     except Exception as exc:
         log.warning("grounding failed for %s: %r", ctx.claim_id, exc)
 
+    # F2-3: a primary verbatim figure already matching the claim closes
+    # the model rounds (the verifier still decides from kept packages).
+    if ctx.config.early_exit_enabled:
+        reason = early_exit_reason(ctx.packages, ctx.text)
+        if reason is not None:
+            return f"early-exit(grounding): {reason}"
+
     # 3. RECUPERADOR tool loop over grounded docs.
     seed = (
         f"claim_id: {ctx.claim_id}\nclaim: {ctx.text}\n"
@@ -1468,8 +1589,18 @@ async def _run_claim_inner(ctx: _ClaimCtx) -> str:
         return "budget exhausted at recuperador"
     except Exception as exc:
         log.warning("recuperador failed for %s: %r", ctx.claim_id, exc)
+    if ctx.expired():  # F2-3: graceful abort (packages kept, honest note)
+        return _expired_note(ctx, "recuperador")
+
+    # F2-3: same match after the model loop skips the redteam round.
+    if ctx.config.early_exit_enabled:
+        reason = early_exit_reason(ctx.packages, ctx.text)
+        if reason is not None:
+            return f"early-exit(recuperador): {reason}"
 
     # 4. REDTEAM counter-query -> second retrieval round.
+    if ctx.expired():  # F2-3: no new round on a lapsed budget
+        return _expired_note(ctx, "redteam")
     try:
         red = await ctx.complete(
             REDTEAM_SYSTEM,
@@ -1537,19 +1668,40 @@ async def run_claim(bus: Any, tracker: Any, claim_id: str, text: str,
             bus, ctx, degraded=True, note="no model available")
 
     deadline = config.claim_deadline_s
+    hard_timeout = float(deadline or 0.0) + CLAIM_DEADLINE_SLACK_S
     try:
-        note = await asyncio.wait_for(_run_claim_inner(ctx), timeout=deadline)
+        note = await asyncio.wait_for(_run_claim_inner(ctx),
+                                      timeout=hard_timeout)
         degraded = note.startswith(
-            ("budget exhausted", "estructurador failed"))
+            ("budget exhausted", "estructurador failed",
+             "claim deadline"))
+        if note.startswith("early-exit"):  # F2-3: latency telemetry event
+            await _publish_early_exit(bus, ctx, note)
         return await _finish(bus, ctx, degraded=degraded, note=note)
     except (asyncio.TimeoutError, TimeoutError):
         return await _finish(
             bus, ctx, degraded=True,
-            note=f"deadline {deadline}s exceeded")
+            note=f"deadline {hard_timeout:g}s exceeded (hard backstop)")
     except Exception as exc:  # never break the swarm on one claim
         log.warning("claim %s failed: %r", claim_id, exc)
         return await _finish(
             bus, ctx, degraded=True, note=f"error: {type(exc).__name__}")
+
+
+async def _publish_early_exit(bus: Any, ctx: _ClaimCtx,
+                              note: str) -> None:
+    """Emit ``claim.early_exit`` telemetry (F2-3; never breaks the run)."""
+    if bus is None:
+        return
+    try:
+        await bus.publish({
+            "type": "claim.early_exit",
+            "claim_id": ctx.claim_id,
+            "reason": note,
+            "n_packages": len(ctx.packages),
+        })
+    except Exception as exc:
+        log.warning("claim.early_exit publish failed: %r", exc)
 
 
 async def _finish(bus: Any, ctx: _ClaimCtx, degraded: bool,
@@ -1581,14 +1733,26 @@ async def _finish(bus: Any, ctx: _ClaimCtx, degraded: bool,
 async def run_swarm(bus: Any, tracker: Any,
                     claims: list[tuple[str, str] | dict],
                     config: SwarmConfig | None = None) -> SwarmReport:
-    """Investigate N claims in parallel (semaphore 4)."""
+    """Investigate N claims in parallel (semaphore ``max_concurrency``)."""
     config = config or SwarmConfig()
     started = _utcnow_iso()
-    sem = asyncio.Semaphore(max(1, config.max_concurrency))
+    width = max(1, config.max_concurrency)
+    sem = asyncio.Semaphore(width)
+    # F2-3 contention telemetry: peak simultaneous bodies + worst wait.
+    telemetry = {"inflight": 0, "peak": 0, "wait_max": 0.0}
 
     async def _one(claim_id: str, text: str) -> ClaimResult:
+        queued_at = time.monotonic()
         async with sem:
-            return await run_claim(bus, tracker, claim_id, text, config)
+            telemetry["wait_max"] = max(
+                telemetry["wait_max"], time.monotonic() - queued_at)
+            telemetry["inflight"] += 1
+            telemetry["peak"] = max(telemetry["peak"],
+                                    telemetry["inflight"])
+            try:
+                return await run_claim(bus, tracker, claim_id, text, config)
+            finally:
+                telemetry["inflight"] -= 1
 
     async def _runner() -> list[ClaimResult]:
         tasks = []
@@ -1615,6 +1779,9 @@ async def run_swarm(bus: Any, tracker: Any,
         total_usage=total_usage,
         started_at=started,
         finished_at=_utcnow_iso(),
+        max_concurrency=width,
+        peak_inflight=telemetry["peak"],
+        sem_wait_s_max=round(telemetry["wait_max"], 3),
     )
 
 
@@ -1629,6 +1796,7 @@ __all__ = [
     "build_package",
     "build_search_queries",
     "doc_excerpts",
+    "early_exit_reason",
     "numbers_from_quote",
     "rank_hits_primary_first",
     "run_claim",

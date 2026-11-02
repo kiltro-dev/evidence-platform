@@ -332,26 +332,43 @@ def test_happy_path_emits_m2a_valid_package(tmp_path):
         "*": [{"url": "https://en.wikipedia.org/wiki/World_population",
                "title": "World population", "snippet": ""}],
     })
-    llm = FakeLLM([ESTRUCT_PLAN, _recup_final_wb(_wb_url("WLD", 2024)),
+    # F2-2: the model cites a LONGER verbatim span than the deterministic
+    # row rescue (identical spans dedup by design), so both paths are pinned.
+    model_quote = ('{"indicator": {"id": "SP.POP.TOTL"}, '
+                   '"country": {"id": "WLD"}, ' + WB_QUOTE)
+    assert model_quote in WB_BODY
+    llm = FakeLLM([ESTRUCT_PLAN,
+                   {"thought": "wb row answers it",
+                    "final": {"findings": [{"url": _wb_url("WLD", 2024),
+                                            "quote": model_quote}]}},
                    REDTEAM_SKIP])
+    # F2-3: this fixture's WB row matches the claim, so the default-on
+    # early exit would close the model rounds; pin the full model path.
     config = SwarmConfig(llm=llm, search_fn=search,
-                         fetch_fn=make_fetch_fn(bodies, str(tmp_path)))
+                         fetch_fn=make_fetch_fn(bodies, str(tmp_path)),
+                         early_exit_enabled=False)
     bus, tracker = _bus_tracker()
     result = asyncio.run(run_claim(
         bus, tracker, "T1-en",
         "We are 8.14 billion people sharing one planet.", config))
     assert result.degraded is False
-    assert len(result.packages) == 1
-    pkg = result.packages[0]
+    # F2-2: grounding adds one deterministic code package (WB row rescue)
+    # next to the model package; the pins below still hold on the MODEL one.
+    model_pkgs = [p for p in result.packages if p["extractor"] == "model"]
+    code_pkgs = [p for p in result.packages if p["extractor"] == "code"]
+    assert len(model_pkgs) == 1
+    assert len(code_pkgs) == 1
+    assert code_pkgs[0]["source_meta"] is not None
+    pkg = model_pkgs[0]
     assert pkg["claim_id"] == "T1-en"
-    assert pkg["quote"] == WB_QUOTE
+    assert pkg["quote"] == model_quote
     assert pkg["source_type"] == "primary"
     assert pkg["extractor"] == "model"
-    assert pkg["offsets"][1] - pkg["offsets"][0] == len(WB_QUOTE)
+    assert pkg["offsets"][1] - pkg["offsets"][0] == len(model_quote)
     # quote greps in its snapshot (fake fetch wrote it under tmp_path)
     snap = open(str(tmp_path / f"{pkg['sha256']}.html"),
                 encoding="utf-8").read()
-    assert WB_QUOTE in snap
+    assert model_quote in snap
     # M2a validates the final schema
     from live.evidence.package import EvidencePackage
 
@@ -457,8 +474,10 @@ def test_redteam_counter_query_triggers_second_round(tmp_path):
                    "quote": WIKI_QUOTE}]}}
     llm = FakeLLM([ESTRUCT_PLAN, _recup_final_wb(_wb_url("WLD", 2024)),
                    redteam, final2, REDTEAM_SKIP])
+    # F2-3: pin the full redteam round (default-on exit would close it).
     config = SwarmConfig(llm=llm, search_fn=search,
-                         fetch_fn=make_fetch_fn(bodies, str(tmp_path)))
+                         fetch_fn=make_fetch_fn(bodies, str(tmp_path)),
+                         early_exit_enabled=False)
     bus, tracker = _bus_tracker()
     result = asyncio.run(run_claim(bus, tracker, "c-red",
                                    "We are 8.14 billion people on this planet.",
@@ -476,7 +495,10 @@ def test_deadline_degrades(tmp_path):
             return super().complete_json(*a, **k)
 
     llm = SlowLLM([ESTRUCT_PLAN])
+    # F2-3: stub search (the soft/hard split lets grounding run past the
+    # tiny budget; without the stub this offline test would hit network).
     config = SwarmConfig(llm=llm, claim_deadline_s=0.05,
+                         search_fn=make_search_fn({}),
                          fetch_fn=make_fetch_fn({}, str(tmp_path)))
     bus, tracker = _bus_tracker()
     result = asyncio.run(run_claim(bus, tracker, "c-slow", "Slow claim.",
@@ -504,8 +526,10 @@ def test_malformed_reply_retried_once(tmp_path):
     llm = FlakyLLM([dict(ESTRUCT_PLAN),
                     _recup_final_wb(_wb_url("WLD", 2024)),
                     dict(REDTEAM_SKIP)])
+    # F2-3: pin the full retry path (default-on exit would close rounds).
     config = SwarmConfig(llm=llm, search_fn=search,
-                         fetch_fn=make_fetch_fn(bodies, str(tmp_path)))
+                         fetch_fn=make_fetch_fn(bodies, str(tmp_path)),
+                         early_exit_enabled=False)
     bus, tracker = _bus_tracker()
     result = asyncio.run(run_claim(
         bus, tracker, "c-flaky",
@@ -584,8 +608,10 @@ def test_run_swarm_entrypoint(tmp_path):
     llm = FakeLLM([dict(ESTRUCT_PLAN),
                    _recup_final_wb(_wb_url("WLD", 2024)),
                    dict(REDTEAM_SKIP)])
+    # F2-3: pin the full 3-call path (default-on exit would close rounds).
     config = SwarmConfig(llm=llm, search_fn=search,
-                         fetch_fn=make_fetch_fn(bodies, str(tmp_path)))
+                         fetch_fn=make_fetch_fn(bodies, str(tmp_path)),
+                         early_exit_enabled=False)
     bus, tracker = _bus_tracker()
     report = asyncio.run(run_swarm(
         bus, tracker,

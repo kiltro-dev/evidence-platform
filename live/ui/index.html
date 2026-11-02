@@ -63,6 +63,8 @@
   .claim .evd, .claim .ver { font-size:13px; margin-top:6px; padding:6px 10px;
     border-radius:8px; background:#0d1220; border:1px solid var(--line); }
   .claim .ver { font-weight:700; }
+  .claim .prog { font-size:12px; color:var(--mut); margin-top:6px; }
+  .claim .ver.v-provisional { color:var(--warn); border-style:dashed; font-weight:700; }
   .badge { display:inline-block; font-size:12px; font-weight:800; padding:2px 12px;
     border-radius:14px; margin-right:8px; vertical-align:middle; }
   .st-escuchada { color:var(--acc); border:1px solid var(--acc); }
@@ -204,7 +206,9 @@
       bannerReplay:"REPLAY DE CORRIDA REAL", investigating:"investiga",
       pkgs:"paquetes", degraded:"degradado", noAgents:"Sin agentes activos.",
       reasons:"motivos", done:"replay terminado", seeking:"vídeo →",
-      demoOnlyLive:"demo disponible solo en modo en vivo" },
+      demoOnlyLive:"demo disponible solo en modo en vivo",
+      prov:"provisional", corrected:"corrección: provisional → final",
+      srcs:"fuentes", quotes:"citas", early:"salida temprana" },
     en: { live:"LIVE", down:"OFFLINE", conn:"connecting…",
       heard:"heard", inv:"investigating", verd:"verdict",
       res:"resolved:", demoOf:"demo", turnOf:"turn",
@@ -212,7 +216,9 @@
       bannerReplay:"REAL-RUN REPLAY", investigating:"investigating",
       pkgs:"packages", degraded:"degraded", noAgents:"No active agents.",
       reasons:"reasons", done:"replay finished", seeking:"video →",
-      demoOnlyLive:"demo available in live mode only" }
+      demoOnlyLive:"demo available in live mode only",
+      prov:"provisional", corrected:"correction: provisional → final",
+      srcs:"sources", quotes:"quotes", early:"early exit" }
   };
   var subsEl = document.getElementById("subs");
   var claimsEl = document.getElementById("claims");
@@ -356,7 +362,8 @@
     var cls = "badge st-" + c.state;
     if (c.ver) cls += " v-" + c.ver;
     c.badge.className = cls;
-    c.badge.textContent = stateLabel(c.state) + (c.ver ? " · " + c.ver : "");
+    c.badge.textContent = stateLabel(c.state) + (c.ver ? " · " + c.ver : "") +
+      (c.prov ? " · " + STR[lang].prov : "");
   }
   function setState(ev){
     var c = cards[ev.claim_id]; if (!c) return;
@@ -378,26 +385,71 @@
       (ev.degraded ? " · ⚠ " + STR[lang].degraded : "") +
       (ev.note ? " · " + ev.note : "");
     c.el.appendChild(d);
+    // F2-3: real intermediate progress DERIVED from this existing
+    // event (no new bus traffic): unique urls = sources, packages =
+    // quotes. Same renderer as an explicit claim.progress frame.
+    var seen = {};
+    pkgs.forEach(function(p){ if (p && p.url) seen[p.url] = 1; });
+    renderProgress(ev.claim_id, Object.keys(seen).length, pkgs.length);
     renderTheater();
+  }
+  function renderProgress(id, n_sources, n_quotes){
+    var c = cards[id]; if (!c) return;
+    if (typeof n_sources !== "number" || typeof n_quotes !== "number") return;
+    c.prog = { n_sources: n_sources, n_quotes: n_quotes };
+    var old = c.el.querySelector(".prog"); if (old) old.remove();
+    var d = document.createElement("div");
+    d.className = "prog";
+    d.textContent = "⏳ " + n_sources + " " + STR[lang].srcs + " · " +
+      n_quotes + " " + STR[lang].quotes;
+    c.el.appendChild(d);
+  }
+  function addProgress(ev){
+    // Tolerated explicit frame {claim_id, n_sources, n_quotes}; the
+    // backend currently derives progress from claim.evidence instead.
+    renderProgress(ev.claim_id, ev.n_sources, ev.n_quotes);
   }
   function addVerdict(ev){
     var c = cards[ev.claim_id]; if (!c) return;
+    var provisional = ev.provisional === true;
+    var wasProv = !!c.prov;
     c.ver = ev.verdict || "unverifiable";
-    if (c.state !== "veredicto") {
-      // Silent promotion: the official claim.state=veredicto event
-      // adds the history line when it arrives (no double line).
-      c.state = "veredicto";
-      c.el.className = "card claim st-veredicto";
+    c.prov = provisional;
+    if (!provisional) {
+      if (c.state !== "veredicto") {
+        // Silent promotion: the official claim.state=veredicto event
+        // adds the history line when it arrives (no double line).
+        c.state = "veredicto";
+        c.el.className = "card claim st-veredicto";
+      }
+      if (wasProv) {
+        // Correction: the labeled provisional verdict is superseded.
+        var line = document.createElement("div");
+        line.textContent = clock() + " · " + STR[lang].corrected;
+        c.hist.appendChild(line);
+      }
     }
     paintBadge(ev.claim_id);
     var old = c.el.querySelector(".ver"); if (old) old.remove();
     var d = document.createElement("div");
-    d.className = "ver v-" + c.ver;
+    d.className = provisional ? "ver v-provisional" : "ver v-" + c.ver;
     var reasons = Array.isArray(ev.reasons) ? ev.reasons.join("; ") : "";
-    d.textContent = "⚖ " + c.ver + (reasons ? " · " + STR[lang].reasons + ": " + reasons : "");
+    d.textContent = "⚖ " + c.ver +
+      (provisional ? " · " + STR[lang].prov : "") +
+      (reasons ? " · " + STR[lang].reasons + ": " + reasons : "");
     c.el.appendChild(d);
+    if (provisional) return;  // investigation continues; no timeline close
     paintTlDot(ev.claim_id);
     theaterDone(ev.claim_id);
+  }
+  function addEarlyExit(ev){
+    // F2-3 telemetry: rounds closed early (history line only).
+    var c = cards[ev.claim_id]; if (!c) return;
+    var line = document.createElement("div");
+    var why = (ev.reason || "").slice(0, 160);
+    line.textContent = clock() + " · " + STR[lang].early +
+      (why ? " · " + why : "");
+    c.hist.appendChild(line);
   }
 
   function theaterState(id, state, actor){
@@ -507,6 +559,8 @@
     else if (ev.type === "claim.state") setState(ev);
     else if (ev.type === "claim.evidence") addEvidence(ev);
     else if (ev.type === "claim.verdict") addVerdict(ev);
+    else if (ev.type === "claim.progress") addProgress(ev);
+    else if (ev.type === "claim.early_exit") addEarlyExit(ev);
     else if (ev.type === "replay.done") {
       replayStatus.textContent = STR[lang].done + " · " + (ev.events || 0) + " events";
       paintBanner();

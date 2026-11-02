@@ -88,8 +88,17 @@ def create_app(
     app.state.latencies: list[float] = []
     app.state.sockets: set[WebSocket] = set()
     app.state.context: list[dict] = []  # last turns, for coreference
+    # F2-3: per-type event counts (early_exit/progress telemetry flows
+    # through the same broadcast; keys appear on first sight).
+    app.state.event_counts: dict[str, int] = {}
 
     async def _broadcast(event: dict) -> None:
+        try:
+            etype = str(event.get("type", "?"))
+            counts = app.state.event_counts
+            counts[etype] = counts.get(etype, 0) + 1
+        except Exception:
+            pass
         dead: list[WebSocket] = []
         line = json.dumps(event, ensure_ascii=False)
         for ws in app.state.sockets:
@@ -112,6 +121,7 @@ def create_app(
         return {
             "events": len(bus.history()),
             "latency_ms": latency_summary(app.state.latencies),
+            "events_by_type": dict(app.state.event_counts),
         }
 
     @app.get("/", response_class=HTMLResponse)

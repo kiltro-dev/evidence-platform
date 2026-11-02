@@ -116,7 +116,7 @@ def test_runner_reuses_run_verify_pipeline():
     from live import run_verify
 
     assert callable(run_verify.run_claim)
-    assert run_verify.MAX_CONCURRENCY == 4
+    assert run_verify.MAX_CONCURRENCY == 8  # F2-3: 4 -> 8 (reuse pin kept)
 
 
 # ---------------------------------------------------------------------------
