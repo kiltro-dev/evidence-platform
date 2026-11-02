@@ -130,15 +130,17 @@ def _():
     assert "[0.757, 1.000]" in panels()
 
 
-@check("R8 ret F2-7 p50 3.4s en panel + addendum historico intacto")
+@check("R8 ret F2-9 p50 4.8/p95 40.8/$0.0067 en panel + addendum intacto")
 def _():
     ad = addendum()
     assert "0 falsos-C/S" in ad
     assert "$0.0189/claim" in ad and "82.8/90.1s" in ad  # F2-2 historico
     h = panels()
-    assert "p50 3.4s" in h and "antes p50 82.8s" in h
-    assert bv.F2R["ret_p50"] == 3.4
-    # Fuente: cifras ejecutadas del brief F2-6b (ver live/F2_VIDEO2.md).
+    assert "p50 4.8s" in h and "p95 40.8s" in h and "$0.0067" in h
+    assert "antes p50 82.8s" in h and "Latencia F2-9" in h
+    assert bv.F2R["ret_p50"] == 4.8 and bv.F2R["ret_p95"] == 40.8
+    assert bv.F2R["ret_cost"] == 0.0067
+    # Fuente: cifras ejecutadas del brief F2-6c (ver live/F2_VIDEO3.md).
     # Sello: este QA jamas abre live/eval2/retention.json ni runs f2ret*.
 
 
@@ -206,90 +208,110 @@ def _():
 
 
 # ------------------------------------------------------------- latencia
-@check("L1 wall F2-7 ~108/run vs 372.4 = -71%")
+@check("L1 wall F2-9 ~78/run vs 372.4 = -79%")
 def _():
-    lat2 = J("data/runs/f2lat2-final-report.json")
+    lat9 = J("data/runs/f2p95-final-report.json")
     lat = J("data/runs/f2lat-atlas-report.json")
-    assert abs(lat2["wall_s"] - 216.1) < 0.5, lat2["wall_s"]
+    assert abs(lat9["wall_s"] - 155.3) < 0.5, lat9["wall_s"]
     assert abs(lat["wall_s"] - 372.4) < 0.05, lat["wall_s"]
-    per_run = lat2["wall_s"] / 2
-    assert abs(per_run - 108.0) < 0.5, per_run
+    per_run = lat9["wall_s"] / 2
+    assert round(per_run) == 78, per_run
     pct = (lat["wall_s"] - per_run) / lat["wall_s"] * 100
-    assert round(pct) == 71, pct
+    assert round(pct) == 79, pct
     h = panels()
-    for s in ("372.4s", "~108s", "71%", "216.1s"):
+    for s in ("372.4s", "~78s", "79%", "155.3s"):
         assert s in h, s
 
 
-@check("L2 p50 4.3/4.5 + p95 79.1/73.3 MISS honesto vs meta 60")
+@check("L2 p50 4.9/5.0 + p95 40.7/38.9 CUMPLE vs meta 60 (0 >60s)")
 def _():
-    lat2 = J("data/runs/f2lat2-final-report.json")
-    l1 = lat2["panels"]["atlas-run1"]["latency_s"]
-    l2 = lat2["panels"]["atlas-run2"]["latency_s"]
-    assert round(l1["p50"], 1) == 4.3 and round(l2["p50"], 1) == 4.5
-    assert round(l1["p95"], 1) == 79.1 and round(l2["p95"], 1) == 73.3
-    assert l1["p95"] > 60 and l2["p95"] > 60, "p95 debe MISS la meta 60"
+    lat9 = J("data/runs/f2p95-final-report.json")
+    l1 = lat9["panels"]["atlas-run1"]["latency_s"]
+    l2 = lat9["panels"]["atlas-run2"]["latency_s"]
+    assert round(l1["p50"], 1) == 4.9 and round(l2["p50"], 1) == 5.0
+    assert round(l1["p95"], 1) == 40.7 and round(l2["p95"], 1) == 38.9
+    assert l1["p95"] <= 60 and l2["p95"] <= 60, "p95 debe CUMPLIR <=60"
     assert l1["p50"] <= 25 and l2["p50"] <= 25, "p50 debe cumplir <=25"
+    # 0 claims >60s en ambas corridas F2-9; antes 7 en F2-7 r1.
+    for f in ("data/runs/f2p95-final-atlas-run1.json",
+              "data/runs/f2p95-final-atlas-run2.json"):
+        n = sum(1 for c in J(f)["claims"] if c["latency_s"] > 60)
+        assert n == 0, (f, n)
+    n0 = sum(1 for c in J("data/runs/f2lat2-final-atlas-run1.json")["claims"]
+             if c["latency_s"] > 60)
+    assert n0 == 7, n0
     h = panels()
-    for s in ("4.3s", "4.5s", "79.1s", "73.3s", "MISS", "60"):
+    for s in ("4.9s", "5.0s", "40.7s", "38.9s", "CUMPLE", "60", "0 claims"):
         assert s in h, s
+    assert "MISS" not in h, "el video F2-6c corrige el MISS de F2-6b"
 
 
-@check("L3 EE-apoyo 9+9 med 4.1/3.0 (rango 2.4-4.9)")
+@check("L3 EE-apoyo 9+9 med 3.6/4.2 (rango 2.9-5.6)")
 def _():
     got = []
-    for f in ("data/runs/f2lat2-final-atlas-run1.json",
-              "data/runs/f2lat2-final-atlas-run2.json"):
+    for f in ("data/runs/f2p95-final-atlas-run1.json",
+              "data/runs/f2p95-final-atlas-run2.json"):
         d = J(f)
         ee = sorted(c["latency_s"] for c in d["claims"]
                     if "quotes a figure within 2%" in (c.get("note") or ""))
         assert len(ee) == 9, (f, len(ee))
         got.append(ee)
-    assert round(percentile(got[0], 50), 1) == 4.1
-    assert round(percentile(got[1], 50), 1) == 3.0
+    assert round(percentile(got[0], 50), 1) == 3.6
+    assert round(percentile(got[1], 50), 1) == 4.2
     lo = min(min(g) for g in got)
     hi = max(max(g) for g in got)
-    assert (round(lo, 1), round(hi, 1)) == (2.4, 4.9), (lo, hi)
-    assert "4.1/3.0s" in panels() and "2.4-4.9s" in panels()
+    assert (round(lo, 1), round(hi, 1)) == (2.9, 5.6), (lo, hi)
+    assert "3.6/4.2s" in panels() and "2.9-5.6s" in panels()
 
 
-@check("L4 refute 11 med 3.9/3.5 + lento 9/8 + ddl 7x~76 + D3 37.3")
+@check("L4 refute 11 med 3.8/3.8 + lento 8/9 + abort 7x~38 + D5 30.1")
 def _():
-    refs, slows, ddls = [], [], []
-    for f in ("data/runs/f2lat2-final-atlas-run1.json",
-              "data/runs/f2lat2-final-atlas-run2.json"):
+    refs, slows, aborts = [], [], []
+    for f in ("data/runs/f2p95-final-atlas-run1.json",
+              "data/runs/f2p95-final-atlas-run2.json"):
         d = J(f)
         refs.append(sorted(c["latency_s"] for c in d["claims"]
                            if "refutes:" in (c.get("note") or "")))
         slows.append(sorted(c["latency_s"] for c in d["claims"]
                             if (c.get("note") or "")
                             == "done (redteam deferred)"))
-        ddls.append(sorted(c["latency_s"] for c in d["claims"]
-                           if "claim deadline 70s exceeded"
-                           in (c.get("note") or "")))
+        aborts.append(sorted(c["latency_s"] for c in d["claims"]
+                             if "early-abort" in (c.get("note") or "")))
     assert [len(v) for v in refs] == [11, 11]
-    assert [len(v) for v in slows] == [9, 8]
-    assert [len(v) for v in ddls] == [7, 7]
-    assert round(percentile(refs[0], 50), 1) == 3.9
-    assert round(percentile(refs[1], 50), 1) == 3.5
+    assert [len(v) for v in slows] == [8, 9]
+    assert [len(v) for v in aborts] == [7, 7]
+    assert round(percentile(refs[0], 50), 1) == 3.8
+    assert round(percentile(refs[1], 50), 1) == 3.8
     assert (round(min(min(r) for r in refs), 1),
-            round(max(max(r) for r in refs), 1)) == (2.6, 5.3)
-    assert round(percentile(slows[0], 50), 1) == 25.3
-    assert round(percentile(slows[1], 50), 1) == 26.1
+            round(max(max(r) for r in refs), 1)) == (2.7, 11.0)
+    assert round(percentile(slows[0], 50), 1) == 28.0
+    assert round(percentile(slows[1], 50), 1) == 28.4
     assert (round(min(min(s) for s in slows), 1),
-            round(max(max(s) for s in slows), 1)) == (21.5, 29.0)
-    assert round(percentile(ddls[0], 50), 1) == 75.9
-    assert round(percentile(ddls[1], 50), 1) == 72.9
-    assert (round(min(min(x) for x in ddls), 1),
-            round(max(max(x) for x in ddls), 1)) == (70.1, 81.1)
-    # D3-run2 budget 37.3s, mismo veredicto que r1.
-    r1 = J("data/runs/f2lat2-final-atlas-run1.json")["claims"]
-    r2 = J("data/runs/f2lat2-final-atlas-run2.json")["claims"]
-    d3_1 = next(c for c in r1 if c["claim_id"] == "F2D-D3")
-    d3_2 = next(c for c in r2 if c["claim_id"] == "F2D-D3")
-    assert d3_1["verdict"] == d3_2["verdict"] == "unverifiable"
-    assert round(d3_2["latency_s"], 1) == 37.3
-    assert d3_2["note"] == "budget exhausted at recuperador"
+            round(max(max(s) for s in slows), 1)) == (23.3, 33.1)
+    assert round(percentile(aborts[0], 50), 1) == 38.2
+    assert round(percentile(aborts[1], 50), 1) == 38.1
+    assert (round(min(min(x) for x in aborts), 1),
+            round(max(max(x) for x in aborts), 1)) == (35.8, 41.3)
+    # Cola abortada: exacto A3+B1-B6 en ambas corridas; 529.8->273.6s.
+    for f in ("data/runs/f2p95-final-atlas-run1.json",
+              "data/runs/f2p95-final-atlas-run2.json"):
+        ids = sorted(c["claim_id"] for c in J(f)["claims"]
+                     if "early-abort" in (c.get("note") or ""))
+        assert ids == ["F2D-A3", "F2D-B1", "F2D-B2", "F2D-B3",
+                       "F2D-B4", "F2D-B5", "F2D-B6"], (f, ids)
+    old = [c["latency_s"]
+           for c in J("data/runs/f2lat2-final-atlas-run1.json")["claims"]
+           if "claim deadline 70s exceeded" in (c.get("note") or "")]
+    assert round(sum(old)) == 530, sum(old)
+    assert round(sum(aborts[0])) == 274, sum(aborts[0])
+    # D5-run1 budget 30.1s, mismo veredicto que r1/r2.
+    r1 = J("data/runs/f2p95-final-atlas-run1.json")["claims"]
+    r2 = J("data/runs/f2p95-final-atlas-run2.json")["claims"]
+    d5_1 = next(c for c in r1 if c["claim_id"] == "F2D-D5")
+    d5_2 = next(c for c in r2 if c["claim_id"] == "F2D-D5")
+    assert d5_1["verdict"] == d5_2["verdict"] == "unverifiable"
+    assert round(d5_1["latency_s"], 1) == 30.1
+    assert d5_1["note"] == "budget exhausted at recuperador"
     # Los 3 lentos que deciden son C1/C4/C6 en ambas corridas.
     for dd in (r1, r2):
         slow_dec = sorted(c["claim_id"].split("-")[-1] for c in dd
@@ -298,30 +320,31 @@ def _():
                           and c["verdict"] in ("supported", "contradicted"))
         assert slow_dec == ["C1", "C4", "C6"], slow_dec
     h = panels()
-    for s in ("3.9/3.5s", "2.6-5.3s", "25.3/26.1s", "21.5-29.0s",
-              "75.9/72.9s", "70.1-81.1s", "37.3s", "C1/C4/C6"):
+    for s in ("3.8/3.8s", "2.7-11.0s", "28.0/28.4s", "23.3-33.1s",
+              "38.2/38.1s", "35.8-41.3s", "30.1s", "C1/C4/C6",
+              "530s", "274s", "A3+B1-B6"):
         assert s in h, s
 
 
-@check("L5 F2-7 $/claim 0.0080/0.0086 + veredictos intactos 22/36")
+@check("L5 F2-9 $/claim 0.0073/0.0059 + veredictos intactos 22/36")
 def _():
-    lat2 = J("data/runs/f2lat2-final-report.json")
-    p1 = lat2["panels"]["atlas-run1"]
-    p2 = lat2["panels"]["atlas-run2"]
-    assert abs(p1["cost_per_claim_usd"] - 0.0080) < 1e-4
-    assert abs(p2["cost_per_claim_usd"] - 0.0086) < 1e-4
+    lat9 = J("data/runs/f2p95-final-report.json")
+    p1 = lat9["panels"]["atlas-run1"]
+    p2 = lat9["panels"]["atlas-run2"]
+    assert abs(p1["cost_per_claim_usd"] - 0.0073) < 1e-4
+    assert abs(p2["cost_per_claim_usd"] - 0.0059) < 1e-4
     for p in (p1, p2):
         assert (p["decided"], p["correct"]) == (22, 22)
         assert p["falsos_contradicted"] == []
         assert p["falsos_supported"] == []
-    # Mismos veredictos que F2-3, claim por claim, ambas corridas.
+    # Mismos veredictos que F2-7 (=F2-3), claim por claim, ambas corridas.
     v0 = {c["claim_id"]: c["verdict"]
-          for c in J("data/runs/f2lat-atlas-atlas-run1.json")["claims"]}
-    for f in ("data/runs/f2lat2-final-atlas-run1.json",
-              "data/runs/f2lat2-final-atlas-run2.json"):
+          for c in J("data/runs/f2lat2-final-atlas-run1.json")["claims"]}
+    for f in ("data/runs/f2p95-final-atlas-run1.json",
+              "data/runs/f2p95-final-atlas-run2.json"):
         v = {c["claim_id"]: c["verdict"] for c in J(f)["claims"]}
         assert v == v0, f
-    assert "0.0080" in panels() and "0.0086" in panels()
+    assert "0.0073" in panels() and "0.0059" in panels()
 
 
 # ----------------------------------------------------------------- voz
@@ -500,15 +523,16 @@ def _():
     assert narr_blocks()[10].startswith("Modelo propone")
 
 
-@check("N6 build config: cap 170 + voz ES + run ES + F2-7")
+@check("N6 build config: cap 170 + voz ES + run ES + F2-9")
 def _():
     assert bv.MAX_TOTAL_S == 170.0
     assert bv.ES_RUN == "run-es-native"
     assert bv.KEYNOTE.name == "keynote_es_native.mp4"
     assert (REPO / "data/runs/run-es-native.jsonl").is_file()
-    assert bv.F2LAT2_REPORT.is_file() and bv.F2LAT2_RUN1.is_file()
-    assert bv.F2LAT2_RUN2.is_file()
-    assert bv.F2L["p50_r1"] == 4.3 and bv.F2L["p95_meta"] == 60
+    assert bv.F2P95_REPORT.is_file() and bv.F2P95_RUN1.is_file()
+    assert bv.F2P95_RUN2.is_file()
+    assert bv.F2L["p50_r1"] == 4.9 and bv.F2L["p95_meta"] == 60
+    assert bv.F2L["p95_r1"] == 40.7 and bv.F2L["p95_r2"] == 38.9
 
 
 def main() -> int:

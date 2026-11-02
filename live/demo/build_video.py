@@ -84,6 +84,10 @@ F2LAT_RUN = REPO / "data/runs/f2lat-atlas-atlas-run1.json"
 F2LAT2_REPORT = REPO / "data/runs/f2lat2-final-report.json"
 F2LAT2_RUN1 = REPO / "data/runs/f2lat2-final-atlas-run1.json"
 F2LAT2_RUN2 = REPO / "data/runs/f2lat2-final-atlas-run2.json"
+# F2-6c: latencia F2-9 (antes=F2-3, despues=F2-9 r1/r2; F2-7 = ref intermedia).
+F2P95_REPORT = REPO / "data/runs/f2p95-final-report.json"
+F2P95_RUN1 = REPO / "data/runs/f2p95-final-atlas-run1.json"
+F2P95_RUN2 = REPO / "data/runs/f2p95-final-atlas-run2.json"
 EVAL2_REPORT = REPO / "data/runs/eval2-20261101-225539-report.json"
 FID_R1 = REPO / "data/runs/eval2-20261101-225539-baseline-run1.json.fidelity.json"
 FID_R2 = REPO / "data/runs/eval2-20261101-225539-baseline-run2.json.fidelity.json"
@@ -100,18 +104,19 @@ M7ES = {"t2_win": "0.0-18.5", "f3_win": "63.5-81.1", "gap": 59,
 # F2 recall/latencia/baseline/voz (verificadas en qa_video.py vs JSONs).
 F2R = {"dev_dec": 22, "dev_n": 36, "dev_wilson": "[0.851, 1.000]",
        "ret_dec": 12, "ret_n": 18, "ret_wilson": "[0.757, 1.000]",
-       "ret_p50": 3.4,  # F2-6b: brief ejecutado (retencion F2-7), ver F2_VIDEO2.md
+       # F2-6c: brief ejecutado (retencion F2-9), ver F2_VIDEO3.md
+       "ret_p50": 4.8, "ret_p95": 40.8, "ret_cost": 0.0067,
        "cats": "a 5/6 · b 0/6 · c 6/6 · d 0/6 · e 5/6 · f 6/6"}
-# F2-6b: latencia F2-7 (F2_LAT2.md §4 + f2lat2-final-*.json).
-F2L = {"wall_before": 372.4, "wall_after": 108.0, "wall_pct": 71,
+# F2-6c: latencia F2-9 (F2_P95.md §4 + f2p95-final-*.json).
+F2L = {"wall_before": 372.4, "wall_after": 77.7, "wall_pct": 79,
        "p50_before": 80.3, "p95_before": 115.7, "cost_before": 0.0227,
-       "p50_r1": 4.3, "p50_r2": 4.5, "p95_r1": 79.1, "p95_r2": 73.3,
-       "p95_meta": 60, "cost_r1": 0.0080, "cost_r2": 0.0086,
-       "ee_sup_n": 9, "ee_sup_med": "4.1/3.0", "ee_sup_rng": "2.4-4.9",
-       "ee_ref_n": 11, "ee_ref_med": "3.9/3.5", "ee_ref_rng": "2.6-5.3",
-       "slow_n": "9/8", "slow_med": "25.3/26.1", "slow_rng": "21.5-29.0",
-       "ddl_n": 7, "ddl_med": "75.9/72.9", "ddl_rng": "70.1-81.1",
-       "per_claim": 0.0080}
+       "p50_r1": 4.9, "p50_r2": 5.0, "p95_r1": 40.7, "p95_r2": 38.9,
+       "p95_meta": 60, "cost_r1": 0.0073, "cost_r2": 0.0059,
+       "ee_sup_n": 9, "ee_sup_med": "3.6/4.2", "ee_sup_rng": "2.9-5.6",
+       "ee_ref_n": 11, "ee_ref_med": "3.8/3.8", "ee_ref_rng": "2.7-11.0",
+       "slow_n": "8/9", "slow_med": "28.0/28.4", "slow_rng": "23.3-33.1",
+       "abort_n": 7, "abort_med": "38.2/38.1", "abort_rng": "35.8-41.3",
+       "per_claim": 0.0073}
 F2B = {"dev_ok": 70, "dev_n": 72, "dev_wilson": "[0.904, 0.992]",
        "ret_n": 18, "ret_wilson": "[0.824, 1.000]",
        "fid": "9/63 = 0.143", "fid_wilson": "[0.077, 0.250]",
@@ -136,8 +141,8 @@ EN_CUES = [
      "and a broken scale putting India above the United States. Two automatic flags."),
     ("The fair benchmark, v2: 36 dev claims and 18 sealed retention claims.",
      "Atlas decides 61% on dev and 67% on retention, with zero false contradicts in both."),
-    ("And now it's much faster: median down from 80 seconds to 4, at eight tenths of a cent per claim.",
-     "Honestly: the tail at 73 to 79 seconds misses our 60-second goal \u2014 set by the deadline queue."),
+    ("And now it's much faster: median down from 80 seconds to 5, at six to seven tenths of a cent per claim.",
+     "And the tail now meets our 60-second goal at 39 to 41 seconds \u2014 a no-progress abort cut the queue from 530 to 274 seconds."),
     ("The baseline, as is: 70 of 72 on dev and 18 of 18 on retention \u2014 it beats us on recall.",
      "But only 14% of its citations are faithful to the source, and it exports zero re-runnable proof."),
     ("Model proposes, code disposes. Our wedge: re-verifiable proof, zero false contradicts,",
@@ -421,33 +426,33 @@ PANELS_BODY = """
 <dl class="kv">
 <dt>Exactitud decidida</dt><dd class="mono">12/12 Wilson 95% [0.757, 1.000]</dd>
 <dt>Falsos-C / falsos-S</dt><dd class="big ok">0 / 0</dd>
-<dt>Latencia F2-7</dt><dd class="mono">p50 3.4s (antes p50 82.8s, código F2-2)</dd>
+<dt>Latencia F2-9</dt><dd class="mono">p50 4.8s, p95 40.8s, $0.0067 (antes p50 82.8s, código F2-2)</dd>
 <dt>Lectura</dt><dd>Dev 0.611 &rarr; ret 0.667: <b>generaliza</b> (b: primarios 403; d: aritmetica honesta).</dd>
 </dl></div>
 </div>
-<p class="src">Fuentes: data/runs/f2recall-fix-report.json (DEV, ambas corridas 22/22) · live/F2_RECALL.md addendum (retencion: 12/18, 12/12, 0 falsos) · live/F2_VIDEO2.md (retencion F2-7: p50 3.4s).</p>
+<p class="src">Fuentes: data/runs/f2recall-fix-report.json (DEV, ambas corridas 22/22) · live/F2_RECALL.md addendum (retencion: 12/18, 12/12, 0 falsos) · live/F2_VIDEO3.md (retencion F2-9: p50 4.8s/p95 40.8s/$0.0067, brief ejecutado).</p>
 </section>
 
 <section id="latency">
-<h1>Mucho mas rapido, con honestidad <span class="en">p50 4s, p95 honest MISS</span></h1>
-<p class="sub">F2-7: mismos 22/36 veredictos que F2-3 (ninguna palanca cambio un veredicto); meta p50 &le;25s CUMPLE, p95 &le;60s MISS.</p>
+<h1>Mucho mas rapido, con honestidad <span class="en">p50 5s, p95 meets 60s</span></h1>
+<p class="sub">F2-9: mismos 22/36 veredictos que F2-7 (ninguna palanca cambio un veredicto); meta p50 &le;25s CUMPLE, p95 &le;60s CUMPLE.</p>
 <div class="grid2">
 <div class="card" id="c-wall"><h2>Antes &rarr; despues</h2>
-<table><tr><th>metrica</th><th class="n">F2-3</th><th class="n">F2-7 r1</th><th class="n">F2-7 r2</th></tr>
-<tr><td>p50 / claim</td><td class="n">80.3s</td><td class="n ok">4.3s</td><td class="n ok">4.5s</td></tr>
-<tr><td>p95 / claim</td><td class="n">115.7s</td><td class="n warn">79.1s</td><td class="n warn">73.3s</td></tr>
-<tr><td>wall 36 claims</td><td class="n">372.4s</td><td class="n ok" colspan="2">~108s (&minus;71%)</td></tr>
-<tr><td>$/claim</td><td class="n">0.0227</td><td class="n">0.0080 (&minus;65%)</td><td class="n">0.0086 (&minus;62%)</td></tr></table>
-<p class="info">El p95 NO cumple la meta de 60s (MISS honesto a 73-79s): la cola deadline-70 (7 claims, 70-81s) fija el p95. La mediana cae 18x.</p></div>
+<table><tr><th>metrica</th><th class="n">F2-3</th><th class="n">F2-9 r1</th><th class="n">F2-9 r2</th></tr>
+<tr><td>p50 / claim</td><td class="n">80.3s</td><td class="n ok">4.9s</td><td class="n ok">5.0s</td></tr>
+<tr><td>p95 / claim</td><td class="n">115.7s</td><td class="n ok">40.7s</td><td class="n ok">38.9s</td></tr>
+<tr><td>wall 36 claims</td><td class="n">372.4s</td><td class="n ok" colspan="2">~78s (&minus;79%)</td></tr>
+<tr><td>$/claim</td><td class="n">0.0227</td><td class="n">0.0073 (&minus;68%)</td><td class="n">0.0059 (&minus;74%)</td></tr></table>
+<p class="info">El p95 CUMPLE la meta de 60s con ~20s de margen: 0 claims &gt;60s en ambas corridas (antes 7). Palanca: aborto no-progress; la cola A3+B1-B6 paso de 530s a 274s (&minus;48%).</p></div>
 <div class="card" id="c-ee"><h2>Por grupo de ejecucion (r1/r2)</h2>
 <table><tr><th>grupo</th><th class="n">n</th><th class="n">mediana</th><th class="n">rango</th></tr>
-<tr><td>early-exit apoyo</td><td class="n">9/9</td><td class="n ok">4.1/3.0s</td><td class="n">2.4-4.9s</td></tr>
-<tr><td>early-exit refuta</td><td class="n">11/11</td><td class="n ok">3.9/3.5s</td><td class="n">2.6-5.3s</td></tr>
-<tr><td>lento ok</td><td class="n">9/8</td><td class="n">25.3/26.1s</td><td class="n">21.5-29.0s</td></tr>
-<tr><td>deadline-70</td><td class="n">7/7</td><td class="n warn">75.9/72.9s</td><td class="n">70.1-81.1s</td></tr></table>
-<p class="info">20/36 por via rapida ~4s; 3 lentos deciden (C1/C4/C6); D3-run2 budget 37.3s con mismo veredicto.</p></div>
+<tr><td>early-exit apoyo</td><td class="n">9/9</td><td class="n ok">3.6/4.2s</td><td class="n">2.9-5.6s</td></tr>
+<tr><td>early-exit refuta</td><td class="n">11/11</td><td class="n ok">3.8/3.8s</td><td class="n">2.7-11.0s</td></tr>
+<tr><td>lento ok</td><td class="n">8/9</td><td class="n">28.0/28.4s</td><td class="n">23.3-33.1s</td></tr>
+<tr><td>early-abort</td><td class="n">7/7</td><td class="n ok">38.2/38.1s</td><td class="n">35.8-41.3s</td></tr></table>
+<p class="info">20/36 por via rapida ~4s; 3 lentos deciden (C1/C4/C6); D5-run1 budget 30.1s con mismo veredicto.</p></div>
 </div>
-<p class="src">Fuente: data/runs/f2lat2-final-report.json (p50 4.3/4.5s, p95 79.1/73.3s, wall 216.1s/2, $0.0080/0.0086) + runs r1/r2 (grupos medidos, nearest-rank) + live/F2_LAT2.md §4.</p>
+<p class="src">Fuente: data/runs/f2p95-final-report.json (p50 4.9/5.0s, p95 40.7/38.9s, wall 155.3s/2, $0.0073/0.0059) + runs r1/r2 (grupos medidos, nearest-rank) + live/F2_P95.md §4.</p>
 </section>
 
 <section id="baseline">
@@ -458,7 +463,7 @@ PANELS_BODY = """
 <dl class="kv">
 <dt>DEV pooled</dt><dd class="mono">70/72 = 0.972 [0.904, 0.992] (r1 35/36, r2 35/36)</dd>
 <dt>Retencion</dt><dd class="mono">18/18 [0.824, 1.000] · recall 1.000 · consistencia 36/36</dd>
-<dt>Velocidad</dt><dd class="mono">p50 ~5-10s/claim (Atlas F2-7: ~4s)</dd>
+<dt>Velocidad</dt><dd class="mono">p50 ~5-10s/claim (Atlas F2-9: ~5s)</dd>
 <dt>Veredicto</dt><dd><b>Nos gana en recall.</b> Punto.</dd>
 </dl></div>
 <div class="card" id="c-bfail"><h2>Donde falla <span class="bad">citas 14% fieles</span></h2>
@@ -482,10 +487,10 @@ PANELS_BODY = """
 <tr><td>falsos contradicted</td><td class="n ok">0</td><td class="n bad">2 (D3 x2)</td></tr>
 <tr><td>prueba offline re-ejecutable</td><td class="n ok">si (bundle + tamper FAIL)</td><td class="n bad">no</td></tr>
 <tr><td>dicho-vs-mostrado</td><td class="n ok">si (F6, F5, F11)</td><td class="n bad">no</td></tr>
-<tr><td>latencia p50 / wall 36</td><td class="n">4.3s / ~108s (p95 73-79s: MISS vs 60)</td><td class="n">~5s / &mdash;</td></tr>
+<tr><td>latencia p50 / wall 36</td><td class="n">4.9s / ~78s (p95 39-41s: CUMPLE vs 60)</td><td class="n">~5s / &mdash;</td></tr>
 <tr><td>ASR ES (WER / recall)</td><td class="n" colspan="2">0.03 / 41 de 41 (wer_report.json)</td></tr></table>
 <div class="banner wedge">Nuestro wedge: paquete re-verificable + 0 falsos-contradicted + dicho-vs-mostrado. Todo medido, todo reproducible: pruebalo.</div>
-<p class="src">Fuentes: f2recall-fix-report.json · addendum F2_RECALL · eval2-20261101-225539-report.json + fidelity r1/r2 · f2lat2-final-report.json · wer_report.json.</p>
+<p class="src">Fuentes: f2recall-fix-report.json · addendum F2_RECALL · eval2-20261101-225539-report.json + fidelity r1/r2 · f2p95-final-report.json · wer_report.json.</p>
 </section>
 """
 

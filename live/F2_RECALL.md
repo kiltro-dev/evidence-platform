@@ -225,3 +225,7 @@ Dev 0.611 → retención 0.667: generaliza. Reporte: `data/runs/f2retention-repo
 ## Retención final con código F2-7 (integrador, 2026-11-01, atlas 1×)
 12/18 (0.667) 12/12 [0.757,1.000], 0 falsos-C/S, p50/p95 3.4/82.0s, $0.0121/claim ($0.22 total).
 Reporte: `data/runs/f2ret2-report.json`. Confirma generalización post-sprint.
+
+## Retención final con código F2-9 (integrador, 2026-11-02, atlas 1×)
+12/18 (0.667) 12/12 [0.757,1.000], 0 falsos-C/S, p50/p95 4.8/40.8s, $0.0067/claim ($0.12 total).
+Reporte: `data/runs/f2ret3-report.json`. p95 también cumple en retención.
