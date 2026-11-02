@@ -65,16 +65,25 @@ No confidence scores, no invented citations. When evidence is missing or
 incomparable, the card says so. Snippets are pointers, never evidence —
 see [docs/AGENTS.md](docs/AGENTS.md).
 
-Measured on a synthetic keynote (41 planted claims × EN/ES, ground
-truth in [`live/material/truth.json`](live/material/truth.json)):
-8/31 decided correctly with 0 false-contradicted
-([`live/M2D.md`](live/M2D.md)); said-vs-shown 4/4 planted cases
-([`live/M3.md`](live/M3.md)); canaries 7/7, Wilson 95% [0.65, 1.0]
-([`live/M6.md`](live/M6.md)). The Muse-only baseline scores higher on
-this set (30–31/31, [`live/M8.md`](live/M8.md)) — without snapshots,
-literal-quote checks, or re-verifiable proof; Atlas abstains (71%)
-rather than assert without evidence. Latency p50 ~78 s/claim
-investigated (parallel ×4) is the known bottleneck.
+Measured on preregistered ground truth (dev 36 + sealed retention 18,
+[`live/eval2/prereg.md`](live/eval2/prereg.md)): Atlas decides
+22/36 dev (recall 0.611) and 12/18 retention (0.667), 22/22 and 12/12
+correct with **0 false verdicts either way** (Wilson 95% [0.851,1.000]
+dev, [0.757,1.000] retention); latency p50 ~5 s / p95 ~40 s per claim
+at ~$0.007/claim ([`live/F2_P95.md`](live/F2_P95.md)). The Muse-only
+baseline scores higher on verdicts (18/18 retention) — but only 14% of
+its literal quotes exist on the cited URL (citation-fidelity audit,
+[`live/F2_BENCH.md`](live/F2_BENCH.md)); Atlas abstains rather than
+assert without evidence, and every verdict ships hashed snapshots
+anyone can re-verify offline. Said-vs-shown 4/4 planted cases
+([`live/M3.md`](live/M3.md)); canaries 7/7 ([`live/M6.md`](live/M6.md)).
+
+> **Scope honesty:** the 12-piece demo corpus (keynotes, 2-speaker
+> panels, science classes, fictional earnings calls, EN+ES) is 100%
+> synthetic — scripted, TTS-voiced and code-rendered by us, labeled
+> "Synthetic demo" on screen ([`live/S4_SYNTHQA.md`](live/S4_SYNTHQA.md)).
+> Its metrics measure the system against known truth, not real-world
+> performance.
 
 The v1 static checker (paste text → receipts) still works under
 `src/atlas/` + `POST /api/check` (tag `pre-pivot-v1`, 755 offline

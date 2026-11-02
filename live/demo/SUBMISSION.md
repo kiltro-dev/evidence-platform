@@ -170,10 +170,15 @@ set -a && . ./.env && set +a
   public domain, trained from scratch) for the ES keynote + demo
   narration; espeak-ng (GPLv3) used as a local build tool only, not
   distributed. Source: `live/material/LICENSES_VOZ.md`.
-- **Video fixture**: synthetic original material (script, slides,
-  narration, video) created for this project; fictional summit, no real
-  persons. The 15 false claims + 4 misleading charts are deliberate traps.
-  Source: `live/material/LICENSES.md`.
+- **Video fixtures**: 100% synthetic original material (scripts,
+  slides, TTS narration, code-rendered video) created for this project:
+  12-piece corpus (keynotes, 2-speaker panels, science classes,
+  fictional earnings calls, EN+ES), each labeled "Synthetic demo" on
+  screen and in the UI. Fictional presenters, no real persons. False
+  claims + misleading charts are deliberate traps with known truth.
+  Corpus metrics measure the system against known truth, NOT real-world
+  performance. Sources: `live/SYNTH_EN.md`, `live/SYNTH_ES.md`,
+  `live/S4_SYNTHQA.md`, `live/material/PROVENANCE_{EN,ES}.md`.
 - **Fact references** (baked into `truth.json`, not redistributed):
   World Bank Open Data (CC BY-4.0), UN Day of Eight Billion, SI/BIPM
   constant, NASA planetary facts (U.S. government public domain), 2020
