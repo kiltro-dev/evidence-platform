@@ -2,11 +2,11 @@
 
 Per claim: ESTRUCTURADOR (plan) -> deterministic grounding (World Bank
 API URL + web_search) -> responsible fetch + snapshots -> RECUPERADOR
-(model tool loop) -> code-validated quotes -> REDTEAM counter-query ->
-second retrieval round -> ``claim.evidence`` with EvidencePackage-compat
-dicts (M2a ``live/evidence/package.py`` validates the final schema).
+(model tool loop) -> code-validated quotes -> ``claim.evidence`` with
+EvidencePackage-compat dicts (M2a ``live/evidence/package.py`` validates
+the final schema). REDTEAM is deferred by default (F2-7, advisory only).
 
-Resilience: semaphore-limited parallelism (8), 120 s deadline per claim,
+Resilience: semaphore-limited parallelism (8), 70 s deadline per claim,
 per-claim token budget, graceful degradation (no network/model ->
 zero packages, never invented quotes). All blocking I/O (model, fetch,
 search) runs in worker threads; the event loop only orchestrates.
@@ -16,6 +16,12 @@ packages + an honest note; ``asyncio.wait_for`` stays as the backstop),
 and a primary verbatim quote whose figure matches the claim within the
 (untouched) verifier tolerance closes the extra rounds early
 (``claim.early_exit``; kill-switch ``SwarmConfig.early_exit_enabled``).
+
+F2-7 latency: a code-refuting WB row (same F1 guards + verifier-mirrored
+units/scale/year checks) also closes rounds early; grounding queries run
+in parallel (cap 4); redteam is deferred (the 4->2 round cut was
+reverted after a B1 falso-C); claims that do not fast-path emit
+``claim.no_exit`` with the general cause (see ``no_exit_reason``).
 """
 
 from __future__ import annotations
@@ -49,12 +55,19 @@ from .roles import (
 
 log = logging.getLogger(__name__)
 
-CLAIM_DEADLINE_S = 120.0
+CLAIM_DEADLINE_S = 70.0
 # F2-3: hard backstop = soft budget + slack. Rounds abort gracefully at
 # the soft budget; only a single hanging call can reach the backstop.
+# F2-7: soft budget 120 -> 70 (the p95<=60 goal needs the tail under 60;
+# the 70s cap plus the faster path is measured in F2_LAT2.md).
 CLAIM_DEADLINE_SLACK_S = 30.0
 MAX_CONCURRENCY = 8
+# F2-7: recuperador rounds stay 4 (the 4->2 cut enabled a premature
+# citation of a rounded secondary on B-class claims — B1 falso-C in
+# run2 — so it was REVERTED; redteam stays deferred, forced final kept).
 MAX_TOOL_ROUNDS = 4
+# F2-7: parallel grounding queries (cap; polite for keyless search).
+GROUND_QUERY_WORKERS = 4
 MODEL_MAX_TOKENS = 1500
 MODEL_REASONING_EFFORT = "low"
 # M2d (cause N3): 12k -> 20k. The 12k cap degraded ~13% of claims
@@ -610,6 +623,10 @@ class SwarmConfig:
     model_max_tokens: int = MODEL_MAX_TOKENS
     reasoning_effort: str | None = MODEL_REASONING_EFFORT
     early_exit_enabled: bool = True  # F2-3 kill-switch (default: on)
+    # F2-7 kill-switches (defaults: latency mode on).
+    code_refutation_enabled: bool = True  # WB refute fast-path
+    ground_parallel: bool = True  # parallel grounding queries (cap 4)
+    redteam_enabled: bool = False  # True restores the blocking 2nd round
 
 
 @dataclass
@@ -1309,6 +1326,213 @@ def early_exit_reason(packages: list[dict] | None, text: str) -> str | None:
     return None
 
 
+def code_refutation_reason(packages: list[dict] | None, text: str,
+                           plan: dict | None) -> str | None:
+    """Reason to close rounds via a deterministic WB refutation, or None.
+
+    F2-7 fast-path refutation (extends F1): when the grounded ``code``
+    primary package quotes a WB row whose figure differs from the claim
+    beyond the (untouched, read-only) verifier tolerance, the kept
+    package already sustains ``contradicted`` — no model rounds needed.
+    The verifier still decides from the kept package; this only skips
+    ROUNDS (web pool / model loop / redteam).
+
+    Guards (all general, same F1 pact plus verifier mirrors): curated
+    total indicator only, exact claim year (plan year must equal the
+    claim year), non-arithmetic claims only, deterministic iso3 match,
+    units compatible (direct or via the curated source_meta unit),
+    no scale-slip backstop trigger, claim + quote carry non-year
+    figures. Returns None (safe degrade) when the verifier helpers are
+    not importable. Never raises.
+    """
+    try:
+        if not wb_fallback_eligible(text or "", plan):
+            return None
+        code_pkgs = [
+            p for p in packages or []
+            if isinstance(p, dict)
+            and p.get("extractor") == "code"
+            and p.get("source_type") == "primary"
+            and isinstance(p.get("quote"), str)
+            and p["quote"].strip()
+            and isinstance(p.get("source_meta"), dict)
+        ]
+        if not code_pkgs:
+            return None
+        parse_q = (_try_import("src.atlas.core.units", "parse_quantities")
+                   or _try_import("atlas.core.units", "parse_quantities"))
+        is_year_q = (_try_import("src.atlas.core.compare", "is_year_quantity")
+                     or _try_import("atlas.core.compare", "is_year_quantity"))
+        units_compat = (_try_import("src.atlas.core.units", "units_compatible")
+                        or _try_import("atlas.core.units", "units_compatible"))
+        is_expl = (_try_import("src.atlas.core.units", "is_explicit_scale")
+                   or _try_import("atlas.core.units", "is_explicit_scale"))
+        scale_pow = (_try_import("src.atlas.core.units", "scale_error_power")
+                     or _try_import("atlas.core.units", "scale_error_power"))
+        if not all(callable(f) for f in
+                   (parse_q, is_year_q, units_compat, is_expl, scale_pow)):
+            return None
+        try:
+            claim_cands = [q for q in parse_q(text or "", label="claim")
+                           if not is_year_q(q)]
+        except Exception:
+            return None
+        if not claim_cands:
+            return None
+        claim = claim_cands[0]
+        try:
+            claim_value = float(claim.value)
+            claim_unit = claim.normalized_unit
+            claim_raw = claim.raw_text or ""
+        except Exception:
+            return None
+        try:
+            claim_years = [int(m.group(0))
+                           for m in _YEAR_RE.finditer(text or "")]
+            claim_year = next(
+                (y for y in claim_years if 1960 <= y <= 2100), None)
+        except Exception:
+            claim_year = None
+        plan_year = plan.get("year") if isinstance(plan, dict) else None
+        if claim_year is None or plan_year != claim_year:
+            return None
+        tol = _default_rel_tolerance()
+        for pkg in code_pkgs:
+            quote = pkg["quote"]
+            meta = pkg["source_meta"]
+            meta_unit = meta.get("unit")
+            try:
+                meta_scale = float(meta.get("scale", 1.0) or 1.0)
+            except (TypeError, ValueError):
+                continue
+            if not meta_scale > 0:
+                continue
+            try:
+                quote_cands = [q for q in parse_q(quote, label="quote")
+                               if not is_year_q(q)]
+            except Exception:
+                continue
+            if not quote_cands:
+                continue
+            try:
+                if not is_expl(claim_raw or ""):
+                    if any(scale_pow(claim_value, float(q.value) * meta_scale)
+                           is not None for q in quote_cands):
+                        continue
+            except Exception:
+                continue
+            try:
+                compat = [q for q in quote_cands
+                          if units_compat(claim_unit, q.normalized_unit)]
+                scale = 1.0
+                if not compat and units_compat(claim_unit, meta_unit):
+                    compat = list(quote_cands)
+                    scale = meta_scale
+                if not compat:
+                    continue
+            except Exception:
+                continue
+            try:
+                def _rel(q: Any) -> float:
+                    ev = float(q.value) * scale
+                    denom = abs(ev) if ev != 0 else 1.0
+                    return abs(claim_value - ev) / denom
+
+                best = min(compat, key=_rel)
+                rel = _rel(best)
+                best_val = float(best.value) * scale
+            except Exception:
+                continue
+            if rel > tol:
+                url = pkg.get("url", "")
+                return (
+                    f"code {url} refutes: claim {claim_value:g} vs row "
+                    f"{best_val:g} (rel {rel:.1%} > {tol:.0%})"
+                )
+        return None
+    except Exception:
+        return None
+
+
+def no_exit_reason(packages: list[dict] | None, text: str,
+                   plan: dict | None) -> str:
+    """Why no grounding fast-path fired (F2-7 taxonomy, pure).
+
+    Returns ``exit_support_fast`` / ``exit_refute_fast`` when a
+    fast-path WOULD fire, else ``no_exit:<cause>``. Causes are general
+    (never claim-, figure- or URL-specific):
+
+    - ``ineligible_indicator/geo/year/arithmetic/country``: the F1 pact
+      blocks a deterministic code package (wrong indicator family, no
+      usable geo/year, computed figure, resolver disagreement).
+    - ``no_code_package``: eligible but the WB row never materialized
+      (fetch failed / year row missing or null).
+    - ``year_mismatch``: eligible code row for a different year than the
+      claim (refutation would be unsound).
+    - ``numeric_undecided``: eligible code row present but neither the
+      support match nor the refutation mismatch applies (units/scale
+      edge or missing figures — the verifier would not decide from it
+      alone, so model rounds are needed).
+    - ``no_packages`` / ``no_primary``: fallback when no plan is
+      available (should not happen in the pipeline; plan always set).
+
+    Never raises.
+    """
+    try:
+        if early_exit_reason(packages, text) is not None:
+            return "exit_support_fast"
+        if code_refutation_reason(packages, text, plan) is not None:
+            return "exit_refute_fast"
+        plan_d = plan if isinstance(plan, dict) else {}
+        has_plan = isinstance(plan, dict) and bool(plan)
+        if has_plan:
+            ind = str(plan_d.get("indicator") or "").strip().upper()
+            iso3 = str(plan_d.get("iso3") or "").strip().upper()
+            year = plan_d.get("year")
+            if ind not in _curated_total_indicators():
+                return "no_exit_ineligible_indicator"
+            if not _ISO3_RE.match(iso3):
+                return "no_exit_ineligible_geo"
+            if not (isinstance(year, int) and 1960 <= year <= 2100):
+                return "no_exit_ineligible_year"
+            if _is_arithmetic_claim(text or ""):
+                return "no_exit_ineligible_arithmetic"
+            try:
+                code_iso3 = _code_plan(text or "").get("iso3")
+            except Exception:
+                code_iso3 = None
+            if code_iso3 != iso3:
+                return "no_exit_ineligible_country"
+            code_primaries = [
+                p for p in packages or []
+                if isinstance(p, dict)
+                and p.get("extractor") == "code"
+                and p.get("source_type") == "primary"
+                and isinstance(p.get("quote"), str)
+                and p["quote"].strip()
+            ]
+            if not code_primaries:
+                return "no_exit_no_code_package"
+            try:
+                claim_years = [int(m.group(0))
+                               for m in _YEAR_RE.finditer(text or "")]
+                claim_year = next(
+                    (y for y in claim_years if 1960 <= y <= 2100), None)
+            except Exception:
+                claim_year = None
+            if claim_year is None or plan_d.get("year") != claim_year:
+                return "no_exit_year_mismatch"
+            return "no_exit_numeric_undecided"
+        pkgs = [p for p in packages or [] if isinstance(p, dict)]
+        if not pkgs:
+            return "no_exit_no_packages"
+        if not any(p.get("source_type") == "primary" for p in pkgs):
+            return "no_exit_no_primary"
+        return "no_exit_numeric_undecided"
+    except Exception:
+        return "no_exit_unknown"
+
+
 # ---------------------------------------------------------------------------
 # per-claim pipeline
 # ---------------------------------------------------------------------------
@@ -1323,6 +1547,8 @@ class _ClaimCtx:
         self.usage = _Usage()
         self.packages: list[dict] = []
         self._seen_quotes: set[tuple[str, str]] = set()
+        # F2-7: grounding exit taxonomy (exit_*/no_exit_*; "" when no plan).
+        self.exit_taxonomy: str = ""
         # F2-3: monotonic per-claim budget; rounds abort gracefully when
         # it lapses (wait_for in run_claim stays as the hard backstop).
         self._deadline_mono = (
@@ -1505,7 +1731,18 @@ async def _ground_claim(ctx: _ClaimCtx, plan: dict) -> None:
 
     F2-2: a deterministic WB row package first (FALSE-claim recall), then
     >=3 diverse queries whose pooled hits are fetched primary-first.
+    F2-7: the web pool is skipped on a support match OR a code
+    refutation; otherwise the >=3 queries run concurrently (cap 4,
+    order-preserving) and fetches stay serial primary-first.
     """
+
+    def _one_query(query: str) -> list[dict]:
+        try:
+            res = ctx.tools.web_search(query, SEARCH_TOP_K)
+        except Exception:
+            return []
+        results = res.get("results", []) if isinstance(res, dict) else []
+        return [h for h in results or [] if isinstance(h, dict)]
 
     def _ground_sync() -> None:
         if plan.get("indicator") and plan.get("iso3"):
@@ -1515,14 +1752,29 @@ async def _ground_claim(ctx: _ClaimCtx, plan: dict) -> None:
         if (ctx.config.early_exit_enabled
                 and early_exit_reason(ctx.packages, ctx.text) is not None):
             return  # F2-3: primary match in hand; skip the web pool
+        if (ctx.config.code_refutation_enabled
+                and code_refutation_reason(
+                    ctx.packages, ctx.text, plan) is not None):
+            return  # F2-7: code refutation in hand; skip the web pool
+        queries = build_search_queries(plan, ctx.text)
+        per_query: list[list[dict]] = []
+        if ctx.config.ground_parallel and len(queries) > 1:
+            try:
+                from concurrent.futures import ThreadPoolExecutor
+
+                with ThreadPoolExecutor(
+                        max_workers=GROUND_QUERY_WORKERS) as pool:
+                    # map preserves query order: the pooled ranking stays
+                    # deterministic regardless of completion order.
+                    per_query = list(pool.map(_one_query, queries))
+            except Exception:
+                per_query = [_one_query(q) for q in queries]
+        else:
+            per_query = [_one_query(q) for q in queries]
         pooled: list[dict] = []
         seen: set[str] = set()
-        for query in build_search_queries(plan, ctx.text):
-            res = ctx.tools.web_search(query, SEARCH_TOP_K)
-            results = res.get("results", []) if isinstance(res, dict) else []
-            for hit in results or []:
-                if not isinstance(hit, dict):
-                    continue
+        for results in per_query:
+            for hit in results:
                 url = str(hit.get("url", ""))
                 if not url or url in seen:
                     continue
@@ -1573,7 +1825,27 @@ async def _run_claim_inner(ctx: _ClaimCtx) -> str:
     if ctx.config.early_exit_enabled:
         reason = early_exit_reason(ctx.packages, ctx.text)
         if reason is not None:
+            ctx.exit_taxonomy = "exit_support_fast"
             return f"early-exit(grounding): {reason}"
+    # F2-7: a code WB row refuting the claim also closes the rounds.
+    if ctx.config.code_refutation_enabled:
+        refute = code_refutation_reason(ctx.packages, ctx.text, plan)
+        if refute is not None:
+            ctx.exit_taxonomy = "exit_refute_fast"
+            return f"early-exit(grounding): {refute}"
+    # F2-7: grounding did not fast-path; record the general cause for
+    # the claim.no_exit telemetry (emitted in run_claim). When a
+    # fast-path WOULD fire but its kill-switch is off, name the switch
+    # (revert/debug telemetry, never a verdict).
+    try:
+        tax = no_exit_reason(ctx.packages, ctx.text, plan)
+    except Exception:
+        tax = "no_exit_unknown"
+    if tax == "exit_support_fast" and not ctx.config.early_exit_enabled:
+        tax = "no_exit_support_disabled"
+    if tax == "exit_refute_fast" and not ctx.config.code_refutation_enabled:
+        tax = "no_exit_refutation_disabled"
+    ctx.exit_taxonomy = tax
 
     # 3. RECUPERADOR tool loop over grounded docs.
     seed = (
@@ -1599,6 +1871,10 @@ async def _run_claim_inner(ctx: _ClaimCtx) -> str:
             return f"early-exit(recuperador): {reason}"
 
     # 4. REDTEAM counter-query -> second retrieval round.
+    # F2-7: deferred by default (advisory; the verdict never depends on
+    # it). True restores the blocking round for revert/debug.
+    if not ctx.config.redteam_enabled:
+        return "done (redteam deferred)"
     if ctx.expired():  # F2-3: no new round on a lapsed budget
         return _expired_note(ctx, "redteam")
     try:
@@ -1677,6 +1953,8 @@ async def run_claim(bus: Any, tracker: Any, claim_id: str, text: str,
              "claim deadline"))
         if note.startswith("early-exit"):  # F2-3: latency telemetry event
             await _publish_early_exit(bus, ctx, note)
+        if ctx.exit_taxonomy.startswith("no_exit"):  # F2-7: why not fast
+            await _publish_no_exit(bus, ctx, ctx.exit_taxonomy)
         return await _finish(bus, ctx, degraded=degraded, note=note)
     except (asyncio.TimeoutError, TimeoutError):
         return await _finish(
@@ -1702,6 +1980,21 @@ async def _publish_early_exit(bus: Any, ctx: _ClaimCtx,
         })
     except Exception as exc:
         log.warning("claim.early_exit publish failed: %r", exc)
+
+
+async def _publish_no_exit(bus: Any, ctx: _ClaimCtx, reason: str) -> None:
+    """Emit ``claim.no_exit`` telemetry (F2-7; never breaks the run)."""
+    if bus is None:
+        return
+    try:
+        await bus.publish({
+            "type": "claim.no_exit",
+            "claim_id": ctx.claim_id,
+            "reason": reason,
+            "n_packages": len(ctx.packages),
+        })
+    except Exception as exc:
+        log.warning("claim.no_exit publish failed: %r", exc)
 
 
 async def _finish(bus: Any, ctx: _ClaimCtx, degraded: bool,
@@ -1788,15 +2081,19 @@ async def run_swarm(bus: Any, tracker: Any,
 __all__ = [
     "CLAIM_DEADLINE_S",
     "GROUND_FETCH_K",
+    "GROUND_QUERY_WORKERS",
     "MAX_CONCURRENCY",
+    "MAX_TOOL_ROUNDS",
     "TOKEN_BUDGET_PER_CLAIM",
     "SwarmConfig",
     "ClaimResult",
     "SwarmReport",
     "build_package",
     "build_search_queries",
+    "code_refutation_reason",
     "doc_excerpts",
     "early_exit_reason",
+    "no_exit_reason",
     "numbers_from_quote",
     "rank_hits_primary_first",
     "run_claim",

@@ -188,7 +188,8 @@ def test_max_concurrency_is_8():
     assert MAX_CONCURRENCY == 8
     assert SwarmConfig().max_concurrency == 8
     assert SwarmConfig().early_exit_enabled is True  # default-on pin
-    assert CLAIM_DEADLINE_S == 120.0
+    # F2-7: soft budget 120 -> 70 (hard backstop unchanged at +30).
+    assert CLAIM_DEADLINE_S == 70.0
 
 
 def test_run_swarm_records_contention(tmp_path):
@@ -347,9 +348,10 @@ def test_early_exit_kill_switch_restores_full_path(tmp_path):
     final = {"thought": "citing",
              "final": {"findings": [{"url": SYN_WB_URL,
                                      "quote": SYN_WB_QUOTE}]}}
+    # F2-7: redteam deferred by default; opt in to pin the 3-call path.
     config = _chile_config(tmp_path, [dict(SYN_PLAN), final,
                                        dict(SYN_REDTEAM_SKIP)],
-                           early_exit_enabled=False)
+                           early_exit_enabled=False, redteam_enabled=True)
     result = asyncio.run(run_claim(bus, tracker, "c-full", SYN_TEXT, config))
     assert result.note == "redteam skipped"
     assert len(config.llm.calls) == 3
@@ -384,8 +386,12 @@ def test_early_exit_silent_on_mismatch_full_path(tmp_path):
     final = {"thought": "citing",
              "final": {"findings": [{"url": SYN_WB_URL,
                                      "quote": SYN_WB_QUOTE}]}}
+    # F2-7: the FALSE fixture now refute-exits by default; disable the
+    # refutation fast-path + opt into redteam to pin the full 3-call path.
     config = _chile_config(tmp_path, [dict(SYN_PLAN), final,
-                                       dict(SYN_REDTEAM_SKIP)])
+                                       dict(SYN_REDTEAM_SKIP)],
+                           code_refutation_enabled=False,
+                           redteam_enabled=True)
     text = "Chile had 99,000 people in 2024."  # FALSE vs the row
     result = asyncio.run(run_claim(bus, tracker, "c-mm", text, config))
     assert result.note == "redteam skipped"

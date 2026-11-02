@@ -344,9 +344,10 @@ def test_happy_path_emits_m2a_valid_package(tmp_path):
                    REDTEAM_SKIP])
     # F2-3: this fixture's WB row matches the claim, so the default-on
     # early exit would close the model rounds; pin the full model path.
+    # F2-7: redteam is deferred by default; pin the full 3-call path.
     config = SwarmConfig(llm=llm, search_fn=search,
                          fetch_fn=make_fetch_fn(bodies, str(tmp_path)),
-                         early_exit_enabled=False)
+                         early_exit_enabled=False, redteam_enabled=True)
     bus, tracker = _bus_tracker()
     result = asyncio.run(run_claim(
         bus, tracker, "T1-en",
@@ -475,9 +476,10 @@ def test_redteam_counter_query_triggers_second_round(tmp_path):
     llm = FakeLLM([ESTRUCT_PLAN, _recup_final_wb(_wb_url("WLD", 2024)),
                    redteam, final2, REDTEAM_SKIP])
     # F2-3: pin the full redteam round (default-on exit would close it).
+    # F2-7: redteam is deferred by default; opt back in to pin the round.
     config = SwarmConfig(llm=llm, search_fn=search,
                          fetch_fn=make_fetch_fn(bodies, str(tmp_path)),
-                         early_exit_enabled=False)
+                         early_exit_enabled=False, redteam_enabled=True)
     bus, tracker = _bus_tracker()
     result = asyncio.run(run_claim(bus, tracker, "c-red",
                                    "We are 8.14 billion people on this planet.",
@@ -527,9 +529,10 @@ def test_malformed_reply_retried_once(tmp_path):
                     _recup_final_wb(_wb_url("WLD", 2024)),
                     dict(REDTEAM_SKIP)])
     # F2-3: pin the full retry path (default-on exit would close rounds).
+    # F2-7: redteam deferred by default; opt in to pin the 3-call path.
     config = SwarmConfig(llm=llm, search_fn=search,
                          fetch_fn=make_fetch_fn(bodies, str(tmp_path)),
-                         early_exit_enabled=False)
+                         early_exit_enabled=False, redteam_enabled=True)
     bus, tracker = _bus_tracker()
     result = asyncio.run(run_claim(
         bus, tracker, "c-flaky",
@@ -609,9 +612,10 @@ def test_run_swarm_entrypoint(tmp_path):
                    _recup_final_wb(_wb_url("WLD", 2024)),
                    dict(REDTEAM_SKIP)])
     # F2-3: pin the full 3-call path (default-on exit would close rounds).
+    # F2-7: redteam deferred by default; opt in to pin 3 calls.
     config = SwarmConfig(llm=llm, search_fn=search,
                          fetch_fn=make_fetch_fn(bodies, str(tmp_path)),
-                         early_exit_enabled=False)
+                         early_exit_enabled=False, redteam_enabled=True)
     bus, tracker = _bus_tracker()
     report = asyncio.run(run_swarm(
         bus, tracker,

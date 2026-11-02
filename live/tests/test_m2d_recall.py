@@ -258,8 +258,10 @@ def test_preamble_rescued_end_to_end(tmp_path, monkeypatch):
     final = {"thought": "citing",
              "final": {"findings": [{"url": WIKI_URL, "quote": WIKI_QUOTE}]}}
     llm = PreambleFlakyLLM([final, dict(REDTEAM_SKIP)], dict(ESTRUCT_PLAN))
+    # F2-7: redteam deferred by default; opt in to pin recup+redteam calls.
     config = SwarmConfig(llm=llm, search_fn=make_search_fn(hits),
-                         fetch_fn=make_fetch_fn(bodies, snap_dir))
+                         fetch_fn=make_fetch_fn(bodies, snap_dir),
+                         redteam_enabled=True)
     bus = EventBus()
     tracker = ClaimTracker(bus)
     result = asyncio.run(run_claim(bus, tracker, "c-pre",
