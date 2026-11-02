@@ -33,7 +33,9 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import threading
 import time
+import uuid
 from pathlib import Path
 from typing import Any
 
@@ -95,6 +97,8 @@ def create_app(
     # F2-3: per-type event counts (early_exit/progress telemetry flows
     # through the same broadcast; keys appear on first sight).
     app.state.event_counts: dict[str, int] = {}
+    # V5-G1 link ingest: run_id -> {run_id, mode, media, status, ...}.
+    app.state.ingest_runs: dict[str, dict] = {}
 
     async def _broadcast(event: dict) -> None:
         try:
@@ -237,11 +241,143 @@ def create_app(
             }
         )
 
+    @app.post("/ingest")
+    async def ingest(payload: dict) -> JSONResponse:
+        """V5-G1: resolve a page/media link and launch the live pipeline.
+
+        ``{url, mode}`` -> validate -> resolve (SSRF-guarded) -> launch
+        ``live.run_live`` in a thread -> ``{run_id, mode, media}``.
+        Optional ``launch:false`` resolves without starting the pipeline
+        (dry-run / tests). YouTube links are always refused.
+        """
+        from live.ingest.resolve import LinkBlocked, LinkError, resolve_link
+        from live.ingest.turbo import check_mode
+
+        url = payload.get("url", "") if isinstance(payload, dict) else ""
+        if not isinstance(url, str) or not url.strip():
+            return JSONResponse({"error": "payload needs 'url' (http(s) link)"},
+                                status_code=400)
+        try:
+            mode = check_mode(payload.get("mode", "vivo"))
+        except ValueError as exc:
+            return JSONResponse({"error": str(exc)}, status_code=400)
+        try:
+            media = resolve_link(url)
+        except LinkBlocked as exc:
+            return JSONResponse({"error": str(exc), "reason": exc.reason},
+                                status_code=403)
+        except LinkError as exc:
+            return JSONResponse({"error": str(exc)}, status_code=400)
+        run_id = uuid.uuid4().hex[:12]
+        record = {
+            "run_id": run_id,
+            "mode": mode,
+            "media": {
+                "url": media.url,
+                "kind": media.kind,
+                "content_type": media.content_type,
+                "size": media.size,
+            },
+            "status": "started",
+        }
+        app.state.ingest_runs[run_id] = record
+        if payload.get("launch", True):
+            log_path = str(Path("data") / "runs" / f"link-{run_id}.jsonl")
+            _launch_link_run(run_id, media.url, media.kind, mode,
+                             app.state.ingest_runs, log_path)
+        else:
+            record["status"] = "resolved"
+        return JSONResponse(
+            {"run_id": run_id, "mode": mode, "media": record["media"],
+             "status": record["status"]}
+        )
+
+    @app.get("/ingest/{run_id}")
+    async def ingest_status(run_id: str) -> JSONResponse:
+        """V5-G1: status of a link-ingest run (started/done/error)."""
+        record = app.state.ingest_runs.get(run_id)
+        if record is None:
+            return JSONResponse({"error": f"unknown run {run_id!r}"},
+                                status_code=404)
+        return JSONResponse(record)
+
     # S3 simulive: additive routes only (/hls/*, /hls-status);
     # M1b/M4 routes, WS contract and /run behavior untouched.
     mount_simulive(app)
 
     return app
+
+
+def _launch_link_run(run_id: str, media_url: str, media_kind: str,
+                     mode: str, runs: dict,
+                     log_path: str) -> threading.Thread:
+    """Start the ``live.run_live`` pipeline for a resolved link (thread).
+
+    Module-level seam so tests can monkeypatch the launch; the thread
+    itself only mutates ``runs[run_id]`` (status/error/summary_path).
+    """
+    thread = threading.Thread(
+        target=_run_link_pipeline,
+        args=(run_id, media_url, media_kind, mode, runs, log_path),
+        name=f"ingest-{run_id}",
+        daemon=True,
+    )
+    thread.start()
+    return thread
+
+
+# File kinds the static ffmpeg can ingest once materialized locally
+# (it segfaults on https input, so remote URLs are never fed to it).
+LOCAL_FILE_KINDS = frozenset({"mp4", "audio"})
+
+
+def _run_link_pipeline(run_id: str, media_url: str, media_kind: str,
+                       mode: str, runs: dict, log_path: str) -> None:
+    """Thread body: reuse ``live.run_live.amain`` on the resolved media.
+
+    Lazy import (``live.run_live`` imports this module for the server
+    path). File media (mp4/audio) is downloaded SSRF-guarded to
+    ``data/cache/`` first — the imageio static ffmpeg segfaults
+    (rc=-11) on ANY https input — and the pipeline ingests the local
+    path. HLS/DASH playlists cannot be single-file materialized and
+    are refused here with a clear error until a TLS-capable ffmpeg
+    lands. Runs headless (``--no-server`` semantics): the bus log +
+    summary land next to the normal runs; status is mirrored in
+    ``runs[run_id]`` for ``GET /ingest/{run_id}``.
+    """
+    import argparse
+
+    try:
+        from live import run_live
+        from live.ingest.resolve import LinkError, download_media
+
+        video = media_url
+        if media_kind in LOCAL_FILE_KINDS:
+            cache_dir = Path("data") / "cache"
+            cache_dir.mkdir(parents=True, exist_ok=True)
+            dest = str(cache_dir / f"link-{run_id}.media")
+            info = download_media(media_url, dest)
+            video = info["path"]
+            runs[run_id]["local_path"] = video
+            runs[run_id]["bytes"] = info["size"]
+        elif media_kind in ("hls", "dash"):
+            raise LinkError(f"playlists {media_kind} aún no soportadas: "
+                            f"el ffmpeg estático no lee https")
+        args = argparse.Namespace(
+            video=video, detector="heuristic", no_server=True,
+            log=log_path, port=8765, duration=None, chunk_ms=80,
+            keywords="", language_bias="", api_key="", record=None,
+            mode=mode,
+        )
+        summary = asyncio.run(run_live.amain(args))
+        runs[run_id]["status"] = "done"
+        runs[run_id]["summary_path"] = summary.get("summary_path")
+    except SystemExit as exc:
+        runs[run_id]["status"] = "error"
+        runs[run_id]["error"] = str(exc) or "pipeline exit"
+    except Exception as exc:  # noqa: BLE001 - surfaced via /ingest/{id}
+        runs[run_id]["status"] = "error"
+        runs[run_id]["error"] = f"{type(exc).__name__}: {exc}"
 
 
 def _video_for_run(run: str) -> str | None:

@@ -52,7 +52,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from live.detector.claims import Detector  # noqa: E402
 from live.ingest.demux import BYTES_PER_SEC, ffmpeg_exe, probe_streams  # noqa: E402
-from live.ingest.simstream import SOURCE_LABEL, restream_to  # noqa: E402
+from live.ingest.simstream import SOURCE_LABEL  # noqa: E402
+from live.ingest.turbo import check_mode, mode_event, restream_for_mode  # noqa: E402
 from live.oido.asr_ws import ASRConfig, transcribe_stream  # noqa: E402
 from live.orchestrator.bus import EventBus  # noqa: E402
 from live.orchestrator.states import ClaimTracker  # noqa: E402
@@ -334,10 +335,12 @@ class FifoStream:
         video: str,
         chunk_ms: int = 80,
         duration: float | None = None,
+        mode: str = "vivo",
     ) -> None:
         self.video = video
         self.chunk_bytes = int(24000 * 2 * chunk_ms / 1000)
         self.duration = duration
+        self.mode = check_mode(mode)  # V5-G1: vivo (paced) | turbo (no -re)
         self.source_label = SOURCE_LABEL
         self.t0_wall: float | None = None
         self.restream_extra: tuple[str, ...] = (
@@ -389,8 +392,8 @@ class FifoStream:
         self._tmpdir = tempfile.mkdtemp(prefix="m1e-fifo")
         self._fifo = os.path.join(self._tmpdir, "live.mkv")
         os.mkfifo(self._fifo)
-        self._sim, label = restream_to(
-            self.video, self._fifo, extra_args=self.restream_extra
+        self._sim, label = restream_for_mode(
+            self.video, self._fifo, self.mode, extra_args=self.restream_extra
         )
         assert label == SOURCE_LABEL == self.source_label
         self._proc = subprocess.Popen(
@@ -614,6 +617,9 @@ def build_parser() -> argparse.ArgumentParser:
                         help="Meta API key (default: MODEL_API_KEY env)")
     parser.add_argument("--record", default=None,
                         help="optional ASR wire-record jsonl path")
+    parser.add_argument("--mode", choices=("vivo", "turbo"), default="vivo",
+                        help="ingest governor: vivo = realtime -re pacing "
+                        "(default), turbo = ingest sin pacing (V5-G1)")
     return parser
 
 
@@ -623,8 +629,11 @@ async def amain(args: argparse.Namespace) -> dict:
     if not api_key:
         # Presence only — never print the key or its length here.
         raise SystemExit("MODEL_API_KEY not configured; source .env first.")
-    if not os.path.isfile(args.video):
+    # V5-G1: link ingest feeds remote http(s) media straight to ffmpeg.
+    _is_remote = str(args.video).startswith(("http://", "https://"))
+    if not _is_remote and not os.path.isfile(args.video):
         raise SystemExit(f"video not found: {args.video}")
+    mode = check_mode(getattr(args, "mode", "vivo"))
 
     log_path = args.log or default_log_path()
     os.makedirs(os.path.dirname(log_path) or ".", exist_ok=True)
@@ -658,11 +667,12 @@ async def amain(args: argparse.Namespace) -> dict:
         server, server_task = await serve_in_background(app, args.port)
         sub_task = asyncio.create_task(ws_subscriber(args.port, arrivals, stop))
 
+    await bus.publish(mode_event(mode))  # V5-G1 run.mode (governor tag)
     demux = FifoStream(args.video, chunk_ms=args.chunk_ms,
-                       duration=args.duration).start()
+                       duration=args.duration, mode=mode).start()
     print(f"[m1e] source={demux.source_label} video={args.video} "
           f"detector={args.detector} server={'on' if with_server else 'off'} "
-          f"log={log_path}", flush=True)
+          f"mode={mode} log={log_path}", flush=True)
 
     state = {
         "partials": 0, "finals": 0,
@@ -766,6 +776,7 @@ async def amain(args: argparse.Namespace) -> dict:
     summary = {
         "video": args.video,
         "source": demux.source_label,
+        "mode": mode,
         "detector": args.detector,
         "server": with_server,
         "port": args.port if with_server else None,

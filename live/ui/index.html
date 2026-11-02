@@ -93,7 +93,15 @@
     min-height:36px; }
   select { background:#0d1220; color:var(--txt); border:1px solid var(--line);
     border-radius:8px; padding:8px 10px; font-size:14px; max-width:100%; }
-  #status, #replayStatus { font-size:13px; color:var(--mut); }
+  input[type="url"] { background:#0d1220; color:var(--txt); border:1px solid var(--line);
+    border-radius:8px; padding:8px 10px; font-size:14px; flex:1 1 220px; min-width:0; }
+  .seg { display:flex; border:1px solid var(--line); border-radius:8px; overflow:hidden; }
+  .seg button { background:#0d1220; color:var(--mut); border:0; padding:8px 14px;
+    font-size:13px; font-weight:700; cursor:pointer; min-height:36px; }
+  .seg button.on { background:var(--acc); color:#0b1020; }
+  #status, #replayStatus, #ingestStatus { font-size:13px; color:var(--mut); }
+  #ingestError { font-size:13px; color:var(--bad); margin:8px 0 0; }
+  #ingestError:empty { display:none; }
   #theater .agent { padding:8px 10px; border:1px solid var(--line); border-radius:8px;
     margin:8px 0; background:#0d1220; font-size:14px; }
   #theater .agent b { color:var(--warn); }
@@ -186,6 +194,22 @@
         <button id="demoClear" class="ghost" type="button" data-es="Limpiar" data-en="Clear">Limpiar</button>
         <span id="status" role="status"></span>
       </div>
+    </section>
+    <section class="card" aria-labelledby="ingestH">
+      <h2 id="ingestH" data-es="Ingesta por enlace" data-en="Link ingest">Ingesta por enlace</h2>
+      <div class="row">
+        <input id="ingestUrl" type="url" placeholder="https://…mp4 / …m3u8 / página con vídeo"
+          aria-label="URL" autocomplete="off" spellcheck="false">
+      </div>
+      <div class="row">
+        <div class="seg" role="group" aria-label="Modo / Mode">
+          <button id="modeVivo" type="button" class="on">Vivo</button>
+          <button id="modeTurbo" type="button">Turbo</button>
+        </div>
+        <button id="ingestGo" class="act" type="button" data-es="Ingestar" data-en="Ingest">Ingestar</button>
+        <span id="ingestStatus" role="status"></span>
+      </div>
+      <p id="ingestError" role="alert"></p>
     </section>
   </div>
   <div>
@@ -709,6 +733,42 @@
     subsEl.innerHTML = ""; claimsEl.innerHTML = ""; cards = {}; latEl.textContent = "";
     subs = []; agents = {}; tlDots = {}; tlEl.innerHTML = ""; overlay.innerHTML = "";
     renderTheater();
+  };
+
+  // V5-G1 link ingest: URL + Vivo/Turbo toggle -> POST /ingest.
+  var ingestMode = "vivo";
+  var modeVivo = document.getElementById("modeVivo");
+  var modeTurbo = document.getElementById("modeTurbo");
+  var ingestUrl = document.getElementById("ingestUrl");
+  var ingestGo = document.getElementById("ingestGo");
+  var ingestStatus = document.getElementById("ingestStatus");
+  var ingestError = document.getElementById("ingestError");
+  modeVivo.onclick = function(){ ingestMode = "vivo";
+    modeVivo.classList.add("on"); modeTurbo.classList.remove("on"); };
+  modeTurbo.onclick = function(){ ingestMode = "turbo";
+    modeTurbo.classList.add("on"); modeVivo.classList.remove("on"); };
+  ingestGo.onclick = function(){
+    ingestError.textContent = "";
+    var url = (ingestUrl.value || "").trim();
+    if (!url) { ingestError.textContent = lang === "es" ? "Pega una URL http(s) primero." : "Paste an http(s) URL first."; return; }
+    ingestStatus.textContent = "…";
+    ingestGo.disabled = true;
+    fetch("/ingest", {method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({url: url, mode: ingestMode})})
+      .then(function(r){ return r.json().then(function(j){ return {ok: r.ok, j: j}; }); })
+      .then(function(res){
+        ingestGo.disabled = false;
+        if (!res.ok || res.j.error) {
+          ingestStatus.textContent = "";
+          ingestError.textContent = res.j.error || "error";
+          return;
+        }
+        var m = res.j.media || {};
+        ingestStatus.textContent = "run " + res.j.run_id + " · " + res.j.mode +
+          " · " + (m.kind || "?") + " · " + (m.url || "");
+      })
+      .catch(function(){ ingestGo.disabled = false; ingestStatus.textContent = "";
+        ingestError.textContent = "error"; });
   };
 })();
 </script>
