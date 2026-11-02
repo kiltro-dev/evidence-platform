@@ -1,21 +1,21 @@
-Un orador dice dos cosas que no pueden ser verdad a la vez, con cincuenta y siete segundos de distancia. Atlas Live lo atrapa en vivo, caught live, y te muestra la prueba, no solo el veredicto.
+Un orador dice dos cosas que no pueden ser verdad a la vez, con cincuenta y nueve segundos de distancia. Atlas Live lo atrapa en vivo, caught live, y te muestra la prueba, no solo el veredicto.
 
-Atlas Live escucha y mira un video en directo, extrae cada afirmación chequeable, la investiga con agentes Muse en la web abierta, y el veredicto lo decide código determinista: the model proposes, code disposes.
+Atlas Live escucha y mira un video en directo, extrae cada afirmación chequeable, la investiga con agentes Muse en la web abierta, y el veredicto lo decide código determinista: the model proposes, code disposes. Y entiende español nativo, con error de palabra de cero coma cero tres.
 
 Minuto uno diez. El orador dice que China cayó a ciento cuarenta y un millones de personas. Tres agentes investigadores salen a la web, three researchers hit the open web, mientras el video sigue corriendo.
 
 Contradecido. El Banco Mundial dice mil cuatrocientos nueve millones: diez veces más. Al minuto cero el orador había dicho mil cuatrocientos diez millones: contradicción propia verificada por código, rel diff de cero coma nueve.
 
-Y no tienes que creernos. Cada corrida exporta un paquete de pruebas que cualquiera re-ejecuta sin red ni modelo: all pass. Cita literal, hash del snapshot, veredicto reproducido.
+Y no tienes que creernos. Cada corrida exporta un paquete de pruebas que cualquiera re-ejecuta sin red ni modelo: all pass. Treinta y una de treinta y una verificadas, y si cambias un solo byte, el verificador falla: tamper detected.
 
 Pero hay algo mejor. El orador dice cuarenta por ciento, y su propio gráfico muestra cero coma noventa y siete. The chart contradicts the speaker. Lo detecta visión sobre el frame, y lo decide código.
 
 Mismo truco en dos slides: un eje truncado que convierte un cinco por ciento en una duplicación, y una escala rota que pone a India por encima de Estados Unidos. Dos flags automáticos.
 
-Cada veredicto afirmativo es atacado por un escéptico que busca contra-evidencia real. Aquí no encontró nada, honest abstention, y la tarjeta se publica en español e inglés.
+El benchmark justo, versión dos: treinta y seis claims de desarrollo y dieciocho de retención sellada. Atlas decide el sesenta y uno por ciento en desarrollo y el sesenta y siete en retención, con cero falsos contradicted en ambas.
 
-Doce canarios internos, disjuntos del video, por el pipeline real: precisión perfecta sobre lo decidido, con intervalo de Wilson honesto. Y cero falsos contradicted: zero false contradicts.
+Y ahora es más rápido: el tiempo total cayó cincuenta y dos por ciento, y la vía temprana decide en cuatro segundos. Lo honesto: la mediana sigue en ochenta segundos, y la cola sube a ciento dieciséis por el presupuesto ampliado.
 
-Los límites, sin maquillar: ocho de treinta y un claims decididos correctamente, una falsa afirmación aceptada por cero coma catorce puntos de tolerancia, y setenta y ocho segundos de mediana por claim.
+El baseline, tal cual: setenta de setenta y dos en desarrollo y dieciocho de dieciocho en retención; nos gana en recall. Pero solo el catorce por ciento de sus citas son fieles a la fuente, y no exporta ninguna prueba re-ejecutable.
 
-Modelo propone, código dispone, escéptico ataca, auditor mide. La ablación honesta: el baseline gana, treinta y uno de treinta y uno. Nuestro wedge: prueba re-verificable, cero falsos contradicted, y dicho contra mostrado.
+Modelo propone, código dispone. Nuestro wedge: prueba re-verificable, cero falsos contradicted, y dicho contra mostrado. Todo medido, todo reproducible: pruébalo.

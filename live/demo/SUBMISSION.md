@@ -46,14 +46,20 @@ of a bare true/false label.
 
 ## Impact
 
-On a synthetic 3:29 keynote with 41 scripted entries (31 checkable: 16 true
-+ 15 false), Atlas Live decided 8 claims correctly with zero false
-contradicts, caught a planted speaker self-contradiction (China 1.41B vs
-141M, 57 s apart) and a said-vs-shown chart contradiction (40% said vs
-0.97% shown), and held 1.0 accuracy on decided claims across 12 held-out
-canary probes. Every number below is measured, with the honest limits in
-the Limits section. (Sources: `live/M2D.md`, `live/M3.md`, `live/M6.md`,
-`live/M7.md`.)
+On the fair benchmark v2 (36 DEV claims + 18 sealed retention claims,
+preregistered), Atlas Live decides 22/36 = 0.611 on DEV and 12/18 = 0.667
+on retention with zero false contradicts in both (22/22 + 12/12 decided
+accuracy), caught a planted speaker self-contradiction (China 1.41B vs
+141M, ~59 s apart in the native-ES keynote) and a said-vs-shown chart
+contradiction (40% said vs 0.97% shown), transcribes native Spanish at
+0.03 WER with 41/41 ASR-recall, and exports tamper-evident proof bundles
+(31/31 ALL PASS; 1 flipped byte ⇒ FAIL). The model-only baseline beats
+us on recall (70/72 DEV, 18/18 retention) — stated plainly — but only
+14% of its citations are faithful to the source (9/63) and it exports
+zero re-runnable proof. Every number is measured, with the honest limits
+in the Limits section. (Sources: `live/F2_RECALL.md` + addendum,
+`live/F2_BENCH.md`, `live/F2_LATENCY.md`, `live/F2_VOICE.md`,
+`live/M3.md`, `live/M7.md`.)
 
 ## Use of Meta capabilities (each with proving file)
 
@@ -102,57 +108,62 @@ vanilla JS newsroom UI (no framework), pytest (206+ offline tests).
 
 ## Honest limits
 
-- Recall 8/31 on the 31 checkable EN claims (7 true supported incl.
-  T1/T2/T3/T5/T6/T7/T8, 1 false contradicted F3; 22 abstentions).
-  Source: `live/M2D.md` + `data/runs/verify-20261101-212343.jsonl.summary.json`.
-- Verdict latency p50 78.4 s / p95 90.0 s per claim (invest→verdict);
-  ASR end-phrase→card p50 1240 ms on the M1e heuristic pass.
-  Source: M2d summary, `live/M1_E2E.md`.
-- One false `supported` on FALSE (F14: WB 2020 population within 1.86%
-  of the 8B milestone claim — a tolerance-edge year-swap our neutralized
-  temporal check cannot catch). Precision on decided: 8/9 (89%).
-  Source: `live/M2D.md`.
-- Zero false `contradicted` on TRUE held across M2c, M2d, and M6.
-  Source: `live/M2_E2E.md`, `live/M2D.md`, `live/M6.md`.
+- Recall 22/36 = 0.611 on DEV (a 5/6, b 0/6, c 6/6, d 0/6, e 5/6, f 6/6;
+  14 abstentions) and 12/18 = 0.667 on sealed retention, 0 false
+  contradicts in both; decided accuracy 22/22 + 12/12 = 1.000.
+  Source: `data/runs/f2recall-fix-report.json` + `live/F2_RECALL.md`
+  addendum (retention; `retention.json` never opened).
+- Verdict latency p50 80.3 s / p95 115.7 s per claim (invest→verdict);
+  wall for 36 claims 372.4 s (−52% vs 779.5 s); early-exit lane 9 claims
+  at 4.0 s median. Honest miss: the median still sits on the full path
+  (~80 s) and the tail ROSE 90 → 115.7 s on the wider 120 s budget.
+  Source: `data/runs/f2lat-atlas-report.json`, `live/F2_LATENCY.md`.
+- DEV-b abstains 0/6 (IMF/BLS primaries return 403; only secondaries,
+  out of budget) and DEV-d abstains 0/6 (multi-source arithmetic by
+  design: `arithmetic_needs_computation` guard). Source: `live/F2_RECALL.md`.
+- Zero false `contradicted` held across F2-2 (44/44 pooled) and F2-3
+  (22/22); the F2-1 D5 false-C is eliminated by construction (F6 guard).
+  Source: `live/F2_RECALL.md`, `live/F2_LATENCY.md`.
 - Physics/geo units (`meters`, `kilometers`, `degrees`, `square
   kilometers`) are outside the unit parser → those claims abstain by
   design; numberless claims abstain by design. Source: `live/M2D.md`.
-- Swarm is non-deterministic across runs (F6 contradicted→unverifiable
-  between M2c and M2d on 0 packages). Source: `live/M2D.md`.
 - Model detector path hits a detector-budget bug (`finish_reason=length`
   on an 800-token budget consumed by hidden reasoning; falls back to
   heuristic). Source: `live/M1_E2E.md` U1.
-- Formal ablation (M8, `ablation-20261101-214721-report.json`): Atlas
-  M2d 8/9=0.889 [0.565,0.980] vs model-only baseline run1 30/31=0.968
-  [0.838,0.994] vs run2 31/31=1.000 [0.890,1.000] (31 EN × 2 runs,
-  run1-vs-run2 consistency 30/31; hallucinations 15/15 baseline vs
-  Atlas 1; cost/claim $0.0310 vs $0.0355 vs $0.0281; p50 78.4s vs 4.5s
-  vs 4.2s). The baseline wins everything measured — stated plainly.
-  Atlas keeps only: re-verifiable proof bundles, 0 false-contradicted
-  across M2d+M6 (baseline run1 committed one P0 on T7), and
-  said-vs-shown vision checks. Caveat: baseline urls are model-stated,
-  0/62 code-validated. Source: `live/M8.md`.
+- Fair benchmark v2 (F2-1, `eval2-20261101-225539-report.json` +
+  fidelity JSONs): Atlas DEV 22/36 vs model-only baseline pooled
+  70/72 = 0.972 [0.904,0.992] (run1 35/36, run2 35/36, consistency
+  36/36) and retention 18/18 [0.824,1.000]. The baseline wins recall —
+  stated plainly. Where it matches us: verdicts (70/72) and speed
+  (p50 ~5–10 s vs ~80 s). Where it fails: citation fidelity pooled
+  9/63 = 0.143 [0.077,0.250] (r1 5/31, r2 4/32; quote_not_found 34,
+  unit_mismatch 13, numeric_mismatch 7; 72/72 urls model-stated,
+  0 browsed), 2 false contradicts (D3×2), and zero offline proof.
+  What Atlas adds: re-verifiable proof bundles (31/31 ALL PASS, 1-byte
+  tamper ⇒ FAIL), 0 false contradicts, and said-vs-shown vision checks.
+  Source: `live/F2_BENCH.md`.
 
 ## How to reproduce ($0 judge path + live path)
 
 ```bash
 cd evidence-platform
 python3.11 -m venv .venv && .venv/bin/pip install -r requirements.txt imageio-ffmpeg
-# $0 replay: recorded 51-event run, no model calls, no key needed
+# $0 replay: recorded 48-event ES run, no model calls, no key needed
 .venv/bin/python -m uvicorn live.server.app:create_app --factory --port 8891
-# open http://127.0.0.1:8891/?replay=run-m1e-heuristic
-# Live keynote (needs MODEL_API_KEY in .env; ≈$0.01 ASR heuristic pass, M1e):
+# open http://127.0.0.1:8891/?replay=run-es-native
+# Live keynote ES (needs MODEL_API_KEY in .env; ≈$0.01 ASR heuristic pass):
 set -a && . ./.env && set +a
-.venv/bin/python live/run_live.py --video data/keynote/keynote_en.mp4 \
-  --detector heuristic --log data/runs/judge.jsonl
+.venv/bin/python live/run_live.py --video data/keynote_es/keynote_es_native.mp4 \
+  --detector heuristic --language-bias "Spanish" --log data/runs/judge.jsonl
 # Offline tests (0 live): .venv/bin/python -m pytest live/tests/ -q -m "not live"
 ```
 
 ## Licenses & data rights
 
-- **TTS voice**: Piper (MIT) with `en_US-ljspeech-medium`; training data
-  LJSpeech is public domain; espeak-ng (GPLv3) used as a local build tool
-  only, not distributed. Source: `live/material/LICENSES.md`.
+- **TTS voice**: Piper (MIT) with `es_ES-carlfm-x_low` (native Spanish,
+  public domain, trained from scratch) for the ES keynote + demo
+  narration; espeak-ng (GPLv3) used as a local build tool only, not
+  distributed. Source: `live/material/LICENSES_VOZ.md`.
 - **Video fixture**: synthetic original material (script, slides,
   narration, video) created for this project; fictional summit, no real
   persons. The 15 false claims + 4 misleading charts are deliberate traps.

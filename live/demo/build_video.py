@@ -1,17 +1,18 @@
 #!/usr/bin/env python3
-"""M9b — Atlas Live demo video builder (rama live, checkout compartido).
+"""M9b/F2-6 — Atlas Live demo video builder (checkout compartido).
 
-Pipeline todo local, $0:
-  1. TTS piper (voz LJSpeech, dominio publico, misma que M1c) desde
-     live/demo/narration_es.txt -> 11 WAV (22050 Hz mono).
+Pipeline todo local, $0 (el log ES live se corre aparte, ver F2_VIDEO.md):
+  1. TTS piper (voz nativa ES carlfm, dominio publico, misma que F2-4)
+     desde live/demo/narration_es.txt -> 11 WAV (reescritos a 22050 Hz).
   2. Exporta bundle real (offline) desde la corrida M2d
      (data/runs/verify-20261101-212343*) -> data/demo/atlas-live-bundle.zip
      y lo re-verifica con live/bundle/verify_bundle.py (captura real stdout).
-  3. Extrae frames reales del keynote (M3 picks) con imageio-ffmpeg.
-  4. Genera panels.html (cifras de summaries JSON + M3/M5/M7 citadas).
-  5. Levanta el server replay (uvicorn, puerto 8897) y graba con playwright
-     recordVideo 1920x1080: UI replay + paneles + terminal. Mata el server.
-  6. ffmpeg compone data/demo/atlas-live-demo.mp4 (1080p, <=3:00) con
+  3. Extrae frames reales del keynote ES nativo (slides 6/7/10 ES).
+  4. Genera panels.html (cifras F2 + M3/M7 citadas, arco baseline-honesto).
+  5. Levanta el server replay (uvicorn, puerto 8897) + estatico ES (8899)
+     y graba con playwright recordVideo 1920x1080: UI replay ES + paneles
+     + terminal. Mata ambos servers.
+  6. ffmpeg compone data/demo/atlas-live-demo.mp4 (1080p, <=2:50) con
      narracion + SRT EN incrustados (live/demo/narration_en.srt).
 
 Uso:
@@ -22,7 +23,10 @@ No hace llamadas live (QA de transcripcion va aparte). No toca git.
 
 from __future__ import annotations
 
+import functools
+import http.server
 import json
+import re
 import shutil
 import sqlite3
 import subprocess
@@ -53,53 +57,80 @@ OUT_MP4 = DATA_DEMO / "atlas-live-demo.mp4"
 OUT_BUNDLE = DATA_DEMO / "atlas-live-bundle.zip"
 
 PORT = 8897
+MPORT = 8899          # estatico para el mp4 ES nativo (sin tocar app.py)
 PAD_S = 0.8          # silencio tras cada bloque
 LEAD_S = 0.5         # silencio inicial
-MAX_TOTAL_S = 179.0  # hard cap (requerido <=180)
+MAX_TOTAL_S = 170.0  # hard cap F2-6 (requerido <=2:50, margen >=10s)
 
-VOICE = Path("/tmp/piper_voices_lj/en_US-ljspeech-medium.onnx")
+VOICE = Path("/tmp/piper_voices_es/es_ES-carlfm-x_low.onnx")
+VOICE_RATE = 16000   # carlfm x_low; se reescribe a OUT_RATE tras piper
+OUT_RATE = 22050
 PIPER = REPO / ".venv" / "bin" / "piper"
 
 M2D_SUMMARY = REPO / "data/runs/verify-20261101-212343.jsonl.summary.json"
 M2D_LOG = REPO / "data/runs/verify-20261101-212343.jsonl"
 M2D_DB = REPO / "data/runs/verify-20261101-212343.jsonl.db"
-AUDIT_JSON = REPO / "data/runs/audit-20261101-213747.json"
-ABLATION_JSON = REPO / "data/runs/ablation-20261101-214721-report.json"
 TRUTH = REPO / "live/material/truth.json"
-KEYNOTE = REPO / "data/keynote/keynote_en.mp4"
+KEYNOTE = REPO / "data/keynote_es/keynote_es_native.mp4"
+KEYNOTE_DIR = REPO / "data/keynote_es"
+KEYNOTE_NAME = "keynote_es_native.mp4"
+ES_RUN = "run-es-native"  # log live ES: data/runs/run-es-native.jsonl
 
-# Cifras M3/M5/M7 (sin artefacto JSON; fuente citada en cada panel).
+# Reportes F2 (fuente de cada cifra nueva; retencion SOLO via addendum).
+F2RECALL_REPORT = REPO / "data/runs/f2recall-fix-report.json"
+F2LAT_REPORT = REPO / "data/runs/f2lat-atlas-report.json"
+F2LAT_RUN = REPO / "data/runs/f2lat-atlas-atlas-run1.json"
+EVAL2_REPORT = REPO / "data/runs/eval2-20261101-225539-report.json"
+FID_R1 = REPO / "data/runs/eval2-20261101-225539-baseline-run1.json.fidelity.json"
+FID_R2 = REPO / "data/runs/eval2-20261101-225539-baseline-run2.json.fidelity.json"
+WER_REPORT = REPO / "data/keynote_es/wer_report.json"
+TAMPER_DEMO = REPO / "data/runs/f2-tamper-demo/demo.json"
+
+# Cifras M3/M7 (sin artefacto JSON; fuente citada en cada panel).
 M3 = {"f6_said": 40.0, "f6_shown": 0.97, "f6_d": 0.976,
       "f5_axis": "27-30", "f5_vals": "27.8->29.3", "f5_cue": "doubled",
       "f11_cue": "larger than", "t10_d": 0.0}
-M5 = {"t7_attack_usd": 0.0041, "t7_card_usd": 0.0026,
-      "t7_query": "Japan nominal GDP 2024 IMF World Bank trillion dollars"}
-M7 = {"t2_t": 13.3, "f3_t": 70.2, "gap": 56.9, "a": "1.41e9",
-      "b": "1.41e8", "rel_diff": 0.9}
+# Par ES medido (log run-es-native.jsonl + SRT nativo; metodo M7).
+M7ES = {"t2_win": "0.0-18.5", "f3_win": "63.5-81.1", "gap": 59,
+        "a": "1.41e9", "b": "1.41e8", "rel_diff": 0.9}
+# F2 recall/latencia/baseline/voz (verificadas en qa_video.py vs JSONs).
+F2R = {"dev_dec": 22, "dev_n": 36, "dev_wilson": "[0.851, 1.000]",
+       "ret_dec": 12, "ret_n": 18, "ret_wilson": "[0.757, 1.000]",
+       "cats": "a 5/6 · b 0/6 · c 6/6 · d 0/6 · e 5/6 · f 6/6"}
+F2L = {"wall_before": 779.5, "wall_after": 372.4, "wall_pct": 52,
+       "p50": 80.3, "p95": 115.7, "p50_before": "84-85", "p95_before": 90,
+       "ee_n": 9, "ee_med": 4.0, "ee_min": 2.7, "ee_max": 5.7,
+       "full_med": 82.2, "bud_med": 114.1, "per_claim": 0.0227}
+F2B = {"dev_ok": 70, "dev_n": 72, "dev_wilson": "[0.904, 0.992]",
+       "ret_n": 18, "ret_wilson": "[0.824, 1.000]",
+       "fid": "9/63 = 0.143", "fid_wilson": "[0.077, 0.250]",
+       "fid_r1": "5/31 = 0.161", "fid_r2": "4/32 = 0.125",
+       "reasons": "quote_not_found 34 · unit_mismatch 13 · numeric_mismatch 7"}
+F2V = {"wer": 0.0296, "recall": "41/41", "dur_s": 189.6}
 
 EN_CUES = [
-    ("One speaker says two things that can't both be true, 57 seconds apart.",
+    ("One speaker says two things that can't both be true, 59 seconds apart.",
      "Atlas Live catches it live \u2014 caught live \u2014 and shows the proof, not just the verdict."),
     ("Atlas Live listens to and watches a live video, extracts every checkable claim,",
-     "investigates it with Muse agents on the open web; deterministic code decides: the model proposes, code disposes."),
+     "investigates it with Muse agents on the open web; deterministic code decides. Native Spanish: 0.03 word error."),
     ("Minute one-ten. The speaker says China fell to 141 million people.",
      "Three researchers hit the open web while the video keeps running."),
     ("Contradicted. The World Bank says 1.409 billion \u2014 ten times more.",
      "And at minute zero he had said 1.41 billion: self-contradiction verified by code, rel diff of 0.9."),
     ("And you don't have to take our word for it. Every run exports a proof bundle",
-     "anyone can re-run with no network and no model: all pass. Literal quote, snapshot hash, reproduced verdict."),
+     "anyone can re-run with no network and no model: all pass. Flip one byte and the verifier fails."),
     ("But there's something better. The speaker says forty percent, and his own chart shows 0.97.",
      "The chart contradicts the speaker. Vision reads the frame; code decides."),
     ("Same trick on two slides: a truncated axis turning five percent into a doubling,",
      "and a broken scale putting India above the United States. Two automatic flags."),
-    ("Every supporting verdict is attacked by a skeptic hunting live counter-evidence.",
-     "Here it found nothing \u2014 honest abstention \u2014 and the card publishes in Spanish and English."),
-    ("Twelve internal canaries, disjoint from the video, through the real pipeline:",
-     "perfect accuracy on decided claims, with an honest Wilson interval. And zero false contradicts."),
-    ("The limits, unvarnished: 8 of 31 claims decided correctly,",
-     "one false claim accepted 0.14 tolerance points from the line, and a 78-second median per claim."),
-    ("Model proposes, code disposes, skeptic attacks, auditor measures. The honest ablation: the baseline wins, 31 of 31.",
-     "Our wedge: re-verifiable proof, zero false contradicts, and said-vs-shown."),
+    ("The fair benchmark, v2: 36 dev claims and 18 sealed retention claims.",
+     "Atlas decides 61% on dev and 67% on retention, with zero false contradicts in both."),
+    ("And now it's faster: total wall time down 52%, and the early-exit lane decides in 4 seconds.",
+     "Honestly: the median stays at 80 seconds, and the tail rises to 116 on the wider budget."),
+    ("The baseline, as is: 70 of 72 on dev and 18 of 18 on retention \u2014 it beats us on recall.",
+     "But only 14% of its citations are faithful to the source, and it exports zero re-runnable proof."),
+    ("Model proposes, code disposes. Our wedge: re-verifiable proof, zero false contradicts,",
+     "and said-vs-shown. All measured, all reproducible: try it."),
 ]
 
 
@@ -119,6 +150,19 @@ def wav_dur(path: Path) -> float:
 
 # ---------------------------------------------------------------- TTS
 
+def _ensure_out_rate(path: Path) -> None:
+    """Reescribe WAV a OUT_RATE mono si piper entrego otra tasa (carlfm=16k)."""
+    with wave.open(str(path), "rb") as w:
+        rate, ch = w.getframerate(), w.getnchannels()
+    if (rate, ch) == (OUT_RATE, 1):
+        return
+    tmp = path.with_suffix(".rs.wav")
+    r = run([ffmpeg(), "-y", "-i", str(path), "-ac", "1", "-ar",
+             str(OUT_RATE), str(tmp)])
+    assert tmp.is_file(), f"resample fallo: {r.stderr[-300:]}"
+    tmp.replace(path)
+
+
 def step_tts() -> list[float]:
     """Sintetiza los 11 bloques ES con piper. Devuelve duraciones."""
     blocks = [b.strip() for b in NARR_ES.read_text(encoding="utf-8").split("\n\n")
@@ -133,6 +177,7 @@ def step_tts() -> list[float]:
                            input=text.encode("utf-8"), capture_output=True)
         if r.returncode != 0 or not out.is_file():
             raise RuntimeError(f"piper fallo bloque {i}: {r.stderr.decode()[-300:]}")
+        _ensure_out_rate(out)
         d = wav_dur(out)
         durs.append(d)
         print(f"[tts] bloque {i}: {len(text)} chars -> {d:.1f}s", flush=True)
@@ -196,15 +241,26 @@ def f3_evidence() -> dict:
 
 def step_frames() -> None:
     ff = ffmpeg()
-    picks = {"slide6.png": 95.56, "slide7.png": 115.56, "slide10.png": 173.21}
+    # Slides ES nativos (keynote_es_native.srt: s6 81.5-93.6, s7 93.6-110.6,
+    # s10 150.7-164.4; mid-slide para charts estables).
+    picks = {"slide6.png": 87.5, "slide7.png": 102.0, "slide10.png": 157.5}
+    # Sentinel: re-extrae si cambian keynote o tiempos (evita frames rancios).
+    want = {"keynote": KEYNOTE.name, "mtime": KEYNOTE.stat().st_mtime,
+            "picks": picks}
+    sentinel = ASSETS / ".frames.json"
+    try:
+        fresh = json.loads(sentinel.read_text(encoding="utf-8")) == want
+    except (OSError, ValueError):
+        fresh = False
     for name, t in picks.items():
         out = ASSETS / name
-        if out.is_file():
+        if fresh and out.is_file():
             continue
         r = run([ff, "-y", "-ss", str(t), "-i", str(KEYNOTE),
                  "-frames:v", "1", str(out)])
         assert out.is_file(), f"frame {name} fallo: {r.stderr[-300:]}"
         print(f"[frames] {name} @ {t}s", flush=True)
+    sentinel.write_text(json.dumps(want), encoding="utf-8")
 
 
 # ---------------------------------------------------------------- paneles
@@ -267,8 +323,8 @@ PANELS_BODY = """
 <h1>Que es Atlas Live <span class="en">a real-time agent newsroom</span></h1>
 <p class="sub">Escucha y mira un video en directo, investiga cada afirmacion y publica veredictos con prueba.</p>
 <div class="pipe">
-<div class="pbox"><b>video</b><small>keynote 3:29</small></div><div class="parr">&rarr;</div>
-<div class="pbox"><b>ASR</b><small>muse-voice-transcribe realtime</small></div><div class="parr">&rarr;</div>
+<div class="pbox"><b>video</b><small>keynote ES 3:10 nativo</small></div><div class="parr">&rarr;</div>
+<div class="pbox"><b>ASR</b><small>realtime ES · WER 0.03</small></div><div class="parr">&rarr;</div>
 <div class="pbox"><b>claims</b><small>detector de afirmaciones</small></div><div class="parr">&rarr;</div>
 <div class="pbox"><b>agentes x3</b><small>Muse + web abierta</small></div><div class="parr">&rarr;</div>
 <div class="pbox code"><b>codigo decide</b><small>verificador determinista</small></div><div class="parr">&rarr;</div>
@@ -276,16 +332,16 @@ PANELS_BODY = """
 </div>
 <div class="grid2">
 <div class="card"><h2>Ojos: vista</h2>Lee graficos y ejes en los frames; codigo cruza <b>dicho-vs-mostrado</b> (tol. 2%).</div>
-<div class="card"><h2>Guardianes</h2>Esceptico ataca cada <span class="mono">supported</span>; auditor mide 12 canarios; longctx caza auto-contradicciones.</div>
+<div class="card"><h2>Oidos ES nativos</h2>Keynote re-generado con voz espa&ntilde;ola carlfm: WER <b>0.03</b> (2 sub + 14 ins + 1 del / 574) y ASR-recall <b>41/41</b>.</div>
 </div>
-<p class="src">Fuente: live/README.md, live/M1_E2E.md (bus + /ws). Lema: the model proposes, code disposes.</p>
+<p class="src">Fuentes: live/README.md, live/M1_E2E.md (bus + /ws) · live/F2_VOICE.md + wer_report.json (WER 0.0296, recall 1.0). Lema: the model proposes, code disposes.</p>
 </section>
 
 <section id="contradiction">
 <h1>La falsa, atrapada dos veces <span class="en">F3 caught: evidence + self-contradiction</span></h1>
-<p class="sub">Minuto 1:10 del keynote: &laquo;{{F3_TEXT}}&raquo;</p>
+<p class="sub">Minuto 1:10 del keynote ES: &laquo;{{F3_TEXT}}&raquo;</p>
 <div class="grid2">
-<div class="card" id="c-f3"><h2>F3-en &rarr; <span class="bad">contradicted</span> <span class="mono info">(3 paquetes)</span></h2>
+<div class="card" id="c-f3"><h2>F3 &rarr; <span class="bad">contradicted</span> <span class="mono info">(3 paquetes WB)</span></h2>
 <dl class="kv">
 <dt>Banco Mundial</dt><dd class="mono">{{F3_QUOTE}}</dd>
 <dt>URL</dt><dd class="mono acc">{{F3_URL}}</dd>
@@ -294,12 +350,12 @@ PANELS_BODY = """
 </dl></div>
 <div class="card" id="c-sc"><h2><span class="mono">speaker.contradiction</span> <span class="ok">verificada por codigo</span></h2>
 <dl class="kv">
-<dt>A (t=13.3s, T2)</dt><dd>&laquo;China is home to <b>1.41 billion</b> people&raquo;</dd>
-<dt>B (t=70.2s, F3)</dt><dd>&laquo;fallen to just <b>141 million</b> people&raquo;</dd>
-<dt>Choque</dt><dd class="mono">1.41e9 vs 1.41e8 count, gap 56.9s, <b>rel_diff=0.9</b></dd>
+<dt>A (turno 0: 0.0-18.5s)</dt><dd>&laquo;China tiene <b>mil cuatrocientos diez millones</b> de habitantes&raquo;</dd>
+<dt>B (turno 6: 63.5-81.1s)</dt><dd>&laquo;cay&oacute; a solo <b>ciento cuarenta y uno millones</b> de personas&raquo;</dd>
+<dt>Choque</dt><dd class="mono">1.41e9 vs 1.41e8 count, gap ~59s, <b>rel_diff=0.9</b></dd>
 </dl></div>
 </div>
-<p class="src">Fuentes: verify-20261101-212343.jsonl.summary.json (F3 contradicted, 3 paquetes) · live/M7.md (par T2/F3, mismo par en 2 corridas).</p>
+<p class="src">Fuentes: verify-20261101-212343.jsonl.summary.json (F3-en M2d, misma falsedad plantada: contradicted, 3 paquetes) · run-es-native.jsonl (turnos ASR 0 y 6) + SRT nativo (gap ~59s) · metodo live/M7.md (rel_diff=0.9).</p>
 </section>
 
 <section id="terminal">
@@ -307,12 +363,14 @@ PANELS_BODY = """
 <p class="sub">Cada corrida exporta un ZIP que cualquiera re-ejecuta sin red ni modelo.</p>
 <div id="term"><div class="cmd mono">demo@atlas:~/evidence-platform$ python live/bundle/verify_bundle.py {{BUNDLE_NAME}}</div>
 <div id="termout">{{TERMINAL_OUT}}</div></div>
-<p class="src">Salida real, verbatim, de {{BUNDLE_NAME}} (31 claims M2d) · motor live.verifier · verificador: live/bundle/verify_bundle.py.</p>
+<div class="card" id="c-tamper"><h2>Tamper: 1 byte &rarr; <span class="bad">FAIL</span></h2>
+<p class="mono">pristine 31/31 ok=True &rarr; 1 byte flip en snapshots/06c3ddaa&hellip;.html &rarr; ok=False <span class="bad">(hash mismatch)</span> · demo_pass=true</p></div>
+<p class="src">Salida real, verbatim, de {{BUNDLE_NAME}} (31 claims M2d) · motor live.verifier · verificador: live/bundle/verify_bundle.py · tamper: data/runs/f2-tamper-demo/demo.json.</p>
 </section>
 
 <section id="f6">
 <h1>El grafico contradice al orador <span class="en">said 40.0 vs shown 0.97</span></h1>
-<p class="sub">Slide 7 &laquo;Percent Games&raquo; (frame real t=115.6s): barra honesta de 0.97% mientras el habla dice &laquo;grew by nearly 40 percent&raquo;.</p>
+<p class="sub">Slide 7 (frame ES real t=102.0s): barra honesta de 0.97% mientras el habla dice &laquo;creci&oacute; casi un 40 por ciento&raquo;.</p>
 <div class="vs">
 <div style="flex:1.4"><img class="slide" src="slide7.png" alt="slide 7"></div>
 <div class="shown card" id="c-f6"><h2><span class="mono">visual.mismatch</span></h2>
@@ -320,7 +378,7 @@ PANELS_BODY = """
 <p class="mono">d = 0.976 &gt; tol 2% &rarr; mismatch</p>
 <p>Vision lee el frame (schema estricto); <b>codigo</b> cruza dicho-vs-mostrado.</p></div>
 </div>
-<p class="src">Fuente: live/M3.md (F6-en, match T10 d=0.0 como control honesto).</p>
+<p class="src">Fuente: live/M3.md (F6, match T10 d=0.0 como control honesto). Frame ES nativo (mismos datos de chart).</p>
 </section>
 
 <section id="axes">
@@ -334,79 +392,88 @@ PANELS_BODY = """
 <img class="slide" src="slide10.png" alt="slide 10">
 <p>India $3.76T dibujada mas alta que EE.UU. $29.3T: escala rota con zigzag.</p></div>
 </div>
-<p class="src">Fuente: live/M3.md (F5 + F11 flags; F12 cherry-pick fuera de contrato: solo notas de vision).</p>
+<p class="src">Fuente: live/M3.md (F5 + F11 flags sobre habla EN; F12 cherry-pick fuera de contrato). Frames ES nativos (mismos datos).</p>
 </section>
 
-<section id="skeptic">
-<h1>El esceptico <span class="en">we attack our own verdicts</span></h1>
-<p class="sub">Cada <span class="mono">supported</span> es atacado con contra-evidencia real antes de publicarse.</p>
+<section id="recall">
+<h1>Recall que generaliza <span class="en">dev 0.611 &rarr; retention 0.667</span></h1>
+<p class="sub">Benchmark justo v2: 36 DEV + 18 retencion sellada (prereg sellado antes de correr). Fixes generales, 0 falsos-contradicted.</p>
 <div class="grid2">
-<div class="card" id="c-t7"><h2>T7-en &rarr; <span class="ok">supported</span> <span class="mono info">[numeric_match]</span></h2>
-<p>&laquo;Jap&oacute;n PIB 4.19T en 2024&raquo; vs quote 4.2T: 0.24% off.</p></div>
-<div class="card" id="c-atk"><h2>Ataque real: <span class="mono">skeptic.note</span> <span class="info">(honest abstention)</span></h2>
+<div class="card" id="c-dev"><h2>DEV: <span class="big ok">22/36 = 0.611</span></h2>
 <dl class="kv">
-<dt>Contra-query</dt><dd class="mono">{{M5_QUERY}}</dd>
-<dt>Docs</dt><dd>1 fetched &rarr; extract abstiene (claim verdadero, nada que refutar)</dd>
-<dt>Costo</dt><dd class="mono">$0.0041 ataque + $0.0026 tarjeta = $0.0067</dd>
-<dt>Tarjeta</dt><dd>ES+EN model-drafted, citas confinadas, <span class="mono">fallback=False</span></dd>
+<dt>Exactitud decidida</dt><dd class="mono">22/22 = 1.000 Wilson 95% [0.851, 1.000]</dd>
+<dt>Falsos-C / falsos-S</dt><dd class="big ok">0 / 0</dd>
+<dt>Por categoria</dt><dd class="mono">a 5/6 · b 0/6 · c 6/6 · d 0/6 · e 5/6 · f 6/6</dd>
+<dt>Consistencia r1-r2</dt><dd class="mono">36/36 = 1.000 (+14 decididos: rescate code + citas refutatorias)</dd>
+</dl></div>
+<div class="card" id="c-ret"><h2>RETENCION: <span class="big ok">12/18 = 0.667</span></h2>
+<dl class="kv">
+<dt>Exactitud decidida</dt><dd class="mono">12/12 Wilson 95% [0.757, 1.000]</dd>
+<dt>Falsos-C / falsos-S</dt><dd class="big ok">0 / 0</dd>
+<dt>Costo</dt><dd class="mono">$0.0189/claim · p50/p95 82.8/90.1s</dd>
+<dt>Lectura</dt><dd>Dev 0.611 &rarr; ret 0.667: <b>generaliza</b> (b: primarios 403; d: aritmetica honesta).</dd>
 </dl></div>
 </div>
-<p class="src">Fuente: live/M5.md (T7 live; GATE A+B publican challenge solo con contra-prueba usable).</p>
+<p class="src">Fuentes: data/runs/f2recall-fix-report.json (DEV, ambas corridas 22/22) · live/F2_RECALL.md addendum (retencion, unica fuente permitida).</p>
 </section>
 
-<section id="auditor">
-<h1>Fiabilidad medida, no prometida <span class="en">12 canaries, zero false contradicts</span></h1>
-<p class="sub">Doce canarios internos (MEX/IDN/NGA/GBR/ITA/CAN, disjuntos del video) por el pipeline real.</p>
+<section id="latency">
+<h1>Mas rapido, con honestidad <span class="en">wall &minus;52%, early-exit 4s</span></h1>
+<p class="sub">Mismos 22/36 veredictos que F2-2 (ninguna palanca cambio un veredicto); solo velocidad + estados UI.</p>
 <div class="grid2">
-<div class="card"><h2>Panel auditor</h2>
-<p class="big">accuracy <span class="ok">1.0</span> <span class="info mono" style="font-size:19px">Wilson 95% [0.6457, 1.0]</span></p>
-<dl class="kv">
-<dt>Decididos</dt><dd class="mono">7/12 correctos (6 TRUE + F1)</dd>
-<dt>Abstencion</dt><dd class="mono">0.4167 (5/12, toda del lado FALSE)</dd>
-<dt>Falsos contradicted</dt><dd class="big ok">0</dd>
-<dt>Costo</dt><dd class="mono">$0.2914 · 58 llamadas · wall 210s</dd>
-</dl></div>
-<div class="card"><h2>Matriz canarios</h2>
-<table><tr><th>expected \\ verdict</th><th class="n">supported</th><th class="n">contradicted</th><th class="n">unverif.</th></tr>
-<tr><td>true (6)</td><td class="n ok">6</td><td class="n">0</td><td class="n">0</td></tr>
-<tr><td>false (6)</td><td class="n">0</td><td class="n ok">1 (F1)</td><td class="n warn">5</td></tr></table>
-<p class="info">Asimetria honesta: el swarm devuelve 0 paquetes ante falsedades (vacio honesto, causa A1).</p></div>
+<div class="card" id="c-wall"><h2>Antes &rarr; despues</h2>
+<table><tr><th>metrica</th><th class="n">F2-2</th><th class="n">F2-3 run1</th></tr>
+<tr><td>p50 / claim</td><td class="n">84-85s</td><td class="n">80.3s</td></tr>
+<tr><td>p95 / claim</td><td class="n">90s</td><td class="n warn">115.7s</td></tr>
+<tr><td>wall 36 claims</td><td class="n">779.5s</td><td class="n ok">372.4s (&minus;52%)</td></tr>
+<tr><td>$/claim</td><td class="n">0.021</td><td class="n">0.0227</td></tr></table>
+<p class="info">El p95 SUBE: el deadline 120 deja agotar presupuesto (~114s) en vez de morir a 90s. Mismos veredictos.</p></div>
+<div class="card" id="c-ee"><h2>Por grupo de ejecucion</h2>
+<table><tr><th>grupo</th><th class="n">n</th><th class="n">mediana</th><th class="n">rango</th></tr>
+<tr><td>early-exit</td><td class="n">9</td><td class="n ok">4.0s</td><td class="n">2.7-5.7s</td></tr>
+<tr><td>path completo</td><td class="n">20</td><td class="n">82.2s</td><td class="n">76.3-104.4s</td></tr>
+<tr><td>budget agotado</td><td class="n">7</td><td class="n warn">114.1s</td><td class="n">93.8-116.8s</td></tr></table>
+<p class="info">La mediana (~80s) sigue en path completo: solo 9/36 salen por la via rapida (los FALSE recorren el path).</p></div>
 </div>
-<p class="src">Fuente: audit-20261101-213747.json (panel + matriz verbatim).</p>
+<p class="src">Fuente: data/runs/f2lat-atlas-report.json (wall 372.4s, p50 80.3, p95 115.7) + live/F2_LATENCY.md §4 (grupos medidos).</p>
 </section>
 
-<section id="limits">
-<h1>Limites honestos <span class="en">8/31, one miss, 78s median</span></h1>
-<p class="sub">31 claims EN chequeables del keynote (16 true + 15 false). Abstenerse es virtud cuando la evidencia no alcanza.</p>
+<section id="baseline">
+<h1>El baseline, tal cual <span class="en">wins recall, loses proof</span></h1>
+<p class="sub">Model-only (1 llamada + web_search por claim), mismo DEV, 2 corridas. Donde acierta, donde falla, que agrega Atlas.</p>
 <div class="grid2">
-<div class="card"><h2>Matriz M2d</h2>
-<table><tr><th>expected \\ verdict</th><th class="n">supported</th><th class="n">contradicted</th><th class="n">unverif.</th></tr>
-<tr><td>true (16)</td><td class="n ok">7</td><td class="n">0</td><td class="n warn">9</td></tr>
-<tr><td>false (15)</td><td class="n bad">1 (F14)</td><td class="n ok">1 (F3)</td><td class="n warn">13</td></tr></table>
-<p class="mono">decididos correctos: 8/31 · precision decidida: 8/9 (89%)</p></div>
-<div class="card"><h2>Costo del recall</h2>
+<div class="card" id="c-beq"><h2>Donde acierta igual <span class="ok">veredictos</span></h2>
 <dl class="kv">
-<dt>F14</dt><dd>WLD 2020 7.85B vs hito 8B: rel 1.86% &lt; 2% &rarr; <span class="mono">supported</span> (a 0.14pp de la linea; year-swap fuera de alcance)</dd>
-<dt>Latencia</dt><dd class="mono">p50 78.4s / p95 90.0s por claim</dd>
-<dt>Costo</dt><dd class="mono">$0.96 · 155 llamadas · wall 611s</dd>
-<dt>F6</dt><dd>varianza del swarm: contradicted&rarr;unverifiable entre corridas (0 paquetes)</dd>
+<dt>DEV pooled</dt><dd class="mono">70/72 = 0.972 [0.904, 0.992] (r1 35/36, r2 35/36)</dd>
+<dt>Retencion</dt><dd class="mono">18/18 [0.824, 1.000] · recall 1.000 · consistencia 36/36</dd>
+<dt>Velocidad</dt><dd class="mono">p50 ~5-10s/claim (Atlas: ~80s)</dd>
+<dt>Veredicto</dt><dd><b>Nos gana en recall.</b> Punto.</dd>
+</dl></div>
+<div class="card" id="c-bfail"><h2>Donde falla <span class="bad">citas 14% fieles</span></h2>
+<dl class="kv">
+<dt>Fidelidad pooled</dt><dd class="mono bad">9/63 = 0.143 [0.077, 0.250] (r1 5/31, r2 4/32)</dd>
+<dt>Motivos</dt><dd class="mono">quote_not_found 34 · unit_mismatch 13 · numeric_mismatch 7</dd>
+<dt>URLs</dt><dd class="mono">72/72 stated por el modelo, 0 browsed · falsos-C: D3 x2</dd>
+<dt>Prueba offline</dt><dd class="big bad">0</dd>
 </dl></div>
 </div>
-<p class="src">Fuente: verify-20261101-212343.jsonl.summary.json (verbatim).</p>
+<p class="src">Fuentes: eval2-20261101-225539-report.json (70/72) + fidelity JSONs r1/r2 (9/63) · addendum F2_RECALL (ret 18/18).</p>
 </section>
 
 <section id="close">
-<h1>Cierre: ablacion honesta <span class="en">the baseline wins &mdash; and that's the point</span></h1>
-<div class="banner lose">Atlas 8/9 vs baseline run1 30/31 vs run2 31/31 &mdash; el baseline gana en todo lo medido.</div>
-<table><tr><th>metrica</th><th class="n">Atlas M2d</th><th class="n">baseline run1</th><th class="n">baseline run2</th></tr>
-<tr><td>accuracy (Wilson 95%)</td><td class="n">0.889 [0.565, 0.980]</td><td class="n">0.968 [0.838, 0.994]</td><td class="n">1.000 [0.890, 1.000]</td></tr>
-<tr><td>alucinaciones FALSE&rarr;contra</td><td class="n">1 (F3)</td><td class="n">15/15</td><td class="n">15/15</td></tr>
-<tr><td>falsos contradicted (P0)</td><td class="n ok">0</td><td class="n bad">1 (T7)</td><td class="n ok">0</td></tr>
-<tr><td>costo/claim</td><td class="n">$0.0310</td><td class="n">$0.0355</td><td class="n">$0.0281</td></tr>
-<tr><td>latencia p50</td><td class="n">78.4s</td><td class="n">4.5s</td><td class="n">4.2s</td></tr>
-<tr><td>consistencia r1-vs-r2</td><td class="n">&mdash;</td><td class="n" colspan="2">30/31 = 0.968 (difiere T7)</td></tr></table>
-<div class="banner wedge">Nuestro wedge: paquete re-verificable + 0 falsos-contradicted + dicho-vs-mostrado. Codigo y pruebas reproducibles: pruebalo.</div>
-<p class="src">Fuente: ablation-20261101-214721-report.json (verbatim; Atlas no lidera ninguna metrica; caveat: urls baseline model-stated, 0/62 validadas).</p>
+<h1>Cierre: numeros F2 <span class="en">the baseline wins recall &mdash; and that's the point</span></h1>
+<div class="banner lose">Atlas dev 0.611 / ret 0.667 vs baseline 1.000 &mdash; el baseline gana en recall.</div>
+<table><tr><th>metrica</th><th class="n">Atlas F2</th><th class="n">baseline</th></tr>
+<tr><td>recall DEV / retencion</td><td class="n">0.611 / 0.667</td><td class="n">1.000 / 1.000</td></tr>
+<tr><td>exactitud decidida</td><td class="n">1.000 (22/22 + 12/12)</td><td class="n">0.972 (70/72)</td></tr>
+<tr><td>citas fieles a la fuente</td><td class="n ok">verbatim por construccion</td><td class="n bad">0.143 (9/63)</td></tr>
+<tr><td>falsos contradicted</td><td class="n ok">0</td><td class="n bad">2 (D3 x2)</td></tr>
+<tr><td>prueba offline re-ejecutable</td><td class="n ok">si (bundle + tamper FAIL)</td><td class="n bad">no</td></tr>
+<tr><td>dicho-vs-mostrado</td><td class="n ok">si (F6, F5, F11)</td><td class="n bad">no</td></tr>
+<tr><td>latencia p50 / wall 36</td><td class="n">80.3s / 372s</td><td class="n">~5s / &mdash;</td></tr>
+<tr><td>ASR ES (WER / recall)</td><td class="n" colspan="2">0.03 / 41 de 41 (wer_report.json)</td></tr></table>
+<div class="banner wedge">Nuestro wedge: paquete re-verificable + 0 falsos-contradicted + dicho-vs-mostrado. Todo medido, todo reproducible: pruebalo.</div>
+<p class="src">Fuentes: f2recall-fix-report.json · addendum F2_RECALL · eval2-20261101-225539-report.json + fidelity r1/r2 · f2lat-atlas-report.json · wer_report.json.</p>
 </section>
 """
 
@@ -433,13 +500,12 @@ def step_panels(verify_out: str) -> Path:
     for ln in verify_out.splitlines():
         cls = "pass" if "PASS" in ln or "OK" in ln else "info"
         lines.append(f'<span class="{cls}">{esc(ln)}</span>')
-    body = PANELS_BODY.replace("{{F3_TEXT}}", esc(truth["F3-en"]["text"]))
+    body = PANELS_BODY.replace("{{F3_TEXT}}", esc(truth["F3-es"]["text"]))
     body = body.replace("{{F3_QUOTE}}", esc(f3["quote"]) + "&hellip;")
     body = body.replace("{{F3_URL}}", esc(f3["url"]))
     body = body.replace("{{F3_SHA}}", esc(f3["sha"]))
     body = body.replace("{{TERMINAL_OUT}}", "\n".join(lines))
     body = body.replace("{{BUNDLE_NAME}}", OUT_BUNDLE.name)
-    body = body.replace("{{M5_QUERY}}", esc(M5["t7_query"]))
     html = ("<!DOCTYPE html><html lang='es'><head><meta charset='utf-8'>"
             "<title>Atlas Live - paneles demo</title><style>" + PANELS_CSS +
             "</style></head><body>" + body +
@@ -492,6 +558,15 @@ def _record(browser, url: str, seg_dur: float, actions) -> Path:
 
 
 def ui_play(page, seek: float | None = None) -> None:
+    if seek is not None:
+        # Solo metadata: el static propio SI soporta Range, asi que el
+        # seek directo pega (un wait de buffer colgaria el segmento).
+        try:
+            page.wait_for_function(
+                "() => { const v = document.getElementById('player');"
+                " return v && v.readyState >= 1; }", timeout=8000)
+        except Exception:
+            pass
     page.evaluate("""(seek) => {
       const v = document.getElementById('player');
       if (v) { v.muted = true; if (seek !== null) { try { v.currentTime = seek; } catch(e){} }
@@ -499,13 +574,85 @@ def ui_play(page, seek: float | None = None) -> None:
     }""", seek)
 
 
+def ui_pin_es_video(page) -> None:
+    """Fija el mp4 ES nativo en el <video> (el server replay no lo mapea)."""
+    page.evaluate(
+        "(src) => { const v = document.getElementById('player');"
+        " if (v && !v.src) { v.src = src; } }",
+        f"http://127.0.0.1:{MPORT}/{KEYNOTE_NAME}")
+
+
 def ui_flash_141m(page) -> None:
     page.evaluate("""() => {
       const els = [...document.querySelectorAll('.claim')];
-      const hit = els.find(e => (e.textContent||'').includes('141 million'));
+      const hit = els.find(e => (e.textContent||'').includes('141 million'))
+        || els.find(e => (e.textContent||'').includes('cayó a'));
       if (hit) { hit.scrollIntoView({block:'center'}); hit.classList.remove('flash');
         void hit.offsetWidth; hit.classList.add('flash'); }
     }""")
+
+
+def serve_range_forever(port: int = MPORT) -> None:
+    """Sirve KEYNOTE_DIR con soporte Range (el seek de Chrome lo exige)."""
+
+    class _H(http.server.SimpleHTTPRequestHandler):
+        def end_headers(self):
+            self.send_header("Accept-Ranges", "bytes")
+            super().end_headers()
+
+        def do_GET(self):  # noqa: N802
+            rng = (self.headers.get("Range") or "").strip()
+            m = re.match(r"bytes=(\d*)-(\d*)$", rng)
+            if not m or not self.path.endswith(".mp4"):
+                return super().do_GET()
+            data = (KEYNOTE_DIR / KEYNOTE_NAME).read_bytes()
+            n = len(data)
+            s, e = m.group(1), m.group(2)
+            start = int(s) if s else max(0, n - int(e or n))
+            end = min(int(e) if e else n - 1, n - 1)
+            if start >= n:
+                self.send_response(416)
+                self.send_header("Content-Range", f"bytes */{n}")
+                self.end_headers()
+                return
+            chunk = data[start:end + 1]
+            self.send_response(206)
+            self.send_header("Content-Type", "video/mp4")
+            self.send_header("Content-Range",
+                             f"bytes {start}-{end}/{n}")
+            self.send_header("Content-Length", str(len(chunk)))
+            self.end_headers()
+            self.wfile.write(chunk)
+
+        def log_message(self, *a):
+            pass
+
+    handler = functools.partial(_H, directory=str(KEYNOTE_DIR))
+    with http.server.ThreadingHTTPServer(("127.0.0.1", port),
+                                         handler) as httpd:
+        httpd.serve_forever()
+
+
+def start_static() -> subprocess.Popen:
+    """Sirve data/keynote_es/ por HTTP (solo para pinchar el <video>)."""
+    srv = subprocess.Popen(
+        [sys.executable, "-c",
+         "from live.demo.build_video import serve_range_forever;"
+         f" serve_range_forever({MPORT})"],
+        cwd=str(REPO),
+        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    for _ in range(40):
+        try:
+            with urllib.request.urlopen(
+                    f"http://127.0.0.1:{MPORT}/{KEYNOTE_NAME}",
+                    timeout=2) as r:
+                if r.status == 200:
+                    print(f"[static] up :{MPORT} pid={srv.pid}", flush=True)
+                    return srv
+        except Exception:
+            time.sleep(0.25)
+    srv.terminate()
+    raise RuntimeError("static no levanto")
 
 
 def step_record(durs: list[float], panels: Path) -> list[tuple[Path, float]]:
@@ -520,13 +667,18 @@ def step_record(durs: list[float], panels: Path) -> list[tuple[Path, float]]:
                   "--mute-audio"])
         try:
             def act_ui_hook(page, dur):
+                ui_pin_es_video(page)
+                page.wait_for_timeout(1500)
                 ui_play(page)
             def act_pipe(page, dur):
                 page.evaluate("document.getElementById('pipeline').scrollIntoView()")
             def act_ui_f3(page, dur):
+                ui_pin_es_video(page)
+                page.wait_for_timeout(1500)
                 ui_play(page, seek=70.0)
                 try:
-                    page.get_by_text("141 million").first.wait_for(timeout=25000)
+                    page.get_by_text("ciento cuarenta y uno").first.wait_for(
+                        timeout=25000)
                 except Exception:
                     pass
                 ui_flash_141m(page)
@@ -554,28 +706,40 @@ def step_record(durs: list[float], panels: Path) -> list[tuple[Path, float]]:
                 page.wait_for_timeout(int(dur * 300))
                 page.evaluate("unhl('c-f5'); document.getElementById('c-f11').scrollIntoView({block:'center'})")
                 page.evaluate("hl('c-f11')")
-            def act_skep(page, dur):
-                page.evaluate("document.getElementById('skeptic').scrollIntoView()")
+            def act_recall(page, dur):
+                page.evaluate("document.getElementById('recall').scrollIntoView()")
                 page.wait_for_timeout(int(dur * 300))
-                page.evaluate("hl('c-t7')")
+                page.evaluate("hl('c-dev')")
                 page.wait_for_timeout(int(dur * 300))
-                page.evaluate("unhl('c-t7'); hl('c-atk')")
+                page.evaluate("unhl('c-dev'); hl('c-ret')")
+            def act_lat(page, dur):
+                page.evaluate("document.getElementById('latency').scrollIntoView()")
+                page.wait_for_timeout(int(dur * 300))
+                page.evaluate("hl('c-wall')")
+                page.wait_for_timeout(int(dur * 300))
+                page.evaluate("unhl('c-wall'); hl('c-ee')")
+            def act_base(page, dur):
+                page.evaluate("document.getElementById('baseline').scrollIntoView()")
+                page.wait_for_timeout(int(dur * 300))
+                page.evaluate("hl('c-beq')")
+                page.wait_for_timeout(int(dur * 300))
+                page.evaluate("unhl('c-beq'); hl('c-bfail')")
             def act_panel(sid):
                 def _fn(page, dur):
                     page.evaluate(f"document.getElementById('{sid}').scrollIntoView()")
                 return _fn
 
             plan = [
-                (f"{base}/?replay=run-m1e-heuristic&rate=4", act_ui_hook),
+                (f"{base}/?replay={ES_RUN}&rate=4", act_ui_hook),
                 (f"{pan}#pipeline", act_pipe),
-                (f"{base}/?replay=run-m1e-heuristic&rate=8", act_ui_f3),
+                (f"{base}/?replay={ES_RUN}&rate=8", act_ui_f3),
                 (f"{pan}#contradiction", act_contra),
                 (f"{pan}#terminal", act_term),
                 (f"{pan}#f6", act_f6),
                 (f"{pan}#axes", act_axes),
-                (f"{pan}#skeptic", act_skep),
-                (f"{pan}#auditor", act_panel("auditor")),
-                (f"{pan}#limits", act_panel("limits")),
+                (f"{pan}#recall", act_recall),
+                (f"{pan}#latency", act_lat),
+                (f"{pan}#baseline", act_base),
                 (f"{pan}#close", act_panel("close")),
             ]
             for i, (url, actions) in enumerate(plan):
@@ -626,9 +790,9 @@ def step_audio_srt(durs: list[float]) -> tuple[Path, float]:
     segs = []
     for i, d in enumerate(durs):
         with wave.open(str(WORK / f"narr_{i:02d}.wav"), "rb") as w:
-            assert (w.getnchannels(), w.getsampwidth(), w.getframerate()) == (1, 2, 22050)
+            assert (w.getnchannels(), w.getsampwidth(), w.getframerate()) == (1, 2, OUT_RATE)
             segs.append(w.readframes(w.getnframes()))
-    rate = 22050
+    rate = OUT_RATE
     silence = lambda s: b"\x00" * int(s * rate) * 2
     full = silence(LEAD_S)
     starts = []
@@ -730,15 +894,17 @@ def main() -> int:
         print("[record] reused 11 clips", flush=True)
     else:
         srv = start_server()
+        static = start_static()
         try:
             clips = step_record(durs, panels)
         finally:
-            srv.terminate()
-            try:
-                srv.wait(timeout=10)
-            except subprocess.TimeoutExpired:
-                srv.kill()
-            print("[server] killed", flush=True)
+            for s, name in ((srv, "server"), (static, "static")):
+                s.terminate()
+                try:
+                    s.wait(timeout=10)
+                except subprocess.TimeoutExpired:
+                    s.kill()
+                print(f"[{name}] killed", flush=True)
     audio, total = step_audio_srt(durs)
     assert total <= MAX_TOTAL_S, f"total {total:.1f}s excede cap"
     step_compose(clips, audio, total)

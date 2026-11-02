@@ -1,88 +1,88 @@
 1
-00:00:00,500 --> 00:00:07,463
-One speaker says two things that can't both be true, 57 seconds apart.
+00:00:00,500 --> 00:00:05,522
+One speaker says two things that can't both be true, 59 seconds apart.
 
 2
-00:00:07,463 --> 00:00:15,918
+00:00:05,522 --> 00:00:11,620
 Atlas Live catches it live — caught live — and shows the proof, not just the verdict.
 
 3
-00:00:16,718 --> 00:00:23,378
+00:00:12,420 --> 00:00:19,315
 Atlas Live listens to and watches a live video, extracts every checkable claim,
 
 4
-00:00:23,378 --> 00:00:32,821
-investigates it with Muse agents on the open web; deterministic code decides: the model proposes, code disposes.
+00:00:19,315 --> 00:00:28,916
+investigates it with Muse agents on the open web; deterministic code decides. Native Spanish: 0.03 word error.
 
 5
-00:00:33,621 --> 00:00:40,950
+00:00:29,716 --> 00:00:35,238
 Minute one-ten. The speaker says China fell to 141 million people.
 
 6
-00:00:40,950 --> 00:00:48,168
+00:00:35,238 --> 00:00:40,676
 Three researchers hit the open web while the video keeps running.
 
 7
-00:00:48,968 --> 00:00:55,922
+00:00:41,476 --> 00:00:47,416
 Contradicted. The World Bank says 1.409 billion — ten times more.
 
 8
-00:00:55,922 --> 00:01:06,407
+00:00:47,416 --> 00:00:56,372
 And at minute zero he had said 1.41 billion: self-contradiction verified by code, rel diff of 0.9.
 
 9
-00:01:07,207 --> 00:01:12,742
+00:00:57,172 --> 00:01:03,650
 And you don't have to take our word for it. Every run exports a proof bundle
 
 10
-00:01:12,742 --> 00:01:20,535
-anyone can re-run with no network and no model: all pass. Literal quote, snapshot hash, reproduced verdict.
+00:01:03,650 --> 00:01:11,748
+anyone can re-run with no network and no model: all pass. Flip one byte and the verifier fails.
 
 11
-00:01:21,335 --> 00:01:29,541
+00:01:12,548 --> 00:01:19,623
 But there's something better. The speaker says forty percent, and his own chart shows 0.97.
 
 12
-00:01:29,541 --> 00:01:36,033
+00:01:19,623 --> 00:01:25,220
 The chart contradicts the speaker. Vision reads the frame; code decides.
 
 13
-00:01:36,833 --> 00:01:44,604
+00:01:26,020 --> 00:01:31,189
 Same trick on two slides: a truncated axis turning five percent into a doubling,
 
 14
-00:01:44,604 --> 00:01:52,181
+00:01:31,189 --> 00:01:36,228
 and a broken scale putting India above the United States. Two automatic flags.
 
 15
-00:01:52,981 --> 00:01:59,565
-Every supporting verdict is attacked by a skeptic hunting live counter-evidence.
+00:01:37,028 --> 00:01:42,991
+The fair benchmark, v2: 36 dev claims and 18 sealed retention claims.
 
 16
-00:01:59,565 --> 00:02:06,971
-Here it found nothing — honest abstention — and the card publishes in Spanish and English.
+00:01:42,991 --> 00:01:50,164
+Atlas decides 61% on dev and 67% on retention, with zero false contradicts in both.
 
 17
-00:02:07,771 --> 00:02:14,419
-Twelve internal canaries, disjoint from the video, through the real pipeline:
+00:01:50,964 --> 00:01:57,122
+And now it's faster: total wall time down 52%, and the early-exit lane decides in 4 seconds.
 
 18
-00:02:14,419 --> 00:02:22,621
-perfect accuracy on decided claims, with an honest Wilson interval. And zero false contradicts.
+00:01:57,122 --> 00:02:03,012
+Honestly: the median stays at 80 seconds, and the tail rises to 116 on the wider budget.
 
 19
-00:02:23,421 --> 00:02:29,265
-The limits, unvarnished: 8 of 31 claims decided correctly,
+00:02:03,812 --> 00:02:10,552
+The baseline, as is: 70 of 72 on dev and 18 of 18 on retention — it beats us on recall.
 
 20
-00:02:29,265 --> 00:02:38,839
-one false claim accepted 0.14 tolerance points from the line, and a 78-second median per claim.
+00:02:10,552 --> 00:02:17,988
+But only 14% of its citations are faithful to the source, and it exports zero re-runnable proof.
 
 21
-00:02:39,639 --> 00:02:50,871
-Model proposes, code disposes, skeptic attacks, auditor measures. The honest ablation: the baseline wins, 31 of 31.
+00:02:18,788 --> 00:02:24,837
+Model proposes, code disposes. Our wedge: re-verifiable proof, zero false contradicts,
 
 22
-00:02:50,871 --> 00:02:58,099
-Our wedge: re-verifiable proof, zero false contradicts, and said-vs-shown.
+00:02:24,837 --> 00:02:28,916
+and said-vs-shown. All measured, all reproducible: try it.
 
