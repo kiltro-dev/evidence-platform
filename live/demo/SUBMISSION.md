@@ -47,9 +47,10 @@ of a bare true/false label.
 ## Impact
 
 On the fair benchmark v2 (36 DEV claims + 18 sealed retention claims,
-preregistered), Atlas Live decides 22/36 = 0.611 on DEV and 12/18 = 0.667
-on retention with zero false contradicts in both (22/22 + 12/12 decided
-accuracy), caught a planted speaker self-contradiction (China 1.41B vs
+preregistered), Atlas Live decides 26/36 = 0.722 on DEV and 12/18 = 0.667
+on retention with zero false verdicts on either set (26/26 + 12/12 decided
+accuracy; coverage and precision always reported together), caught a planted
+speaker self-contradiction (China 1.41B vs
 141M, ~59 s apart in the native-ES keynote) and a said-vs-shown chart
 contradiction (40% said vs 0.97% shown), transcribes native Spanish at
 0.03 WER with 41/41 ASR-recall, and exports tamper-evident proof bundles
@@ -108,11 +109,17 @@ vanilla JS newsroom UI (no framework), pytest (206+ offline tests).
 
 ## Honest limits
 
-- Recall 22/36 = 0.611 on DEV (a 5/6, b 0/6, c 6/6, d 0/6, e 5/6, f 6/6;
-  14 abstentions) and 12/18 = 0.667 on sealed retention, 0 false
-  contradicts in both; decided accuracy 22/22 + 12/12 = 1.000.
-  Source: `data/runs/f2recall-fix-report.json` + `live/F2_RECALL.md`
+- Recall 26/36 = 0.722 on DEV (a 5/6, b 0/6, c 6/6, d 4/6, e 5/6, f 6/6;
+  10 abstentions) and 12/18 = 0.667 on sealed retention, 0 false
+  verdicts on either set; decided accuracy 26/26 + 12/12 = 1.000.
+  Source: `data/runs/v5p0-dev-atlas-run1.json` + `live/F2_RECALL.md`
   addendum (retention; `retention.json` never opened).
+- Corpus false contradicts (declared): 3 systematic difference-claim
+  errors found in S4 (C1D3/D5/D7) — FIXED by the V5-1 arithmetic guard
+  (s1 false-C list empty on re-run); 1 open retrieval-variance case on
+  the EN bench (P1-17-en: spurious wiki quote cited, model-path,
+  pre-existing, not verifier-caused). Corpus EN post-fix: 75/181
+  decided, 74/75 correct. Source: `live/V5_P0.md`, `live/V5_2B.md`.
 - Verdict latency (F2-9) p50 4.9/5.0 s per claim (invest→verdict),
   down from 80.3 s (16×); wall for 36 claims ~78 s (−79% vs 372.4 s);
   $0.0073/0.0059 per claim; 20/36 claims exit via the ~4 s fast lane.
@@ -146,7 +153,8 @@ vanilla JS newsroom UI (no framework), pytest (206+ offline tests).
   unit_mismatch 13, numeric_mismatch 7; 72/72 urls model-stated,
   0 browsed), 2 false contradicts (D3×2), and zero offline proof.
   What Atlas adds: re-verifiable proof bundles (31/31 ALL PASS, 1-byte
-  tamper ⇒ FAIL), 0 false contradicts, and said-vs-shown vision checks.
+  tamper ⇒ FAIL), 0 false contradicts on benchmark v2 dev+retention,
+  and said-vs-shown vision checks.
   Source: `live/F2_BENCH.md`.
 
 ## How to reproduce ($0 judge path + live path)

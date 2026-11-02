@@ -67,8 +67,8 @@ see [docs/AGENTS.md](docs/AGENTS.md).
 
 Measured on preregistered ground truth (dev 36 + sealed retention 18,
 [`live/eval2/prereg.md`](live/eval2/prereg.md)): Atlas decides
-22/36 dev (recall 0.611) and 12/18 retention (0.667), 22/22 and 12/12
-correct with **0 false verdicts either way** (Wilson 95% [0.851,1.000]
+26/36 dev (recall 0.722) and 12/18 retention (0.667), 26/26 and 12/12
+correct with **0 false verdicts on these two sets** (Wilson 95% [0.871,1.000]
 dev, [0.757,1.000] retention); latency p50 ~5 s / p95 ~40 s per claim
 at ~$0.007/claim ([`live/F2_P95.md`](live/F2_P95.md)). The Muse-only
 baseline scores higher on verdicts (18/18 retention) — but only 14% of
@@ -83,7 +83,10 @@ anyone can re-verify offline. Said-vs-shown 4/4 planted cases
 > synthetic — scripted, TTS-voiced and code-rendered by us, labeled
 > "Synthetic demo" on screen ([`live/S4_SYNTHQA.md`](live/S4_SYNTHQA.md)).
 > Its metrics measure the system against known truth, not real-world
-> performance.
+> performance. Declared errors: 3 systematic difference-claim
+> false-contradicts found on the corpus, FIXED by the V5-1 arithmetic
+> guard; 1 open retrieval-variance case (P1-17-en). See
+> [`live/demo/SUBMISSION.md`](live/demo/SUBMISSION.md) § Honest limits.
 
 The v1 static checker (paste text → receipts) still works under
 `src/atlas/` + `POST /api/check` (tag `pre-pivot-v1`, 755 offline

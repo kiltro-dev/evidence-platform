@@ -157,8 +157,8 @@ con p95 39–41 s CUMPLE vs 60, ASR ES). Banner «el
 baseline gana en recall» + banner wedge.
 
 SE DICE: «Modelo propone, código dispone. Nuestro wedge: prueba
-re-verificable, cero falsos contradicted, y dicho contra mostrado. Todo
-medido, todo reproducible: pruébalo.»
+re-verificable, cero falsos en el benchmark preregistrado, y dicho
+contra mostrado. Todo medido, todo reproducible: pruébalo.»
 
 Fuente: reportes F2 (recall/latencia/retención/fidelity/WER citados
 arriba).
@@ -180,4 +180,6 @@ arriba).
   `live/F2_VIDEO.md`.
 - M8/M9b (EN, baseline 31/31) quedan como precedente histórico; el arco
   actual es F2 baseline-honesto (el baseline gana recall 1.000 vs
-  0.611/0.667; Atlas conserva prueba + 0 falsos-C + dicho-vs-mostrado).
+  0.722/0.667; Atlas conserva prueba + 0 falsos-C en benchmark v2 +
+  dicho-vs-mostrado). Corpus: 3 falsos-C diferencia CORREGIDOS (V5-1),
+  1 abierto retrieval (P1-17).
