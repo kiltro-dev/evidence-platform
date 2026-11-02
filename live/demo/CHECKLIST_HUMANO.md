@@ -5,14 +5,17 @@ ordena el trabajo manual que un humano debe hacer (login, video, portal).
 
 ## Paso 1 — Subir el video (~5 min)
 
-1. Conseguir el MP4 final de M9b (este kit M9a es solo docs: NO hay
-   video aquí). Duración requerida ≤2:55; guion en `live/demo/script.md`.
+1. Grabar el MP4 con tu voz siguiendo `live/demo/RECORDING_GUIDE.md`
+   (~2:30, guion frase por frase en inglés). Alternativa: el MP4
+   TTS `data/demo/atlas-live-demo.mp4` (2:37.0, en máquina del dev,
+   data/ no se commitea — pedirlo si se prefiere esa versión).
 2. Subirlo a la plataforma que pida el portal (YouTube no-listado o
    adjunto directo — confirmar en el portal tras login, ver Campos).
 3. Copiar la URL final / ID del adjunto. Pegarla en el campo de video
    del portal Y en `SUBMISSION.md` § Links (reemplaza el TODO-M8).
 
-TODO-M8: sin M9b no hay video; no submitear con un video provisorio.
+Números congelados 3-nov 12:00 Santiago: usar los de SUBMISSION.md
+§ Reproducibility tal cual (§ V5-4 cierra cambios de métricas).
 
 ## Paso 2 — Portal: pegar textos exactos (~8 min)
 
