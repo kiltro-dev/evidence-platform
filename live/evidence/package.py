@@ -211,22 +211,58 @@ def is_multi_source_arithmetic(text: str) -> bool:
 
 
 _WB_API_HOSTS = ("api.worldbank.org",)
+_FRED_API_HOSTS = ("api.stlouisfed.org",)
+
+
+def _fred_meta_for_snapshot(url: str, snapshot_text: str) -> "SourceMeta | None":
+    """FRED observations metadata, or None (V7; pure leaf of below).
+
+    Host must be api.stlouisfed.org, ``series_id`` in the query must be
+    a curated FRED_SERIES id, and the bytes must parse as a FRED
+    observations object (``observations[]`` with date/value rows).
+    The series id comes from the code-built request URL (altroutes
+    candidates are model-unreachable), the values from the bytes.
+    """
+    try:
+        from live.swarm import fred as _fred  # lazy: swarm/__init__ cycle
+    except Exception:
+        return None
+    try:
+        parts = urllib.parse.urlsplit(url or "")
+        query = urllib.parse.parse_qs(parts.query or "")
+        sid = (query.get("series_id") or [""])[0].strip().upper()
+    except (ValueError, AttributeError, TypeError):
+        return None
+    spec = _fred.FRED_SERIES.get(sid)
+    if not spec:
+        return None
+    try:
+        rows = _fred.parse_observations(snapshot_text or "")
+    except Exception:
+        return None
+    if not rows:
+        return None
+    return SourceMeta(indicator=sid, unit=str(spec["unit"]),
+                      scale=float(spec["scale"]))
 
 
 def source_meta_for_snapshot(url: str, snapshot_text: str) -> "SourceMeta | None":
     """Structured-source metadata for a snapshot, or None.
 
     Applies ONLY to World Bank API JSON (``[meta, rows]`` with
-    ``rows[].indicator.id``): returns the single consistent indicator id
-    plus its curated unit when every row agrees and the indicator is in
-    WB_INDICATOR_UNITS. Anything else (prose, CSV, mixed/unknown
-    indicators, malformed JSON, non-WB host) -> None. Never raises:
-    the producer must never crash on an odd snapshot.
+    ``rows[].indicator.id``) and (V7) FRED observations JSON: returns
+    the single consistent indicator id plus its curated unit when
+    every row agrees and the indicator is curated. Anything else
+    (prose, CSV, mixed/unknown indicators, malformed JSON, other
+    hosts) -> None. Never raises: the producer must never crash on an
+    odd snapshot.
     """
     try:
         host = (urllib.parse.urlsplit(url or "").hostname or "").lower()
     except ValueError:
         return None
+    if any(host == h or host.endswith("." + h) for h in _FRED_API_HOSTS):
+        return _fred_meta_for_snapshot(url, snapshot_text)
     if not any(host == h or host.endswith("." + h) for h in _WB_API_HOSTS):
         return None
     try:

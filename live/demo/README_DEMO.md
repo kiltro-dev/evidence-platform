@@ -71,6 +71,6 @@ that (and only with the local `data/` corpus).
 ## Offline tests ($0)
 
 ```bash
-PYTHONPATH=src:live .venv/bin/python -m pytest live/tests -q   # 1073 passed
+PYTHONPATH=src:live .venv/bin/python -m pytest live/tests -q   # 1085 passed
 PYTHONPATH=src:live .venv/bin/python scripts/check_claims.py   # numbers guard
 ```

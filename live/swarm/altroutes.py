@@ -139,13 +139,24 @@ def match_imf(text: str) -> bool:
         return False
 
 
+def match_fred(text: str) -> bool:
+    """True when the claim names a FRED-covered concept (pure, V7)."""
+    try:
+        from live.swarm import fred as _fred
+        return bool(_fred.match_fred_series(text))
+    except Exception:
+        return False
+
+
 def is_blike_claim(text: str) -> bool:
-    """True for b-like (IMF/BLS-topic) claims (pure).
+    """True for b-like (IMF/BLS/FRED-topic) claims (pure).
 
     Covers the corpus/dev b classes except the UN-population claim
     (S2-04), which has no altroute and is out of scope by design.
+    V7 admits FRED topics (fed funds, CPI, unemployment, real GDP,
+    10y treasury, payrolls) — they share the same per-claim budget.
     """
-    return match_bls(text) or match_imf(text)
+    return match_bls(text) or match_imf(text) or match_fred(text)
 
 
 # ---------------------------------------------------------------------------
@@ -436,11 +447,14 @@ def attempt_altroutes(
     *,
     snapshot_dir: str | Path | None = None,
     budget: int = MAX_ALT_CALLS_PER_CLAIM,
+    get: Callable[..., Any] | None = None,
 ) -> AltAttempt:
     """Deterministic altroute attempt for one claim (sync, capped).
 
     ``post`` is ``fetch_post`` (or a test double) with signature
-    ``post(url, payload_dict, snapshot_dir=...)``. At most ``budget``
+    ``post(url, payload_dict, snapshot_dir=...)``; ``get`` is the GET
+    seam (``fetch_url`` or a double) used ONLY by the V7 FRED leg —
+    ``None`` skips FRED with zero packets. At most ``budget``
     network attempts (default 2); registry-dead routes are recorded
     as skipped WITHOUT network traffic. Never raises on
     claim/post-shaped input: transport failures become ``refused``
@@ -464,8 +478,6 @@ def attempt_altroutes(
         series = match_bls_series(text)
     except Exception:
         series = []
-    if not series:
-        return AltAttempt([], 0, tried)
     try:
         year = year_from_text(text)
         month = month_from_text(text)
@@ -511,6 +523,88 @@ def attempt_altroutes(
             vintage=bls_vintage(obs), fetch_result=fetched))
         tried.append({"route": f"bls-api/{sid}", "action": "candidate",
                       "reason": f"vintage {bls_vintage(obs)}"})
+    # V7 FRED leg: remaining budget only, key-gated, GET seam.
+    try:
+        fred_out = _fred_leg(text, get, snapshot_dir, cap - calls, tried,
+                             year, month)
+    except Exception:
+        fred_out = AltAttempt([], 0, tried)
+    return AltAttempt(candidates + fred_out.candidates,
+                      calls + fred_out.calls_made, fred_out.routes_tried)
+
+
+def _fred_leg(text: str, get: Callable[..., Any] | None,
+              snapshot_dir: str | Path | None, remaining: int,
+              tried: list[dict], year: int | None = None,
+              month: int | None = None) -> AltAttempt:
+    """FRED observations via official API (V7; key-gated; capped).
+
+    Zero packets when ``get`` is None, no series matches, or
+    ``FRED_API_KEY`` is unset. Cache bypassed + urls redacted so the
+    key never persists. Never raises on claim-shaped input.
+    """
+    from live.swarm import fred as _fred
+
+    try:
+        series = _fred.match_fred_series(text)
+    except Exception:
+        series = []
+    if not series:
+        return AltAttempt([], 0, tried)
+    if get is None:
+        for sid in series:
+            tried.append({"route": f"fred-api/{sid}", "action": "skipped",
+                          "reason": "no GET seam"})
+        return AltAttempt([], 0, tried)
+    key = _fred.read_key()
+    if not key:
+        for sid in series:
+            tried.append({"route": f"fred-api/{sid}", "action": "skipped",
+                          "reason": "FRED_API_KEY unset"})
+        return AltAttempt([], 0, tried)
+    candidates: list[AltCandidate] = []
+    calls = 0
+    cap = max(0, int(remaining or 0))
+    for sid in series:
+        if calls >= cap:
+            tried.append({"route": f"fred-api/{sid}", "action": "skipped",
+                          "reason": "budget exhausted"})
+            break
+        calls += 1
+        try:
+            fetched = get(_fred.fred_url(sid, key, year),
+                          snapshot_dir=snapshot_dir, use_cache=False)
+            fetched = _fred.redact_result(fetched, key)
+        except Exception as exc:
+            tried.append({"route": f"fred-api/{sid}", "action": "refused",
+                          "reason": f"{type(exc).__name__}"})
+            continue
+        try:
+            body = fetched.text or ""
+            obs = _fred.pick_observation(
+                _fred.parse_observations(body), year, month)
+            quote = _fred.fred_quote_for(body, obs) if obs else None
+        except Exception:
+            obs, quote = None, None
+        if obs is None or not quote:
+            tried.append({"route": f"fred-api/{sid}",
+                          "action": "no-observation",
+                          "reason": "requested period not in response"})
+            continue
+        try:
+            url = fetched.final_url or fetched.url
+        except Exception:
+            url = _fred.FRED_API_URL
+        try:
+            source_year = int(str(obs.get("date", ""))[:4])
+        except (TypeError, ValueError):
+            source_year = None
+        candidates.append(AltCandidate(
+            url=url, quote=quote, source_meta=_fred.fred_source_meta(sid),
+            source_year=source_year,
+            vintage=_fred.fred_vintage(obs), fetch_result=fetched))
+        tried.append({"route": f"fred-api/{sid}", "action": "candidate",
+                      "reason": f"vintage {_fred.fred_vintage(obs)}"})
     return AltAttempt(candidates, calls, tried)
 
 

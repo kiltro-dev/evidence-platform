@@ -1102,9 +1102,20 @@ class _Tools:
             if not callable(attempt):
                 return {"ok": False, "error": "altroutes unavailable"}
             post = self._config.post_fn or fetch_post
+            # V7 FRED leg: GET seam (keyed URLs bypass the cache;
+            # TypeError fallback keeps pre-V7 fetch_fn doubles working).
+            fetch_fn = self._config.fetch_fn or fetch_url
+
+            def _get(url: str, **kw: Any) -> Any:
+                try:
+                    return fetch_fn(url, **kw)
+                except TypeError:
+                    kw.pop("use_cache", None)
+                    return fetch_fn(url, **kw)
+
             tried = attempt(
                 str(text or ""), post,
-                snapshot_dir=self._config.snapshot_dir)
+                snapshot_dir=self._config.snapshot_dir, get=_get)
         except Exception as exc:
             log.warning("alt_lookup failed: %r", exc)
             return {"ok": False, "error": f"{type(exc).__name__}"}

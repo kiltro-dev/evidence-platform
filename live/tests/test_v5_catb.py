@@ -39,6 +39,13 @@ import urllib.error
 
 import pytest
 
+
+@pytest.fixture(autouse=True)
+def _no_ambient_fred_key(monkeypatch):
+    """V7: this suite is offline — an ambient FRED_API_KEY must not
+    let the FRED leg reach the network through the default GET seam."""
+    monkeypatch.delenv("FRED_API_KEY", raising=False)
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 from live.swarm.altroutes import (  # noqa: E402
@@ -402,10 +409,16 @@ class TestAttempt:
             snapshot_dir=tmp_path)
         assert res.calls_made == 1 and res.candidates == []
         tried = res.routes_tried
-        assert len(tried) == 1
-        assert tried[0]["route"] == "bls-api/LNS14000000"
-        assert tried[0]["action"] == "refused"
-        assert tried[0]["reason"] == "FetchBlocked"
+        bls = [t for t in tried if t["route"].startswith("bls-api/")]
+        assert len(bls) == 1
+        assert bls[0]["route"] == "bls-api/LNS14000000"
+        assert bls[0]["action"] == "refused"
+        assert bls[0]["reason"] == "FetchBlocked"
+        # V7: the unemployment claim also names FRED UNRATE; the leg
+        # records its skip with zero packets (no GET seam passed).
+        fred = [t for t in tried if t["route"].startswith("fred-api/")]
+        assert fred == [{"route": "fred-api/UNRATE", "action": "skipped",
+                         "reason": "no GET seam"}]
         assert seen[0]["url"] == BLS_API_URL
         assert seen[0]["payload"] == {"seriesid": ["LNS14000000"],
                                       "startyear": "2026",
@@ -438,7 +451,10 @@ class TestAttempt:
             snapshot_dir=tmp_path, budget=1)
         assert res.calls_made == 1
         actions = [t["action"] for t in res.routes_tried]
-        assert actions == ["refused", "skipped"]
+        # V7: +1 FRED skip (budget already spent by BLS).
+        assert actions == ["refused", "skipped", "skipped"]
+        assert res.routes_tried[-1]["route"] == "fred-api/UNRATE"
+        assert res.routes_tried[-1]["reason"] == "no GET seam"
 
     def test_success_candidate_rate(self, tmp_path):
         bodies = {"LNS14000000": _bls_body("LNS14000000")}

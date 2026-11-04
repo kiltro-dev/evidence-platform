@@ -41,7 +41,7 @@ Layout (actual):
   `live/eval2/` (benchmark v2: prereg, dev/retention, fidelity,
   committed `scores/`), `live/synthqa/`, `live/material/`,
   `live/fixtures/`, `live/ablation/`, `live/demo/` (judge kit).
-- `live/tests/` — offline gate (1073 passed); `live/claims_registry.json`
+- `live/tests/` — offline gate (1085 passed); `live/claims_registry.json`
   — published-numbers registry + recompute specs.
 
 Milestone notes (`M*.md`, `F2_*.md`, `S*.md`, `V5_*.md`, `V6_LINK.md`)

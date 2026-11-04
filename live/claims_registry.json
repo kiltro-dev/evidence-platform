@@ -327,23 +327,23 @@
       "d": null,
       "dataset": "live/tests/ (this checkout)",
       "dataset_version": "n/a",
-      "definition": "pytest collect-only count = 1082 on 2026-11-04; last full run 1073 passed + 9 skipped (live-network tests excluded); command: PYTHONPATH=src:live .venv/bin/python -m pytest live/tests -q",
+      "definition": "pytest collect-only count = 1095 on 2026-11-04; last full run 1085 passed + 10 skipped (live-network tests excluded); command: PYTHONPATH=src:live .venv/bin/python -m pytest live/tests -q",
       "docs": [
         "README.md"
       ],
-      "experiment": "offline gate",
+      "experiment": "offline gate (V7 FRED: +13 tests, 1 live-skipped)",
       "id": "tests_live",
       "metric": "Offline tests, live suite",
-      "n": 1082,
+      "n": 1095,
       "not_proven": "count only; live-network tests (ATLAS_LIVE_NET) excluded from the gate",
       "pins": [
-        "1073"
+        "1085"
       ],
       "recompute": "collect:live/tests",
       "status": "measured",
-      "value": "1073 passed, 9 skipped (1082 collected)",
-      "passed": 1073,
-      "skipped": 9,
+      "value": "1085 passed, 10 skipped (1095 collected)",
+      "passed": 1085,
+      "skipped": 10,
       "date": "2026-11-04",
       "command": "PYTHONPATH=src:live .venv/bin/python -m pytest live/tests -q",
       "scope": "live-network tests excluded"
