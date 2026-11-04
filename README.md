@@ -41,14 +41,13 @@ recording guide: [`live/demo/RECORDING_GUIDE.md`](live/demo/RECORDING_GUIDE.md).
 | Vivo por enlace | Link ingest (mp4 or HLS window) paced in real time | Run `link-22abeaf5ee2e` (mux HLS, 30 s, done, $0.0015) |
 | Turbo por enlace | Same ingest without the realtime governor | V5-G1 + `run.mode` pacing flag |
 | Archivo en tiempo real | Local file ingested with realtime pacing | Same pipeline, `source=file` |
+| Visión sobre gráficos | Said-vs-shown run **offline** over prepared material (M3 4/4 incl. 40% said vs 0.97% shown) — NOT during ingest | [`live/M3.md`](live/M3.md) |
+| ❌ Micrófono/pestaña | NOT implemented (no browser capture) | — |
+| ❌ DASH / cifradas / YouTube | NOT implemented (DASH + encrypted refused; YouTube refused by policy) | — |
 
-Vision on link media runs **offline** (said-vs-shown over the
-materialized file, M3 4/4 incl. 40% said vs 0.97% shown) — not
-inline-realtime. Claim detection publishes `claim.detected` p50/p95
-1240/1314 ms after end-of-phrase (M1 bus measurement; detection only,
-not verdict latency). Explicitly NOT implemented: browser
-tab/microphone capture, DASH playlists, encrypted playlists, YouTube
-(refused by policy). No other "live" claim is made.
+Claim detection publishes `claim.detected` p50/p95 1240/1314 ms after
+end-of-phrase (M1 bus measurement; detection only, not verdict
+latency). No other "live" claim is made.
 
 ## Metrics (each with its experiment)
 

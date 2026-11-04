@@ -10,34 +10,36 @@ F2-6c (re-render parcial F2-9, TTS carlfm): total 2:37.0
 
 ---
 
-## 0:00–0:12 — Hook: el orador se contradice a sí mismo
+## 0:00–0:12 — Hook: el orador se contradice a sí mismo [replay rotulado]
 
 SE VE: keynote ES nativo corriendo en la sala de redacción
 (`live/ui/index.html`, replay `run-es-native` 4×); tarjeta de claim en
 estado `escuchada`.
 
 SE DICE: «Un orador dice dos cosas que no pueden ser verdad a la vez,
-con cincuenta y nueve segundos de distancia. Atlas Live lo atrapa en
-vivo — *caught live* — y te muestra la prueba, no solo el veredicto.»
+con cincuenta y nueve segundos de distancia. Atlas Live lo atrapa
+mientras se emite — *caught as it airs* — y te muestra la prueba, no
+solo el veredicto.» [Modo en pantalla: replay rotulado de corrida real.]
 
 Fuente: turnos ASR 0 (0.0–18.5 s) y 6 (63.5–81.1 s) de
 `run-es-native.jsonl` + SRT nativo (gap ~59 s); método M7 (rel_diff 0.9).
 
-## 0:12–0:29 — Qué es Atlas Live + oídos ES nativos
+## 0:12–0:29 — Qué es Atlas Live + oídos ES nativos [diagrama + replay rotulado]
 
 SE VE: diagrama simple en pantalla: video → ASR → claims → agentes →
 código verificador → tarjeta ES/EN. Panel de voz nativa ES.
 
-SE DICE: «Atlas Live escucha y mira un video en directo, extrae cada
-afirmación chequeable, la investiga con agentes Muse en la web abierta,
-y el veredicto lo decide código determinista — *the model proposes,
-code disposes*. Y entiende español nativo, con error de palabra de
-cero coma cero tres.»
+SE DICE: «Atlas Live escucha y mira un video mientras se emite,
+extrae cada afirmación chequeable, la investiga con agentes Muse en
+la web abierta, y el veredicto lo decide código determinista — *the
+model proposes, code disposes*. Y entiende español nativo, con error
+de palabra de cero coma cero tres.» [Modo en pantalla: diagrama +
+replay rotulado.]
 
 Fuente: `live/README.md`, M1_E2E (bus + `/ws`); `live/F2_VOICE.md` +
 `wer_report.json` (WER 0.0296, recall 41/41).
 
-## 0:29–0:41 — La falsa, parte 1: F3 en vivo
+## 0:29–0:41 — La falsa, parte 1: F3 al emitirse [replay rotulado]
 
 SE VE: minuto 1:10 del keynote ES (slide 5 pineado). Turno 6 con
 «…cayó a solo ciento cuarenta y uno millones de personas». Tarjeta F3
@@ -50,7 +52,7 @@ sigue corriendo.»
 
 Fuente: `truth.json` F3-es + turno ASR 6 (63.5–81.1 s, slide 5).
 
-## 0:41–0:57 — La falsa, parte 2: contradicción verificada
+## 0:41–0:57 — La falsa, parte 2: contradicción verificada [replay rotulado + informe]
 
 SE VE: tarjeta F3 → `contradicted`. Zoom al paquete de evidencia: quote
 del Banco Mundial, URL api.worldbank.org, sha256 del snapshot. Luego el
@@ -64,7 +66,7 @@ código, *rel diff* de cero coma nueve.»
 Fuente: M2d summary (F3-en, misma falsedad plantada: contradicted,
 3 paquetes) + turnos ASR 0/6 + método M7.
 
-## 0:57–1:12 — Prueba re-verificable + tamper
+## 0:57–1:12 — Prueba re-verificable + tamper [terminal, bundle publicado]
 
 SE VE: terminal. Comando `verify_bundle.py` sobre el ZIP exportado.
 Salida: `ALL PASS (31/31)`. Tarjeta tamper: 1 byte → `FAIL
@@ -78,7 +80,7 @@ el verificador falla: *tamper detected*.»
 Fuente: `atlas-live-bundle.zip` (salida real verbatim) +
 `data/runs/f2-tamper-demo/demo.json` (pristine ok → 1 byte FAIL).
 
-## 1:12–1:26 — Giro: el gráfico contradice al orador
+## 1:12–1:26 — Giro: el gráfico contradice al orador [replay rotulado (visión: chequeo offline M3)]
 
 SE VE: slide 7 ES "Juegos de porcentajes" (frame real t=102.0 s).
 Gráfico de barras honesto: 0.97%. Alerta `visual.mismatch`: said 40.0
@@ -91,7 +93,7 @@ código.»
 
 Fuente: M3 (F6, said 40.0 / shown 0.97, d=0.976; frames ES, mismos datos).
 
-## 1:26–1:37 — Ejes tramposos: F5 y F11
+## 1:26–1:37 — Ejes tramposos: F5 y F11 [replay rotulado (visión: chequeo offline M3)]
 
 SE VE: slide 6 ES, eje Y 27–30, barras 27.8→29.3 que parecen duplicarse.
 Flag `visual.misleading_axis`, cue "doubled". Corte al slide 10 ES:
@@ -103,7 +105,7 @@ por encima de Estados Unidos. Dos *flags* automáticos.»
 
 Fuente: M3 (F5 + F11 `visual.misleading_axis`; frames ES, mismos datos).
 
-## 1:37–1:51 — Recall F2 que generaliza
+## 1:37–1:51 — Recall F2 que generaliza [panel de cifras bench v2]
 
 SE VE: panel DEV 26/36 = 0.722 (recall Wilson [0.560, 0.842]) +
 retención 14/18 = 0.778 (recall Wilson [0.548, 0.910]); exactitud entre
@@ -120,7 +122,7 @@ Fuente: `v5p0-dev-atlas-run1.json` (DEV 26/36) + `v6ret-atlas-run1.json`
 (retención 14/18; sello intacto, corrida 3× solo-lectura — ver
 `live/claims_registry.json` ret_recall).
 
-## 1:51–2:11 — Latencia honesta (F2-9)
+## 1:51–2:11 — Latencia honesta (F2-9) [panel de cifras F2-9]
 
 SE VE: tabla antes→después: p50 80.3 s → 4.9/5.0 s, p95 115.7 s →
 40.7/38.9 s (CUMPLE vs meta 60, en verde), wall 372.4 s → ~78 s (−79%),
@@ -137,7 +139,7 @@ Fuente: `f2p95-final-report.json` (p50 4.9/5.0, p95 40.7/38.9,
 wall 155.3/2, $0.0073/0.0059) + runs r1/r2 (grupos, nearest-rank) +
 `live/F2_P95.md` §4.
 
-## 2:11–2:26 — El baseline, tal cual
+## 2:11–2:26 — El baseline, tal cual [panel de cifras F2-1]
 
 SE VE: dos tarjetas: donde acierta igual (DEV 70/72 = 0.972, retención
 18/18, «Nos gana en recall. Punto.») y donde falla (fidelidad pooled
@@ -152,7 +154,7 @@ ninguna prueba re-ejecutable.»
 Fuente: `eval2-20261101-225539-report.json` (70/72) + fidelity JSONs
 r1/r2 (5/31, 4/32) + addendum F2_RECALL (ret 18/18).
 
-## 2:26–2:37 — Cierre: números F2 + wedge
+## 2:26–2:37 — Cierre: números F2 + wedge [panel + UI replay]
 
 SE VE: tabla Atlas F2 vs baseline (recall, exactitud, citas, falsos,
 prueba offline, dicho-vs-mostrado, latencia F2-9: p50 4.9 s / ~78 s
