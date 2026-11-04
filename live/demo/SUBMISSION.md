@@ -220,5 +220,6 @@ PYTHONPATH=src:live .venv/bin/python scripts/check_claims.py
   upload, paste the link here and in the portal)
 - Evidence bundle ZIP (judge re-run): `live/demo/atlas-live-bundle.zip`
   (31/31 ALL PASS; verifier: `live/bundle/verify_bundle.py bundle.zip`)
-- Repo + commit: TODO-CT9 (final tag at freeze — see
-  `live/demo/CHECKLIST_HUMANO.md`)
+- Repo + commit: https://github.com/kiltro-dev/evidence-platform ,
+  tag `submittable-18` (coherence freeze; see
+  `live/demo/CHECKLIST_HUMANO.md` for the video + portal steps)
