@@ -139,7 +139,9 @@ hypothesis) — see [requirements.txt](requirements.txt) (pinned:
 
 Architecture: [docs/ARCHITECTURE_LIVE.md](docs/ARCHITECTURE_LIVE.md) ·
 API: [docs/API.md](docs/API.md) (v1 core) · Decisions:
-[docs/adr/](docs/adr/) · Model/code split: [docs/AGENTS.md](docs/AGENTS.md).
+[docs/adr/](docs/adr/) · Model/code split: Atlas
+[docs/AGENTS_LIVE.md](docs/AGENTS_LIVE.md), v1 core
+[docs/AGENTS.md](docs/AGENTS.md) (Histórico).
 
 ## Tests & evaluation (offline gate)
 

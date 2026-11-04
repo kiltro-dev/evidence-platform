@@ -1,3 +1,5 @@
+> **Histórico (v0.4.0).** v1-core era doc (staged pipeline over src/atlas). For Atlas Live roles see [AGENTS_LIVE.md](AGENTS_LIVE.md).
+
 # Agent design: a staged pipeline, not a multi-agent system
 
 ## Why no agent loop
