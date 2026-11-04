@@ -36,7 +36,7 @@ otherwise record A.
   the World Bank, quote it literally, and the code — not the model —
   calls it contradicted. Here is the quote and its hash."
 
-### 0:55–1:25 — Said-vs-shown
+### 0:55–1:25 — Said-vs-shown (4/4 planted, M3)
 - DO: switch replay to `run-keynote-en-listen`, jump timeline to the
   chart slide. Hover the mismatch badge (40% said vs 0.97% shown).
 - SAY: "It also watches the slides. The speaker says forty percent;
@@ -50,14 +50,10 @@ otherwise record A.
   script anyone re-runs offline. No trust required."
 
 ### 1:55–2:20 — Honest numbers
-- DO: show the metrics panel (or `live/F2_P95.md` summary):
-  retention 14/18, zero false verdicts on benchmark v2,
-  p50 ~5 seconds, Muse-only baseline wins recall but only
-  14% of its quotes exist.
-- SAY: "On sealed ground truth: fourteen of eighteen, zero false
-  verdicts, five-second median. The raw model answers more — but
-  only fourteen percent of its quotes are real. We abstain instead
-  of guessing."
+<!-- METRICS:START -->
+- DO: show the metrics panel (`live/claims_registry.json`): retention 14/18 = 0.778, zero false verdicts on benchmark v2, p50 ~5 s / p95 ~40 s / ~$0.007 per claim, Muse-only baseline wins recall but only 14% of its quotes exist.
+- SAY: "On sealed ground truth: fourteen of eighteen, zero false verdicts, five-second median. The raw model answers more — but only fourteen percent of its quotes are real. We abstain instead of guessing."
+<!-- METRICS:END -->
 
 ### 2:20–2:30 — Close
 - DO: back to UI, banner "REPLAY OF REAL RUN" visible.

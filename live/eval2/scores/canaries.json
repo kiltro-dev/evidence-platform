@@ -1,0 +1,78 @@
+{
+ "run": "audit-20261101-213747",
+ "panel": {
+  "n": 12,
+  "decided": 7,
+  "correct": 7,
+  "accuracy": 1.0,
+  "wilson_lo": 0.6457,
+  "wilson_hi": 1.0,
+  "abstention_rate": 0.4167,
+  "falsos_contradicted": [],
+  "falsos_supported": [],
+  "n_disputed": 0,
+  "total_cost_usd": 0.2914,
+  "per_canary": [
+   {
+    "id": null,
+    "expected": "true",
+    "verdict": "supported"
+   },
+   {
+    "id": null,
+    "expected": "true",
+    "verdict": "supported"
+   },
+   {
+    "id": null,
+    "expected": "true",
+    "verdict": "supported"
+   },
+   {
+    "id": null,
+    "expected": "true",
+    "verdict": "supported"
+   },
+   {
+    "id": null,
+    "expected": "true",
+    "verdict": "supported"
+   },
+   {
+    "id": null,
+    "expected": "true",
+    "verdict": "supported"
+   },
+   {
+    "id": null,
+    "expected": "false",
+    "verdict": "contradicted"
+   },
+   {
+    "id": null,
+    "expected": "false",
+    "verdict": "unverifiable"
+   },
+   {
+    "id": null,
+    "expected": "false",
+    "verdict": "unverifiable"
+   },
+   {
+    "id": null,
+    "expected": "false",
+    "verdict": "unverifiable"
+   },
+   {
+    "id": null,
+    "expected": "false",
+    "verdict": "unverifiable"
+   },
+   {
+    "id": null,
+    "expected": "false",
+    "verdict": "unverifiable"
+   }
+  ]
+ }
+}

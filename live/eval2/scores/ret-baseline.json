@@ -1,0 +1,133 @@
+{
+ "run": "f2retention-baseline-run1.json",
+ "arm": "baseline",
+ "claims": [
+  {
+   "id": "F2R-RA1",
+   "expected": "true",
+   "verdict": "supported",
+   "latency_s": 4.08,
+   "cost_usd": 0.02577
+  },
+  {
+   "id": "F2R-RA2",
+   "expected": "true",
+   "verdict": "supported",
+   "latency_s": 17.73,
+   "cost_usd": 0.03729
+  },
+  {
+   "id": "F2R-RA3",
+   "expected": "false",
+   "verdict": "contradicted",
+   "latency_s": 33.83,
+   "cost_usd": 0.0582
+  },
+  {
+   "id": "F2R-RB1",
+   "expected": "true",
+   "verdict": "supported",
+   "latency_s": 4.39,
+   "cost_usd": 0.01212
+  },
+  {
+   "id": "F2R-RB2",
+   "expected": "true",
+   "verdict": "supported",
+   "latency_s": 5.14,
+   "cost_usd": 0.03368
+  },
+  {
+   "id": "F2R-RB3",
+   "expected": "false",
+   "verdict": "contradicted",
+   "latency_s": 4.13,
+   "cost_usd": 0.01223
+  },
+  {
+   "id": "F2R-RC1",
+   "expected": "false",
+   "verdict": "contradicted",
+   "latency_s": 26.14,
+   "cost_usd": 0.0318
+  },
+  {
+   "id": "F2R-RC2",
+   "expected": "false",
+   "verdict": "contradicted",
+   "latency_s": 25.35,
+   "cost_usd": 0.02912
+  },
+  {
+   "id": "F2R-RC3",
+   "expected": "false",
+   "verdict": "contradicted",
+   "latency_s": 10.52,
+   "cost_usd": 0.04747
+  },
+  {
+   "id": "F2R-RD1",
+   "expected": "true",
+   "verdict": "supported",
+   "latency_s": 9.73,
+   "cost_usd": 0.03403
+  },
+  {
+   "id": "F2R-RD2",
+   "expected": "true",
+   "verdict": "supported",
+   "latency_s": 29.01,
+   "cost_usd": 0.03793
+  },
+  {
+   "id": "F2R-RD3",
+   "expected": "false",
+   "verdict": "contradicted",
+   "latency_s": 18.36,
+   "cost_usd": 0.04979
+  },
+  {
+   "id": "F2R-RE1",
+   "expected": "true",
+   "verdict": "supported",
+   "latency_s": 5.28,
+   "cost_usd": 0.01401
+  },
+  {
+   "id": "F2R-RE2",
+   "expected": "false",
+   "verdict": "contradicted",
+   "latency_s": 9.88,
+   "cost_usd": 0.03586
+  },
+  {
+   "id": "F2R-RE3",
+   "expected": "false",
+   "verdict": "contradicted",
+   "latency_s": 3.84,
+   "cost_usd": 0.01522
+  },
+  {
+   "id": "F2R-RF1",
+   "expected": "true",
+   "verdict": "supported",
+   "latency_s": 5.54,
+   "cost_usd": 0.02515
+  },
+  {
+   "id": "F2R-RF2",
+   "expected": "true",
+   "verdict": "supported",
+   "latency_s": 6.71,
+   "cost_usd": 0.02887
+  },
+  {
+   "id": "F2R-RF3",
+   "expected": "false",
+   "verdict": "contradicted",
+   "latency_s": 15.52,
+   "cost_usd": 0.02921
+  }
+ ],
+ "total_cost_usd": 0.5578
+}

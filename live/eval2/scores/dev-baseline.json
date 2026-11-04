@@ -1,0 +1,377 @@
+{
+ "experiment": "F2-1 DEV x2, model-only baseline",
+ "runs": [
+  {
+   "run": "eval2-20261101-225539-baseline-run1.json",
+   "claims": [
+    {
+     "id": "F2D-A1",
+     "expected": "true",
+     "verdict": "supported"
+    },
+    {
+     "id": "F2D-A2",
+     "expected": "true",
+     "verdict": "supported"
+    },
+    {
+     "id": "F2D-A3",
+     "expected": "true",
+     "verdict": "supported"
+    },
+    {
+     "id": "F2D-A4",
+     "expected": "false",
+     "verdict": "contradicted"
+    },
+    {
+     "id": "F2D-A5",
+     "expected": "false",
+     "verdict": "contradicted"
+    },
+    {
+     "id": "F2D-A6",
+     "expected": "false",
+     "verdict": "contradicted"
+    },
+    {
+     "id": "F2D-B1",
+     "expected": "true",
+     "verdict": "supported"
+    },
+    {
+     "id": "F2D-B2",
+     "expected": "false",
+     "verdict": "contradicted"
+    },
+    {
+     "id": "F2D-B3",
+     "expected": "true",
+     "verdict": "supported"
+    },
+    {
+     "id": "F2D-B4",
+     "expected": "false",
+     "verdict": "contradicted"
+    },
+    {
+     "id": "F2D-B5",
+     "expected": "true",
+     "verdict": "supported"
+    },
+    {
+     "id": "F2D-B6",
+     "expected": "false",
+     "verdict": "contradicted"
+    },
+    {
+     "id": "F2D-C1",
+     "expected": "false",
+     "verdict": "contradicted"
+    },
+    {
+     "id": "F2D-C2",
+     "expected": "false",
+     "verdict": "contradicted"
+    },
+    {
+     "id": "F2D-C3",
+     "expected": "false",
+     "verdict": "contradicted"
+    },
+    {
+     "id": "F2D-C4",
+     "expected": "false",
+     "verdict": "contradicted"
+    },
+    {
+     "id": "F2D-C5",
+     "expected": "false",
+     "verdict": "contradicted"
+    },
+    {
+     "id": "F2D-C6",
+     "expected": "false",
+     "verdict": "contradicted"
+    },
+    {
+     "id": "F2D-D1",
+     "expected": "true",
+     "verdict": "supported"
+    },
+    {
+     "id": "F2D-D2",
+     "expected": "false",
+     "verdict": "contradicted"
+    },
+    {
+     "id": "F2D-D3",
+     "expected": "true",
+     "verdict": "contradicted"
+    },
+    {
+     "id": "F2D-D4",
+     "expected": "false",
+     "verdict": "contradicted"
+    },
+    {
+     "id": "F2D-D5",
+     "expected": "true",
+     "verdict": "supported"
+    },
+    {
+     "id": "F2D-D6",
+     "expected": "false",
+     "verdict": "contradicted"
+    },
+    {
+     "id": "F2D-E1",
+     "expected": "true",
+     "verdict": "supported"
+    },
+    {
+     "id": "F2D-E2",
+     "expected": "true",
+     "verdict": "supported"
+    },
+    {
+     "id": "F2D-E3",
+     "expected": "true",
+     "verdict": "supported"
+    },
+    {
+     "id": "F2D-E4",
+     "expected": "false",
+     "verdict": "contradicted"
+    },
+    {
+     "id": "F2D-E5",
+     "expected": "false",
+     "verdict": "contradicted"
+    },
+    {
+     "id": "F2D-E6",
+     "expected": "false",
+     "verdict": "contradicted"
+    },
+    {
+     "id": "F2D-F1",
+     "expected": "true",
+     "verdict": "supported"
+    },
+    {
+     "id": "F2D-F2",
+     "expected": "true",
+     "verdict": "supported"
+    },
+    {
+     "id": "F2D-F3",
+     "expected": "true",
+     "verdict": "supported"
+    },
+    {
+     "id": "F2D-F4",
+     "expected": "false",
+     "verdict": "contradicted"
+    },
+    {
+     "id": "F2D-F5",
+     "expected": "false",
+     "verdict": "contradicted"
+    },
+    {
+     "id": "F2D-F6",
+     "expected": "false",
+     "verdict": "contradicted"
+    }
+   ],
+   "total_cost_usd": 1.0707
+  },
+  {
+   "run": "eval2-20261101-225539-baseline-run2.json",
+   "claims": [
+    {
+     "id": "F2D-A1",
+     "expected": "true",
+     "verdict": "supported"
+    },
+    {
+     "id": "F2D-A2",
+     "expected": "true",
+     "verdict": "supported"
+    },
+    {
+     "id": "F2D-A3",
+     "expected": "true",
+     "verdict": "supported"
+    },
+    {
+     "id": "F2D-A4",
+     "expected": "false",
+     "verdict": "contradicted"
+    },
+    {
+     "id": "F2D-A5",
+     "expected": "false",
+     "verdict": "contradicted"
+    },
+    {
+     "id": "F2D-A6",
+     "expected": "false",
+     "verdict": "contradicted"
+    },
+    {
+     "id": "F2D-B1",
+     "expected": "true",
+     "verdict": "supported"
+    },
+    {
+     "id": "F2D-B2",
+     "expected": "false",
+     "verdict": "contradicted"
+    },
+    {
+     "id": "F2D-B3",
+     "expected": "true",
+     "verdict": "supported"
+    },
+    {
+     "id": "F2D-B4",
+     "expected": "false",
+     "verdict": "contradicted"
+    },
+    {
+     "id": "F2D-B5",
+     "expected": "true",
+     "verdict": "supported"
+    },
+    {
+     "id": "F2D-B6",
+     "expected": "false",
+     "verdict": "contradicted"
+    },
+    {
+     "id": "F2D-C1",
+     "expected": "false",
+     "verdict": "contradicted"
+    },
+    {
+     "id": "F2D-C2",
+     "expected": "false",
+     "verdict": "contradicted"
+    },
+    {
+     "id": "F2D-C3",
+     "expected": "false",
+     "verdict": "contradicted"
+    },
+    {
+     "id": "F2D-C4",
+     "expected": "false",
+     "verdict": "contradicted"
+    },
+    {
+     "id": "F2D-C5",
+     "expected": "false",
+     "verdict": "contradicted"
+    },
+    {
+     "id": "F2D-C6",
+     "expected": "false",
+     "verdict": "contradicted"
+    },
+    {
+     "id": "F2D-D1",
+     "expected": "true",
+     "verdict": "supported"
+    },
+    {
+     "id": "F2D-D2",
+     "expected": "false",
+     "verdict": "contradicted"
+    },
+    {
+     "id": "F2D-D3",
+     "expected": "true",
+     "verdict": "contradicted"
+    },
+    {
+     "id": "F2D-D4",
+     "expected": "false",
+     "verdict": "contradicted"
+    },
+    {
+     "id": "F2D-D5",
+     "expected": "true",
+     "verdict": "supported"
+    },
+    {
+     "id": "F2D-D6",
+     "expected": "false",
+     "verdict": "contradicted"
+    },
+    {
+     "id": "F2D-E1",
+     "expected": "true",
+     "verdict": "supported"
+    },
+    {
+     "id": "F2D-E2",
+     "expected": "true",
+     "verdict": "supported"
+    },
+    {
+     "id": "F2D-E3",
+     "expected": "true",
+     "verdict": "supported"
+    },
+    {
+     "id": "F2D-E4",
+     "expected": "false",
+     "verdict": "contradicted"
+    },
+    {
+     "id": "F2D-E5",
+     "expected": "false",
+     "verdict": "contradicted"
+    },
+    {
+     "id": "F2D-E6",
+     "expected": "false",
+     "verdict": "contradicted"
+    },
+    {
+     "id": "F2D-F1",
+     "expected": "true",
+     "verdict": "supported"
+    },
+    {
+     "id": "F2D-F2",
+     "expected": "true",
+     "verdict": "supported"
+    },
+    {
+     "id": "F2D-F3",
+     "expected": "true",
+     "verdict": "supported"
+    },
+    {
+     "id": "F2D-F4",
+     "expected": "false",
+     "verdict": "contradicted"
+    },
+    {
+     "id": "F2D-F5",
+     "expected": "false",
+     "verdict": "contradicted"
+    },
+    {
+     "id": "F2D-F6",
+     "expected": "false",
+     "verdict": "contradicted"
+    }
+   ],
+   "total_cost_usd": 1.0126
+  }
+ ]
+}

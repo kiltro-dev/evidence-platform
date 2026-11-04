@@ -23,11 +23,13 @@ spans, parallel researcher agents gather evidence packages (URL, capture
 date, sha256 snapshot, literal quote + offsets) from the open web, and a
 deterministic verifier — never the model — decides `supported`,
 `contradicted`, or `unverifiable`. A vision stage cross-checks said-vs-shown
-numbers on slides, a skeptic red-teams every `supported` verdict with live
-counter-evidence, a long-context check catches speaker self-contradictions,
-and every run exports a self-verifying evidence bundle (`verify_bundle.py`
-re-executes offline: ALL PASS or FAIL per claim). Verdict cards publish in
-Spanish and English over WebSocket while the video keeps running.
+numbers on slides (offline path over the materialized file), an advisory
+skeptic pass probes `supported` verdicts with live counter-evidence
+(deferred by default, never blocking), a long-context check catches
+speaker self-contradictions, and every run exports a self-verifying
+evidence bundle (`verify_bundle.py` re-executes offline: ALL PASS or
+FAIL per claim). Verdict cards publish in Spanish and English over
+WebSocket while the video keeps running.
 
 ## Problem
 
@@ -46,21 +48,13 @@ of a bare true/false label.
 
 ## Impact
 
-On the fair benchmark v2 (36 DEV claims + 18 sealed retention claims,
-preregistered), Atlas Live decides 26/36 = 0.722 on DEV and 14/18 = 0.778
-on retention with zero false verdicts on either set (26/26 + 14/14 decided
-accuracy; coverage and precision always reported together), caught a planted
-speaker self-contradiction (China 1.41B vs
-141M, ~59 s apart in the native-ES keynote) and a said-vs-shown chart
-contradiction (40% said vs 0.97% shown), transcribes native Spanish at
-0.03 WER with 41/41 ASR-recall, and exports tamper-evident proof bundles
-(31/31 ALL PASS; 1 flipped byte ⇒ FAIL). The model-only baseline beats
-us on recall (70/72 DEV, 18/18 retention) — stated plainly — but only
-14% of its citations are faithful to the source (9/63) and it exports
-zero re-runnable proof. Every number is measured, with the honest limits
-in the Limits section. (Sources: `live/F2_RECALL.md` + addendum,
+<!-- METRICS:IMPACT:START -->
+On the fair benchmark v2 (36 DEV claims + 18 sealed retention claims, preregistered), Atlas Live decides 26/36 = 0.722 on DEV and 14/18 = 0.778 on retention with zero false verdicts on either set (26/26 + 14/14 decided accuracy; coverage and precision always reported together), verdict latency p50 ~5 s / p95 ~40 s at ~$0.007/claim, said-vs-shown 4/4 planted (40% said vs 0.97% shown), canaries 7/7 decided of 12 (5 abstained), accuracy 1.000 [0.646,1.000], proof bundles 31/31 ALL PASS; 1-byte tamper => FAIL, Spanish ASR 0.03 WER, 41/41 ASR-recall, and a planted speaker self-contradiction caught (China 1.41B vs 141M, ~59 s apart in the native-ES keynote). The model-only baseline beats us on recall (70/72 DEV, 18/18 retention) — stated plainly — but only 9/63 = 0.143 of its citations are faithful (verbatim quote + figure within 2% on the cited URL) and it exports zero re-runnable proof.
+<!-- METRICS:IMPACT:END -->
+(Sources: `live/F2_RECALL.md` + addendum,
 `live/F2_BENCH.md`, `live/F2_LATENCY.md`, `live/F2_VOICE.md`,
-`live/M3.md`, `live/M7.md`.)
+`live/M3.md`, `live/M7.md`. Every figure is rendered from
+`live/claims_registry.json`; honest limits in the Limits section.)
 
 ## Use of Meta capabilities (each with proving file)
 
@@ -94,7 +88,7 @@ video ─▶ simstream (ffmpeg -re, "simulated-stream") ─▶ fifo ─▶ ffmpe
   ─▶ WebSocket /ws + newsroom UI + evidence bundle ZIP
 Side stages: vista (frames ─▶ vision read ─▶ said-vs-shown xcheck),
 longctx (full transcript ─▶ proposed pairs ─▶ code-verified speaker.contradiction),
-auditor (12 canaries ─▶ accuracy + Wilson panel).
+auditor (12 canaries, 7 decided 7/7 ─▶ accuracy + Wilson panel).
 ```
 
 Event log per run in `data/runs/*.jsonl` (+ `.summary.json`); UI replays
@@ -105,7 +99,8 @@ any recorded run with zero model cost (`GET /replay`, `WS /ws?replay=`).
 Python ≥3.11, FastAPI + uvicorn (server + WS), `imageio-ffmpeg` static
 ffmpeg (demux/restream), Meta API (`muse-spark`, `muse-voice-transcribe-1.0`,
 vision, `web_search`), World Bank Open Data + Wikipedia (evidence sources),
-vanilla JS newsroom UI (no framework), pytest (206+ offline tests).
+vanilla JS newsroom UI (no framework), pytest (1070 live offline tests
++ 755 v1-core offline tests).
 
 ## Honest limits
 
@@ -131,8 +126,10 @@ vanilla JS newsroom UI (no framework), pytest (206+ offline tests).
   Same 22/36 verdicts as F2-7, claim by claim. Source:
   `data/runs/f2p95-final-report.json`, `live/F2_P95.md` §4.
 - DEV-b abstains 0/6 (IMF/BLS primaries return 403; only secondaries,
-  out of budget) and DEV-d abstains 0/6 (multi-source arithmetic by
-  design: `arithmetic_needs_computation` guard). Source: `live/F2_RECALL.md`.
+  out of budget). DEV-d decides 4/6 after the V5-1 guard (was 0/6:
+  multi-source arithmetic by design, `arithmetic_needs_computation`);
+  the 2 remaining abstain by design. Source: `live/F2_RECALL.md`,
+  `live/V5_P0.md`.
 - Zero false `contradicted` held across F2-2 (44/44 pooled), F2-3
   (22/22), F2-7 (44/44 pooled, both runs), and F2-9 (44/44 pooled,
   both runs); the F2-1 D5 false-C is eliminated by construction
@@ -145,33 +142,30 @@ vanilla JS newsroom UI (no framework), pytest (206+ offline tests).
 - Model detector path hits a detector-budget bug (`finish_reason=length`
   on an 800-token budget consumed by hidden reasoning; falls back to
   heuristic). Source: `live/M1_E2E.md` U1.
-- Fair benchmark v2 (F2-1, `eval2-20261101-225539-report.json` +
-  fidelity JSONs): Atlas DEV 22/36 vs model-only baseline pooled
-  70/72 = 0.972 [0.904,0.992] (run1 35/36, run2 35/36, consistency
-  36/36) and retention 18/18 [0.824,1.000]. The baseline wins recall —
-  stated plainly. Where it matches us: verdicts (70/72) and speed
-  (p50 ~5–10 s vs Atlas F2-9 ~5 s). Where it fails: citation fidelity pooled
-  9/63 = 0.143 [0.077,0.250] (r1 5/31, r2 4/32; quote_not_found 34,
-  unit_mismatch 13, numeric_mismatch 7; 72/72 urls model-stated,
-  0 browsed), 2 false contradicts (D3×2), and zero offline proof.
+<!-- METRICS:BENCH:START -->
+- Fair benchmark v2 (F2-1, `eval2-20261101-225539-report.json` + fidelity JSONs): Atlas DEV 26/36 vs model-only baseline pooled 70/72 = 0.972 [0.904,0.992] (run1 35/36, run2 35/36, consistency 36/36) and retention 18/18 = 1.000 [0.824,1.000]. The baseline wins recall — stated plainly. Where it fails: citation fidelity pooled 9/63 = 0.143 [0.077,0.250] (r1 5/31, r2 4/32) (r1 5/31, r2 4/32; quote_not_found 34, unit_mismatch 13, numeric_mismatch 7; 72/72 urls model-stated, 0 browsed), 2 false contradicts (D3x2), and zero offline proof. Source: `live/F2_BENCH.md`.
+<!-- METRICS:BENCH:END -->
   What Atlas adds: re-verifiable proof bundles (31/31 ALL PASS, 1-byte
-  tamper ⇒ FAIL), 0 false contradicts on benchmark v2 dev+retention,
+  tamper ⇒ FAIL — shipped: `live/demo/atlas-live-bundle.zip`),
+  0 false contradicts on benchmark v2 dev+retention,
   and said-vs-shown vision checks.
-  Source: `live/F2_BENCH.md`.
 
 ## How to reproduce ($0 judge path + live path)
 
 ```bash
-cd evidence-platform
-python3.11 -m venv .venv && .venv/bin/pip install -r requirements.txt imageio-ffmpeg
+git clone https://github.com/kiltro-dev/evidence-platform && cd evidence-platform
+uv venv -p 3.12 && uv pip install --python .venv/bin/python -r requirements.txt
 # $0 replay: recorded 48-event ES run, no model calls, no key needed
-.venv/bin/python -m uvicorn live.server.app:create_app --factory --port 8891
+PYTHONPATH=src:live .venv/bin/python -m uvicorn live.server.app:create_app --factory --host 127.0.0.1 --port 8891
 # open http://127.0.0.1:8891/?replay=run-es-native
-# Live keynote ES (needs MODEL_API_KEY in .env; ≈$0.01 ASR heuristic pass):
-set -a && . ./.env && set +a
-.venv/bin/python live/run_live.py --video data/keynote_es/keynote_es_native.mp4 \
-  --detector heuristic --language-bias "Spanish" --log data/runs/judge.jsonl
-# Offline tests (0 live): .venv/bin/python -m pytest live/tests/ -q -m "not live"
+# Live link ingest (needs MODEL_API_KEY in .env; ≈$0.01 for 30 s):
+curl localhost:8891/ingest -H 'Content-Type: application/json' \
+  -d '{"url":"https://images-assets.nasa.gov/video/A1Launch/A1Launch~preview.mp4","mode":"vivo","duration":30}'
+# then open ?replay=link-<run_id> and /report/link-<run_id>?format=html
+# Offline gate (no network, no key):
+PYTHONPATH=src:live .venv/bin/python -m pytest live/tests -q
+PYTHONPATH=src:live .venv/bin/python scripts/check_claims.py
+# Proof bundle re-verify (shipped): PYTHONPATH=src:live .venv/bin/python live/bundle/verify_bundle.py live/demo/atlas-live-bundle.zip
 ```
 
 ## Licenses & data rights
@@ -201,8 +195,9 @@ set -a && . ./.env && set +a
 
 ## Links (fill at submit time)
 
-- Demo video URL: TODO-M8 (M9b produces the video; this kit is docs only)
-- Evidence bundle ZIP (judge re-run): TODO-M8 (export from a fresh
-  `verify-*` run; verifier: `live/bundle/verify_bundle.py bundle.zip`)
-- Repo + commit: TODO-M8 (fill portal field after login — see
+- Demo video URL: TODO-HUMAN (record with `live/demo/RECORDING_GUIDE.md`,
+  upload, paste the link here and in the portal)
+- Evidence bundle ZIP (judge re-run): `live/demo/atlas-live-bundle.zip`
+  (31/31 ALL PASS; verifier: `live/bundle/verify_bundle.py bundle.zip`)
+- Repo + commit: TODO-CT9 (final tag at freeze — see
   `live/demo/CHECKLIST_HUMANO.md`)

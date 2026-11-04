@@ -167,6 +167,10 @@ arriba).
 
 ## Notas de producción (no narrar)
 
+<!-- METRICS:START -->
+- Figures (V6 frozen): DEV 26/36 = 0.722, retention 14/18 = 0.778, decided 26/26 + 14/14, 0 false verdicts, baseline 18/18 retention with fidelity 9/63.
+<!-- METRICS:END -->
+
 - Duración objetivo: ≤2:50; build F2-6c: 2:37.0 (margen 13 s).
   Re-render parcial: re-TTS bloque 8 + re-record segs 7–10 (paneles
   recall/latencia/baseline/cierre); segs 0–6 reutilizados.

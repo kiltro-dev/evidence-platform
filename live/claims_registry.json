@@ -1,0 +1,410 @@
+{
+  "claims": [
+    {
+      "artifact": "live/eval2/scores/dev-atlas.json",
+      "d": 36,
+      "dataset": "benchmark v2 DEV (live/eval2/dev.json)",
+      "dataset_version": "sha256 db4ebe71",
+      "definition": "decided (supported|contradicted) / total claims; abstentions excluded from numerator AND denominator of accuracy",
+      "docs": [
+        "README.md",
+        "live/demo/SUBMISSION.md",
+        "live/demo/script.md"
+      ],
+      "experiment": "V5-1 arithmetic guard (run v5p0-dev-atlas-run1, 2026-11-02)",
+      "id": "dev_recall",
+      "metric": "Atlas recall, DEV",
+      "n": 26,
+      "not_proven": "NOT real-world accuracy: 36 scripted claims against available sources; b 0/6 by source access, not reasoning",
+      "pins": [
+        "26/36",
+        "0.722"
+      ],
+      "recompute": "scores:recall",
+      "status": "measured",
+      "value": 0.722
+    },
+    {
+      "artifact": "live/eval2/scores/ret-atlas.json",
+      "d": 18,
+      "dataset": "benchmark v2 retention (live/eval2/retention.json)",
+      "dataset_version": "sha256 5278ba4c (seal intact, never edited)",
+      "definition": "same as dev_recall; retention run read-only, no tuning on it",
+      "docs": [
+        "README.md",
+        "live/demo/SUBMISSION.md",
+        "live/demo/script.md",
+        "live/demo/RECORDING_GUIDE.md"
+      ],
+      "experiment": "V6 validation (run v6ret-atlas-run1, 2026-11-02). Retention ran 3x Atlas-arm total: 12/18 (F2-2), 12/18 (F2-3), 14/18 (V6). The change (+RD2,+RD3, both d) comes from the general V5-1 guard, no retention tuning",
+      "id": "ret_recall",
+      "metric": "Atlas recall, sealed retention",
+      "n": 14,
+      "not_proven": "NOT generalization to arbitrary claims; n=18, Wilson recall interval [0.548,0.910]",
+      "pins": [
+        "14/18"
+      ],
+      "recompute": "scores:recall",
+      "status": "measured",
+      "value": 0.778
+    },
+    {
+      "artifact": "live/eval2/scores/dev-atlas.json + live/eval2/scores/ret-atlas.json",
+      "d": 40,
+      "dataset": "benchmark v2 DEV + retention",
+      "dataset_version": "db4ebe71 + 5278ba4c",
+      "definition": "correct / decided; a decided verdict matching expected. Wilson 95% per set",
+      "docs": [
+        "README.md",
+        "live/demo/SUBMISSION.md"
+      ],
+      "experiment": "V5-1 (dev) + V6 (retention)",
+      "id": "decided_accuracy",
+      "metric": "Decided accuracy + false verdicts",
+      "n": 40,
+      "not_proven": "says nothing about the 14 abstentions (10 dev + 4 ret); high precision WITH low coverage is the design trade",
+      "pins": [
+        "26/26",
+        "14/14",
+        "false verdicts"
+      ],
+      "recompute": "scores:accuracy",
+      "status": "measured",
+      "value": "dev 26/26 [0.871,1.000], ret 14/14 [0.785,1.000], 0 false verdicts either set"
+    },
+    {
+      "artifact": "live/eval2/scores/dev-atlas.json + live/eval2/scores/ret-atlas.json",
+      "d": null,
+      "dataset": "same runs as dev_recall/ret_recall",
+      "dataset_version": "n/a",
+      "definition": "per-claim invest-to-verdict latency (nearest-rank p50/p95) and mean $/claim (ASR+model, Meta metered usage)",
+      "docs": [
+        "README.md",
+        "live/demo/SUBMISSION.md",
+        "live/demo/RECORDING_GUIDE.md"
+      ],
+      "experiment": "V5-1 (dev) + V6 (ret)",
+      "id": "latency_cost",
+      "metric": "Verdict latency + cost per claim",
+      "n": null,
+      "not_proven": "NOT end-to-end video latency (excludes ASR+detection); NOT worst-case (deadline 90s caps the tail by aborting)",
+      "pins": [
+        "p50",
+        "p95",
+        "~$0.007"
+      ],
+      "recompute": "scores:latency_cost",
+      "status": "measured",
+      "value": "dev p50 5.7s/p95 40.3s $0.0075; ret p50 3.7s/p95 41.0s $0.0056; published rounded p50 ~5s / p95 ~40s / ~$0.007"
+    },
+    {
+      "artifact": "live/eval2/scores/ret-baseline.json",
+      "d": 18,
+      "dataset": "benchmark v2 retention",
+      "dataset_version": "5278ba4c",
+      "definition": "model-only judge verdicts matching expected (1 run). UNFAVORABLE to Atlas: kept and stated",
+      "docs": [
+        "README.md",
+        "live/demo/SUBMISSION.md",
+        "live/demo/script.md"
+      ],
+      "experiment": "F2 retention baseline (f2retention-baseline-run1)",
+      "id": "baseline_ret",
+      "metric": "Baseline recall, retention (Atlas loses)",
+      "n": 18,
+      "not_proven": "verdicts only: paired with fidelity 9/63, which is the wedge",
+      "pins": [
+        "18/18"
+      ],
+      "recompute": "scores:recall",
+      "status": "measured-unfavorable",
+      "value": "18/18 = 1.000 [0.824,1.000]"
+    },
+    {
+      "artifact": "live/eval2/scores/dev-baseline.json",
+      "d": 72,
+      "dataset": "benchmark v2 DEV x2 runs",
+      "dataset_version": "db4ebe71",
+      "definition": "pooled verdicts matching expected (r1 35/36, r2 35/36, consistency 36/36). UNFAVORABLE: kept",
+      "docs": [
+        "live/demo/SUBMISSION.md"
+      ],
+      "experiment": "F2-1 (eval2-20261101-225539)",
+      "id": "baseline_dev",
+      "metric": "Baseline verdicts, DEV pooled (Atlas loses)",
+      "n": 70,
+      "not_proven": "includes 2 false contradicts (D3x2); verdicts without proof",
+      "pins": [
+        "70/72"
+      ],
+      "recompute": "scores:pooled",
+      "status": "measured-unfavorable",
+      "value": "70/72 = 0.972 [0.904,0.992]"
+    },
+    {
+      "artifact": "live/eval2/scores/dev-baseline-fidelity.json",
+      "d": 63,
+      "dataset": "DEV baseline quotes (F2-1 runs above)",
+      "dataset_version": "n/a",
+      "definition": "EXACT: cited quote found literally (verbatim substring) on the fetched cited URL AND its figure within 2% of the stated value. Deterministic checker (live/eval2/fidelity.py); unresolved fetches excluded from d (9 total: 5+4)",
+      "docs": [
+        "README.md",
+        "live/demo/SUBMISSION.md"
+      ],
+      "experiment": "F2-1 fidelity audit",
+      "id": "citation_fidelity",
+      "metric": "Baseline citation fidelity, DEV pooled",
+      "n": 9,
+      "not_proven": "NOT Atlas fidelity (Atlas quotes are package-verified by construction, different mechanism); reasons: quote_not_found 34, unit_mismatch 13, numeric_mismatch 7",
+      "pins": [
+        "9/63",
+        "0.143"
+      ],
+      "recompute": "scores:fidelity",
+      "status": "measured",
+      "value": "9/63 = 0.143 [0.077,0.250] (r1 5/31, r2 4/32)"
+    },
+    {
+      "artifact": "live/eval2/scores/canaries.json",
+      "d": 12,
+      "dataset": "12 internal canaries (M6 set, never from video)",
+      "dataset_version": "n/a",
+      "definition": "n=12 run, decided=7, correct=7; 5 abstentions all on FALSE side; $0.29, wall 210s",
+      "docs": [
+        "README.md"
+      ],
+      "experiment": "M6 live run audit-20261101-213747",
+      "id": "canaries",
+      "metric": "Canary reliability panel",
+      "n": 7,
+      "not_proven": "NOT a false-rate guarantee: Wilson [0.646,1.000] is wide at n=12; abstention 5/12",
+      "pins": [
+        "7/7",
+        "12 canar"
+      ],
+      "recompute": "scores:canaries",
+      "status": "measured",
+      "value": "7/7 decided of 12 (5 abstained), accuracy 1.000 [0.646,1.000]"
+    },
+    {
+      "artifact": null,
+      "d": 4,
+      "dataset": "4 planted chart traps (keynote EN/ES)",
+      "dataset_version": "n/a",
+      "definition": "planted said-vs-shown mismatches caught incl. F6 40%-said-vs-0.97%-shown; offline vision path",
+      "docs": [
+        "README.md",
+        "live/demo/SUBMISSION.md",
+        "live/demo/RECORDING_GUIDE.md"
+      ],
+      "experiment": "M3 (live/M3.md)",
+      "id": "said_shown",
+      "metric": "Said-vs-shown planted cases",
+      "n": 4,
+      "not_proven": "NOT inline-realtime vision on link runs (V6-2: offline path on materialized files)",
+      "pins": [
+        "4/4",
+        "0.97"
+      ],
+      "recompute": null,
+      "recompute_note": "live-model vision run, artifact in data/runs (git-ignored); re-run = live/vista tests + M3 doc steps, ~$0.50",
+      "status": "measured",
+      "value": "4/4"
+    },
+    {
+      "artifact": null,
+      "d": null,
+      "dataset": "M1e bus measurement (keynote run)",
+      "dataset_version": "n/a",
+      "definition": "claim.detected published after end-of-phrase (bus p50/p95 over the run)",
+      "docs": [
+        "README.md"
+      ],
+      "experiment": "M1 (live/M1_E2E.md)",
+      "id": "bus_latency",
+      "metric": "Claim-detect bus latency",
+      "n": null,
+      "not_proven": "NOT verdict latency (detection only, before investigation)",
+      "pins": [
+        "1240",
+        "1314"
+      ],
+      "recompute": null,
+      "recompute_note": "historical run file; re-run = live pipeline on keynote (~$2). Kept as M1-measured",
+      "status": "measured",
+      "value": "p50/p95 1240/1314 ms"
+    },
+    {
+      "artifact": null,
+      "d": 41,
+      "dataset": "F2-4 voice experiment (clip2b synthetic + mic-degraded)",
+      "dataset_version": "n/a",
+      "definition": "WER on reference transcript + ASR recall 41/41 turns",
+      "docs": [
+        "live/demo/SUBMISSION.md"
+      ],
+      "experiment": "F2-4/F2-10 (live/F2_VOICE.md)",
+      "id": "asr_voice",
+      "metric": "Spanish ASR quality",
+      "n": 41,
+      "not_proven": "NOT general Spanish WER: synthetic TTS reference, one voice family",
+      "pins": [
+        "0.03",
+        "41/41"
+      ],
+      "recompute": null,
+      "recompute_note": "needs data/ audio fixtures (git-ignored) + ASR $; steps in live/F2_VOICE.md",
+      "status": "measured",
+      "value": "0.03 WER, 41/41 ASR-recall"
+    },
+    {
+      "artifact": null,
+      "d": 31,
+      "dataset": "M5 proof bundle demo (verify run)",
+      "dataset_version": "n/a",
+      "definition": "verify_bundle.py re-executes offline: 31/31 ALL PASS pristine, 1 flipped byte => FAIL",
+      "docs": [
+        "live/demo/SUBMISSION.md"
+      ],
+      "experiment": "M5 + F2 tamper demo (live/M5.md, live/F2_BENCH.md tamper)",
+      "id": "bundle_proof",
+      "metric": "Tamper-evident proof bundle",
+      "n": 31,
+      "not_proven": "proves integrity of the bundle, not truth of the verdicts",
+      "pins": [
+        "31/31"
+      ],
+      "recompute": null,
+      "recompute_note": "pytest live/tests/test_m5_proof.py covers the tamper property; 31/31 count is the demo run",
+      "status": "measured",
+      "value": "31/31 ALL PASS; 1-byte tamper => FAIL"
+    },
+    {
+      "artifact": null,
+      "d": null,
+      "dataset": "M7 native-ES keynote (planted)",
+      "dataset_version": "n/a",
+      "definition": "planted speaker self-contradiction China 1.41B vs 141M caught ~59s apart",
+      "docs": [
+        "live/demo/SUBMISSION.md"
+      ],
+      "experiment": "M7 (live/M7.md)",
+      "id": "longctx",
+      "metric": "Long-context self-contradiction",
+      "n": null,
+      "not_proven": "planted single case, not a contradiction benchmark",
+      "pins": [
+        "59 s",
+        "141M"
+      ],
+      "recompute": null,
+      "recompute_note": "live-model run; steps in live/M7.md",
+      "status": "measured",
+      "value": "caught, ~59 s apart"
+    },
+    {
+      "artifact": null,
+      "d": 117,
+      "dataset": "S4 synth-QA corpus (12 synthetic pieces, EN+ES) -- NOT benchmark v2",
+      "dataset_version": "n/a",
+      "definition": "decided-correct / decided on the synthetic demo corpus; measures system-vs-known-truth, separate dataset from bench v2",
+      "docs": [],
+      "experiment": "S4 (live/S4_SYNTHQA.md)",
+      "id": "corpus_s4",
+      "metric": "S4 corpus decided accuracy (scoped: corpus only)",
+      "n": 114,
+      "not_proven": "MUST NOT be compared with bench-v2 recall; different dataset, different n, TTS audio",
+      "pins": [],
+      "recompute": null,
+      "recompute_note": "live/synthqa/bench.py on data/synth (git-ignored fixtures)",
+      "status": "measured-scoped",
+      "value": "114/117 = 0.974 [0.927,0.991]"
+    },
+    {
+      "artifact": null,
+      "d": null,
+      "dataset": "live/tests/ (this checkout)",
+      "dataset_version": "n/a",
+      "definition": "pytest collect-only count = 1079 on 2026-11-02; last full run 1070 passed + 9 skipped (live-network tests excluded)",
+      "docs": [
+        "README.md"
+      ],
+      "experiment": "offline gate",
+      "id": "tests_live",
+      "metric": "Live offline test count",
+      "n": 1079,
+      "not_proven": "count only; live-network tests (ATLAS_LIVE_NET) excluded from the gate",
+      "pins": [
+        "1070"
+      ],
+      "recompute": "collect:live/tests",
+      "status": "measured",
+      "value": "1070 passed, 9 skipped (1079 collected)"
+    },
+    {
+      "artifact": null,
+      "d": null,
+      "dataset": "tests/unit + tests/e2e (this checkout)",
+      "dataset_version": "n/a",
+      "definition": "pytest collect-only count, 2026-11-02 (historical v1 core gate)",
+      "docs": [
+        "README.md"
+      ],
+      "experiment": "offline gate (v1 core)",
+      "id": "tests_v1",
+      "metric": "v1 core offline test count",
+      "n": 755,
+      "not_proven": "v1 static checker, now the numeric library; Atlas Live behavior is covered by tests_live",
+      "pins": [
+        "755"
+      ],
+      "recompute": "collect:tests/unit tests/e2e",
+      "status": "measured-historical",
+      "value": "755 passed"
+    },
+    {
+      "artifact": null,
+      "d": null,
+      "dataset": "mux VOD HLS fixture (public test stream)",
+      "dataset_version": "n/a",
+      "definition": "POST /ingest HLS vivo 30s window: status done, source link-hls, label Vivo por enlace, $0.0015",
+      "docs": [
+        "README.md"
+      ],
+      "experiment": "V6-2 proof run link-22abeaf5ee2e",
+      "id": "vivo_link_proof",
+      "metric": "Vivo-by-link-HLS proof run",
+      "n": null,
+      "not_proven": "NOT a 24/7 livestream test: one 30 s VOD window; 0 claims (test content has no numeric claims)",
+      "pins": [
+        "link-22abeaf5ee2e"
+      ],
+      "recompute": null,
+      "recompute_note": "re-runnable live: POST /ingest {mux url, vivo, duration 30}, ~$0.01",
+      "status": "measured",
+      "value": "done, 30 s media, 1 turn, $0.0015"
+    },
+    {
+      "id": "demo_verify",
+      "metric": "Shipped keynote verify log (judge replay)",
+      "definition": "claim.verdict events in live/demo/replay/verify-keynote-en-investigate.jsonl scored vs live/material/truth.json expected",
+      "dataset": "M2d keynote EN (31 claims, synthetic)",
+      "dataset_version": "n/a",
+      "n": 8,
+      "d": 9,
+      "value": "9 decided of 31, 8/9 correct, 1 false-supported (F14-en), 0 false-contradicts",
+      "experiment": "M2d (shipped log)",
+      "artifact": "live/demo/replay/verify-keynote-en-investigate.jsonl",
+      "recompute": "scores:demo_verify",
+      "docs": [
+        "live/demo/README_DEMO.md"
+      ],
+      "pins": [
+        "8/9",
+        "F14-en"
+      ],
+      "status": "measured-unfavorable",
+      "not_proven": "NOT benchmark v2; the 22 abstentions + 1 false-supported are the keynote demo reality"
+    }
+  ]
+}

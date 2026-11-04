@@ -1,98 +1,20 @@
 # Atlas Live — a real-time agent newsroom that checks video as it plays
 
-> **Provenance (hackathon compliance):** all work in this repo was done
-> 2026-10-31 → 2026-11-04 (first commit `757d0e8`, 2026-10-31 — inside
-> the Oct 26–Nov 4 window). The static claim-checker (`src/atlas/`,
-> tag `pre-pivot-v1`) is now the deterministic numeric library of
-> **Atlas Live**, the real-time agent newsroom in [`live/`](live/).
-> New demo work lands only in `live/` with dated commits.
+Atlas Live transcribes video as it plays, extracts checkable claims as
+they are said, investigates each one with parallel Muse agents, and
+publishes verdict cards with re-verifiable proof. Model proposes,
+deterministic code disposes: no valid evidence package means
+`unverifiable`, never a guess.
 
-Play a video and watch agents check it live: Atlas Live transcribes
-speech in real time, extracts checkable claims as they are said,
-investigates each one with parallel Muse agents over the open web,
-verifies with deterministic code, and publishes verdict cards with
-re-verifiable proof over WebSocket — while the video keeps running.
-It also watches the slides: when the speaker says 40% and the chart
-shows 0.97%, that mismatch is caught on screen
-([`live/M3.md`](live/M3.md)).
-
-Built for the **Meta Global AI Developer Hackathon 2026** (Indie track).
-See [docs/HACKATHON.md](docs/HACKATHON.md) for the verified rules and deadlines.
-Judge path (3 min, $0 replay): [`live/demo/README_DEMO.md`](live/demo/README_DEMO.md) ·
-Submission text: [`live/demo/SUBMISSION.md`](live/demo/SUBMISSION.md).
+Built for the **Meta Global AI Developer Hackathon 2026** (Indie).
+Rules/deadlines: [docs/HACKATHON.md](docs/HACKATHON.md).
 
 > Atlas Live is an analysis aid, not an arbiter of truth. It never
-> invents sources, every verdict links to hashed snapshots anyone can
-> re-verify offline, and when proof is missing it says "unverifiable"
-> instead of guessing. Honest numbers below — including the ones where
-> the Muse-only baseline wins ([`live/M8.md`](live/M8.md)).
+> invents sources, abstains when proof is missing, and reports the
+> runs where the Muse-only baseline wins. Every figure below names
+> its experiment and what it does NOT prove.
 
-## Problem
-
-AI apps ship statistics nobody checks — and LLM-judge guardrails can
-hallucinate about hallucinations. You get "true or false" without the
-work: which sources were consulted, what each source actually says, how
-numbers were compared, or what the model guessed versus what code
-verified. Video makes it worse: claims fly by at speaking pace, and
-charts on screen can contradict the speaker with nobody noticing.
-
-## What this does
-
-Given a video or stream, Atlas Live ([`live/`](live/)):
-
-0. **Listens** with `muse-voice-transcribe` over streaming WebSocket
-   (diarization, endpointing, ES/EN) and **watches** slides, tables and
-   charts — each visual claim anchored to its frame and second.
-1. **Detects** checkable claims live (model-first under a strict
-   schema, verbatim spans, coreference resolved, deduped), publishing
-   `claim.detected` ~1.2 s (p50/p95 1240/1314 ms) after end-of-phrase.
-2. **Investigates** with parallel Muse agents (structurer, retriever,
-   red-team) over the open web: responsible fetch (robots.txt,
-   user-agent, rate limits, no paywalls), hashed local snapshots, and
-   literal quotes with offsets — [evidence packages](live/M2_E2E.md).
-3. **Verifies** with deterministic code only: quote-must-exist,
-   number re-extraction, 2% tolerance, scale-error guard, temporal
-   alignment, primary-beats-secondary. No valid package → `unverifiable`.
-   Models never vote on verdicts.
-4. **Cross-checks said-vs-shown**: speech numbers vs on-screen charts
-   (±15 s window), truncated-axis and broken-scale flags.
-5. **Publishes** verdict cards (ES/EN) over WebSocket as the video runs,
-   with live corrections, a canary-measured reliability panel (no
-   invented confidence), and an exportable proof bundle
-   (`verify_bundle.py` re-verifies offline).
-
-No confidence scores, no invented citations. When evidence is missing or
-incomparable, the card says so. Snippets are pointers, never evidence —
-see [docs/AGENTS.md](docs/AGENTS.md).
-
-Measured on preregistered ground truth (dev 36 + sealed retention 18,
-[`live/eval2/prereg.md`](live/eval2/prereg.md)): Atlas decides
-26/36 dev (recall 0.722) and 14/18 retention (0.778), 26/26 and 14/14
-correct with **0 false verdicts on these two sets** (Wilson 95% [0.871,1.000]
-dev, [0.785,1.000] retention); latency p50 ~5 s / p95 ~40 s per claim
-at ~$0.007/claim ([`live/F2_P95.md`](live/F2_P95.md)). The Muse-only
-baseline scores higher on verdicts (18/18 retention) — but only 14% of
-its literal quotes exist on the cited URL (citation-fidelity audit,
-[`live/F2_BENCH.md`](live/F2_BENCH.md)); Atlas abstains rather than
-assert without evidence, and every verdict ships hashed snapshots
-anyone can re-verify offline. Said-vs-shown 4/4 planted cases
-([`live/M3.md`](live/M3.md)); canaries 7/7 ([`live/M6.md`](live/M6.md)).
-
-> **Scope honesty:** the 12-piece demo corpus (keynotes, 2-speaker
-> panels, science classes, fictional earnings calls, EN+ES) is 100%
-> synthetic — scripted, TTS-voiced and code-rendered by us, labeled
-> "Synthetic demo" on screen ([`live/S4_SYNTHQA.md`](live/S4_SYNTHQA.md)).
-> Its metrics measure the system against known truth, not real-world
-> performance. Declared errors: 3 systematic difference-claim
-> false-contradicts found on the corpus, FIXED by the V5-1 arithmetic
-> guard; 1 open retrieval-variance case (P1-17-en). See
-> [`live/demo/SUBMISSION.md`](live/demo/SUBMISSION.md) § Honest limits.
-
-The v1 static checker (paste text → receipts) still works under
-`src/atlas/` + `POST /api/check` (tag `pre-pivot-v1`, 755 offline
-tests, 43/43 eval) and now serves as Atlas Live's numeric library.
-
-## Demo (3 minutes, $0 replay)
+## Try it in 3 minutes ($0 replay, no key)
 
 ```bash
 git clone https://github.com/kiltro-dev/evidence-platform && cd evidence-platform
@@ -100,168 +22,177 @@ uv venv -p 3.12 && uv pip install --python .venv/bin/python -r requirements.txt
 PYTHONPATH=src:live .venv/bin/python -m uvicorn live.server.app:create_app --factory --host 127.0.0.1 --port 8891
 ```
 
-Open [http://127.0.0.1:8891](http://127.0.0.1:8891), pick a recorded run
-and press **Watch replay**: live subtitles, verdict cards appearing as
-the video runs, the agent theater, and the timeline — a replay of a
-real run, labeled as such. Live mode needs `MODEL_API_KEY` (see
-[`.env.example`](.env.example)).
+Open [http://127.0.0.1:8891/?replay=run-es-native](http://127.0.0.1:8891/?replay=run-es-native):
+a recorded 48-event native-Spanish run re-emitted through the newsroom
+UI — subtitles, verdict cards, agent theater, timeline with click-seek.
+Labeled as replay; $0, no network, no model calls. Other shipped runs
+in the "Real-run replay" dropdown.
 
-Full judge path: [`live/demo/README_DEMO.md`](live/demo/README_DEMO.md) ·
-3-min video script: [`live/demo/script.md`](live/demo/script.md).
+Judge kit: [`live/demo/README_DEMO.md`](live/demo/README_DEMO.md) ·
+submission text: [`live/demo/SUBMISSION.md`](live/demo/SUBMISSION.md) ·
+recording guide: [`live/demo/RECORDING_GUIDE.md`](live/demo/RECORDING_GUIDE.md).
 
-> Demo notice: live video/audio is sent to Meta's Model API (Standard no-training tier); don't stream sensitive content.
+## Modes (every label the UI can show)
 
-## Stack
+| Mode (UI badge) | What it is | Proven by |
+|---|---|---|
+| Recorded replay | Re-emitted event log, labeled REPLAY | 4 shipped logs in `live/demo/replay/` |
+| Directo simulado | `ffmpeg -re` paced replay of a local file over a fifo | M1e run + `/hls` simulive loop ([`live/S3_SIMULIVE.md`](live/S3_SIMULIVE.md)) |
+| Vivo por enlace | Link ingest (mp4 or HLS window) paced in real time | Run `link-22abeaf5ee2e` (mux HLS, 30 s, done, $0.0015) |
+| Turbo por enlace | Same ingest without the realtime governor | V5-G1 + `run.mode` pacing flag |
+| Archivo en tiempo real | Local file ingested with realtime pacing | Same pipeline, `source=file` |
 
-Python 3.12 monolith (3.11+ supported), one process: FastAPI + static
-single-page UI, httpx connectors, SQLite persistence, pydantic models.
-The only model dependency is the Meta Model API: Chat Completions
-(`muse-spark-1.3`, strict `json_schema` decoding) for structuring and
-judgment calls, Responses API + `web_search` for live counter-evidence.
-Eleven dependencies total (nine runtime incl. imageio-ffmpeg,
-websockets and matplotlib for Atlas Live + pytest and hypothesis) —
-see [requirements.txt](requirements.txt).
+Vision on link media runs **offline** (said-vs-shown over the
+materialized file, M3 4/4 incl. 40% said vs 0.97% shown) — not
+inline-realtime. Claim detection publishes `claim.detected` p50/p95
+1240/1314 ms after end-of-phrase (M1 bus measurement; detection only,
+not verdict latency). Explicitly NOT implemented: browser
+tab/microphone capture, DASH playlists, encrypted playlists, YouTube
+(refused by policy). No other "live" claim is made.
 
-Architecture: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) ·
-API: [docs/API.md](docs/API.md) ·
-Decisions: [docs/adr/](docs/adr/) ·
-Model/code split: [docs/AGENTS.md](docs/AGENTS.md) ·
-Ops: [docs/SECURITY_OPS.md](docs/SECURITY_OPS.md)
+## Metrics (each with its experiment)
 
-## Requirements
+<!-- METRICS:START -->
+| Metric | Value | Experiment | Does NOT prove |
+|---|---|---|---|
+| Atlas recall, DEV (n=36) | 26/36 = 0.722 | V5-1 guard | NOT real-world accuracy: 36 scripted claims against available sources; b 0/6 by source access, not reasoning |
+| Atlas recall, sealed retention (n=18) | 14/18 = 0.778 | V6 validation (ret ran 3x, seal kept) | NOT generalization to arbitrary claims; n=18, Wilson recall interval [0.548,0.910] |
+| Decided accuracy | dev 26/26 [0.871,1.000], ret 14/14 [0.785,1.000], 0 false verdicts either set | V5-1 + V6 | says nothing about the 14 abstentions (10 dev + 4 ret); high precision WITH low coverage is the design trade |
+| Verdict latency / cost | p50 ~5 s / p95 ~40 s / ~$0.007 per claim | V5-1 + V6 runs | NOT end-to-end video latency (excludes ASR+detection); NOT worst-case (deadline 90s caps the tail by aborting) |
+| Baseline recall, retention (Atlas loses) | 18/18 = 1.000 [0.824,1.000] | F2 retention baseline | verdicts only: paired with fidelity 9/63, which is the wedge |
+| Baseline citation fidelity, DEV pooled | 9/63 = 0.143 [0.077,0.250] (r1 5/31, r2 4/32) | F2-1 audit | NOT Atlas fidelity (Atlas quotes are package-verified by construction, different mechanism); reasons: quote_not_found 34, unit_mismatch 13, numeric_mismatch 7 |
+| Said-vs-shown planted | 4/4 | M3 | NOT inline-realtime vision on link runs (V6-2: offline path on materialized files) |
+| Canaries | 7/7 decided of 12 (5 abstained), accuracy 1.000 [0.646,1.000] | M6 live run | NOT a false-rate guarantee: Wilson [0.646,1.000] is wide at n=12; abstention 5/12 |
+| Live offline tests | 1070 passed, 9 skipped (1079 collected) | gate 2026-11-02 | count only; live-network tests (ATLAS_LIVE_NET) excluded from the gate |
+| v1 core offline tests (historical) | 755 passed | gate 2026-11-02 | v1 static checker, now the numeric library; Atlas Live behavior is covered by tests_live |
+<!-- METRICS:END -->
 
-- Python 3.11+ (3.12 verified), `uv` (or `pip` — see below)
-- Internet access for live sources (World Bank, OpenAlex)
-- Optional: `MODEL_API_KEY` for full model-assisted mode.
-  Without it the system runs in degraded deterministic mode
-  (heuristic extraction + template summaries, same verification core).
-  Check the current mode any time with `GET /api/status`.
+Registry + recompute: [`live/claims_registry.json`](live/claims_registry.json)
+(commit `ae7f8f4` numbers frozen 2026-11-03 12:00 Santiago, re-rendered by
+`scripts/render_metrics.py`, guarded by `scripts/check_claims.py` in the
+offline gate). Benchmark preregistration:
+[`live/eval2/prereg.md`](live/eval2/prereg.md).
 
-## Install & run
+Scope honesty: the 12-piece demo corpus (keynotes, panels, science
+classes, fictional earnings calls, EN+ES) is 100% synthetic — scripted,
+TTS-voiced and code-rendered by us, labeled "Synthetic demo" on screen
+([`live/S4_SYNTHQA.md`](live/S4_SYNTHQA.md)). Corpus metrics
+(e.g. S4 114/117 = 0.974 decided accuracy) measure system-vs-known-truth
+on that corpus — never confuse them with benchmark-v2 recall above.
 
-Single supported path (`uv`):
+## Limits (short; full list in SUBMISSION § Honest limits)
+
+- Recall 26/36 DEV / 14/18 retention with 0 false verdicts both sets;
+  the Muse-only baseline wins recall (70/72 DEV, 18/18 retention) but
+  only 9/63 of its citations are faithful (verbatim quote + figure ±2%
+  on the cited URL) and it exports zero proof.
+- Category b 0/42 and FOMC 5/5 unverifiable: official APIs need keys
+  nobody has added yet ([`live/KEYS_NEEDED.md`](live/KEYS_NEEDED.md));
+  re-run planned if keys arrive before submission.
+- 3 corpus false-contradicts FIXED by the V5-1 guard; 1 open
+  retrieval-variance case (P1-17-en). The skeptic red-team pass is
+  advisory-only (deferred by default), not blocking.
+- Canaries: 12 canaries run (M6), 7 decided 7/7, Wilson [0.646,1.000]
+  — wide at n=12, and 5 abstentions all on the FALSE side.
+- Contributor tier: live runs send video/audio + claim text to Meta's
+  Model API; don't stream sensitive content. Microphone/tab capture
+  does not exist (server mic/file input only). Clip 2 is synthetic.
+
+## Install & run (live path)
 
 ```bash
 git clone https://github.com/kiltro-dev/evidence-platform
 cd evidence-platform
 uv venv -p 3.12
 uv pip install --python .venv/bin/python -r requirements.txt
-cp .env.example .env   # optional; add MODEL_API_KEY for full mode
-chmod 600 .env         # the key file must not be group/world-readable
-PYTHONPATH=src .venv/bin/python -m uvicorn atlas.api.app:app --host 127.0.0.1 --port 8765
+cp .env.example .env   # add MODEL_API_KEY for live (non-replay) mode
+chmod 600 .env
+PYTHONPATH=src:live .venv/bin/python -m uvicorn live.server.app:create_app --factory --host 127.0.0.1 --port 8891
 ```
 
-`pip` alternative (no `uv`):
+`pip` alternative: `python3 -m venv .venv && .venv/bin/pip install -r
+requirements.txt` (same commands after). Live link ingest:
 
 ```bash
-git clone https://github.com/kiltro-dev/evidence-platform
-cd evidence-platform
-python3 -m venv .venv
-.venv/bin/pip install -r requirements.txt
-PYTHONPATH=src .venv/bin/python -m uvicorn atlas.api.app:app --host 127.0.0.1 --port 8765
+curl localhost:8891/ingest -H 'Content-Type: application/json' \
+  -d '{"url":"https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8","mode":"vivo","duration":30}'
 ```
 
-Notes:
+Poll `GET /ingest/{id}`, replay it (`?replay=link-{id}`), export it
+(`GET /report/link-{id}?format=html`). Localhost only, no auth — do
+not expose it; see [docs/SECURITY_OPS.md](docs/SECURITY_OPS.md). Env
+vars: `MODEL_API_KEY` (live mode), `OPENALEX_API_KEY` (own quota),
+`ATLAS_DB`, key-gated sources in `live/KEYS_NEEDED.md`.
 
-- `PYTHONPATH=src` is required: the importable package lives in `src/atlas`
-  and is not pip-installed. Every Python invocation below includes it.
-- The server binds **localhost only** (`127.0.0.1`) by default. There is no
-  authentication; do not expose it to a network. See
-  [docs/SECURITY_OPS.md](docs/SECURITY_OPS.md).
-- If port 8765 is taken, pick another: `--port 8770`, then use
-  `http://127.0.0.1:8770`. The smoke script auto-resolves a busy port.
-- Reports persist to `data/atlas.db` by default; override with `ATLAS_DB`.
-  The directory is created on first write. Reads never create it.
-- After adding or changing `MODEL_API_KEY` in `.env`, **restart the server**:
-  the key is read once at startup and a running server keeps its old mode.
+## Stack
+
+Python 3.12 (3.11+ supported), one process: FastAPI + static
+single-page UI, httpx connectors, SQLite, pydantic. Model surface is
+only the Meta Model API: Chat Completions (`muse-spark-1.3`, strict
+`json_schema`) for structuring/judgment, `muse-voice-transcribe-1.0`
+for streaming ASR, vision for slide reads, Responses `web_search` for
+counter-evidence. Twelve direct dependencies (ten runtime incl.
+imageio-ffmpeg, PyAV, websockets, matplotlib + pytest and hypothesis)
+— see [requirements.txt](requirements.txt) (pinned:
+[requirements.lock](requirements.lock)).
+
+Architecture: [docs/ARCHITECTURE_LIVE.md](docs/ARCHITECTURE_LIVE.md) ·
+API: [docs/API.md](docs/API.md) (v1 core) · Decisions:
+[docs/adr/](docs/adr/) · Model/code split: [docs/AGENTS.md](docs/AGENTS.md).
+
+## Tests & evaluation (offline gate)
+
+```bash
+PYTHONPATH=src:live .venv/bin/python -m pytest live/tests -q   # Atlas Live: 1070 passed
+PYTHONPATH=src .venv/bin/python -m pytest tests/unit tests/e2e -q  # v1 core: 755 passed
+PYTHONPATH=src:live .venv/bin/python scripts/check_claims.py   # numbers guard
+```
+
+Live-network tests (`ATLAS_LIVE_NET=1`) and the retention re-run
+(`live/eval2/run.py --claims live/eval2/retention.json --arms atlas`,
+~$0.10) are opt-in and never part of the gate.
+
+## Origen del trabajo (hackathon window Oct 26 – Nov 4)
+
+All commits in this repo fall inside the window: first commit
+`757d0e8` (2026-10-31, Evidence Atlas MVP), Atlas Live pivot
+`b5c0841` (2026-11-01), ShipCheck v0.4.0 `4e13d7d` (2026-11-01) —
+verified via `git log --reverse`. Nothing predates 2026-10-26. Work
+after the Nov 3 12:00 Santiago freeze is docs/consistency only.
+
+## Histórico (v0.4.0): ShipCheck static checker
+
+> **Histórico (v0.4.0).** The static checker below is preserved as
+> Atlas Live's deterministic numeric library (`src/atlas/`). It still
+> runs standalone (paste text → receipts) but is no longer the
+> product. Docs kept in place, unmoved.
+
+```bash
+PYTHONPATH=src .venv/bin/python -m uvicorn atlas.api.app:app --host 127.0.0.1 --port 8765
+```
 
 API: `GET /api/status`, `POST /api/analyze`, `POST /api/check`,
-`GET /api/reports`, `GET /api/reports/{id}`, `DELETE /api/reports/{id}`.
-UI at `/`. Full reference: [docs/API.md](docs/API.md).
-
-## Tests & evaluation
-
-```bash
-.venv/bin/python -m pytest tests/unit tests/e2e -q        # offline gate (755 tests)
-.venv/bin/python -m pytest tests/integration -q -m live   # live sources (needs network)
-cd tests/e2e-browser && npm ci && npm run install-browser-shell && npm test  # 6 browser specs, degraded
-PYTHONPATH=src .venv/bin/python scripts/run_eval.py --mode degraded  # 11 scripted cases, offline
-PYTHONPATH=src .venv/bin/python scripts/run_eval.py --mode full      # all 43 cases, needs network + key
-PYTHONPATH=src .venv/bin/python scripts/run_eval.py --paraphrase     # 36-input stability probe, offline
-PYTHONPATH=src .venv/bin/python scripts/run_eval.py --unanswerable   # 20-variant abstention probe, offline
-bash scripts/smoke.sh --port 8765                           # offline smoke (32 checks)
-bash scripts/smoke.sh --port 8765 --live --eval              # + live API + full eval
-```
-
-- `tests/unit tests/e2e` is the offline gate: **755 tests, all green**,
-  no network, no key (pytest 9). No `PYTHONPATH` needed: the test
-  modules self-insert `src/` on `sys.path`. Direct scripts
-  (`scripts/run_eval.py`, `repro_findings.py`, `uvicorn`) DO need
-  `PYTHONPATH=src`.
-- `tests/e2e-browser` is the browser gate: 6 Playwright specs drive the
-  real UI in degraded mode (a11y contract, abort paths, journeys,
-  render fidelity, UI units, judge mode) — see
-  [tests/e2e-browser/README.md](tests/e2e-browser/README.md).
-- `-m live` selects the `live` pytest marker (registered in
-  `pyproject.toml`): tests that hit real public APIs.
-- Eval: 43 cases total. `--mode degraded` runs the 11 offline-capable
-  cases and skips the 32 `live` ones; `--mode full` runs everything but
-  needs network and takes many minutes (live source latency plus up to
-  5 model calls per case, incl. the token-hungry web pass).
-- Current results: **755/755 offline, 43/43 full-mode eval with real
-  muse-spark-1.3, 11/11 degraded eval, 36/36 paraphrase agreement** —
-  see [docs/EVAL_REPORT.md](docs/EVAL_REPORT.md) for the pinned run.
-  What these numbers do and do not prove is stated there honestly:
-  pinned regressions green, not an accuracy benchmark.
-  Methodology: [docs/EVAL.md](docs/EVAL.md).
-  Project's evaluation proposal: [docs/FRAMEWORK.md](docs/FRAMEWORK.md).
-
-## Limitations
-
-- Economy verification covers the World Bank indicator/country catalog coded
-  in [src/atlas/connectors/](src/atlas/connectors/) (49 indicator
-  keywords incl. Spanish aliases, 51 countries/aggregates).
-- Science evidence is OpenAlex metadata plus abstract-stance judgments;
-  full texts are not read and abstracts never verify a claim.
-- Bare numbers are compared as counts only, with an explicit flag.
-- Tolerance default is 2% relative (an explicit engineering prior, not a
-  validated constant); methodology differences are the user's call. The
-  claimed-precision rule additionally requires stated digits to survive
-  contact with the retrieved value. Absolute-gap guides ($100B, 1M,
-  0.5pp) are order-of-magnitude disclosure thresholds with the same
-  honesty status.
-- Heuristic scale abbreviations are limited (e.g. bare "T" for trillion
-  is not parsed); the model path handles the general case.
-- No authentication or multi-user support (single-user demo; localhost-only).
-- Stored reports never expire (no TTL); delete unneeded ones via the UI or
-  `DELETE /api/reports/{id}`.
+`GET /api/reports`, `DELETE /api/reports/{id}`; UI at `/`. Full
+reference: [docs/API.md](docs/API.md). Eval: 43/43 full-mode with
+real `muse-spark-1.3`, 11/11 degraded, 36/36 paraphrase
+([docs/EVAL_REPORT.md](docs/EVAL_REPORT.md)); browser gate
+(`tests/e2e-browser/`, 6 Playwright specs); smoke
+(`bash scripts/smoke.sh --port 8765`, 32 checks). v1 limitations
+(tolerance prior, unit parser, no auth/TTL) live in
+[docs/API.md](docs/API.md) and [docs/EVAL_REPORT.md](docs/EVAL_REPORT.md).
+Direction rationale:
+[docs/BREAKTHROUGH_DECISION.md](docs/BREAKTHROUGH_DECISION.md) ·
+progress: [PROGRESS.md](PROGRESS.md).
 
 ## Troubleshooting
 
 | Symptom | Cause | Fix |
 |---|---|---|
-| `ModuleNotFoundError: atlas` | `PYTHONPATH` not set | Prefix Python/uvicorn/pytest with `PYTHONPATH=src` |
-| `/api/status` shows degraded after adding a key | Server reads `.env` once at startup | Restart the server |
-| `address already in use` on 8765 | Port taken | Use `--port 8770` (server) or let `smoke.sh` resolve one |
-| `uvicorn: command not found` | `.venv` not on PATH | Use `.venv/bin/python -m uvicorn ...` |
-| Live tests / full eval fail on network | No internet or source outage | Run the offline gate + `--mode degraded`; both need no network |
-| `MODEL_API_KEY` errors in full mode | Key missing or invalid | Fill `.env` from `.env.example`, `chmod 600 .env`, restart |
-
-## Project status
-
-v4 (0.4.0) ShipCheck sidecar: multi-claim batch intake, strict decoding
-schemas, live-web adversarial falsification, EVS hardening
-(pin-conformance + Wilson CIs, independent recompute, partial-coverage
-caveat). Night-shift hardening on top: parallel batch analysis,
-authoritative-first web ordering, World Bank vintage/mrnev/coverage
-upgrades, multi-geo disclosure, 43-case eval. Prior v3 (0.3.0):
-adversarial self-review, claimed-precision
-methodology, abstract-stance science path, per-stage token accounting,
-receipt export + deterministic re-run. Direction rationale:
-[docs/BREAKTHROUGH_DECISION.md](docs/BREAKTHROUGH_DECISION.md).
-Progress log: [PROGRESS.md](PROGRESS.md).
-Study/defense guide: [docs/STUDY_GUIDE.md](docs/STUDY_GUIDE.md).
-Developer guide: [docs/DEVELOPER_GUIDE.md](docs/DEVELOPER_GUIDE.md).
+| `ModuleNotFoundError: live` / `atlas` | `PYTHONPATH` not set | Prefix with `PYTHONPATH=src:live` (Atlas) or `PYTHONPATH=src` (v1) |
+| `address already in use` on 8891 | Port taken | Use `--port 8892` and open that port |
+| Replay dropdown empty | Old server | Restart (shipped logs load at startup) |
+| Live ingest error `MODEL_API_KEY not configured` | Key missing | Fill `.env`, `chmod 600 .env`, restart |
+| Live tests fail on network | No internet | Run the offline gate only (no network needed) |
 
 ## License
 

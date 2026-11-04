@@ -1,0 +1,16 @@
+{
+ "run": "eval2-20261101-225539 DEV baseline x2",
+ "definition": "quote literal found verbatim on cited URL + figure within 2%",
+ "runs": [
+  {
+   "n_checked": 31,
+   "n_faithful": 5,
+   "n_unresolved": 5
+  },
+  {
+   "n_checked": 32,
+   "n_faithful": 4,
+   "n_unresolved": 4
+  }
+ ]
+}
