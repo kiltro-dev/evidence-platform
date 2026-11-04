@@ -452,6 +452,9 @@
       (c.prov ? " · " + STR[lang].prov : "");
   }
   function setState(ev){
+    // Verify/investigation replays carry states without claim.detected:
+    // create the card so verdicts/evidence are visible there too.
+    if (ev.claim_id && !cards[ev.claim_id]) addClaim(ev);
     var c = cards[ev.claim_id]; if (!c) return;
     c.state = ev.state || "escuchada";
     c.el.className = "card claim st-" + c.state;
