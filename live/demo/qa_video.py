@@ -54,55 +54,61 @@ def narr_blocks() -> list[str]:
                 encoding="utf-8").split("\n\n") if b.strip()]
 
 
-# ------------------------------------------------------------- recall DEV
-@check("R1 dev decididos 22/36 recall 0.611 (r1+r2)")
+# --------------------------------------- recall DEV (pins V5-1, scores)
+def _tally(scores_name: str):
+    d = J(f"live/eval2/scores/{scores_name}")
+    dec = cor = 0
+    for c in d["claims"]:
+        if c["verdict"] == "unverifiable":
+            continue
+        dec += 1
+        if (c["expected"] == "true") == (c["verdict"] == "supported"):
+            cor += 1
+    return d, dec, cor, len(d["claims"])
+
+
+@check("R1 dev decididos 26/36 recall 0.722 (V5-1 scores)")
 def _():
-    d = J("data/runs/f2recall-fix-report.json")
-    for run in ("atlas-run1", "atlas-run2"):
-        p = d["panels"][run]
-        assert (p["decided"], p["n"]) == (22, 36), (run, p["decided"])
-        assert abs(p["recall"] - 0.6111) < 1e-3, p["recall"]
-    assert "22/36 = 0.611" in panels()
+    d, dec, _cor, n = _tally("dev-atlas.json")
+    assert (dec, n) == (26, 36), (dec, n)
+    assert d["run"] == "v5p0-dev-atlas-run1.json", d["run"]
+    assert "26/36 = 0.722" in panels()
 
 
-@check("R2 dev exactitud 22/22 wilson [0.851,1.000]")
+@check("R2 dev exactitud 26/26 wilson [0.871,1.000]")
 def _():
-    d = J("data/runs/f2recall-fix-report.json")
-    p = d["panels"]["atlas-run1"]
-    assert p["correct"] == 22 and p["accuracy_decided"] == 1.0
-    lo, hi = wilson_interval(22, 22)
-    assert (round(lo, 3), round(hi, 3)) == (0.851, 1.0), (lo, hi)
-    assert abs(p["wilson_lo"] - 0.8513) < 1e-3
-    assert "22/22 = 1.000" in panels() and "[0.851, 1.000]" in panels()
+    _d, dec, cor, _n = _tally("dev-atlas.json")
+    assert (dec, cor) == (26, 26)
+    lo, hi = wilson_interval(26, 26)
+    assert (round(lo, 3), round(hi, 3)) == (0.871, 1.0), (lo, hi)
+    assert "26/26 = 1.000" in panels() and "[0.871, 1.000]" in panels()
 
 
-@check("R3 dev 0 falsos-C/S ambas corridas")
+@check("R3 dev 0 falsos-C/S (scores)")
 def _():
-    d = J("data/runs/f2recall-fix-report.json")
-    for run in ("atlas-run1", "atlas-run2"):
-        p = d["panels"][run]
-        assert p["falsos_contradicted"] == [], run
-        assert p["falsos_supported"] == [], run
-    assert bv.F2R["dev_dec"] == 22
+    _d, dec, cor, _n = _tally("dev-atlas.json")
+    assert dec == cor == 26
+    assert bv.F2R["dev_dec"] == 26
 
 
-@check("R4 dev por categoria a5 b0 c6 d0 e5 f6")
+@check("R4 dev por categoria a5 b0 c6 d4 e5 f6 (scores+dev.json)")
 def _():
-    d = J("data/runs/f2recall-fix-report.json")
-    p = d["panels"]["atlas-run1"]["by_category"]
-    got = {c: p[c]["decided"] for c in "abcdef"}
-    assert got == {"a": 5, "b": 0, "c": 6, "d": 0, "e": 5, "f": 6}, got
-    assert "a 5/6" in panels() and "d 0/6" in panels()
+    dev = {c["id"]: c for c in J("live/eval2/dev.json")}
+    got: dict[str, int] = {c: 0 for c in "abcdef"}
+    for c in J("live/eval2/scores/dev-atlas.json")["claims"]:
+        if c["verdict"] != "unverifiable":
+            got[dev[c["id"]]["category"]] += 1
+    assert got == {"a": 5, "b": 0, "c": 6, "d": 4, "e": 5, "f": 6}, got
+    assert "a 5/6" in panels() and "d 4/6" in panels()
 
 
-@check("R5 dev consistencia r1-r2 36/36 (veredictos identicos)")
+@check("R5 scores run-id + registry cross-check (dev)")
 def _():
-    r1 = J("data/runs/f2recall-fix-atlas-run1.json")["claims"]
-    r2 = J("data/runs/f2recall-fix-atlas-run2.json")["claims"]
-    v1 = {c["claim_id"]: c["verdict"] for c in r1}
-    v2 = {c["claim_id"]: c["verdict"] for c in r2}
-    assert v1 == v2 and len(v1) == 36
-    assert "36/36 = 1.000" in panels()
+    d = J("live/eval2/scores/dev-atlas.json")
+    reg = {c["id"]: c for c in J("live/claims_registry.json")["claims"]}
+    assert d["run"] == "v5p0-dev-atlas-run1.json"
+    assert reg["dev_recall"]["n"] == 26 and reg["dev_recall"]["d"] == 36
+    assert "v5p0-dev-atlas-run1" in panels()
 
 
 # ------------------------------------------------- retencion (addendum)
@@ -113,34 +119,38 @@ def addendum() -> str:
     return txt[i:]
 
 
-@check("R6 ret 12/18=0.667 solo-addendum (retention.json intacta)")
+@check("R6 ret 14/18=0.778 via scores (retention.json intacta)")
 def _():
-    ad = addendum()
-    assert "12/18 (0.667)" in ad, ad[-400:]
-    assert "12/18 = 0.667" in panels()
+    d, dec, _cor, n = _tally("ret-atlas.json")
+    assert (dec, n) == (14, 18), (dec, n)
+    assert d["run"] == "v6ret-atlas-run1.json", d["run"]
+    assert "14/18 = 0.778" in panels()
     assert not (REPO / "live/eval2/retention.json").stat().st_mtime == -1
 
 
-@check("R7 ret 12/12 wilson [0.757,1.000]")
+@check("R7 ret 14/14 wilson [0.785,1.000]")
 def _():
-    ad = addendum()
-    assert "12/12 [0.757,1.000]" in ad
-    lo, hi = wilson_interval(12, 12)
-    assert (round(lo, 3), round(hi, 3)) == (0.757, 1.0)
-    assert "[0.757, 1.000]" in panels()
+    _d, dec, cor, _n = _tally("ret-atlas.json")
+    assert (dec, cor) == (14, 14)
+    lo, hi = wilson_interval(14, 14)
+    assert (round(lo, 3), round(hi, 3)) == (0.785, 1.0)
+    assert "[0.785, 1.000]" in panels()
 
 
-@check("R8 ret F2-9 p50 4.8/p95 40.8/$0.0067 en panel + addendum intacto")
+@check("R8 ret V6 p50 3.7/p95 41.0/$0.0056 en panel (scores)")
 def _():
-    ad = addendum()
-    assert "0 falsos-C/S" in ad
-    assert "$0.0189/claim" in ad and "82.8/90.1s" in ad  # F2-2 historico
+    d = J("live/eval2/scores/ret-atlas.json")
+    lat = sorted(c["latency_s"] for c in d["claims"])
+    n = len(lat)
+    p50 = lat[min(n - 1, int(0.50 * n))]
+    p95 = lat[min(n - 1, int(0.95 * n))]
+    assert round(p50, 1) == 3.7 and round(p95, 1) == 41.0, (p50, p95)
+    assert abs(d["total_cost_usd"] / n - 0.0056) < 5e-4
     h = panels()
-    assert "p50 4.8s" in h and "p95 40.8s" in h and "$0.0067" in h
-    assert "antes p50 82.8s" in h and "Latencia F2-9" in h
-    assert bv.F2R["ret_p50"] == 4.8 and bv.F2R["ret_p95"] == 40.8
-    assert bv.F2R["ret_cost"] == 0.0067
-    # Fuente: cifras ejecutadas del brief F2-6c (ver live/F2_VIDEO3.md).
+    assert "p50 3.7s" in h and "p95 41.0s" in h and "$0.0056" in h
+    assert "antes p50 82.8s" in h and "Latencia V6" in h
+    assert bv.F2R["ret_p50"] == 3.7 and bv.F2R["ret_p95"] == 41.0
+    assert bv.F2R["ret_cost"] == 0.0056
     # Sello: este QA jamas abre live/eval2/retention.json ni runs f2ret*.
 
 

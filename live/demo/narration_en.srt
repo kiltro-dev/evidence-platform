@@ -1,88 +1,88 @@
 1
-00:00:00,500 --> 00:00:05,522
+00:00:00,500 --> 00:00:06,035
 One speaker says two things that can't both be true, 59 seconds apart.
 
 2
-00:00:05,522 --> 00:00:11,620
-Atlas Live catches it as it processes the replay — and shows the proof, not just the verdict.
+00:00:06,035 --> 00:00:12,756
+Atlas Live catches it live — caught live — and shows the proof, not just the verdict.
 
 3
-00:00:12,420 --> 00:00:19,315
-Atlas Live processes video, extracts every checkable claim,
+00:00:13,556 --> 00:00:19,789
+Atlas Live listens to and watches a live video, extracts every checkable claim,
 
 4
-00:00:19,315 --> 00:00:28,916
+00:00:19,789 --> 00:00:28,468
 investigates it with Muse agents on the open web; deterministic code decides. Native Spanish: 0.03 word error.
 
 5
-00:00:29,716 --> 00:00:35,238
+00:00:29,268 --> 00:00:35,451
 Minute one-ten. The speaker says China fell to 141 million people.
 
 6
-00:00:35,238 --> 00:00:40,676
-Three researchers hit the open web while the replay is processed.
+00:00:35,451 --> 00:00:41,540
+Three researchers hit the open web while the video keeps running.
 
 7
-00:00:41,476 --> 00:00:47,416
+00:00:42,340 --> 00:00:47,999
 Contradicted. The World Bank says 1.409 billion — ten times more.
 
 8
-00:00:47,416 --> 00:00:56,372
+00:00:47,999 --> 00:00:56,532
 And at minute zero he had said 1.41 billion: self-contradiction verified by code, rel diff of 0.9.
 
 9
-00:00:57,172 --> 00:01:03,650
+00:00:57,332 --> 00:01:03,583
 And you don't have to take our word for it. Every run exports a proof bundle
 
 10
-00:01:03,650 --> 00:01:11,748
+00:01:03,583 --> 00:01:11,396
 anyone can re-run with no network and no model: all pass. Flip one byte and the verifier fails.
 
 11
-00:01:12,548 --> 00:01:19,623
+00:01:12,196 --> 00:01:18,994
 But there's something better. The speaker says forty percent, and his own chart shows 0.97.
 
 12
-00:01:19,623 --> 00:01:25,220
+00:01:18,994 --> 00:01:24,372
 The chart contradicts the speaker. Vision reads the frame; code decides.
 
 13
-00:01:26,020 --> 00:01:31,189
+00:01:25,172 --> 00:01:30,762
 Same trick on two slides: a truncated axis turning five percent into a doubling,
 
 14
-00:01:31,189 --> 00:01:36,228
+00:01:30,762 --> 00:01:36,212
 and a broken scale putting India above the United States. Two automatic flags.
 
 15
-00:01:37,028 --> 00:01:42,991
+00:01:37,012 --> 00:01:42,939
 The fair benchmark, v2: 36 dev claims and 18 sealed retention claims.
 
 16
-00:01:42,991 --> 00:01:50,164
-Atlas decides 61% on dev and 67% on retention, with zero false contradicts in both.
+00:01:42,939 --> 00:01:50,068
+Atlas decides 72% on dev and 78% on retention, with zero false contradicts in both.
 
 17
-00:01:50,964 --> 00:01:59,834
+00:01:50,868 --> 00:01:59,848
 And now it's much faster: median down from 80 seconds to 5, at six to seven tenths of a cent per claim.
 
 18
-00:01:59,834 --> 00:02:10,340
+00:01:59,848 --> 00:02:10,484
 And the tail now meets our 60-second goal at 39 to 41 seconds — a no-progress abort cut the queue from 530 to 274 seconds.
 
 19
-00:02:11,140 --> 00:02:17,880
+00:02:11,284 --> 00:02:17,445
 The baseline, as is: 70 of 72 on dev and 18 of 18 on retention — it beats us on recall.
 
 20
-00:02:17,880 --> 00:02:25,316
+00:02:17,445 --> 00:02:24,244
 But only 14% of its citations are faithful to the source, and it exports zero re-runnable proof.
 
 21
-00:02:26,116 --> 00:02:32,165
+00:02:25,044 --> 00:02:31,532
 Model proposes, code disposes. Our wedge: re-verifiable proof, zero false contradicts,
 
 22
-00:02:32,165 --> 00:02:36,244
+00:02:31,532 --> 00:02:35,908
 and said-vs-shown. All measured, all reproducible: try it.
 

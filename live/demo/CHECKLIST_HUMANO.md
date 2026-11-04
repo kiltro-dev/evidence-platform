@@ -7,7 +7,7 @@ ordena el trabajo manual que un humano debe hacer (login, video, portal).
 
 1. Grabar el MP4 con tu voz siguiendo `live/demo/RECORDING_GUIDE.md`
    (~2:30, guion frase por frase en inglés). Alternativa: el MP4
-   TTS `data/demo/atlas-live-demo.mp4` (2:37.0, en máquina del dev,
+   TTS `data/demo/atlas-live-demo.mp4` (2:36.7, en máquina del dev,
    data/ no se commitea — pedirlo si se prefiere esa versión).
 2. Subirlo a la plataforma que pida el portal (YouTube no-listado o
    adjunto directo — confirmar en el portal tras login, ver Campos).
@@ -53,7 +53,7 @@ final de esa sección (nunca re-redactar cifras).
    NO declarar un total redondo inventado.
 4. Marcar el submit como final SOLO si el video sigue
    `live/demo/RECORDING_GUIDE.md` (voz humana) o es el MP4 TTS
-   alternativo verificado (2:37.0, `live/F2_VIDEO.md` QA).
+   alternativo verificado (2:36.7, QA 34/34 + spot-transcripción V7).
 
 ## Campos a confirmar del portal (tras login)
 

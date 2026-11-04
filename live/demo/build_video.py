@@ -101,12 +101,14 @@ M3 = {"f6_said": 40.0, "f6_shown": 0.97, "f6_d": 0.976,
 # Par ES medido (log run-es-native.jsonl + SRT nativo; metodo M7).
 M7ES = {"t2_win": "0.0-18.5", "f3_win": "63.5-81.1", "gap": 59,
         "a": "1.41e9", "b": "1.41e8", "rel_diff": 0.9}
-# F2 recall/latencia/baseline/voz (verificadas en qa_video.py vs JSONs).
-F2R = {"dev_dec": 22, "dev_n": 36, "dev_wilson": "[0.851, 1.000]",
-       "ret_dec": 12, "ret_n": 18, "ret_wilson": "[0.757, 1.000]",
-       # F2-6c: brief ejecutado (retencion F2-9), ver F2_VIDEO3.md
-       "ret_p50": 4.8, "ret_p95": 40.8, "ret_cost": 0.0067,
-       "cats": "a 5/6 · b 0/6 · c 6/6 · d 0/6 · e 5/6 · f 6/6"}
+# Recall DEV/retencion: pins vigentes V5-1 (dev) + V6 (ret), verificadas en
+# qa_video.py vs live/eval2/scores/*.json (commiteados). Latencia F2-9 y
+# baseline quedan como corridas historicas rotuladas (L1-L5, B1-B5).
+F2R = {"dev_dec": 26, "dev_n": 36, "dev_wilson": "[0.871, 1.000]",
+       "ret_dec": 14, "ret_n": 18, "ret_wilson": "[0.785, 1.000]",
+       # V6: ret-atlas.json (v6ret-atlas-run1), nearest-rank + media
+       "ret_p50": 3.7, "ret_p95": 41.0, "ret_cost": 0.0056,
+       "cats": "a 5/6 · b 0/6 · c 6/6 · d 4/6 · e 5/6 · f 6/6"}
 # F2-6c: latencia F2-9 (F2_P95.md §4 + f2p95-final-*.json).
 F2L = {"wall_before": 372.4, "wall_after": 77.7, "wall_pct": 79,
        "p50_before": 80.3, "p95_before": 115.7, "cost_before": 0.0227,
@@ -140,7 +142,7 @@ EN_CUES = [
     ("Same trick on two slides: a truncated axis turning five percent into a doubling,",
      "and a broken scale putting India above the United States. Two automatic flags."),
     ("The fair benchmark, v2: 36 dev claims and 18 sealed retention claims.",
-     "Atlas decides 61% on dev and 67% on retention, with zero false contradicts in both."),
+     "Atlas decides 72% on dev and 78% on retention, with zero false contradicts in both."),
     ("And now it's much faster: median down from 80 seconds to 5, at six to seven tenths of a cent per claim.",
      "And the tail now meets our 60-second goal at 39 to 41 seconds \u2014 a no-progress abort cut the queue from 530 to 274 seconds."),
     ("The baseline, as is: 70 of 72 on dev and 18 of 18 on retention \u2014 it beats us on recall.",
@@ -412,25 +414,25 @@ PANELS_BODY = """
 </section>
 
 <section id="recall">
-<h1>Recall que generaliza <span class="en">dev 0.611 &rarr; retention 0.667</span></h1>
+<h1>Recall que generaliza <span class="en">dev 0.722 &rarr; retention 0.778</span></h1>
 <p class="sub">Benchmark justo v2: 36 DEV + 18 retencion sellada (prereg sellado antes de correr). Fixes generales, 0 falsos-contradicted.</p>
 <div class="grid2">
-<div class="card" id="c-dev"><h2>DEV: <span class="big ok">22/36 = 0.611</span></h2>
+<div class="card" id="c-dev"><h2>DEV: <span class="big ok">26/36 = 0.722</span></h2>
 <dl class="kv">
-<dt>Exactitud decidida</dt><dd class="mono">22/22 = 1.000 Wilson 95% [0.851, 1.000]</dd>
+<dt>Exactitud decidida</dt><dd class="mono">26/26 = 1.000 Wilson 95% [0.871, 1.000]</dd>
 <dt>Falsos-C / falsos-S</dt><dd class="big ok">0 / 0</dd>
-<dt>Por categoria</dt><dd class="mono">a 5/6 · b 0/6 · c 6/6 · d 0/6 · e 5/6 · f 6/6</dd>
-<dt>Consistencia r1-r2</dt><dd class="mono">36/36 = 1.000 (+14 decididos: rescate code + citas refutatorias)</dd>
+<dt>Por categoria</dt><dd class="mono">a 5/6 · b 0/6 · c 6/6 · d 4/6 · e 5/6 · f 6/6</dd>
+<dt>Corrida</dt><dd class="mono">v5p0-dev-atlas-run1 (guard V5-1, scores/dev-atlas.json)</dd>
 </dl></div>
-<div class="card" id="c-ret"><h2>RETENCION: <span class="big ok">12/18 = 0.667</span></h2>
+<div class="card" id="c-ret"><h2>RETENCION: <span class="big ok">14/18 = 0.778</span></h2>
 <dl class="kv">
-<dt>Exactitud decidida</dt><dd class="mono">12/12 Wilson 95% [0.757, 1.000]</dd>
+<dt>Exactitud decidida</dt><dd class="mono">14/14 Wilson 95% [0.785, 1.000]</dd>
 <dt>Falsos-C / falsos-S</dt><dd class="big ok">0 / 0</dd>
-<dt>Latencia F2-9</dt><dd class="mono">p50 4.8s, p95 40.8s, $0.0067 (antes p50 82.8s, código F2-2)</dd>
-<dt>Lectura</dt><dd>Dev 0.611 &rarr; ret 0.667: <b>generaliza</b> (b: primarios 403; d: aritmetica honesta).</dd>
+<dt>Latencia V6</dt><dd class="mono">p50 3.7s, p95 41.0s, $0.0056 (antes p50 82.8s, código F2-2)</dd>
+<dt>Lectura</dt><dd>Dev 0.722 &rarr; ret 0.778: <b>generaliza</b> (b: primarios 403; d: guard aritmetico V5-1).</dd>
 </dl></div>
 </div>
-<p class="src">Fuentes: data/runs/f2recall-fix-report.json (DEV, ambas corridas 22/22) · live/F2_RECALL.md addendum (retencion: 12/18, 12/12, 0 falsos) · live/F2_VIDEO3.md (retencion F2-9: p50 4.8s/p95 40.8s/$0.0067, brief ejecutado).</p>
+<p class="src">Fuentes: live/eval2/scores/dev-atlas.json (DEV 26/26, V5-1) · live/eval2/scores/ret-atlas.json (retencion 14/14, V6) · live/claims_registry.json (pins + bandas).</p>
 </section>
 
 <section id="latency">
@@ -478,11 +480,11 @@ PANELS_BODY = """
 </section>
 
 <section id="close">
-<h1>Cierre: numeros F2 <span class="en">the baseline wins recall &mdash; and that's the point</span></h1>
-<div class="banner lose">Atlas dev 0.611 / ret 0.667 vs baseline 1.000 &mdash; el baseline gana en recall.</div>
-<table><tr><th>metrica</th><th class="n">Atlas F2</th><th class="n">baseline</th></tr>
-<tr><td>recall DEV / retencion</td><td class="n">0.611 / 0.667</td><td class="n">1.000 / 1.000</td></tr>
-<tr><td>exactitud decidida</td><td class="n">1.000 (22/22 + 12/12)</td><td class="n">0.972 (70/72)</td></tr>
+<h1>Cierre: numeros vigentes <span class="en">the baseline wins recall &mdash; and that's the point</span></h1>
+<div class="banner lose">Atlas dev 0.722 / ret 0.778 vs baseline 1.000 &mdash; el baseline gana en recall.</div>
+<table><tr><th>metrica</th><th class="n">Atlas</th><th class="n">baseline</th></tr>
+<tr><td>recall DEV / retencion</td><td class="n">0.722 / 0.778</td><td class="n">1.000 / 1.000</td></tr>
+<tr><td>exactitud decidida</td><td class="n">1.000 (26/26 + 14/14)</td><td class="n">0.972 (70/72)</td></tr>
 <tr><td>citas fieles a la fuente</td><td class="n ok">verbatim por construccion</td><td class="n bad">0.143 (9/63)</td></tr>
 <tr><td>falsos contradicted</td><td class="n ok">0</td><td class="n bad">2 (D3 x2)</td></tr>
 <tr><td>prueba offline re-ejecutable</td><td class="n ok">si (bundle + tamper FAIL)</td><td class="n bad">no</td></tr>
@@ -490,7 +492,7 @@ PANELS_BODY = """
 <tr><td>latencia p50 / wall 36</td><td class="n">4.9s / ~78s (p95 39-41s: CUMPLE vs 60)</td><td class="n">~5s / &mdash;</td></tr>
 <tr><td>ASR ES (WER / recall)</td><td class="n" colspan="2">0.03 / 41 de 41 (wer_report.json)</td></tr></table>
 <div class="banner wedge">Nuestro wedge: paquete re-verificable + 0 falsos-contradicted + dicho-vs-mostrado. Todo medido, todo reproducible: pruebalo.</div>
-<p class="src">Fuentes: f2recall-fix-report.json · addendum F2_RECALL · eval2-20261101-225539-report.json + fidelity r1/r2 · f2p95-final-report.json · wer_report.json.</p>
+<p class="src">Fuentes: scores/dev-atlas.json + scores/ret-atlas.json (Atlas) · eval2-20261101-225539-report.json + fidelity r1/r2 · addendum F2_RECALL (baseline ret 18/18) · f2p95-final-report.json · wer_report.json.</p>
 </section>
 """
 
