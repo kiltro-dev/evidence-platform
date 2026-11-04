@@ -99,7 +99,7 @@ any recorded run with zero model cost (`GET /replay`, `WS /ws?replay=`).
 Python ≥3.11, FastAPI + uvicorn (server + WS), `imageio-ffmpeg` static
 ffmpeg (demux/restream), Meta API (`muse-spark`, `muse-voice-transcribe-1.0`,
 vision, `web_search`), World Bank Open Data + Wikipedia (evidence sources),
-vanilla JS newsroom UI (no framework), pytest (1070 live offline tests
+vanilla JS newsroom UI (no framework), pytest (1071 live offline tests
 + 755 v1-core offline tests).
 
 ## Honest limits

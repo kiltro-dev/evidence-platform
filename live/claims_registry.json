@@ -325,21 +325,21 @@
       "d": null,
       "dataset": "live/tests/ (this checkout)",
       "dataset_version": "n/a",
-      "definition": "pytest collect-only count = 1079 on 2026-11-02; last full run 1070 passed + 9 skipped (live-network tests excluded)",
+      "definition": "pytest collect-only count = 1080 on 2026-11-03; last full run 1071 passed + 9 skipped (live-network tests excluded)",
       "docs": [
         "README.md"
       ],
       "experiment": "offline gate",
       "id": "tests_live",
       "metric": "Live offline test count",
-      "n": 1079,
+      "n": 1080,
       "not_proven": "count only; live-network tests (ATLAS_LIVE_NET) excluded from the gate",
       "pins": [
-        "1070"
+        "1071"
       ],
       "recompute": "collect:live/tests",
       "status": "measured",
-      "value": "1070 passed, 9 skipped (1079 collected)"
+      "value": "1071 passed, 9 skipped (1080 collected)"
     },
     {
       "artifact": null,

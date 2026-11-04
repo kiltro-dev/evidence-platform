@@ -72,12 +72,12 @@ def probe_streams(path: str) -> dict[str, bool]:
         timeout=60,
     )
     if proc.returncode == -11:
-        # V6-1: the static build segfaults on TS/https input; fail
-        # loudly instead of reporting "no streams" (TS windows must
-        # go through tsdemux.remux_to_mkv first).
+        # V6-1: pre-0.7 static builds segfault on TS/https input (fixed
+        # upstream in imageio-ffmpeg>=0.7, now the install floor); fail
+        # loudly instead of reporting "no streams" on old binaries.
         raise RuntimeError(
             f"ffmpeg segfault probing {path!r}: este binario no lee "
-            f"TS ni https (usa tsdemux.remux_to_mkv para ventanas HLS)")
+            f"TS ni https (actualiza imageio-ffmpeg>=0.7)")
     err = proc.stderr or ""
     return {
         "audio": " Audio:" in err,

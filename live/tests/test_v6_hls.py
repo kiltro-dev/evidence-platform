@@ -342,13 +342,35 @@ def test_remux_ts_to_mkv_static_ffmpeg_reads_it(tmp_path):
     assert len(pcm) > 24000 * 2  # >1 s of mono s16le 24 kHz
 
 
-def test_probe_ts_raises_loudly_not_silent_empty(tmp_path):
+def test_probe_ts_behaves_loudly_or_reads(tmp_path):
+    # Build-dependent reality: pre-0.7 static binaries segfault on TS
+    # (probe_streams must raise loudly, never report "no streams");
+    # fixed builds (>=0.7) read it. Either behavior passes.
     from live.ingest.demux import probe_streams
 
     ts = str(tmp_path / "clip.ts")
     _lavfi_ts(ts)
+    try:
+        info = probe_streams(ts)
+    except RuntimeError as exc:
+        assert "segfault" in str(exc)
+    else:
+        assert info == {"audio": True, "video": True}
+
+
+def test_probe_segfault_branch_raises(monkeypatch):
+    # Pin the rc=-11 branch regardless of the installed build.
+    import subprocess as sp
+
+    import live.ingest.demux as D
+
+    class _Proc:
+        returncode = -11
+        stderr = ""
+
+    monkeypatch.setattr(sp, "run", lambda *a, **k: _Proc())
     with pytest.raises(RuntimeError, match="segfault"):
-        probe_streams(ts)
+        D.probe_streams("whatever.ts")
 
 
 # ---------------------------------------------------------------------------
