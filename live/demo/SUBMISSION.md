@@ -111,8 +111,9 @@ vanilla JS newsroom UI (no framework), pytest (live 1073 passed +
   verdicts on either set; decided accuracy 26/26 + 14/14 = 1.000.
   Source: `data/runs/v5p0-dev-atlas-run1.json` + V6 validation
   (`data/runs/v6ret-atlas-run1.json`; seal 5278ba4c intact, retention
-  re-run read-only — the V5-1 arithmetic guard generalizes to 2/3
-  unseen d-claims with no tuning).
+  ran 3x Atlas-arm total — 12/18 (F2-2), 12/18 (F2-3), 14/18 (V6) —
+  read-only, no tuning: the V5-1 arithmetic guard generalizes to 2/3
+  unseen d-claims).
 - Corpus false contradicts (declared): 3 systematic difference-claim
   errors found in S4 (C1D3/D5/D7) — FIXED by the V5-1 arithmetic guard
   (s1 false-C list empty on re-run); 1 open retrieval-variance case on
@@ -163,7 +164,7 @@ vanilla JS newsroom UI (no framework), pytest (live 1073 passed +
   on an 800-token budget consumed by hidden reasoning; falls back to
   heuristic). Source: `live/M1_E2E.md` U1.
 <!-- METRICS:BENCH:START -->
-- Fair benchmark v2 (F2-1, `eval2-20261101-225539-report.json` + fidelity JSONs): Atlas DEV 26/36 vs model-only baseline pooled 70/72 = 0.972 [0.904,0.992] (run1 35/36, run2 35/36, consistency 36/36) and retention 18/18 = 1.000 [0.824,1.000]. The baseline wins recall — stated plainly. Where it fails: citation fidelity pooled 9/63 = 0.143 [0.077,0.250] (r1 5/31, r2 4/32) (r1 5/31, r2 4/32; quote_not_found 34, unit_mismatch 13, numeric_mismatch 7; 72/72 urls model-stated, 0 browsed), 2 false contradicts (D3x2), and zero offline proof. Source: `live/F2_BENCH.md`.
+- Fair benchmark v2 (F2-1, `eval2-20261101-225539-report.json` + fidelity JSONs): Atlas DEV 26/36 vs model-only baseline pooled 70/72 = 0.972 [0.904,0.992] (run1 35/36, run2 35/36, consistency 36/36) and retention 18/18 = 1.000 [0.824,1.000]. The baseline wins recall — stated plainly. Where it fails: citation fidelity pooled 9/63 = 0.143 [0.077,0.250] (r1 5/31, r2 4/32; quote_not_found 34, unit_mismatch 13, numeric_mismatch 7; 72/72 urls model-stated, 0 browsed), 2 false contradicts (D3x2), and zero offline proof. Source: `live/F2_BENCH.md`.
 <!-- METRICS:BENCH:END -->
   What Atlas adds: re-verifiable proof bundles (31/31 ALL PASS, 1-byte
   tamper ⇒ FAIL — shipped: `live/demo/atlas-live-bundle.zip`),

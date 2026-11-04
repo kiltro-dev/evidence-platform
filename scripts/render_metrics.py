@@ -111,7 +111,7 @@ def submission_bench_block(reg: dict) -> str:
         f"{c['baseline_dev']['value']} (run1 35/36, run2 35/36, consistency "
         f"36/36) and retention {c['baseline_ret']['value']}. The baseline wins "
         f"recall — stated plainly. Where it fails: citation fidelity pooled "
-        f"{c['citation_fidelity']['value']} (r1 5/31, r2 4/32; "
+        f"{c['citation_fidelity']['value'].split(' (')[0]} (r1 5/31, r2 4/32; "
         f"quote_not_found 34, unit_mismatch 13, numeric_mismatch 7; 72/72 urls "
         f"model-stated, 0 browsed), 2 false contradicts (D3x2), and zero "
         f"offline proof. Source: `live/F2_BENCH.md`.\n"
