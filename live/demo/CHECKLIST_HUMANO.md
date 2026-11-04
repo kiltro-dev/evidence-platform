@@ -12,10 +12,11 @@ ordena el trabajo manual que un humano debe hacer (login, video, portal).
 2. Subirlo a la plataforma que pida el portal (YouTube no-listado o
    adjunto directo — confirmar en el portal tras login, ver Campos).
 3. Copiar la URL final / ID del adjunto. Pegarla en el campo de video
-   del portal Y en `SUBMISSION.md` § Links (reemplaza el TODO-M8).
+   del portal Y en `SUBMISSION.md` § Links (reemplaza el TODO-HUMAN).
 
-Números congelados 3-nov 12:00 Santiago: usar los de SUBMISSION.md
-§ Reproducibility tal cual (§ V5-4 cierra cambios de métricas).
+Números congelados 3-nov 12:00 Santiago (`live/claims_registry.json` +
+`scripts/check_claims.py` en verde): pegar los de SUBMISSION.md tal
+cual, sin re-redactar cifras.
 
 ## Paso 2 — Portal: pegar textos exactos (~8 min)
 
@@ -50,7 +51,9 @@ final de esa sección (nunca re-redactar cifras).
    verificadas (M1e $0.0213 · M2 $0.70 · M2d $0.96 · M3 $0.0248 ·
    M5 ≈$0.02 · M6 $0.2914 · M7 ≈$0.03 — cada una en su `live/M*.md`).
    NO declarar un total redondo inventado.
-4. Marcar el submit como final SOLO si el video es el de M9b.
+4. Marcar el submit como final SOLO si el video sigue
+   `live/demo/RECORDING_GUIDE.md` (voz humana) o es el MP4 TTS
+   alternativo verificado (2:37.0, `live/F2_VIDEO.md` QA).
 
 ## Campos a confirmar del portal (tras login)
 

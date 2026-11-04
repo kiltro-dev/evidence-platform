@@ -63,7 +63,7 @@ tab/microphone capture, DASH playlists, encrypted playlists, YouTube
 | Baseline citation fidelity, DEV pooled | 9/63 = 0.143 [0.077,0.250] (r1 5/31, r2 4/32) | F2-1 audit | NOT Atlas fidelity (Atlas quotes are package-verified by construction, different mechanism); reasons: quote_not_found 34, unit_mismatch 13, numeric_mismatch 7 |
 | Said-vs-shown planted | 4/4 | M3 | NOT inline-realtime vision on link runs (V6-2: offline path on materialized files) |
 | Canaries | 7/7 decided of 12 (5 abstained), accuracy 1.000 [0.646,1.000] | M6 live run | NOT a false-rate guarantee: Wilson [0.646,1.000] is wide at n=12; abstention 5/12 |
-| Live offline tests | 1071 passed, 9 skipped (1080 collected) | gate 2026-11-02 | count only; live-network tests (ATLAS_LIVE_NET) excluded from the gate |
+| Live offline tests | 1073 passed, 9 skipped (1082 collected) | gate 2026-11-02 | count only; live-network tests (ATLAS_LIVE_NET) excluded from the gate |
 | v1 core offline tests (historical) | 755 passed | gate 2026-11-02 | v1 static checker, now the numeric library; Atlas Live behavior is covered by tests_live |
 <!-- METRICS:END -->
 
@@ -144,7 +144,7 @@ API: [docs/API.md](docs/API.md) (v1 core) · Decisions:
 ## Tests & evaluation (offline gate)
 
 ```bash
-PYTHONPATH=src:live .venv/bin/python -m pytest live/tests -q   # Atlas Live: 1071 passed
+PYTHONPATH=src:live .venv/bin/python -m pytest live/tests -q   # Atlas Live: 1073 passed
 PYTHONPATH=src .venv/bin/python -m pytest tests/unit tests/e2e -q  # v1 core: 755 passed
 PYTHONPATH=src:live .venv/bin/python scripts/check_claims.py   # numbers guard
 ```

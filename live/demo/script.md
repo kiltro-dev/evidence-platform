@@ -107,15 +107,17 @@ Fuente: M3 (F5 + F11 `visual.misleading_axis`; frames ES, mismos datos).
 
 SE VE: panel DEV 26/36 = 0.722 (Wilson [0.871, 1.000], 0 falsos) +
 retención 14/18 = 0.778 (Wilson [0.785, 1.000], 0 falsos, p50 ~5 s
-/ p95 ~40 s con código F2-9). Categorías a–f y consistencia r1–r2 36/36.
+/ p95 ~40 s con código F2-9). Categorías a–f; consistencia baseline
+r1–r2 36/36 (no Atlas).
 
 SE DICE: «El benchmark justo, versión dos: treinta y seis claims de
-desarrollo y dieciocho de retención sellada. Atlas decide el sesenta y
-uno por ciento en desarrollo y el sesenta y siete en retención, con
-cero falsos contradicted en ambas.»
+desarrollo y dieciocho de retención sellada. Atlas decide el setenta y
+dos por ciento en desarrollo y el setenta y ocho en retención, con
+cero falsos veredictos en ambas.»
 
-Fuente: `f2recall-fix-report.json` (DEV ambas 22/22) + addendum
-F2_RECALL (retención; `retention.json` jamás abierta).
+Fuente: `v5p0-dev-atlas-run1.json` (DEV 26/36) + `v6ret-atlas-run1.json`
+(retención 14/18; sello intacto, corrida 3× solo-lectura — ver
+`live/claims_registry.json` ret_recall).
 
 ## 1:51–2:11 — Latencia honesta (F2-9)
 

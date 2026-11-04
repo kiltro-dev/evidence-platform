@@ -333,14 +333,14 @@
       "experiment": "offline gate",
       "id": "tests_live",
       "metric": "Live offline test count",
-      "n": 1080,
+      "n": 1082,
       "not_proven": "count only; live-network tests (ATLAS_LIVE_NET) excluded from the gate",
       "pins": [
-        "1071"
+        "1073"
       ],
       "recompute": "collect:live/tests",
       "status": "measured",
-      "value": "1071 passed, 9 skipped (1080 collected)"
+      "value": "1073 passed, 9 skipped (1082 collected)"
     },
     {
       "artifact": null,

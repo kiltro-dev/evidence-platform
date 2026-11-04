@@ -60,7 +60,9 @@ log = logging.getLogger(__name__)
 
 UI_PATH = Path(__file__).resolve().parent.parent / "ui" / "index.html"
 MEDIA_DIR = Path(__file__).resolve().parent.parent.parent / "data" / "keynote"
-MEDIA_ALLOW = {"keynote_en.mp4", "keynote_es.mp4"}
+# CT: shipped synthetic videos (fresh clones have no data/); MEDIA_DIR wins.
+DEMO_MEDIA_DIR = Path(__file__).resolve().parent.parent / "demo" / "media"
+MEDIA_ALLOW = {"keynote_en.mp4", "keynote_es.mp4", "keynote_es_native.mp4"}
 # V6-2: link-ingest cache served to the player (strict shape, no traversal).
 CACHE_DIR = Path(__file__).resolve().parent.parent.parent / "data" / "cache"
 _LINK_MEDIA_RE = re.compile(r"link-[A-Za-z0-9]+\.(mkv|media|mp4|m4a|mp3)\Z")
@@ -200,6 +202,8 @@ def create_app(
         """
         if name in MEDIA_ALLOW:
             path = MEDIA_DIR / name
+            if not path.is_file():
+                path = DEMO_MEDIA_DIR / name
             if not path.is_file():
                 return JSONResponse({"error": f"missing media {name!r}"},
                                     status_code=404)
@@ -445,12 +449,21 @@ def _run_link_pipeline(run_id: str, media_url: str, media_kind: str,
         runs[run_id]["error"] = f"{type(exc).__name__}: {exc}"
 
 
+def _media_url(name: str) -> str | None:
+    """Serve URL when the allowlisted video exists (local or shipped)."""
+    if (MEDIA_DIR / name).is_file() or (DEMO_MEDIA_DIR / name).is_file():
+        return f"/media/{name}"
+    return None
+
+
 def _video_for_run(run: str) -> str | None:
     """Demo video URL for a run (keynote runs -> keynote mp4)."""
-    if "model-60s" in run or "heuristic" in run or run.startswith("run-m1"):
-        name = "keynote_en.mp4"
-        if (MEDIA_DIR / name).is_file():
-            return f"/media/{name}"
+    if run == "run-es-native":
+        return _media_url("keynote_es_native.mp4")
+    if ("model-60s" in run or "heuristic" in run or run.startswith("run-m1")
+            or run in ("run-keynote-en-listen",
+                       "verify-keynote-en-investigate")):
+        return _media_url("keynote_en.mp4")
     # V6-2: link-<runid> replays pin their own materialized media.
     if run.startswith("link-"):
         rid = run[len("link-"):]

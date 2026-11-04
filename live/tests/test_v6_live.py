@@ -119,6 +119,25 @@ def test_media_serves_link_cache_and_refuses_traversal(monkeypatch, tmp_path):
     assert c.get("/media/link-abc123.exe").status_code == 404
 
 
+def test_shipped_runs_pin_shipped_video():
+    assert appmod._video_for_run("run-es-native") == \
+        "/media/keynote_es_native.mp4"
+    assert appmod._video_for_run("run-keynote-en-listen") == \
+        "/media/keynote_en.mp4"
+    assert appmod._video_for_run("verify-keynote-en-investigate") == \
+        "/media/keynote_en.mp4"
+    assert appmod._video_for_run("run-m1e-heuristic") == \
+        "/media/keynote_en.mp4"
+
+
+def test_media_serves_shipped_fallback():
+    c = _client()
+    r = c.get("/media/keynote_en.mp4")
+    assert r.status_code == 200 and len(r.content) > 1_000_000
+    r = c.get("/media/keynote_es_native.mp4")
+    assert r.status_code == 200 and len(r.content) > 1_000_000
+
+
 def test_video_for_run_maps_link_cache(monkeypatch, tmp_path):
     (tmp_path / "link-abc123.mkv").write_bytes(b"mkv")
     monkeypatch.setattr(appmod, "CACHE_DIR", tmp_path)

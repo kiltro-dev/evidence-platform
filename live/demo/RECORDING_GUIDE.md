@@ -31,21 +31,27 @@ when done, Watch replay + Report. Use B only if it works first try —
 otherwise record A.
 
 - DO: let subtitles + cards run. Pause on the CONTRADICTED card
-  (China population). Click the card → show quote + snapshot hash.
+  (F3 China population; the card shows verdict + package count).
+  Open `/report/verify-keynote-en-investigate?format=html` in a
+  second tab → point at the World Bank literal quote + snapshot hash.
 - SAY: "The speaker says China has 141 million people. Agents open
   the World Bank, quote it literally, and the code — not the model —
-  calls it contradicted. Here is the quote and its hash."
+  calls it contradicted. The report carries the quote and its hash."
 
 ### 0:55–1:25 — Said-vs-shown (4/4 planted, M3)
-- DO: switch replay to `run-keynote-en-listen`, jump timeline to the
-  chart slide. Hover the mismatch badge (40% said vs 0.97% shown).
+- DO: switch replay to `run-keynote-en-listen` (video pinned from the
+  shipped mp4). Click a timeline dot to seek; pause on the 0.97% bar
+  chart while the subtitle says 40% — point at both numbers. (The
+  said-vs-shown cross-check runs offline over these frames; there is
+  no inline badge — the 4/4 is measured in `live/M3.md`.)
 - SAY: "It also watches the slides. The speaker says forty percent;
   his own chart shows zero point nine seven. Said versus shown —
   caught on screen."
 
 ### 1:25–1:55 — Proof bundle
-- DO: open a terminal. Run verify on the shipped bundle
-  (see `live/M5.md` for the exact command). Show `ALL PASS`.
+- DO: open a terminal. Run exactly:
+  `PYTHONPATH=src:live .venv/bin/python live/bundle/verify_bundle.py live/demo/atlas-live-bundle.zip`
+  Show `ALL PASS (31/31)`.
 - SAY: "Every verdict ships a proof bundle: snapshots, hashes, and a
   script anyone re-runs offline. No trust required."
 
