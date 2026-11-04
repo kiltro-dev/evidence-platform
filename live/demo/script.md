@@ -17,9 +17,10 @@ SE VE: keynote ES nativo corriendo en la sala de redacción
 estado `escuchada`.
 
 SE DICE: «Un orador dice dos cosas que no pueden ser verdad a la vez,
-con cincuenta y nueve segundos de distancia. Atlas Live lo atrapa
-mientras se emite — *caught as it airs* — y te muestra la prueba, no
-solo el veredicto.» [Modo en pantalla: replay rotulado de corrida real.]
+con cincuenta y nueve segundos de distancia. Atlas Live detecta la
+contradicción durante el procesamiento de la reproducción y te muestra
+la prueba, no solo el veredicto.» [Modo en pantalla: replay rotulado
+de corrida real.]
 
 Fuente: turnos ASR 0 (0.0–18.5 s) y 6 (63.5–81.1 s) de
 `run-es-native.jsonl` + SRT nativo (gap ~59 s); método M7 (rel_diff 0.9).
@@ -29,12 +30,11 @@ Fuente: turnos ASR 0 (0.0–18.5 s) y 6 (63.5–81.1 s) de
 SE VE: diagrama simple en pantalla: video → ASR → claims → agentes →
 código verificador → tarjeta ES/EN. Panel de voz nativa ES.
 
-SE DICE: «Atlas Live escucha y mira un video mientras se emite,
-extrae cada afirmación chequeable, la investiga con agentes Muse en
-la web abierta, y el veredicto lo decide código determinista — *the
-model proposes, code disposes*. Y entiende español nativo, con error
-de palabra de cero coma cero tres.» [Modo en pantalla: diagrama +
-replay rotulado.]
+SE DICE: «Atlas Live procesa el video, extrae afirmaciones, las
+investiga con agentes Muse y verifica los resultados mediante código
+determinista — *the model proposes, code disposes*. Y entiende
+español nativo, con error de palabra de cero coma cero tres.»
+[Modo en pantalla: diagrama + replay rotulado.]
 
 Fuente: `live/README.md`, M1_E2E (bus + `/ws`); `live/F2_VOICE.md` +
 `wer_report.json` (WER 0.0296, recall 41/41).
@@ -47,8 +47,8 @@ resaltada con *flash*.
 
 SE DICE: «Minuto uno diez. El orador dice que China cayó a ciento
 cuarenta y un millones de personas. Tres agentes investigadores salen
-a la web — *three researchers hit the open web* — mientras el video
-sigue corriendo.»
+a la web — *three researchers hit the open web* — mientras se
+procesa la reproducción.»
 
 Fuente: `truth.json` F3-es + turno ASR 6 (63.5–81.1 s, slide 5).
 
@@ -179,7 +179,7 @@ arriba).
 - Duración objetivo: ≤2:50; build F2-6c: 2:37.0 (margen 13 s).
   Re-render parcial: re-TTS bloque 8 + re-record segs 7–10 (paneles
   recall/latencia/baseline/cierre); segs 0–6 reutilizados.
-- Capturas: UI en `?replay=run-es-native` (log live ES, 48 eventos),
+- Capturas: UI en `?replay=run-es-native` (log ES, 48 eventos),
   terminal con `verify_bundle.py` (salida real), slides ES 6/7/10
   (frames t=87.5/102.0/157.5 s del mp4 nativo).
 - Voz: piper `es_ES-carlfm-x_low` (dominio público, F2-4); SRT EN de

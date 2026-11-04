@@ -1,7 +1,7 @@
 # Atlas Live — judge README (30 s to get it, 3 min to try it, $0)
 
 **What it is:** a real-time agent newsroom. It listens to and watches a
-video while it plays, extracts checkable claims as spoken, investigates
+video as it processes it, extracts checkable claims as spoken, investigates
 them with parallel Muse agents over the open web, and publishes verdict
 cards (ES/EN) with re-verifiable proof. The model proposes; deterministic
 code disposes. Every figure below comes from `live/M*.md` or
@@ -36,9 +36,9 @@ This re-emits the recorded 51-event M1e run (11 ASR turns → 20 claims →
 states) through the newsroom UI at original wall-clock pacing. $0: replay
 serves `data/runs/*.jsonl` verbatim, no network, no model.
 
-## 1 command: live keynote (needs key)
+## 1 command: link ingest (needs key)
 
-Live local-file mode needs the git-ignored `data/` corpus; on a fresh
+Local-file mode needs the git-ignored `data/` corpus; on a fresh
 clone use link ingest instead (needs `MODEL_API_KEY` in `.env`):
 
 ```bash

@@ -1,8 +1,8 @@
-Un orador dice dos cosas que no pueden ser verdad a la vez, con cincuenta y nueve segundos de distancia. Atlas Live lo atrapa en vivo, caught live, y te muestra la prueba, no solo el veredicto.
+Un orador dice dos cosas que no pueden ser verdad a la vez, con cincuenta y nueve segundos de distancia. Atlas Live detecta la contradicción durante el procesamiento de la reproducción y te muestra la prueba, no solo el veredicto.
 
-Atlas Live escucha y mira un video en directo, extrae cada afirmación chequeable, la investiga con agentes Muse en la web abierta, y el veredicto lo decide código determinista: the model proposes, code disposes. Y entiende español nativo, con error de palabra de cero coma cero tres.
+Atlas Live procesa el video, extrae afirmaciones, las investiga con agentes Muse en la web abierta, y el veredicto lo decide código determinista: the model proposes, code disposes. Y entiende español nativo, con error de palabra de cero coma cero tres.
 
-Minuto uno diez. El orador dice que China cayó a ciento cuarenta y un millones de personas. Tres agentes investigadores salen a la web, three researchers hit the open web, mientras el video sigue corriendo.
+Minuto uno diez. El orador dice que China cayó a ciento cuarenta y un millones de personas. Tres agentes investigadores salen a la web, three researchers hit the open web, mientras se procesa la reproducción.
 
 Contradecido. El Banco Mundial dice mil cuatrocientos nueve millones: diez veces más. Al minuto cero el orador había dicho mil cuatrocientos diez millones: contradicción propia verificada por código, rel diff de cero coma nueve.
 

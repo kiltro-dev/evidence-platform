@@ -233,6 +233,82 @@ def check_interval_types(errors: list[str]) -> None:
                 start = i + 1
 
 
+def check_test_coherence(reg: dict, render, errors: list[str]) -> None:
+    """n == passed + skipped; definition generated; value matches."""
+    for claim in reg["claims"]:
+        if "passed" not in claim:
+            continue
+        cid = claim["id"]
+        if claim["n"] != claim["passed"] + claim["skipped"]:
+            errors.append(f"{cid}: n={claim['n']} != passed "
+                          f"{claim['passed']} + skipped {claim['skipped']}")
+        want = render.test_definition(claim)
+        if claim.get("definition") != want:
+            errors.append(f"{cid}: definition is stale/hand-edited "
+                          f"(must equal generated)")
+        for num in (claim["n"], claim["passed"], claim["skipped"]):
+            if str(num) not in str(claim.get("value", "")):
+                errors.append(f"{cid}: value {claim.get('value')!r} "
+                              f"missing {num}")
+
+
+# Replay scenes must not be described as live. Banned outside lines
+# that name the labeled "Vivo por enlace" mode (or "Directo simulado").
+LINT_FILES = ("README.md", "live/demo/SUBMISSION.md",
+              "live/demo/README_DEMO.md", "live/demo/RECORDING_GUIDE.md",
+              "live/demo/script.md", "live/demo/narration_en.srt",
+              "live/demo/narration_es.txt", "live/ui/index.html")
+LINT_BANNED = ("mientras se emite", "as it airs", "caught as it airs",
+               "mientras el video sigue corriendo", "sigue corriendo",
+               "en vivo", "en directo", "while it plays", "as it streams",
+               "as it plays", "caught live", "live video", "live mode",
+               "go live", "live feed", "live subtitles", "live newsroom")
+LINT_ALLOW_MARKERS = ("Vivo por enlace", "Directo simulado")
+
+
+def check_live_language(errors: list[str]) -> None:
+    import re
+
+    for rel in LINT_FILES:
+        in_script = False
+        for num, line in enumerate(
+                (REPO / rel).read_text(encoding="utf-8").splitlines(), 1):
+            if rel.endswith(".html"):
+                if "<script" in line:
+                    in_script = True
+                if "</script>" in line:
+                    in_script = False
+                    continue
+                if in_script:
+                    continue  # JS identifiers (STR.live, mode "vivo")
+            if any(m in line for m in LINT_ALLOW_MARKERS):
+                continue
+            scrubbed = re.sub(r"`[^`]*`", "", line)
+            for keep in ("Atlas Live", "aria-live", "real-time",
+                         "realtime", "live-network", "Live-network",
+                         "ATLAS_LIVE_NET"):
+                scrubbed = scrubbed.replace(keep, "")
+            # identifiers/paths/commands/selectors are not prose
+            scrubbed = " ".join(
+                w for w in scrubbed.split()
+                if "/" not in w and ":" not in w
+                and not re.fullmatch(r"[\w.]*\.[\w.]+", w)
+                and not w.startswith(("#", ".", "class=")))
+            low = scrubbed.lower()
+            for phrase in LINT_BANNED:
+                if phrase in low:
+                    errors.append(f"{rel}:{num}: banned live-language "
+                                  f"{phrase!r} outside Vivo-por-enlace mode")
+                    break
+            else:
+                for word in ("vivo", "live"):
+                    if re.search(rf"\b{word}\b", low):
+                        errors.append(
+                            f"{rel}:{num}: lone {word!r} outside "
+                            f"Vivo-por-enlace mode")
+                        break
+
+
 def check_pins(reg: dict, errors: list[str]) -> None:
     for claim in reg["claims"]:
         for rel in claim.get("docs", []):
@@ -263,6 +339,8 @@ def main() -> int:
         errors.append(f"wilson recompute mismatch: {exc}")
     check_pins(reg, errors)
     check_interval_types(errors)
+    check_test_coherence(reg, render, errors)
+    check_live_language(errors)
     if render.main(check=True) != 0:
         errors.append("metric blocks differ from registry (run render)")
     if errors:

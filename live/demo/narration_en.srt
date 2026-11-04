@@ -4,11 +4,11 @@ One speaker says two things that can't both be true, 59 seconds apart.
 
 2
 00:00:05,522 --> 00:00:11,620
-Atlas Live catches it live — caught live — and shows the proof, not just the verdict.
+Atlas Live catches it as it processes the replay — and shows the proof, not just the verdict.
 
 3
 00:00:12,420 --> 00:00:19,315
-Atlas Live listens to and watches a live video, extracts every checkable claim,
+Atlas Live processes video, extracts every checkable claim,
 
 4
 00:00:19,315 --> 00:00:28,916
@@ -20,7 +20,7 @@ Minute one-ten. The speaker says China fell to 141 million people.
 
 6
 00:00:35,238 --> 00:00:40,676
-Three researchers hit the open web while the video keeps running.
+Three researchers hit the open web while the replay is processed.
 
 7
 00:00:41,476 --> 00:00:47,416

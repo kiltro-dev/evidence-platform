@@ -6,7 +6,7 @@
 
 ## Title
 
-Atlas Live — a real-time agent newsroom that fact-checks video while it plays
+Atlas Live — a real-time agent newsroom that checks video with re-verifiable proof
 
 ## Short description (≤280 chars)
 
@@ -25,7 +25,7 @@ date, sha256 snapshot, literal quote + offsets) from the open web, and a
 deterministic verifier — never the model — decides `supported`,
 `contradicted`, or `unverifiable`. A vision stage cross-checks said-vs-shown
 numbers on slides (offline path over the materialized file), an advisory
-skeptic pass probes `supported` verdicts with live counter-evidence
+skeptic pass probes `supported` verdicts with counter-evidence fetched from the open web
 (deferred by default, never blocking), a long-context check catches
 speaker self-contradictions, and every run exports a self-verifying
 evidence bundle (`verify_bundle.py` re-executes offline: ALL PASS or
@@ -34,7 +34,7 @@ WebSocket while the video keeps running.
 
 ## Problem
 
-Live video carries false statistics at full confidence — wrong numbers,
+Published video carries false statistics at full confidence — wrong numbers,
 truncated axes, cherry-picked charts — and post-hoc checking arrives after
 the damage. LLM-judge guardrails can hallucinate about hallucinations. What
 is missing is a real-time checker that shows its work: which sources were
@@ -43,7 +43,7 @@ what the model guessed.
 
 ## Target user
 
-Newsrooms and stream moderators running live events (keynotes, debates,
+Newsrooms and stream moderators running streamed events (keynotes, debates,
 earnings calls), plus any viewer who wants verdict cards with proof instead
 of a bare true/false label.
 
@@ -67,14 +67,14 @@ On the fair benchmark v2 (36 DEV claims + 18 sealed retention claims, preregiste
    `live/skeptic/attack.py`, `live/editor/cards.py`, `live/longctx/check.py`.
 2. **Meta realtime speech-to-text** (`muse-voice-transcribe-1.0`) —
    streaming WebSocket ASR (PCM 24 kHz, diarization + endpointing,
-   keywords, language bias) turns live audio into timestamped turns.
+   keywords, language bias) turns stream audio into timestamped turns.
    Proving files: `live/oido/asr_ws.py`, `live/oido/CONTRACT.md`.
 3. **Muse vision** — reads on-screen text, tables, and chart values/axes
    from scene frames under a strict schema; deterministic code then
    cross-checks said-vs-shown (2% tolerance). Proving files:
    `live/vista/read.py`, `live/vista/xcheck.py`.
 4. **Web grounding (`web_search` + responsible fetch)** — researchers and
-   the skeptic retrieve live counter-evidence (robots-respecting fetch,
+   the skeptic retrieve counter-evidence from the open web (robots-respecting fetch,
    2 MB cap, paywall refusals). Proving files: `live/swarm/roles.py`,
    `live/skeptic/attack.py`.
 
@@ -101,7 +101,7 @@ any recorded run with zero model cost (`GET /replay`, `WS /ws?replay=`).
 Python ≥3.11, FastAPI + uvicorn (server + WS), `imageio-ffmpeg` static
 ffmpeg (demux/restream), Meta API (`muse-spark`, `muse-voice-transcribe-1.0`,
 vision, `web_search`), World Bank Open Data + Wikipedia (evidence sources),
-vanilla JS newsroom UI (no framework), pytest (live 1073 passed +
+vanilla JS newsroom UI (no framework), pytest (1073 passed +
 9 skipped of 1082 collected; v1-core 755 passed).
 
 ## Honest limits
@@ -131,7 +131,7 @@ vanilla JS newsroom UI (no framework), pytest (live 1073 passed +
   530 s to 274 s (−48%). Same 22/36 verdicts as F2-7, claim by claim
   (at F2-9 time; V5-1 later moved DEV to 26/36). Source:
   `data/runs/f2p95-final-report.json`, `live/F2_P95.md` §4.
-- Canaries (M6 live run): 12 run, 7 decided 7/7 correct, Wilson
+- Canaries (M6 run): 12 run, 7 decided 7/7 correct, Wilson
   [0.646,1.000] (wide at n=12), 5 abstentions ALL on the FALSE side,
   $0.29. Source: `live/M6.md`, `live/eval2/scores/canaries.json`.
 - DEV-b abstains 0/6 (IMF/BLS primaries return 403; only secondaries,
@@ -142,7 +142,7 @@ vanilla JS newsroom UI (no framework), pytest (live 1073 passed +
   see `live/KEYS_NEEDED.md`; both will be re-run if keys arrive
   before submission. Source: `live/F2_RECALL.md`, `live/V5_P0.md`,
   `live/V5_CATB.md`.
-- Data & tier: live (non-replay) runs send video/audio + claim text
+- Data & tier: non-replay runs send video/audio + claim text
   to Meta's Model API on the Contributor tier; don't stream sensitive
   content. Browser microphone/tab capture is NOT implemented
   (server mic/file/link input only); DASH playlists, encrypted
@@ -171,7 +171,7 @@ vanilla JS newsroom UI (no framework), pytest (live 1073 passed +
   0 false contradicts on benchmark v2 dev+retention,
   and said-vs-shown vision checks.
 
-## How to reproduce ($0 judge path + live path)
+## How to reproduce ($0 judge path + link-ingest path)
 
 ```bash
 git clone https://github.com/kiltro-dev/evidence-platform && cd evidence-platform
@@ -179,7 +179,7 @@ uv venv -p 3.12 && uv pip install --python .venv/bin/python -r requirements.txt
 # $0 replay: recorded 48-event ES run, no model calls, no key needed
 PYTHONPATH=src:live .venv/bin/python -m uvicorn live.server.app:create_app --factory --host 127.0.0.1 --port 8891
 # open http://127.0.0.1:8891/?replay=run-es-native
-# Live link ingest (needs MODEL_API_KEY in .env; $0.0015–0.01 per 30 s
+# Link ingest, Vivo por enlace (needs MODEL_API_KEY in .env; $0.0015–0.01 per 30 s
 # depending on claims — V6 proof run $0.0015 with 0 claims):
 curl localhost:8891/ingest -H 'Content-Type: application/json' \
   -d '{"url":"https://images-assets.nasa.gov/video/A1Launch/A1Launch~preview.mp4","mode":"vivo","duration":30}'

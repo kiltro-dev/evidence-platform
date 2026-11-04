@@ -28,6 +28,19 @@ def by_id(reg: dict) -> dict:
     return {c["id"]: c for c in reg["claims"]}
 
 
+def test_definition(c: dict) -> str:
+    """Canonical test-count definition, generated from fields (H1-fix).
+
+    Single source: n/passed/skipped/command/date/scope. The registry
+    ``definition`` must equal this exactly (check_claims enforces it).
+    """
+    return (
+        f"pytest collect-only count = {c['n']} on {c['date']}; last full "
+        f"run {c['passed']} passed + {c['skipped']} skipped "
+        f"({c['scope']}); command: {c['command']}"
+    )
+
+
 def readme_block(reg: dict) -> str:
     c = by_id(reg)
     rows = [
@@ -55,12 +68,12 @@ def readme_block(reg: dict) -> str:
          "F2-1 audit", c['citation_fidelity']['not_proven']),
         ("Said-vs-shown planted", c['said_shown']['value'], "M3",
          c['said_shown']['not_proven']),
-        ("Canaries", c['canaries']['value'], "M6 live run",
+        ("Canaries", c['canaries']['value'], "M6 run",
          c['canaries']['not_proven']),
-        ("Live offline tests", c['tests_live']['value'],
-         "gate 2026-11-02", c['tests_live']['not_proven']),
+        ("Offline tests, `live/tests`", c['tests_live']['value'],
+         "gate 2026-11-04", c['tests_live']['not_proven']),
         ("v1 core offline tests (historical)", c['tests_v1']['value'],
-         "gate 2026-11-02", c['tests_v1']['not_proven']),
+         "gate 2026-11-04", c['tests_v1']['not_proven']),
     ]
     out = ["| Metric | Value | Experiment | Does NOT prove |",
            "|---|---|---|---|"]

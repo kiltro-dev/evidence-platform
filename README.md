@@ -1,6 +1,6 @@
-# Atlas Live — a real-time agent newsroom that checks video as it plays
+# Atlas Live — a real-time agent newsroom that checks video with re-verifiable proof
 
-Atlas Live transcribes video as it plays, extracts checkable claims as
+Atlas Live transcribes video as it processes it, extracts checkable claims as
 they are said, investigates each one with parallel Muse agents, and
 publishes verdict cards with re-verifiable proof. Model proposes,
 deterministic code disposes: no valid evidence package means
@@ -47,7 +47,7 @@ recording guide: [`live/demo/RECORDING_GUIDE.md`](live/demo/RECORDING_GUIDE.md).
 
 Claim detection publishes `claim.detected` p50/p95 1240/1314 ms after
 end-of-phrase (M1 bus measurement; detection only, not verdict
-latency). No other "live" claim is made.
+latency). No other realtime claim is made.
 
 ## Metrics (each with its experiment)
 
@@ -61,9 +61,9 @@ latency). No other "live" claim is made.
 | Baseline recall, retention (Atlas loses) | 18/18 = 1.000 [0.824,1.000] | F2 retention baseline | verdicts only: paired with fidelity 9/63, which is the wedge |
 | Baseline citation fidelity, DEV pooled (fidelity Wilson) | 9/63 = 0.143 [0.077,0.250] (r1 5/31, r2 4/32); NOT directly comparable to Atlas fidelity (different mechanisms: audit vs package-verified) | F2-1 audit | NOT Atlas fidelity (Atlas quotes are package-verified by construction, different mechanism); reasons: quote_not_found 34, unit_mismatch 13, numeric_mismatch 7 |
 | Said-vs-shown planted | 4/4 | M3 | NOT inline-realtime vision on link runs (V6-2: offline path on materialized files) |
-| Canaries | 7/7 decided of 12 (5 abstained), accuracy 1.000 [0.646,1.000] | M6 live run | NOT a false-rate guarantee: Wilson [0.646,1.000] is wide at n=12; abstention 5/12 |
-| Live offline tests | 1073 passed, 9 skipped (1082 collected) | gate 2026-11-02 | count only; live-network tests (ATLAS_LIVE_NET) excluded from the gate |
-| v1 core offline tests (historical) | 755 passed | gate 2026-11-02 | v1 static checker, now the numeric library; Atlas Live behavior is covered by tests_live |
+| Canaries | 7/7 decided of 12 (5 abstained), accuracy 1.000 [0.646,1.000] | M6 run | NOT a false-rate guarantee: Wilson [0.646,1.000] is wide at n=12; abstention 5/12 |
+| Offline tests, `live/tests` | 1073 passed, 9 skipped (1082 collected) | gate 2026-11-04 | count only; live-network tests (ATLAS_LIVE_NET) excluded from the gate |
+| v1 core offline tests (historical) | 755 passed, 0 skipped (755 collected) | gate 2026-11-04 | v1 static checker, now the numeric library; Atlas Live behavior is covered by tests_live |
 <!-- METRICS:END -->
 
 Registry + recompute: [`live/claims_registry.json`](live/claims_registry.json)
@@ -93,25 +93,25 @@ on that corpus — never confuse them with benchmark-v2 recall above.
   advisory-only (deferred by default), not blocking.
 - Canaries: 12 canaries run (M6), 7 decided 7/7, Wilson [0.646,1.000]
   — wide at n=12, and 5 abstentions all on the FALSE side.
-- Contributor tier: live runs send video/audio + claim text to Meta's
+- Contributor tier: non-replay runs send video/audio + claim text to Meta's
   Model API; don't stream sensitive content. Browser microphone/tab
   capture does not exist (server-side audio/file/link input only).
   Clip 2 is synthetic.
 
-## Install & run (live path)
+## Install & run (Atlas Live)
 
 ```bash
 git clone https://github.com/kiltro-dev/evidence-platform
 cd evidence-platform
 uv venv -p 3.12
 uv pip install --python .venv/bin/python -r requirements.txt
-cp .env.example .env   # add MODEL_API_KEY for live (non-replay) mode
+cp .env.example .env   # add MODEL_API_KEY for non-replay mode
 chmod 600 .env
 PYTHONPATH=src:live .venv/bin/python -m uvicorn live.server.app:create_app --factory --host 127.0.0.1 --port 8891
 ```
 
 `pip` alternative: `python3 -m venv .venv && .venv/bin/pip install -r
-requirements.txt` (same commands after). Live link ingest:
+requirements.txt` (same commands after). Link ingest (Vivo/Turbo, needs key):
 
 ```bash
 curl localhost:8891/ingest -H 'Content-Type: application/json' \
@@ -121,7 +121,7 @@ curl localhost:8891/ingest -H 'Content-Type: application/json' \
 Poll `GET /ingest/{id}`, replay it (`?replay=link-{id}`), export it
 (`GET /report/link-{id}?format=html`). Localhost only, no auth — do
 not expose it; see [docs/SECURITY_OPS.md](docs/SECURITY_OPS.md). Env
-vars: `MODEL_API_KEY` (live mode), `OPENALEX_API_KEY` (own quota),
+vars: `MODEL_API_KEY` (non-replay mode), `OPENALEX_API_KEY` (own quota),
 `ATLAS_DB`, key-gated sources in `live/KEYS_NEEDED.md`.
 
 ## Stack
@@ -180,7 +180,7 @@ real `muse-spark-1.3`, 11/11 degraded, 36/36 paraphrase
 ([docs/EVAL_REPORT.md](docs/EVAL_REPORT.md)); browser gate
 (`tests/e2e-browser/`, 6 Playwright specs); smoke
 (`bash scripts/smoke.sh --port 8765`, 32 checks). v1 limitations
-(tolerance prior, unit parser, no auth/TTL) live in
+(tolerance prior, unit parser, no auth/TTL) are documented in
 [docs/API.md](docs/API.md) and [docs/EVAL_REPORT.md](docs/EVAL_REPORT.md).
 Direction rationale:
 [docs/BREAKTHROUGH_DECISION.md](docs/BREAKTHROUGH_DECISION.md) ·
@@ -193,8 +193,8 @@ progress: [PROGRESS.md](PROGRESS.md).
 | `ModuleNotFoundError: live` / `atlas` | `PYTHONPATH` not set | Prefix with `PYTHONPATH=src:live` (Atlas) or `PYTHONPATH=src` (v1) |
 | `address already in use` on 8891 | Port taken | Use `--port 8892` and open that port |
 | Replay dropdown empty | Old server | Restart (shipped logs load at startup) |
-| Live ingest error `MODEL_API_KEY not configured` | Key missing | Fill `.env`, `chmod 600 .env`, restart |
-| Live tests fail on network | No internet | Run the offline gate only (no network needed) |
+| Link-ingest error `MODEL_API_KEY not configured` | Key missing | Fill `.env`, `chmod 600 .env`, restart |
+| Network tests fail | No internet | Run the offline gate only (no network needed) |
 
 ## License
 

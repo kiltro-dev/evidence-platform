@@ -11,7 +11,7 @@ on screen. Work in English UI (toggle EN, top-right).
 3. `PYTHONPATH=src:live .venv/bin/python -m uvicorn live.server.app:create_app --factory --host 127.0.0.1 --port 8891`
 4. Open http://127.0.0.1:8891 — you should see the newsroom UI.
 5. Recording: Windows `Win+Alt+R` (Xbox Game Bar, captures tab audio
-   off — speak over it later, or narrate live) or OBS (Display Capture
+   off — speak over it later, or narrate while recording) or OBS (Display Capture
    + Mic). Record at 1080p. Clap once at start for sync.
 
 ## 1. Script (timestamps = video time)
@@ -19,14 +19,14 @@ on screen. Work in English UI (toggle EN, top-right).
 ### 0:00–0:20 — Hook
 - DO: UI visible, replay selector on `verify-keynote-en-investigate`,
   rate 4×. Press **Watch replay**.
-- SAY: "This is Atlas Live. It watches video and checks every number
-  while it plays — with proof you can re-verify yourself."
+- SAY: "This is Atlas Live. It processes video and checks every number
+  as it processes it — with proof you can re-verify yourself."
 
-### 0:20–0:55 — False claim caught live (or: real link ingest)
+### 0:20–0:55 — False claim caught on replay (or: real link ingest)
 
-Option A (replay, no key needed): below. Option B (live, needs
+Option A (replay, no key needed): below. Option B (link ingest, needs
 MODEL_API_KEY + network): paste `https://images-assets.nasa.gov/
-video/A1Launch/A1Launch~preview.mp4` in Link ingest, Vivo, Ingest;
+video/A1Launch/A1Launch~preview.mp4` in Link ingest, Vivo mode (= Vivo por enlace), Ingest;
 when done, Watch replay + Report. Use B only if it works first try —
 otherwise record A.
 
@@ -70,5 +70,5 @@ otherwise record A.
 1. Trim head/tail; check duration ≤ 3:00.
 2. Watch once: no secrets, emails, paths, or billing on screen.
 3. Upload to YouTube/Loom (unlisted OK) → paste link in portal.
-4. If anything breaks live, record the replay path only — it is
+4. If anything breaks during link ingest, record the replay path only — it is
    labeled as replay and needs no API key.

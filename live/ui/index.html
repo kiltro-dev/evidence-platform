@@ -140,20 +140,20 @@
 <body>
 <header>
   <h1>Atlas <span>Live</span></h1>
-  <p data-es="Sala de redacción en vivo: afirmaciones verificables mientras se hablan."
-     data-en="Live newsroom: checkable claims as they are spoken.">Sala de redacción en vivo: afirmaciones verificables mientras se hablan.</p>
+  <p data-es="Sala de redacción de agentes: afirmaciones verificables mientras se hablan."
+     data-en="Agent newsroom: checkable claims as they are spoken.">Sala de redacción de agentes: afirmaciones verificables mientras se hablan.</p>
   <span id="conn" role="status">…</span>
   <div class="lang" role="group" aria-label="Language / Idioma">
     <button id="langEs" class="on" type="button">ES</button>
     <button id="langEn" type="button">EN</button>
   </div>
 </header>
-<div id="modeBanner" class="live" role="status"><div class="in"><span id="modeTitle">EN VIVO</span><small id="modeSub"></small></div></div>
+<div id="modeBanner" class="live" role="status"><div class="in"><span id="modeTitle">…</span><small id="modeSub"></small></div></div>
 <main>
   <div>
     <section class="card" aria-labelledby="videoH">
       <div class="srchead">
-        <h2 id="videoH" data-es="Señal en vivo" data-en="Live feed">Señal en vivo</h2>
+        <h2 id="videoH" data-es="Señal" data-en="Feed">Señal</h2>
         <span id="simuliveBadge" role="status" hidden></span>
         <span id="modeBadge" role="status" hidden></span>
       </div>
@@ -166,7 +166,7 @@
       </div>
       <div class="videowrap">
         <video id="player" controls playsinline preload="metadata"
-          aria-label="Live video"></video>
+          aria-label="Run video"></video>
         <div id="subOverlay" aria-live="polite"></div>
       </div>
       <p class="vidnote" data-es="M1b: el reproductor E2E se conecta en M1c. M4: el replay fija el vídeo de la corrida."
@@ -183,12 +183,12 @@
           <option value="8">8×</option>
         </select>
         <button id="replayGo" class="act" type="button" data-es="Ver replay" data-en="Watch replay">Ver replay</button>
-        <button id="liveGo" class="ghost" type="button" data-es="En vivo" data-en="Go live">En vivo</button>
+        <button id="liveGo" class="ghost" type="button" data-es="Bus" data-en="Bus">Bus</button>
         <span id="replayStatus" role="status"></span>
       </div>
     </section>
     <section class="card" aria-labelledby="subH">
-      <h2 id="subH" data-es="Subtítulos en vivo" data-en="Live subtitles">Subtítulos en vivo</h2>
+      <h2 id="subH" data-es="Subtítulos" data-en="Subtitles">Subtítulos</h2>
       <div id="subs"><p class="empty" data-es="Esperando transcripción…" data-en="Waiting for transcript…">Esperando transcripción…</p></div>
     </section>
     <section class="card" aria-labelledby="demoH">
@@ -253,25 +253,25 @@
   var SOURCE = qs.get("source") || "file";  // file | hls (S3 directo-simulado)
   var CORPUS = qs.get("corpus") === "1";    // per-run flag: synthetic corpus
   var STR = {
-    es: { live:"EN VIVO", down:"DESCONECTADO", conn:"conectando…",
+    es: { live:"CONECTADO", down:"DESCONECTADO", conn:"conectando…",
       heard:"escuchada", inv:"investigando", verd:"veredicto",
       res:"resuelta:", demoOf:"demo", turnOf:"turno",
-      bannerLive:"EN VIVO", bannerLiveSub:"señal en directo del bus · sin replay",
+      bannerLive:"BUS", bannerLiveSub:"bus conectado · sin replay",
       bannerReplay:"REPLAY DE CORRIDA REAL", investigating:"investiga",
       pkgs:"paquetes", degraded:"degradado", noAgents:"Sin agentes activos.",
       reasons:"motivos", done:"replay terminado", seeking:"vídeo →",
-      demoOnlyLive:"demo disponible solo en modo en vivo",
+      demoOnlyLive:"demo disponible solo con bus conectado",
       prov:"provisional", corrected:"corrección: provisional → final",
       srcs:"fuentes", quotes:"citas", early:"salida temprana",
       simulive:"● DIRECTO SIMULADO" },
-    en: { live:"LIVE", down:"OFFLINE", conn:"connecting…",
+    en: { live:"CONNECTED", down:"OFFLINE", conn:"connecting…",
       heard:"heard", inv:"investigating", verd:"verdict",
       res:"resolved:", demoOf:"demo", turnOf:"turn",
-      bannerLive:"LIVE", bannerLiveSub:"live bus feed · no replay",
+      bannerLive:"BUS", bannerLiveSub:"connected bus · no replay",
       bannerReplay:"REAL-RUN REPLAY", investigating:"investigating",
       pkgs:"packages", degraded:"degraded", noAgents:"No active agents.",
       reasons:"reasons", done:"replay finished", seeking:"video →",
-      demoOnlyLive:"demo available in live mode only",
+      demoOnlyLive:"demo available with connected bus only",
       prov:"provisional", corrected:"correction: provisional → final",
       srcs:"sources", quotes:"quotes", early:"early exit",
       simulive:"● SIMULATED LIVE" },

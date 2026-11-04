@@ -327,13 +327,13 @@
       "d": null,
       "dataset": "live/tests/ (this checkout)",
       "dataset_version": "n/a",
-      "definition": "pytest collect-only count = 1080 on 2026-11-03; last full run 1071 passed + 9 skipped (live-network tests excluded)",
+      "definition": "pytest collect-only count = 1082 on 2026-11-04; last full run 1073 passed + 9 skipped (live-network tests excluded); command: PYTHONPATH=src:live .venv/bin/python -m pytest live/tests -q",
       "docs": [
         "README.md"
       ],
       "experiment": "offline gate",
       "id": "tests_live",
-      "metric": "Live offline test count",
+      "metric": "Offline tests, live suite",
       "n": 1082,
       "not_proven": "count only; live-network tests (ATLAS_LIVE_NET) excluded from the gate",
       "pins": [
@@ -341,14 +341,19 @@
       ],
       "recompute": "collect:live/tests",
       "status": "measured",
-      "value": "1073 passed, 9 skipped (1082 collected)"
+      "value": "1073 passed, 9 skipped (1082 collected)",
+      "passed": 1073,
+      "skipped": 9,
+      "date": "2026-11-04",
+      "command": "PYTHONPATH=src:live .venv/bin/python -m pytest live/tests -q",
+      "scope": "live-network tests excluded"
     },
     {
       "artifact": null,
       "d": null,
       "dataset": "tests/unit + tests/e2e (this checkout)",
       "dataset_version": "n/a",
-      "definition": "pytest collect-only count, 2026-11-02 (historical v1 core gate)",
+      "definition": "pytest collect-only count = 755 on 2026-11-04; last full run 755 passed + 0 skipped (historical v1 core gate); command: PYTHONPATH=src .venv/bin/python -m pytest tests/unit tests/e2e -q",
       "docs": [
         "README.md"
       ],
@@ -362,7 +367,12 @@
       ],
       "recompute": "collect:tests/unit tests/e2e",
       "status": "measured-historical",
-      "value": "755 passed"
+      "value": "755 passed, 0 skipped (755 collected)",
+      "passed": 755,
+      "skipped": 0,
+      "date": "2026-11-04",
+      "command": "PYTHONPATH=src .venv/bin/python -m pytest tests/unit tests/e2e -q",
+      "scope": "historical v1 core gate"
     },
     {
       "artifact": null,
@@ -407,6 +417,29 @@
       ],
       "status": "measured-unfavorable",
       "not_proven": "NOT benchmark v2; the 22 abstentions + 1 false-supported are the keynote demo reality"
+    },
+    {
+      "id": "corpus_en_fix",
+      "metric": "Corpus EN post-V5-fix (scoped: corpus only)",
+      "definition": "decided/correct on the EN synth corpus after the V5-1/V5-2b fixes; 1 false = P1-17-en retrieval variance (kept)",
+      "dataset": "EN synth corpus n=181 (S4, TTS) -- NOT benchmark v2",
+      "dataset_version": "n/a",
+      "n": 74,
+      "d": 75,
+      "value": "75/181 decided, 74/75 correct = 0.987 [0.928,0.998]",
+      "experiment": "V5-2b (live/V5_2B.md)",
+      "artifact": null,
+      "recompute": null,
+      "recompute_note": "live/synthqa/bench.py on data/synth EN (git-ignored fixtures)",
+      "docs": [
+        "live/demo/SUBMISSION.md"
+      ],
+      "pins": [
+        "75/181",
+        "74/75"
+      ],
+      "status": "measured-unfavorable-scoped",
+      "not_proven": "MUST NOT be compared with bench-v2 recall; corpus scope, 1 known false"
     }
   ]
 }
