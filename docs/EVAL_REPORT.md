@@ -1,3 +1,5 @@
+> **Histórico (v0.4.0).** v1-core era doc, kept in place; the product is Atlas Live ([README](../README.md), [INDEX](INDEX.md)).
+
 # Eval report — v4 dataset (2026-11-01)
 
 Runner: `PYTHONPATH=src .venv/bin/python scripts/run_eval.py`.

@@ -1,3 +1,5 @@
+> **Histórico (v0.4.0).** v1-core era doc, kept in place; the product is Atlas Live ([README](../README.md), [INDEX](INDEX.md)).
+
 # Evidence Atlas MCP server (Pilar F)
 
 Exposes verification as [Model Context Protocol](https://modelcontextprotocol.io/)

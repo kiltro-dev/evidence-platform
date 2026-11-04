@@ -128,8 +128,17 @@ vanilla JS newsroom UI (no framework), pytest (1071 live offline tests
 - DEV-b abstains 0/6 (IMF/BLS primaries return 403; only secondaries,
   out of budget). DEV-d decides 4/6 after the V5-1 guard (was 0/6:
   multi-source arithmetic by design, `arithmetic_needs_computation`);
-  the 2 remaining abstain by design. Source: `live/F2_RECALL.md`,
-  `live/V5_P0.md`.
+  the 2 remaining abstain by design. Category b overall is 0/42 and
+  the real FOMC case 5/5 unverifiable for lack of official API keys —
+  see `live/KEYS_NEEDED.md`; both will be re-run if keys arrive
+  before submission. Source: `live/F2_RECALL.md`, `live/V5_P0.md`,
+  `live/V5_CATB.md`.
+- Data & tier: live (non-replay) runs send video/audio + claim text
+  to Meta's Model API on the Contributor tier; don't stream sensitive
+  content. Browser microphone/tab capture is NOT implemented
+  (server mic/file/link input only). The "clip 2" voice robustness
+  case is synthetic (VOA-mix had no clean ≥20 s segment; clip2b
+  synthetic closes it). Source: `live/F2_VOICE.md`, `live/V6_LINK.md`.
 - Zero false `contradicted` held across F2-2 (44/44 pooled), F2-3
   (22/22), F2-7 (44/44 pooled, both runs), and F2-9 (44/44 pooled,
   both runs); the F2-1 D5 false-C is eliminated by construction

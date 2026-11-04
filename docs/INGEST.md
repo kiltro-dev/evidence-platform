@@ -1,3 +1,5 @@
+> **Histórico (v0.4.0).** v1-core era doc, kept in place; the product is Atlas Live ([README](../README.md), [INDEX](INDEX.md)).
+
 # INGEST — multimodal intake (Pilar B-ingest, Evidence Atlas V3)
 
 `src/atlas/ingest/`: PDF / image / video-frames → **anchored claims**.

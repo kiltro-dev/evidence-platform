@@ -1,3 +1,5 @@
+> **Histórico (v0.4.0).** v1-core era doc, kept in place; the product is Atlas Live ([README](../README.md), [INDEX](INDEX.md)).
+
 # API reference (v0.4.0)
 
 Base URL (local): `http://127.0.0.1:8765`. Machine-readable schema:

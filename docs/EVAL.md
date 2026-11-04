@@ -1,3 +1,5 @@
+> **Histórico (v0.4.0).** v1-core era doc, kept in place; the product is Atlas Live ([README](../README.md), [INDEX](INDEX.md)).
+
 # Evaluation
 
 Runner: `scripts/run_eval.py --mode {degraded,full,both}` plus probes

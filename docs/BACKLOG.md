@@ -1,3 +1,5 @@
+> **Histórico (v0.4.0).** v1-core era doc, kept in place; the product is Atlas Live ([README](../README.md), [INDEX](INDEX.md)).
+
 # Mission backlog (living, lead-owned)
 
 STATUS 2026-11-01 (V3 waves 1+2, 7 pillars built + judged):

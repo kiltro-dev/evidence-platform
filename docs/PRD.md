@@ -1,3 +1,5 @@
+> **Histórico (v0.4.0).** v1-core era doc, kept in place; the product is Atlas Live ([README](../README.md), [INDEX](INDEX.md)).
+
 # Evidence Atlas — PRD (v4 ShipCheck; v2 MVP frozen 2026-10-31, amended 2026-11-01)
 
 ## 1. Problem & users

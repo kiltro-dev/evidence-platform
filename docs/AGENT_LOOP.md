@@ -1,3 +1,5 @@
+> **Histórico (v0.4.0).** v1-core era doc, kept in place; the product is Atlas Live ([README](../README.md), [INDEX](INDEX.md)).
+
 # Agent self-correction loop (Pilar A-backend)
 
 `atlas.agent.loop.run_agent(topic)` drafts a short economics/science analysis,

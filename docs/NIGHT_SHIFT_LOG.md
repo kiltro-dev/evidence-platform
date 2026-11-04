@@ -1,3 +1,5 @@
+> **Histórico (v0.4.0).** v1-core era doc, kept in place; the product is Atlas Live ([README](../README.md), [INDEX](INDEX.md)).
+
 # Night-shift log (living, lead-owned)
 
 Mission: make ShipCheck maximally competitive before Nov 4 9PM ET.

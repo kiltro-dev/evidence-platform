@@ -242,3 +242,23 @@ Persistent record for the autonomous build. Latest entry last.
 - H: README V3 + judge-batch.png + DEMO_SCRIPT extensión (4 beats).
 - Verified: 755/755 offline, repro 55/0, browser 6/6, full10 re-run
   post-fix (below). Spend V3 ≈ $3.85 acumulado (saldo ~$111).
+
+## 2026-11-01 → 2026-11-03 — Atlas Live pivot → FASE2 → V5 → V6 → Coherencia Total v2
+
+- Pivot V1→Atlas Live (branch live, `b5c0841`): real-time agent
+  newsroom (listen/watch, live claims, swarm, deterministic verifier,
+  WS verdicts, proof bundles). M1–M9 shipped, tags submittable-1..12.
+- FASE2 v2: preregistered benchmark v2 (dev36 db4ebe71 + ret18
+  5278ba4c, sealed); recall 0.611→0.722 dev; p95 ≤60s; synth corpus
+  12 pieces EN+ES; video 2:37.
+- V5: P0 difference-guard (d 0→4/12 dev, 0 false), EN abstention
+  0.862→0.586, cat-b LIMIT 0/42, link/Turbo ingest, HTML+JSON+ZIP
+  export, FOMC 5xUnverifiable. Tag submittable-16.
+- V6: HLS-over-https without ffmpeg SIGSEGV (Python fetch + PyAV
+  remux; upstream fixed in imageio-ffmpeg>=0.7, now the floor),
+  Vivo-by-link-HLS proven live, link replay+report, KEYS_NEEDED.md,
+  retention re-validated read-only 14/18 0 false. Tag submittable-17.
+- CT v2 (this entry): claims registry + render/guard scripts, shipped
+  replays + proof bundle, README Atlas-first, clean-room verified
+  (<1 min to first replay result), disclosures, ARCHITECTURE_LIVE.md.
+  Spend total ≈ $22 (saldo ≈ $94, piso $15 intacto).
