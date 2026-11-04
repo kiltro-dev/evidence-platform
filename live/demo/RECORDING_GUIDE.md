@@ -57,7 +57,7 @@ otherwise record A.
 
 ### 1:55–2:20 — Honest numbers
 <!-- METRICS:START -->
-- DO: show the metrics panel (`live/claims_registry.json`): retention 14/18 = 0.778, zero false verdicts on benchmark v2, p50 ~5 s / p95 ~40 s / ~$0.007 per claim, Muse-only baseline wins recall but only 14% of its quotes exist.
+- DO: show the metrics panel (`live/claims_registry.json`): DEV 26/36 = 0.722 (recall Wilson [0.560,0.842]), retention 14/18 = 0.778 (recall Wilson [0.548,0.910]), decided 26/26 [0.871,1.000] + 14/14 [0.785,1.000] (decided-accuracy Wilsons), zero false verdicts on benchmark v2, p50 ~5 s / p95 ~40 s / ~$0.007 per claim, Muse-only baseline wins recall but only 9/63 = 0.143 (fidelity Wilson [0.077,0.250]) of its quotes exist.
 - SAY: "On sealed ground truth: fourteen of eighteen, zero false verdicts, five-second median. The raw model answers more — but only fourteen percent of its quotes are real. We abstain instead of guessing."
 <!-- METRICS:END -->
 

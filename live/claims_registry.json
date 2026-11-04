@@ -22,7 +22,8 @@
       ],
       "recompute": "scores:recall",
       "status": "measured",
-      "value": 0.722
+      "value": 0.722,
+      "recall_wilson": "[0.560,0.842]"
     },
     {
       "artifact": "live/eval2/scores/ret-atlas.json",

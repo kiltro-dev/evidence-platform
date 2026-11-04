@@ -55,12 +55,12 @@ tab/microphone capture, DASH playlists, encrypted playlists, YouTube
 <!-- METRICS:START -->
 | Metric | Value | Experiment | Does NOT prove |
 |---|---|---|---|
-| Atlas recall, DEV (n=36) | 26/36 = 0.722 | V5-1 guard | NOT real-world accuracy: 36 scripted claims against available sources; b 0/6 by source access, not reasoning |
-| Atlas recall, sealed retention (n=18) | 14/18 = 0.778 | V6 validation (ret ran 3x, seal kept) | NOT generalization to arbitrary claims; n=18, Wilson recall interval [0.548,0.910] |
-| Decided accuracy | dev 26/26 [0.871,1.000], ret 14/14 [0.785,1.000], 0 false verdicts either set | V5-1 + V6 | says nothing about the 14 abstentions (10 dev + 4 ret); high precision WITH low coverage is the design trade |
+| Atlas recall, DEV (n=36) | 26/36 = 0.722, recall Wilson [0.560,0.842] | V5-1 guard | NOT real-world accuracy: 36 scripted claims against available sources; b 0/6 by source access, not reasoning |
+| Atlas recall, sealed retention (n=18) | 14/18 = 0.778, recall Wilson [0.548,0.910] | V6 validation (ret ran 3x, seal kept) | NOT generalization to arbitrary claims; n=18, Wilson recall interval [0.548,0.910] |
+| Decided accuracy (decided-accuracy Wilsons) | dev 26/26 [0.871,1.000], ret 14/14 [0.785,1.000], 0 false verdicts either set | V5-1 + V6 | says nothing about the 14 abstentions (10 dev + 4 ret); high precision WITH low coverage is the design trade |
 | Verdict latency / cost | p50 ~5 s / p95 ~40 s / ~$0.007 per claim | V5-1 + V6 runs | NOT end-to-end video latency (excludes ASR+detection); NOT worst-case (deadline 90s caps the tail by aborting) |
 | Baseline recall, retention (Atlas loses) | 18/18 = 1.000 [0.824,1.000] | F2 retention baseline | verdicts only: paired with fidelity 9/63, which is the wedge |
-| Baseline citation fidelity, DEV pooled | 9/63 = 0.143 [0.077,0.250] (r1 5/31, r2 4/32) | F2-1 audit | NOT Atlas fidelity (Atlas quotes are package-verified by construction, different mechanism); reasons: quote_not_found 34, unit_mismatch 13, numeric_mismatch 7 |
+| Baseline citation fidelity, DEV pooled (fidelity Wilson) | 9/63 = 0.143 [0.077,0.250] (r1 5/31, r2 4/32); NOT directly comparable to Atlas fidelity (different mechanisms: audit vs package-verified) | F2-1 audit | NOT Atlas fidelity (Atlas quotes are package-verified by construction, different mechanism); reasons: quote_not_found 34, unit_mismatch 13, numeric_mismatch 7 |
 | Said-vs-shown planted | 4/4 | M3 | NOT inline-realtime vision on link runs (V6-2: offline path on materialized files) |
 | Canaries | 7/7 decided of 12 (5 abstained), accuracy 1.000 [0.646,1.000] | M6 live run | NOT a false-rate guarantee: Wilson [0.646,1.000] is wide at n=12; abstention 5/12 |
 | Live offline tests | 1073 passed, 9 skipped (1082 collected) | gate 2026-11-02 | count only; live-network tests (ATLAS_LIVE_NET) excluded from the gate |

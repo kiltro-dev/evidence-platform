@@ -179,6 +179,9 @@ def check_wilson_intervals(reg: dict, errors: list[str]) -> None:
     assert wilson(70, 72) == (0.904, 0.992), wilson(70, 72)
     if c["ret_recall"].get("recall_wilson") != "[0.548,0.910]":
         errors.append("ret_recall.recall_wilson != recomputed [0.548,0.910]")
+    if c["dev_recall"].get("recall_wilson") != "[0.560,0.842]":
+        errors.append("dev_recall.recall_wilson != recomputed [0.560,0.842]")
+    assert wilson(26, 36) == (0.56, 0.842), wilson(26, 36)
     for text, interval in (
             (c["decided_accuracy"]["value"], ["0.871", "0.785"]),
             (c["citation_fidelity"]["value"], ["0.077", "0.250"]),
@@ -187,6 +190,47 @@ def check_wilson_intervals(reg: dict, errors: list[str]) -> None:
         for frag in interval:
             if frag not in text:
                 errors.append(f"wilson fragment {frag} missing: {text[:60]}")
+
+
+# Every published Wilson interval must sit next to its metric kind.
+# Pairs: (normalized interval core, required keyword nearby).
+INTERVAL_TYPES = [
+    ("0.560,0.842", "recall"),
+    ("0.548,0.910", "recall"),
+    ("0.871,1.000", "decid"),  # decided / decididos (ES script)
+    ("0.785,1.000", "decid"),
+    ("0.077,0.250", "fidelity"),
+]
+INTERVAL_DOCS = ("README.md", "live/demo/SUBMISSION.md",
+                 "live/demo/script.md", "live/demo/RECORDING_GUIDE.md")
+
+
+def check_interval_types(errors: list[str]) -> None:
+    import re
+
+    for rel in INTERVAL_DOCS:
+        text = (REPO / rel).read_text(encoding="utf-8")
+        flat = re.sub(r"\s+", "", text)
+        low = text.lower()
+        for core, keyword in INTERVAL_TYPES:
+            start = 0
+            while True:
+                i = flat.find(f"[{core}]", start)
+                if i < 0:
+                    break
+                # map flat offset back: count non-space chars in text[:j]
+                seen = 0
+                j = 0
+                while seen < i and j < len(text):
+                    if not text[j].isspace():
+                        seen += 1
+                    j += 1
+                window = low[max(0, j - 150):j + 150]
+                if keyword not in window:
+                    errors.append(
+                        f"{rel}: interval [{core}] without {keyword!r} "
+                        f"within 150 chars (mislabeled Wilson)")
+                start = i + 1
 
 
 def check_pins(reg: dict, errors: list[str]) -> None:
@@ -218,6 +262,7 @@ def main() -> int:
     except AssertionError as exc:
         errors.append(f"wilson recompute mismatch: {exc}")
     check_pins(reg, errors)
+    check_interval_types(errors)
     if render.main(check=True) != 0:
         errors.append("metric blocks differ from registry (run render)")
     if errors:

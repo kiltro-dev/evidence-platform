@@ -105,10 +105,11 @@ Fuente: M3 (F5 + F11 `visual.misleading_axis`; frames ES, mismos datos).
 
 ## 1:37–1:51 — Recall F2 que generaliza
 
-SE VE: panel DEV 26/36 = 0.722 (Wilson [0.871, 1.000], 0 falsos) +
-retención 14/18 = 0.778 (Wilson [0.785, 1.000], 0 falsos, p50 ~5 s
-/ p95 ~40 s con código F2-9). Categorías a–f; consistencia baseline
-r1–r2 36/36 (no Atlas).
+SE VE: panel DEV 26/36 = 0.722 (recall Wilson [0.560, 0.842]) +
+retención 14/18 = 0.778 (recall Wilson [0.548, 0.910]); exactitud entre
+decididos 26/26 [0.871, 1.000] + 14/14 [0.785, 1.000], 0 falsos,
+p50 ~5 s / p95 ~40 s con código F2-9. Categorías a–f; consistencia
+baseline r1–r2 36/36 (no Atlas).
 
 SE DICE: «El benchmark justo, versión dos: treinta y seis claims de
 desarrollo y dieciocho de retención sellada. Atlas decide el setenta y
@@ -170,7 +171,7 @@ arriba).
 ## Notas de producción (no narrar)
 
 <!-- METRICS:START -->
-- Figures (V6 frozen): DEV 26/36 = 0.722, retention 14/18 = 0.778, decided 26/26 + 14/14, 0 false verdicts, baseline 18/18 retention with fidelity 9/63.
+- Figures (V6 frozen): DEV 26/36 = 0.722 (recall Wilson [0.560,0.842]), retention 14/18 = 0.778 (recall Wilson [0.548,0.910]), decided 26/26 [0.871,1.000] + 14/14 [0.785,1.000] (decided-accuracy Wilsons), 0 false verdicts, baseline 18/18 retention with fidelity 9/63 = 0.143 (fidelity Wilson [0.077,0.250]; NOT comparable to Atlas fidelity, different mechanisms).
 <!-- METRICS:END -->
 
 - Duración objetivo: ≤2:50; build F2-6c: 2:37.0 (margen 13 s).
