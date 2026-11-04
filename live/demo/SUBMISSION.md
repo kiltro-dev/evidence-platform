@@ -10,16 +10,17 @@ Atlas Live — a real-time agent newsroom that fact-checks video while it plays
 
 ## Short description (≤280 chars)
 
-Atlas Live listens to and watches a livestream, extracts checkable claims as
-spoken, investigates them with parallel Muse agents, and publishes verdicts
-with re-verifiable proof — model proposes, code disposes.
+Atlas Live listens to and watches a video stream (file or link, realtime-paced),
+extracts checkable claims as spoken, investigates them with parallel Muse agents,
+and publishes verdicts with re-verifiable proof — model proposes, code disposes.
 
 ## Long description
 
 AI-generated video is full of confident statistics nobody checks. Atlas Live
-is an agent newsroom that fact-checks a stream in real time: Meta realtime
-speech-to-text transcribes the audio, a claim detector extracts checkable
-spans, parallel researcher agents gather evidence packages (URL, capture
+is an agent newsroom that fact-checks a stream in real time (realtime-paced
+ingest of file/link windows, incl. HLS): Meta realtime speech-to-text
+transcribes the audio, a claim detector extracts checkable spans,
+parallel researcher agents gather evidence packages (URL, capture
 date, sha256 snapshot, literal quote + offsets) from the open web, and a
 deterministic verifier — never the model — decides `supported`,
 `contradicted`, or `unverifiable`. A vision stage cross-checks said-vs-shown
@@ -49,7 +50,7 @@ of a bare true/false label.
 ## Impact
 
 <!-- METRICS:IMPACT:START -->
-On the fair benchmark v2 (36 DEV claims + 18 sealed retention claims, preregistered), Atlas Live decides 26/36 = 0.722 on DEV and 14/18 = 0.778 on retention with zero false verdicts on either set (26/26 + 14/14 decided accuracy; coverage and precision always reported together), verdict latency p50 ~5 s / p95 ~40 s at ~$0.007/claim, said-vs-shown 4/4 planted (40% said vs 0.97% shown), canaries 7/7 decided of 12 (5 abstained), accuracy 1.000 [0.646,1.000], proof bundles 31/31 ALL PASS; 1-byte tamper => FAIL, Spanish ASR 0.03 WER, 41/41 ASR-recall, and a planted speaker self-contradiction caught (China 1.41B vs 141M, ~59 s apart in the native-ES keynote). The model-only baseline beats us on recall (70/72 DEV, 18/18 retention) — stated plainly — but only 9/63 = 0.143 of its citations are faithful (verbatim quote + figure within 2% on the cited URL) and it exports zero re-runnable proof.
+On the fair benchmark v2 (36 DEV claims + 18 sealed retention claims, preregistered), Atlas Live decides 26/36 = 0.722 on DEV and 14/18 = 0.778 (recall Wilson [0.548,0.910]) on retention with zero false verdicts on either set (26/26 [0.871,1.000] + 14/14 [0.785,1.000] decided accuracy; coverage and precision always reported together), verdict latency p50 ~5 s / p95 ~40 s at ~$0.007/claim (invest-to-verdict only), said-vs-shown 4/4 planted (40% said vs 0.97% shown), canaries 7/7 decided of 12 (5 abstained, all FALSE-side), proof bundles 31/31 ALL PASS; 1-byte tamper => FAIL, Spanish ASR 0.03 WER, 41/41 ASR-recall, and a planted speaker self-contradiction caught (China 1.41B vs 141M, ~59 s apart in the native-ES keynote). The model-only baseline beats us on recall (70/72 DEV, 18/18 retention) — stated plainly — but only 9/63 = 0.143 of its citations are faithful (verbatim quote + figure within 2% on the cited URL) and it exports zero re-runnable proof.
 <!-- METRICS:IMPACT:END -->
 (Sources: `live/F2_RECALL.md` + addendum,
 `live/F2_BENCH.md`, `live/F2_LATENCY.md`, `live/F2_VOICE.md`,
@@ -84,7 +85,8 @@ video ─▶ simstream (ffmpeg -re, "simulated-stream") ─▶ fifo ─▶ ffmpe
   ─▶ Meta realtime ASR ─▶ per final: Detector.process_turn
   ─▶ EventBus (transcript.final / claim.detected / claim.state)
   ─▶ swarm researchers ─▶ claim.evidence ─▶ EvidencePackage ─▶ store
-  ─▶ deterministic verifier ─▶ claim.verdict ─▶ skeptic ─▶ editor card (ES/EN)
+  ─▶ deterministic verifier ─▶ claim.verdict ─▶ editor card (ES/EN)
+  (+ advisory skeptic probe, deferred by default, never blocking)
   ─▶ WebSocket /ws + newsroom UI + evidence bundle ZIP
 Side stages: vista (frames ─▶ vision read ─▶ said-vs-shown xcheck),
 longctx (full transcript ─▶ proposed pairs ─▶ code-verified speaker.contradiction),
@@ -99,8 +101,8 @@ any recorded run with zero model cost (`GET /replay`, `WS /ws?replay=`).
 Python ≥3.11, FastAPI + uvicorn (server + WS), `imageio-ffmpeg` static
 ffmpeg (demux/restream), Meta API (`muse-spark`, `muse-voice-transcribe-1.0`,
 vision, `web_search`), World Bank Open Data + Wikipedia (evidence sources),
-vanilla JS newsroom UI (no framework), pytest (1071 live offline tests
-+ 755 v1-core offline tests).
+vanilla JS newsroom UI (no framework), pytest (live 1071 passed +
+9 skipped of 1080 collected; v1-core 755 passed).
 
 ## Honest limits
 
@@ -117,14 +119,20 @@ vanilla JS newsroom UI (no framework), pytest (1071 live offline tests
   the EN bench (P1-17-en: spurious wiki quote cited, model-path,
   pre-existing, not verifier-caused). Corpus EN post-fix: 75/181
   decided, 74/75 correct. Source: `live/V5_P0.md`, `live/V5_2B.md`.
-- Verdict latency (F2-9) p50 4.9/5.0 s per claim (invest→verdict),
+- Verdict latency (F2-9) p50 4.9/5.0 s per claim (invest→verdict
+  ONLY — excludes ASR+detection; NOT end-to-end video latency),
   down from 80.3 s (16×); wall for 36 claims ~78 s (−79% vs 372.4 s);
   $0.0073/0.0059 per claim; 20/36 claims exit via the ~4 s fast lane.
   The p95 at 40.7/38.9 s MEETS the ≤60 s goal with ~20 s of margin —
-  0 claims over 60 s in both runs (before: 7). Lever: a no-progress
-  early abort cut the old A3+B1–B6 tail from 530 s to 274 s (−48%).
-  Same 22/36 verdicts as F2-7, claim by claim. Source:
+  0 claims over 60 s in both runs (before: 7), with the 90 s deadline
+  aborting the tail (it caps, it doesn't measure, the worst case).
+  Lever: a no-progress early abort cut the old A3+B1–B6 tail from
+  530 s to 274 s (−48%). Same 22/36 verdicts as F2-7, claim by claim
+  (at F2-9 time; V5-1 later moved DEV to 26/36). Source:
   `data/runs/f2p95-final-report.json`, `live/F2_P95.md` §4.
+- Canaries (M6 live run): 12 run, 7 decided 7/7 correct, Wilson
+  [0.646,1.000] (wide at n=12), 5 abstentions ALL on the FALSE side,
+  $0.29. Source: `live/M6.md`, `live/eval2/scores/canaries.json`.
 - DEV-b abstains 0/6 (IMF/BLS primaries return 403; only secondaries,
   out of budget). DEV-d decides 4/6 after the V5-1 guard (was 0/6:
   multi-source arithmetic by design, `arithmetic_needs_computation`);
@@ -136,7 +144,10 @@ vanilla JS newsroom UI (no framework), pytest (1071 live offline tests
 - Data & tier: live (non-replay) runs send video/audio + claim text
   to Meta's Model API on the Contributor tier; don't stream sensitive
   content. Browser microphone/tab capture is NOT implemented
-  (server mic/file/link input only). The "clip 2" voice robustness
+  (server mic/file/link input only); DASH playlists, encrypted
+  playlists, and YouTube (refused by policy — paste a direct
+  mp4/m3u8 or a page with embedded video instead) are NOT supported.
+  The "clip 2" voice robustness
   case is synthetic (VOA-mix had no clean ≥20 s segment; clip2b
   synthetic closes it). Source: `live/F2_VOICE.md`, `live/V6_LINK.md`.
 - Zero false `contradicted` held across F2-2 (44/44 pooled), F2-3
@@ -167,7 +178,8 @@ uv venv -p 3.12 && uv pip install --python .venv/bin/python -r requirements.txt
 # $0 replay: recorded 48-event ES run, no model calls, no key needed
 PYTHONPATH=src:live .venv/bin/python -m uvicorn live.server.app:create_app --factory --host 127.0.0.1 --port 8891
 # open http://127.0.0.1:8891/?replay=run-es-native
-# Live link ingest (needs MODEL_API_KEY in .env; ≈$0.01 for 30 s):
+# Live link ingest (needs MODEL_API_KEY in .env; $0.0015–0.01 per 30 s
+# depending on claims — V6 proof run $0.0015 with 0 claims):
 curl localhost:8891/ingest -H 'Content-Type: application/json' \
   -d '{"url":"https://images-assets.nasa.gov/video/A1Launch/A1Launch~preview.mp4","mode":"vivo","duration":30}'
 # then open ?replay=link-<run_id> and /report/link-<run_id>?format=html

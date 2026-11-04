@@ -177,6 +177,8 @@ def check_wilson_intervals(reg: dict, errors: list[str]) -> None:
     assert wilson(9, 63) == (0.077, 0.25), wilson(9, 63)
     assert wilson(18, 18) == (0.824, 1.0), wilson(18, 18)
     assert wilson(70, 72) == (0.904, 0.992), wilson(70, 72)
+    if c["ret_recall"].get("recall_wilson") != "[0.548,0.910]":
+        errors.append("ret_recall.recall_wilson != recomputed [0.548,0.910]")
     for text, interval in (
             (c["decided_accuracy"]["value"], ["0.871", "0.785"]),
             (c["citation_fidelity"]["value"], ["0.077", "0.250"]),

@@ -95,8 +95,9 @@ on that corpus — never confuse them with benchmark-v2 recall above.
 - Canaries: 12 canaries run (M6), 7 decided 7/7, Wilson [0.646,1.000]
   — wide at n=12, and 5 abstentions all on the FALSE side.
 - Contributor tier: live runs send video/audio + claim text to Meta's
-  Model API; don't stream sensitive content. Microphone/tab capture
-  does not exist (server mic/file input only). Clip 2 is synthetic.
+  Model API; don't stream sensitive content. Browser microphone/tab
+  capture does not exist (server-side audio/file/link input only).
+  Clip 2 is synthetic.
 
 ## Install & run (live path)
 

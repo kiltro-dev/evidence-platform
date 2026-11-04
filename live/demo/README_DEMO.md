@@ -46,7 +46,8 @@ curl localhost:8891/ingest -H 'Content-Type: application/json' \
   -d '{"url":"https://images-assets.nasa.gov/video/A1Launch/A1Launch~preview.mp4","mode":"vivo","duration":30}'
 ```
 
-Cost ≈$0.01 for the 30 s window. Then `?replay=link-<run_id>`.
+Cost $0.0015–0.01 per 30 s depending on claims (proof run $0.0015,
+0 claims). Then `?replay=link-<run_id>`.
 Full verification of all 31 keynote claims (`live/run_verify.py
 --lang en`) cost $0.96 and 611 s wall in M2d — run only if you accept
 that (and only with the local `data/` corpus).
